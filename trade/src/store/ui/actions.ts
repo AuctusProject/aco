@@ -28,6 +28,7 @@ import {
     StoreState,
 } from '../../util/types';
 import * as selectors from '../selectors';
+import { unitsInTokenAmount, tokenAmountInUnitsToBigNumber } from '../../util/tokens';
 
 export const setHasUnreadNotifications = createAction('ui/UNREAD_NOTIFICATIONS_set', resolve => {
     return (hasUnreadNotifications: boolean) => resolve(hasUnreadNotifications);
@@ -188,14 +189,16 @@ const checkBalances = (state: StoreState, side: OrderSide, amount: BigNumber, pr
         }
     }
     else {
-        var totalAmount = amount.times(price)
+        var buyAmount = tokenAmountInUnitsToBigNumber(amount, baseToken.decimals)
+        var totalAmount = buyAmount.times(price)
+        var totalAmountDecimals = unitsInTokenAmount(totalAmount.toString(), quoteToken.decimals);
         // When buying and
         // if quote token is weth, should have enough ETH + WETH balance, or
         // if quote token is not weth, should have enough quote token balance
-        const ifEthAndWethNotEnoughBalance = isWeth(quoteToken.symbol) && totalEthBalance.isLessThan(totalAmount);
+        const ifEthAndWethNotEnoughBalance = isWeth(quoteToken.symbol) && totalEthBalance.isLessThan(totalAmountDecimals);
         const ifOtherQuoteTokenAndNotEnoughBalance = !isWeth(quoteToken.symbol) &&
             quoteTokenBalance &&
-            quoteTokenBalance.balance.isLessThan(totalAmount);
+            quoteTokenBalance.balance.isLessThan(totalAmountDecimals);
         if (ifEthAndWethNotEnoughBalance || ifOtherQuoteTokenAndNotEnoughBalance) {
             throw new InsufficientTokenBalanceException(quoteToken.symbol);
         }
