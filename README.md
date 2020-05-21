@@ -6,9 +6,10 @@ ACO is a decentralized non-custodial options protocol built on top of Ethereum t
 Each option series is integrated through an ACOToken contract, which is ERC20-compliant, making options transferable, fungible, and ready for further DeFi integrations.
 
 Links:
-[aco.finance](https://aco.finance) - deployed application
-[docs](https://docs.aco.finance) - explaining in plain English how the protocol works
-If you need development support,  join the #developers channel on [our community Discord server.](https://discord.gg/9JqeMxs)
+
+- [aco.finance](https://aco.finance) - deployed application
+- [docs](https://docs.aco.finance) - explaining in plain English how the protocol works
+- If you need development support,  join the #developers channel on [our community Discord server.](https://discord.gg/9JqeMxs)
 
 
 ## Directories
