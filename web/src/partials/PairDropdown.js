@@ -58,7 +58,7 @@ class PairDropdown extends Component {
 
   render() {
     return (
-      <li className="nav-item dropdown">                  
+      <li className="nav-item dropdown pair-dropdown">                  
         {!this.state.pairs && <div><FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>&nbsp;Loading pairs...</div>}
         {this.state.pairs && <div className={"nav-link " + ((this.state.pairs && this.state.pairs.length > 1) ? "dropdown-toggle clickable" : "")} target="_self" id="navbarPair" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <div className="pair-nav-container">

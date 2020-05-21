@@ -113,6 +113,7 @@
 
 li.dropdown {
   padding: 0 10px;
+  height: 45px;
 }
 
 .nav-item.dropdown.metamask {
@@ -149,7 +150,7 @@ li.dropdown {
 .navbar-items .nav-item.active::after {
   content: "";
   position: absolute;
-  bottom: -11px;
+  bottom: -10px;
   height: 4px;
   background-color: white;
   width: 100%;
