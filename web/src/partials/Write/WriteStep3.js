@@ -71,9 +71,9 @@ class WriteStep3 extends Component {
   }
 
   getOptionConfirmationText = () => {
-    var text = "After transfering or selling the minted options, at any time before {EXPIRY_TIME}, if you get assigned, you will be forced to {OPTION_TYPE} {OPTION_ASSET} for {OPTION_STRIKE_PRICE} per option."
+    var text = "After transferring or selling the minted options, at any time before {EXPIRY_TIME}, if you get assigned, you will be forced to {OPTION_TYPE} {OPTION_ASSET} for {OPTION_STRIKE_PRICE} per option."
     return text.replace("{EXPIRY_TIME}", formatDate(this.props.option.expiryTime))
-      .replace("{OPTION_TYPE}", (this.props.option.isCall ? "buy" : "sell"))
+      .replace("{OPTION_TYPE}", (!this.props.option.isCall ? "buy" : "sell"))
       .replace("{OPTION_ASSET}", this.props.option.underlyingInfo.symbol)
       .replace("{OPTION_STRIKE_PRICE}", getOptionFormattedPrice(this.props.option))
   }

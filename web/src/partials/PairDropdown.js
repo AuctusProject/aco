@@ -60,12 +60,12 @@ class PairDropdown extends Component {
     return (
       <li className="nav-item dropdown">                  
         {!this.state.pairs && <div><FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>&nbsp;Loading pairs...</div>}
-        {this.state.pairs && <div className="dropdown-toggle nav-link clickable" target="_self" id="navbarPair" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {this.state.pairs && <div className={"nav-link " + ((this.state.pairs && this.state.pairs.length > 1) ? "dropdown-toggle clickable" : "")} target="_self" id="navbarPair" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <div className="pair-nav-container">
             {this.props.selectedPair && <PairInfo pair={this.props.selectedPair}></PairInfo>}
           </div>
         </div>}
-        {this.state.pairs && 
+        {this.state.pairs && this.state.pairs.length > 1 &&
           <div className="dropdown-menu" aria-labelledby="navbarPair">
             {this.state.pairs.map(pair => 
               <div key={pair.id} onClick={() => this.selectPair(pair)} className="dropdown-item clickable" target="_self">
