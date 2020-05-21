@@ -243,7 +243,7 @@ class WriteStep3 extends Component {
           </div>
           <div className="balance-row">
             <div className="balance-info">Balance: {this.state.collateralBalance ? (fromDecimals(this.state.collateralBalance.toString(), this.getCollateralDecimals(), 2) + " " + this.getCollaterizeAssetSymbol()) : ""}</div>
-            <div>{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</a>}</div>
+            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</a>}</div>
           </div>
           <div className="card-separator"></div>
           <div>

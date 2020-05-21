@@ -101,3 +101,8 @@
     text-decoration: underline;
     cursor: pointer;
 }
+
+.write-step3 .swap-link {
+    width: 115px;
+    display: block;
+}
