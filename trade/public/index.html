@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="%PUBLIC_URL%/favicons/favicon-72.png" />
+    <!--[if IE]>
+    <link rel="shortcut icon" href="%PUBLIC_URL%/favicons/favicon.ico"/>
+    <![endif]-->
+    <link rel="apple-touch-icon-precomposed" href="%PUBLIC_URL%/favicons/favicon-152.png"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF"/>
+    <meta name="msapplication-TileImage" content="%PUBLIC_URL%/favicons/favicon-144.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="%PUBLIC_URL%/favicons/favicon-152.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="%PUBLIC_URL%/favicons/favicon-144.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="%PUBLIC_URL%/favicons/favicon-120.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="%PUBLIC_URL%/favicons/favicon-114.png"/>
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="%PUBLIC_URL%/favicons/favicon-72.png"/>
+    <link rel="apple-touch-icon-precomposed" href="%PUBLIC_URL%/favicons/favicon-57.png"/>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <meta name="theme-color" content="#000000" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <title>0x Trade</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="trade-app"></div>
+    <script>
+      function loadAsync() {
+        setTimeout(() => {
+          if (window.TradeApp) {
+            window.TradeApp.setNetwork(42)
+            window.TradeApp.mount({"baseToken":{"decimals":18,"symbol":"ACO ETH-210T18D-C-18MAY20-1900UTC","name":"ACO ETH-210T18D-C-18MAY20-1900UTC","icon":null,"primaryColor":null,"expiryTime":"1589828400","addresses":{"42":"0x376aFc787bcD3A7B3f50157522B39A104c590550"}},"quoteToken":{"decimals":18,"symbol":"T18D","name":"T18D","icon":null,"primaryColor":null,"expiryTime":null,"addresses":{"42":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"}}})
+          }
+          else {
+            loadAsync()
+          }
+        }, 1000)
+      }
+      loadAsync();
+    </script>
+  </body>
+</html>

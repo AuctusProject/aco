@@ -1,0 +1,38 @@
+.pair-info {
+    display: flex;
+    flex-direction: column;
+    margin-right: 6px;
+}
+
+.pair-img-symbol {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.pair-img-symbol img {
+    width: 24px;
+    margin-right: 8px;
+}
+
+.pair-symbol {
+    font-size: 16px;
+    font-weight: 500;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: 0.4px;
+    color: #ffffff;
+}
+
+.pair-price {    
+    font-size: 14px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: 0.35px;
+    text-align: left;
+    color: #cccccc;
+}

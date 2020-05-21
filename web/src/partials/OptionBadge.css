@@ -1,0 +1,22 @@
+.option-badge{
+  width: 42px;
+  height: 22px;
+  line-height: 22px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: bold;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+.put-badge {
+  background-color: #501d1d;
+  color: #ed2e2e;
+}
+
+.call-badge {
+  background-color: #165417;
+  color: #0ec812;
+}

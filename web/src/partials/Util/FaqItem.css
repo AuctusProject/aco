@@ -1,0 +1,40 @@
+.faq-item.card {
+  margin-bottom: 18px;
+  flex-direction: column-reverse;
+}
+
+.faq-item .card-header {
+  border: none;
+  background: white;
+  font-size: 18px;
+  text-align: left;
+  color: #191919;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+}
+
+.faq-item > div.show ~ div,
+.faq-item .card-header:hover {
+  text-decoration: underline;
+}
+
+.faq-item > div.show ~ div.card-header > svg {
+  -webkit-transform: rotate(90deg);
+  transform: rotate(90deg);
+}
+
+.faq-item .card-header > svg {
+  margin-right: 8px;
+}
+
+.faq-item .card-header > svg {
+  -o-transition: all 250ms;
+  -moz-transition: all 250ms;
+  -webkit-transition: all 250ms;
+  transition: all 250ms;
+}
+
+.faq-item .card-body {
+  padding-top: 0;
+  white-space: pre-wrap;
+}

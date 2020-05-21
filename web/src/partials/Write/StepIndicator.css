@@ -1,0 +1,94 @@
+.steps-indicator {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin: 30px auto 18px;
+}
+
+.steps-indicator .step-item {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  align-items: center;
+  color: #707070;
+  padding-left: 32px;
+  padding-right: 32px;
+  font-size: 12px;
+  font-weight: 300;
+  font-stretch: normal;
+  font-style: italic;
+  letter-spacing: 0.3px;
+}
+
+.steps-indicator .step-item.current,
+.steps-indicator .step-item.done {
+  font-weight: 500;
+  color: white;
+}
+
+.steps-indicator .step-item.done {
+  cursor: pointer;
+}
+
+.steps-indicator .step-item .circle {
+  width: 11px;
+  height: 11px;
+  margin: 2px;
+  border: solid 1px #707070;
+  border-radius: 50%;
+}
+
+.steps-indicator .step-item.done .circle {
+  border-color: white;
+  background-color: white;
+}
+
+.steps-indicator .step-item.current .circle {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  border-color: white;
+}
+
+.steps-indicator .step-item.current .circle::before {
+  content: "";
+  width: 11px;
+  height: 11px;
+  background: white;
+  border-radius: 50%;
+  display: block;
+  margin: 1px;
+}
+
+.steps-indicator .step-item::after,
+.steps-indicator .step-item::before {
+  width: calc(50% - 10px);
+  position: absolute;
+  height: 1px;
+  content: "";
+  background: #707070;
+  top: 7px;
+}
+
+.steps-indicator .step-item::after {
+  right: 0;
+}
+
+.steps-indicator .step-item::before {
+  left: 0;
+}
+
+.steps-indicator .step-item.done::after,
+.steps-indicator .step-item.done::before,
+.steps-indicator .step-item.current::before {
+  background: white;
+}
+
+.steps-indicator .step-item:first-child::before,
+.steps-indicator .step-item:last-child::after {
+  display: none;
+}
+
+.steps-indicator .step-description {
+  margin-top: 8px;
+}

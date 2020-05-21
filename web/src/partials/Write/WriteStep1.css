@@ -1,0 +1,60 @@
+.option-types {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-type-card {
+    width: 210px;
+    border-radius: 4px;
+    border: solid 0.5px #676767;
+    margin: 8px 16px 16px;
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    position: relative;
+}
+
+.option-type-card:hover {
+    background-color: #363636;
+}
+
+.option-type-card.call:hover {
+    border: solid 0.5px #0ec812;    
+}
+
+.option-type-card.put:hover {
+    border: solid 0.5px #ed2e2e;
+}
+
+.option-type-description {
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+    color: #a6a6a6;
+    margin-bottom: 32px;
+}
+
+.learn-more {
+    font-size: 14px;
+    position: absolute;
+    right: 4px;
+    top: 2px;
+    color: #a6a6a6;
+}
+
+.learn-more:hover {
+    color: white;
+}
+
+.option-type-card .action-btn {
+    font-size: 10px !important;
+}
+
+.option-type-tooltip {
+    max-width: 300px;
+    text-align: left;
+}

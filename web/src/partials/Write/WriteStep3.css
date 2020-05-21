@@ -1,0 +1,103 @@
+.input-row,.balance-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.balance-row {
+    margin-top: 8px;
+}
+
+.input-column {
+    max-width:  115px;
+}
+
+.input-label {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.insufficient-funds-error .input-field {
+    background-color: #ff0000;
+    border: solid 1px #ff0000;
+}
+
+.insufficient-funds-error .input-field input{
+    color: white;
+}
+
+.insufficient-funds-error .balance-info {
+    font-weight: normal;
+    color: #fb1a1a;
+}
+
+.balance-info {
+    font-size: 11px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.55px;
+    color: #e6e6e6;
+}
+
+.input-field {
+    width: 115px;
+    height: 35px;
+    border: solid 1px #4c4c4c;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.input-field input {
+    max-width: 100%;
+    height: 100%;
+    background-color: transparent;
+    border: none;
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+    color: #7f7f7f;
+    padding: 0 6px;
+}
+
+.max-btn {
+    border-radius: 2px;
+    background-color: #ffffff;
+    font-size: 10px;
+    font-weight: 500;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.25px;
+    color: #323232;
+    height: 20px;
+    line-height: 20px;
+    position: absolute;
+    right: 4px;
+    width: 34px;
+    cursor: pointer;
+}
+
+.equal-symbol {
+    margin-top: 40px;
+    font-size: 20px;
+}
+
+.swap-link {
+    font-size: 11px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.5px;
+    text-align: center;
+    color: #139bf2;
+    text-decoration: underline;
+    cursor: pointer;
+}

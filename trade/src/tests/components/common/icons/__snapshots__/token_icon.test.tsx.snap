@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TokenIcon TokenIcon MLN to match snapshot 1`] = `
+<div
+  className="sc-bdVaJa erQgzz"
+  color="#232332"
+>
+  <label
+    className="sc-bwzfXH jgqeEE"
+  >
+    MLN
+  </label>
+</div>
+`;
+
+exports[`TokenIcon TokenIcon ZRX to match snapshot 1`] = `
+<div
+  className="sc-bdVaJa erQgzz"
+  color="#232332"
+>
+  <label
+    className="sc-bwzfXH jgqeEE"
+  >
+    ZRX
+  </label>
+</div>
+`;
+
+exports[`TokenIcon Without token 1`] = `
+<div
+  className="sc-bdVaJa erQgzz"
+  color="#232332"
+>
+  <label
+    className="sc-bwzfXH jgqeEE"
+  >
+    TEST
+  </label>
+</div>
+`;

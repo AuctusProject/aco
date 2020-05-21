@@ -1,0 +1,111 @@
+.steps-modal .modal-header .close {
+    padding: 0 5px;
+    margin: 0 0 0 auto;
+    color: rgb(196,196,196);
+    text-shadow: none;
+    font-weight: 300;
+}
+
+.steps-modal .modal-header {
+    padding: 0;
+    border-bottom: 0;
+}
+
+.steps-modal .modal-content {
+    background-color: #202020;
+}
+
+.steps-modal-title {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.steps-modal-subtitle {
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+.steps-modal .steps {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    margin-top: auto;
+    padding-top: 22px;
+    width: 100%;
+}
+
+.steps-modal .start-dot {
+    border-radius: 50%;
+    flex-grow: 0;
+    flex-shrink: 0;
+    height: 12px;
+    width: 12px;
+    background-color: white;
+}
+
+.steps-modal .step-item {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+}
+
+.steps-modal .step-container {
+    flex-grow: 1;
+    margin: 0 3px;
+    position: relative;
+}
+
+.steps-modal .step-title {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+    margin: 0;
+    position: absolute;
+    text-align: center;
+    top: -25px;
+    white-space: nowrap;
+    width: 100%;
+    color: #5A5A5A;
+}
+
+.steps-modal .step-title.step-title-active {
+    color: white;
+}
+
+.steps-modal .step-line {
+    height: 3px;
+    margin: 0;
+    position: relative;
+    background-color: #5A5A5A;
+}
+
+.steps-modal .step-line-progress {
+    background: white;
+    height: 3px;
+    left: 0;
+    margin: 0;
+    position: absolute;
+}
+
+.steps-modal .step-dot {
+    color: #5A5A5A;
+}
+
+.steps-modal .step-dot.step-dot-done {
+    color: white;
+}
+
+.steps-modal .steps-modal-icon {
+    margin: auto;
+    text-align: center;
+    height: 82px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.done-button-wrapper {
+    margin-bottom: 26px;
+}

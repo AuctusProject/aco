@@ -1,0 +1,112 @@
+.metamask-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-content: center;
+  align-items: center;
+}
+
+.metamask-modal .logo-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 79px;
+  width: 79px;
+  border: 1px solid #454545;
+  border-radius: 50%;
+}
+
+.metamask-modal .logo-img {
+  height: 22px;
+}
+
+.metamask-modal .modal-header  {
+  padding: 0 !important;
+  margin: 0 !important; 
+  border: none !important;
+  justify-content: flex-end !important;
+}
+
+.metamask-modal .modal-header > button {
+  padding: 0px 5px !important;
+  margin: 0 !important; 
+  border: none !important;
+}
+
+.metamask-modal .modal-header > button:focus {
+  outline: none !important;
+}
+
+.metamask-modal .modal-body {
+  padding: 0px !important;
+}
+
+.metamask-modal-title {
+  font-size: 14px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: 0.35px;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.metamask-modal-subtitle {
+  font-size: 14px;
+  font-weight: 300;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: 0.35px;
+  text-align: center;
+  color: #a7a7a7;
+}
+
+.metamask-modal .modal-content {
+  background-color: #000000;
+}
+
+.metamask-modal .modal-header .close {
+  padding: 0 5px;
+  margin: 0 0 0 auto;
+  color: rgb(196,196,196);
+  text-shadow: none;
+  font-weight: 300;
+}
+
+.accept-terms {
+  margin-top: 24px;
+  font-size: 11px;
+  margin-bottom: 24px;
+}
+
+.connect-metamask-row {
+  width: 100%;
+  background-color: #242424b6;
+  margin-top: 20px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.connect-metamask-row.disabled {
+  cursor: default;
+}
+
+.connect-metamask-row:not(.disabled):hover {
+  background-color: #ffffff;
+  color: #272727;
+}
+
+a.connect-metamask-row {
+  color: white;
+}
+
+.connect-metamask-row img{
+  margin-right: 20px;  
+}
+
+.connect-metamask-row span {
+  flex: 1;
+  text-align: left;
+}

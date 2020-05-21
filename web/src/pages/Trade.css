@@ -1,0 +1,11 @@
+.trade-page {
+    height: calc(100vh - 62px);
+    display: flex;
+    flex-direction: row;
+}
+
+#trade-app,
+.trade-options-list {
+    width: calc(100% - 300px);
+    height: calc(100vh - 62px) !important;
+}

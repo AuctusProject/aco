@@ -1,0 +1,25 @@
+.balance-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.balance-column div {
+    font-size: 11px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.55px;
+    text-align: center; 
+}
+
+.balance-column div span {
+    font-weight: 500;
+    color: #ffffff;
+}
+
+.insufficient-funds-error .balance-column div,
+.insufficient-funds-error .balance-column div span {
+    color: #FF0000;
+}
