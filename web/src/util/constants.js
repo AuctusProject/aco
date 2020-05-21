@@ -6,6 +6,7 @@ const negative1 = new Web3Utils.BN(-1);
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
+export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
 export const symbolsMappedToBaseAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_BASE_ASSET)
 
@@ -112,7 +113,7 @@ export function fromDecimals(input, decimals, maxSignificantsDigits = 4, minSign
 
 export function toDecimals(input, decimals) {
     var inputStr = input.toString(10)
-    const base = Web3Utils.toBN(Math.pow(10, decimals))
+    const base = new Web3Utils.BN(10).pow(new Web3Utils.BN(decimals))
     const baseLength = decimals
 
     var negative = (inputStr.substring(0, 1) === '-'); // eslint-disable-line

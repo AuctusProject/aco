@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount } from '../../util/acoTokenMethods'
-import { formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision } from '../../util/constants'
+import { formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -202,6 +202,11 @@ class ExerciseAction extends Component {
     return getExerciseInfo(option).symbol
   }
 
+  getPayAddress = () => {
+    var option = this.props.position.option
+    return getExerciseInfo(option).address
+  }
+
   getPayDecimals = () => {
     var option = this.props.position.option
     return getExerciseInfo(option).decimals
@@ -267,7 +272,7 @@ class ExerciseAction extends Component {
                 </tbody>
               </table>
               {this.isInsufficientFundsToPay() && <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>}
-              {this.isInsufficientFundsToPay() && <div className="swap-link">Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</div>}
+              {this.isInsufficientFundsToPay() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl+this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
             </div>
         </div>}
         <div className={"confirm-card-actions " + ((this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
