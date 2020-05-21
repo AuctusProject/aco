@@ -110,3 +110,77 @@
     max-width: 100%;
     flex-grow: 1;
 }
+
+.trade-menu-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: calc(100% - 151px);
+}
+
+.trade-menu-content > div {
+    width: 100%;
+}
+
+.trade-menu-footer {
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+    width: 100%;
+    padding-bottom: 14px;
+}
+
+.trade-menu-footer-links {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    text-align: center;
+    padding: 0px 15px;
+}
+
+.trade-menu-footer a {
+    font-size: 10px;
+    color: #e6e6e6;
+    text-decoration: underline;
+    transition: opacity 200ms linear;
+    -webkit-transition: opacity 200ms linear;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+}
+
+.trade-menu-footer a:hover {
+    color: #e6e6e6;
+    opacity: 0.75;
+}
+
+.trade-menu-footer-media {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #676767;
+    letter-spacing: 0.5px;
+    line-height: 1;
+    margin-top: 12px;
+    padding: 0px 15px;
+}
+
+.trade-menu-footer-media > div:last-child {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    line-height: 1;
+}
+
+.trade-menu-footer-media svg {
+    font-size: 15px;
+    margin-left: 17px;
+}

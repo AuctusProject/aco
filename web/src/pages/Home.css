@@ -158,8 +158,8 @@
     letter-spacing: 0.5px;
     text-align: center;
     color: #c0c0c0;
-    margin-top: 33px;
-    margin-bottom: 66px;
+    margin-top: 38px;
+    margin-bottom: 80px;
     max-width: 620px;
 }
 
@@ -169,24 +169,7 @@
     justify-content: center;
     align-items: center;
     width: 100%;
-}
-
-.head > a {
-    font-size: 15px;
-    font-weight: bold;
-    letter-spacing: 0.4px;
-    text-align: center;
-    color: #ffffff;
-    text-decoration: underline;
-    transition: opacity 200ms linear;
-    -webkit-transition: opacity 200ms linear;
-    margin-top: 70px;
-    margin-bottom: 88px;
-}
-
-.head > a:hover {
-    color: #ffffff;
-    opacity: 0.75;
+    margin-bottom: 150px;
 }
 
 #why-aco {

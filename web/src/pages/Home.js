@@ -142,8 +142,7 @@ class Home extends Component {
               <span className="navbar-toggler-icon"></span>
             </button>
             <div className="collapse navbar-collapse" id="navbarResponsive">
-              <ul className="navbar-nav mx-auto my-2 my-lg-0">
-                <a target="_blank"  rel="noopener noreferrer" href="https://docs.aco.finance/#aco-tokens">Learn about Options</a>
+              <ul className="navbar-nav mx-auto my-2 my-sm-0">
                 <a target="_blank"  rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
                 <a target="_blank"  rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
                 <a target="_blank"  rel="noopener noreferrer" href="https://discord.gg/9JqeMxs">DISCORD</a>
@@ -173,7 +172,6 @@ class Home extends Component {
                 <span>(Mint &amp; Sell options)</span>
               </div>
             </div>
-            <a target="_blank"  rel="noopener noreferrer" href="https://docs.aco.finance/">READ THE DOCS</a>
           </div>
         </div>
       </section>
