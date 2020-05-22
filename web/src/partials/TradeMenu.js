@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { fromDecimals, OPTION_TYPES } from '../util/constants'
 import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faEnvelope } from '@fortawesome/free-solid-svg-icons'
+import { faSpinner, faEnvelope, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { faTwitter, faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons'
 import { NavLink } from 'react-router-dom'
 
@@ -27,6 +27,7 @@ class TradeMenu extends Component {
     return (
       <div className="trade-menu">
         <div className="trade-menu-pair-balance-info">
+          <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>      
           <div className="trade-menu-balance-title">BALANCE</div>
           <div className="pair-balance-item">
             <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>

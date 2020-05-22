@@ -99,7 +99,7 @@ class App extends Component {
                   render={ routeProps => <Terms {...routeProps} /> }
                 />
                 <Route 
-                  path={`/write/`}
+                  path={`/mint/`}
                   render={ routeProps => <Writer 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}

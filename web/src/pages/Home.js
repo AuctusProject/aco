@@ -121,7 +121,7 @@ class Home extends Component {
     if (type === "trade") {
       return "/trade"
     } else if (type === "earn") {
-      return "/write"
+      return "/mint"
     }
   }
 
