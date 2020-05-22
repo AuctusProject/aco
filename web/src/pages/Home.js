@@ -68,13 +68,13 @@ class Home extends Component {
   onCase = (item) => {
     let url = ""
     if (item === 1) {
-      url = "https://docs.aco.finance/faq#how-to-exercise-a-call-option"
+      url = "https://docs.aco.finance/use-cases/buy-eth-calls"      
     } else if (item === 2) {
-      url = "https://docs.aco.finance/faq#how-to-exercise-a-put-option"
+      url = "https://docs.aco.finance/use-cases/buying-eth-put-options"
     } else if (item === 3) {
-      url = "https://docs.aco.finance/faq#how-to-write-a-call-option"
+      url = "https://docs.aco.finance/use-cases/writing-ethereum-call-options"
     } else if (item === 4) {
-      url = "https://docs.aco.finance/faq#how-to-write-a-put-option"
+      url = "https://docs.aco.finance/use-cases/writing-eth-put-options"
     }
     if (url) {
       window.open(url, '_blank')
