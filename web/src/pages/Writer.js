@@ -9,6 +9,8 @@ import WriteStep3 from '../partials/Write/WriteStep3'
 import WrittenOptionsPositions from '../partials/Write/WrittenOptionsPositions'
 import Burn from '../partials/Write/Burn'
 import Loading from '../partials/Util/Loading'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 
 class Writer extends Component {
   constructor() {
@@ -47,9 +49,10 @@ class Writer extends Component {
   }
 
   render() {
-    return <div className="py-5">
+    return <div className="py-4">
       {this.canLoad() && <>
-        {this.state.currentStep !== 4 && <div className="page-title">WRITE OPTIONS</div>}
+        <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
+        {this.state.currentStep !== 4 && <div className="page-title">MINT OPTIONS</div>}
         {this.state.currentStep !== 4 && <StepIndicator totalSteps={3} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>}
         {!this.props.selectedPair && <Loading/>}
         {this.props.selectedPair &&  <>

@@ -32,7 +32,7 @@ class NavBar extends Component {
             <div className="collapse navbar-collapse" id="navbarResponsive">
               <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items">
                 <NavLink className="nav-item link-nav" to="/trade">Trade</NavLink>
-                <NavLink className="nav-item link-nav" to="/write">Write</NavLink>
+                <NavLink className="nav-item link-nav" to="/mint">Mint</NavLink>
                 <NavLink className="nav-item link-nav" to="/exercise">Exercise</NavLink>
               </ul>
               <ul className="navbar-nav">
@@ -62,7 +62,7 @@ class NavBar extends Component {
                 }
                 {!username && 
                   <li className="nav-item mx-lg-2">
-                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn("/write")}>SIGN IN</div>
+                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn("/mint")}>SIGN IN</div>
                   </li>
                 }
               </ul>

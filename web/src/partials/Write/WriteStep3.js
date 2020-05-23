@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
-import { formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther } from '../../util/constants'
+import { uniswapUrl, formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther } from '../../util/constants'
 import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount } from '../../util/acoTokenMethods'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
@@ -71,15 +71,19 @@ class WriteStep3 extends Component {
   }
 
   getOptionConfirmationText = () => {
-    var text = "After transfering or selling the minted options, at any time before {EXPIRY_TIME}, if you get assigned, you will be forced to {OPTION_TYPE} {OPTION_ASSET} for {OPTION_STRIKE_PRICE} per option."
+    var text = "After transferring or selling the minted options, at any time before {EXPIRY_TIME}, if you get assigned, you will be forced to {OPTION_TYPE} {OPTION_ASSET} for {OPTION_STRIKE_PRICE} per option."
     return text.replace("{EXPIRY_TIME}", formatDate(this.props.option.expiryTime))
-      .replace("{OPTION_TYPE}", (this.props.option.isCall ? "buy" : "sell"))
+      .replace("{OPTION_TYPE}", (!this.props.option.isCall ? "buy" : "sell"))
       .replace("{OPTION_ASSET}", this.props.option.underlyingInfo.symbol)
       .replace("{OPTION_STRIKE_PRICE}", getOptionFormattedPrice(this.props.option))
   }
 
   getCollaterizeAssetSymbol = () => {
     return getCollateralInfo(this.props.option).symbol
+  }
+
+  getCollaterizeAssetAddress = () => {
+    return getCollateralInfo(this.props.option).address
   }
 
   isCollateralEth = () => {
@@ -239,7 +243,7 @@ class WriteStep3 extends Component {
           </div>
           <div className="balance-row">
             <div className="balance-info">Balance: {this.state.collateralBalance ? (fromDecimals(this.state.collateralBalance.toString(), this.getCollateralDecimals(), 2) + " " + this.getCollaterizeAssetSymbol()) : ""}</div>
-            <div>{this.isInsufficientFunds() && !this.isCollateralEth() && <div className="swap-link">Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</div>}</div>
+            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</a>}</div>
           </div>
           <div className="card-separator"></div>
           <div>
