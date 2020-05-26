@@ -134,6 +134,7 @@ export interface StepBuySellMarket {
     amount: BigNumber;
     side: OrderSide;
     token: Token;
+    price?: BigNumber;
 }
 
 export type Step =

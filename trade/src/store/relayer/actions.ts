@@ -166,6 +166,7 @@ export const submitLimitOrder: ThunkCreator = (signedOrder: SignedOrder, amount:
 export const submitMarketOrder: ThunkCreator<Promise<{ txHash: string; amountInReturn: BigNumber }>> = (
     amount: BigNumber,
     side: OrderSide,
+    price?: BigNumber
 ) => {
     return async (dispatch, getState, { getContractWrappers, getWeb3Wrapper }) => {
         const state = getState();
@@ -180,9 +181,10 @@ export const submitMarketOrder: ThunkCreator<Promise<{ txHash: string; amountInR
                 orders,
             },
             side,
+            price
         );
 
-        if (canBeFilled) {
+        if (canBeFilled || !!price) {
             const baseToken = getBaseToken(state) as Token;
             const quoteToken = getQuoteToken(state) as Token;
             const contractWrappers = await getContractWrappers();

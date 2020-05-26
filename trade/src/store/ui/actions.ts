@@ -103,23 +103,29 @@ export const startBuySellLimitSteps: ThunkCreator = (
         const quoteToken = selectors.getQuoteToken(state) as Token;
         const tokenBalances = selectors.getTokenBalances(state) as TokenBalance[];
         const wethTokenBalance = selectors.getWethTokenBalance(state) as TokenBalance;
+        const ethBalance = selectors.getEthBalance(state);
 
         checkBalances(state, side, amount, price, baseToken, quoteToken);
+        let [, buySellFlow, totalFilled] = getMarketSteps(side, state, amount, price, baseToken,quoteToken, tokenBalances, wethTokenBalance, ethBalance, orderFeeData, dispatch)
 
-        const buySellLimitFlow: Step[] = createBuySellLimitSteps(
-            baseToken,
-            quoteToken,
-            tokenBalances,
-            wethTokenBalance,
-            amount,
-            price,
-            expirationTimeSeconds,
-            side,
-            orderFeeData,
-        );
+        if (totalFilled.isLessThan(amount)) {
+            const remainingAmount = amount.minus(totalFilled)
+            buySellFlow = buySellFlow.concat(createBuySellLimitSteps(
+                baseToken,
+                quoteToken,
+                tokenBalances,
+                wethTokenBalance,
+                remainingAmount,
+                price,
+                expirationTimeSeconds,
+                side,
+                orderFeeData,
+                totalFilled.isGreaterThan(0)
+            ))
+        }
 
-        dispatch(setStepsModalCurrentStep(buySellLimitFlow[0]));
-        dispatch(setStepsModalPendingSteps(buySellLimitFlow.slice(1)));
+        dispatch(setStepsModalCurrentStep(buySellFlow[0]));
+        dispatch(setStepsModalPendingSteps(buySellFlow.slice(1)));
         dispatch(setStepsModalDoneSteps([]));
     };
 };
@@ -128,6 +134,7 @@ export const startBuySellMarketSteps: ThunkCreator = (
     amount: BigNumber,
     side: OrderSide,
     orderFeeData: OrderFeeData,
+    price?: BigNumber
 ) => {
     return async (dispatch, getState) => {
         const state = getState();        
@@ -137,39 +144,7 @@ export const startBuySellMarketSteps: ThunkCreator = (
         const wethTokenBalance = selectors.getWethTokenBalance(state) as TokenBalance;
         const ethBalance = selectors.getEthBalance(state);
 
-        const orders = side === OrderSide.Buy ? selectors.getOpenSellOrders(state) : selectors.getOpenBuyOrders(state);
-        // tslint:disable-next-line:no-unused-variable
-        const [, filledAmounts, canBeFilled] = buildMarketOrders(
-            {
-                amount,
-                orders,
-            },
-            side,
-        );
-        if (!canBeFilled) {
-            throw new InsufficientOrdersAmountException();
-        }
-
-        const totalFilledAmount = filledAmounts.reduce((total: BigNumber, currentValue: BigNumber) => {
-            return total.plus(currentValue);
-        }, ZERO);
-
-        const price = totalFilledAmount.div(amount);
-
-        checkBalances(state, side, amount, price, baseToken, quoteToken);
-
-        const buySellMarketFlow: Step[] = createBuySellMarketSteps(
-            baseToken,
-            quoteToken,
-            tokenBalances,
-            wethTokenBalance,
-            ethBalance,
-            amount,
-            side,
-            price,
-            orderFeeData,
-        );
-
+        const [, buySellMarketFlow] = getMarketSteps(side, state, amount, price, baseToken, quoteToken, tokenBalances, wethTokenBalance, ethBalance, orderFeeData, dispatch);
         dispatch(setStepsModalCurrentStep(buySellMarketFlow[0]));
         dispatch(setStepsModalPendingSteps(buySellMarketFlow.slice(1)));
         dispatch(setStepsModalDoneSteps([]));
@@ -283,4 +258,26 @@ export const addMarketBuySellNotification: ThunkCreator = (
         );
     };
 };
+
+function getMarketSteps(side: OrderSide, state: StoreState, amount: BigNumber, price: BigNumber | undefined, baseToken: Token, quoteToken: Token, tokenBalances: TokenBalance[], wethTokenBalance: TokenBalance, ethBalance: BigNumber, orderFeeData: OrderFeeData, dispatch: any): [BigNumber, Step[], BigNumber] {
+    const orders = side === OrderSide.Buy ? selectors.getOpenSellOrders(state) : selectors.getOpenBuyOrders(state);
+    // tslint:disable-next-line:no-unused-variable
+    const [, filledAmounts, canBeFilled, filledQuoteAmount] = buildMarketOrders({
+        amount,
+        orders,
+    }, side, price);
+    if (!canBeFilled && !price) {
+        throw new InsufficientOrdersAmountException();
+    }
+    const totalFilledAmount = filledAmounts.reduce((total: BigNumber, currentValue: BigNumber) => {
+        return total.plus(currentValue);
+    }, ZERO);
+    const avgPrice = totalFilledAmount.div(amount);
+    checkBalances(state, side, amount, avgPrice, baseToken, quoteToken);
+    let buySellMarketFlow: Step[] = []
+    if (filledQuoteAmount.isGreaterThan(ZERO)) {   
+        buySellMarketFlow = createBuySellMarketSteps(baseToken, quoteToken, tokenBalances, wethTokenBalance, ethBalance, filledQuoteAmount, side, avgPrice, orderFeeData, price);
+    }
+    return [totalFilledAmount, buySellMarketFlow, filledQuoteAmount]
+}
 

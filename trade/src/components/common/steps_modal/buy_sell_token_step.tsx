@@ -2,16 +2,17 @@ import { BigNumber } from '@0x/utils';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { ZERO } from '../../../common/constants';
+import { ZERO, STEP_MODAL_DONE_STATUS_VISIBILITY_TIME } from '../../../common/constants';
 import { getWeb3Wrapper } from '../../../services/web3_wrapper';
 import { getOrderbookAndUserOrders, submitMarketOrder } from '../../../store/actions';
 import { getEstimatedTxTimeMs, getQuoteToken, getStepsModalCurrentStep } from '../../../store/selectors';
-import { addMarketBuySellNotification } from '../../../store/ui/actions';
+import { addMarketBuySellNotification, stepsModalAdvanceStep } from '../../../store/ui/actions';
 import { tokenAmountInUnits, tokenSymbolToDisplayString } from '../../../util/tokens';
 import { OrderSide, StepBuySellMarket, StoreState, Token } from '../../../util/types';
 
 import { BaseStepModal } from './base_step_modal';
 import { StepItem } from './steps_progress';
+import { sleep } from '../../../util/sleep';
 
 interface OwnProps {
     buildStepsProgress: (currentStepItem: StepItem) => StepItem[];
@@ -23,9 +24,10 @@ interface StateProps {
 }
 
 interface DispatchProps {
-    onSubmitMarketOrder: (amount: BigNumber, side: OrderSide) => Promise<{ txHash: string; amountInReturn: BigNumber }>;
+    onSubmitMarketOrder: (amount: BigNumber, side: OrderSide, price?: BigNumber) => Promise<{ txHash: string; amountInReturn: BigNumber }>;
     refreshOrders: () => any;
     notifyBuySellMarket: (id: string, amount: BigNumber, token: Token, side: OrderSide, tx: Promise<any>) => any;
+    advanceStep: () => any;
 }
 
 type Props = OwnProps & StateProps & DispatchProps;
@@ -79,11 +81,11 @@ class BuySellTokenStep extends React.Component<Props, State> {
     };
 
     private readonly _confirmOnMetamaskBuyOrSell = async ({ onLoading, onDone, onError }: any) => {
-        const { step, onSubmitMarketOrder } = this.props;
-        const { amount, side, token } = step;
+        const { step, onSubmitMarketOrder, advanceStep } = this.props;
+        const { amount, side, token, price } = step;
         try {
             const web3Wrapper = await getWeb3Wrapper();
-            const { txHash, amountInReturn } = await onSubmitMarketOrder(amount, side);
+            const { txHash, amountInReturn } = await onSubmitMarketOrder(amount, side, price);
             this.setState({ amountInReturn });
             onLoading();
 
@@ -92,6 +94,8 @@ class BuySellTokenStep extends React.Component<Props, State> {
             onDone();
             this.props.notifyBuySellMarket(txHash, amount, token, side, Promise.resolve());
             this.props.refreshOrders();
+            await sleep(STEP_MODAL_DONE_STATUS_VISIBILITY_TIME);
+            advanceStep();
         } catch (err) {
             onError(err);
         }
@@ -121,10 +125,11 @@ const BuySellTokenStepContainer = connect(
     mapStateToProps,
     (dispatch: any) => {
         return {
-            onSubmitMarketOrder: (amount: BigNumber, side: OrderSide) => dispatch(submitMarketOrder(amount, side)),
+            onSubmitMarketOrder: (amount: BigNumber, side: OrderSide, price?: BigNumber) => dispatch(submitMarketOrder(amount, side, price)),
             notifyBuySellMarket: (id: string, amount: BigNumber, token: Token, side: OrderSide, tx: Promise<any>) =>
                 dispatch(addMarketBuySellNotification(id, amount, token, side, tx)),
             refreshOrders: () => dispatch(getOrderbookAndUserOrders()),
+            advanceStep: () => dispatch(stepsModalAdvanceStep()),
         };
     },
 )(BuySellTokenStep);

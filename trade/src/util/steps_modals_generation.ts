@@ -23,21 +23,23 @@ export const createBuySellLimitSteps = (
     expirationTimeSeconds: BigNumber,
     side: OrderSide,
     orderFeeData: OrderFeeData,
+    hasMarketSteps?: boolean
 ): Step[] => {
     const buySellLimitFlow: Step[] = [];
     let unlockTokenStep;
 
     // unlock base and quote tokens if necessary
-
-    unlockTokenStep =
-        side === OrderSide.Buy
-            ? // If it's a buy -> the quote token has to be unlocked
-              getUnlockTokenStepIfNeeded(quoteToken, tokenBalances, wethTokenBalance)
-            : // If it's a sell -> the base token has to be unlocked
-              getUnlockTokenStepIfNeeded(baseToken, tokenBalances, wethTokenBalance);
-
-    if (unlockTokenStep) {
-        buySellLimitFlow.push(unlockTokenStep);
+    if (!hasMarketSteps) {
+        unlockTokenStep =
+            side === OrderSide.Buy
+                ? // If it's a buy -> the quote token has to be unlocked
+                getUnlockTokenStepIfNeeded(quoteToken, tokenBalances, wethTokenBalance)
+                : // If it's a sell -> the base token has to be unlocked
+                getUnlockTokenStepIfNeeded(baseToken, tokenBalances, wethTokenBalance);
+    
+        if (unlockTokenStep) {
+            buySellLimitFlow.push(unlockTokenStep);
+        }
     }
 
     if (orderFeeData.makerFee.isGreaterThan(0)) {
@@ -78,8 +80,9 @@ export const createBuySellMarketSteps = (
     ethBalance: BigNumber,
     amount: BigNumber,
     side: OrderSide,
-    price: BigNumber,
+    avgPrice: BigNumber,
     orderFeeData: OrderFeeData,
+    price?: BigNumber,
 ): Step[] => {
     const buySellMarketFlow: Step[] = [];
     const isBuy = side === OrderSide.Buy;
@@ -96,7 +99,7 @@ export const createBuySellMarketSteps = (
         isBuy &&
         unlockTokenStep &&
         (!isWeth(tokenToUnlock.symbol) ||
-            (isWeth(tokenToUnlock.symbol) && ethBalance.isLessThan(amount.multipliedBy(price))));
+            (isWeth(tokenToUnlock.symbol) && ethBalance.isLessThan(amount.multipliedBy(avgPrice))));
     if (isSell || isBuyWithWethConditions) {
         buySellMarketFlow.push(unlockTokenStep as Step);
     }
@@ -114,7 +117,7 @@ export const createBuySellMarketSteps = (
 
     // wrap the necessary ether if necessary
     if (isWeth(quoteToken.symbol)) {
-        const wrapEthStep = getWrapEthStepIfNeeded(amount, price, side, wethTokenBalance, ethBalance);
+        const wrapEthStep = getWrapEthStepIfNeeded(amount, avgPrice, side, wethTokenBalance, ethBalance);
         if (wrapEthStep) {
             buySellMarketFlow.push(wrapEthStep);
         }
@@ -125,6 +128,7 @@ export const createBuySellMarketSteps = (
         amount,
         side,
         token: baseToken,
+        price: price
     });
     return buySellMarketFlow;
 };

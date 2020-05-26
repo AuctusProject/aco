@@ -72,7 +72,8 @@ export const getOrderWithTakerAndFeeConfigFromRelayer = async (orderConfigReques
 export const buildMarketOrders = (
     params: BuildMarketOrderParams,
     side: OrderSide,
-): [SignedOrder[], BigNumber[], boolean] => {
+    price?: BigNumber
+): [SignedOrder[], BigNumber[], boolean, BigNumber] => {
     const { amount, orders } = params;
 
     // sort orders from best to worse
@@ -89,6 +90,11 @@ export const buildMarketOrders = (
     let filledAmount = ZERO;
     for (let i = 0; i < sortedOrders.length && filledAmount.isLessThan(amount); i++) {
         const order = sortedOrders[i];
+        if (!!price && (
+            (order.price.isGreaterThan(price) && side === OrderSide.Buy) ||
+            (order.price.isLessThan(price) && side === OrderSide.Sell))) {
+            break;
+        }
         ordersToFill.push(order.rawOrder);
 
         let available = order.size;
@@ -115,7 +121,7 @@ export const buildMarketOrders = (
 
     const roundedAmounts = amounts.map(a => a.integerValue(BigNumber.ROUND_CEIL));
 
-    return [ordersToFill, roundedAmounts, canBeFilled];
+    return [ordersToFill, roundedAmounts, canBeFilled, filledAmount];
 };
 
 export const sumTakerAssetFillableOrders = (
