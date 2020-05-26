@@ -347,36 +347,36 @@ describe("ACOToken", function() {
       
       await expect(
         buidlerT1T210000P.connect(addr1).mint(value1)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC2");
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(0);
 
       await expect(
         buidlerT1T210000P.connect(addr1).mintTo(await addr2.getAddress(), value1)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC2");
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(0);
 
       await token1.connect(addr1).approve(buidlerT1T210000P.address, 50);
 
       await expect(
         buidlerT1T210000P.connect(addr1).mint(50)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC2");
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(0);  
 
       await expect(
         buidlerT1T210000P.connect(addr1).mintTo(await addr2.getAddress(), 50)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC2");
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(0);  
 
       await token2.connect(addr1).approve(buidlerT1T210000P.address, value1);
 
       await expect(
         buidlerT1T210000P.connect(addr1).mint(value1.add(1))
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC2");
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(0);
 
       await expect(
         buidlerT1T210000P.connect(addr1).mintTo(await addr2.getAddress(), value1.add(1))
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC2");
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(0);
 
       await expect(
@@ -1374,22 +1374,22 @@ describe("ACOToken", function() {
 
       await expect(
         buidlerEthT1003C.connect(owner).exercise(val3)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       let e1 = val3.mul(price1).div(precision2);
       await token1.connect(owner).approve(buidlerEthT1003C.address, e1.sub(one));
       await expect(
         buidlerEthT1003C.connect(owner).exercise(val3)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await expect(
         buidlerT1T210000P.connect(owner).exercise(amount3)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.sub(one));
       await expect(
         buidlerT1T210000P.connect(owner).exercise(amount3)
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await token1.connect(owner).approve(buidlerEthT1003C.address, e1.add(e1));
       await expect(
@@ -1803,7 +1803,7 @@ describe("ACOToken", function() {
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.sub(1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr3.getAddress(), v1.add(v1))
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await expect(
         buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1).add(1), {value: a1.add(a1).add(1)})
@@ -2142,7 +2142,7 @@ describe("ACOToken", function() {
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.sub(1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccounts(v1.add(v1), [await addr1.getAddress(), await addr2.getAddress()])
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await expect(
         buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1).add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(1)})
@@ -2464,7 +2464,7 @@ describe("ACOToken", function() {
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.sub(1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), v1.add(v1), [await addr1.getAddress(), await addr2.getAddress()])
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await buidlerEthT1003P.connect(addr3).approve(await owner.getAddress(), a1.add(a1).add(1));
       await buidlerT1T210000C.connect(addr3).approve(await owner.getAddress(), v1.add(v1).add(1));
