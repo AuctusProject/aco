@@ -35,6 +35,12 @@ export function allowDeposit(from, value, token, to, nonce) {
     }
 }
 
+export function allowance(from, token, to) {
+    const _web3 = getWeb3()
+    const tokenContract = new _web3.eth.Contract(erc20ABI, token)
+    return tokenContract.methods.allowance(from, to).call()
+}
+
 export function getTokenBalance(tknContractAddress, accountAddrs) {
     return new Promise(function (resolve, reject) {
         const _web3 = getWeb3()

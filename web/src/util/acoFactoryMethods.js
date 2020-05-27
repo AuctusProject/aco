@@ -148,6 +148,9 @@ export function getOptionsPositions(pair, userAccount) {
                         resolve(positions)
                     }
                 })
+            }            
+            if (options.length === 0) {
+                resolve(positions)
             }
         })
     })
@@ -168,6 +171,9 @@ export function listPositionsForExercise(pair, userAccount) {
                         resolve(sortedPositions)
                     }
                 })
+            }
+            if (options.length === 0) {
+                resolve(positions)
             }
         })
     })

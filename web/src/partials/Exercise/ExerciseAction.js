@@ -8,7 +8,7 @@ import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
 import DecimalInput from '../Util/DecimalInput'
-import { allowDeposit } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
@@ -37,79 +37,94 @@ class ExerciseAction extends Component {
     if (this.canConfirm()) {
       getNextNonce(this.context.web3.selectedAccount).then(nonce => {
         var stepNumber = 0
-        if (!this.isPayEth()) {
-          this.setStepsModalInfo(++stepNumber)
-          allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken, nonce)
-          .then(result => {
-            if (result) {
-              this.setStepsModalInfo(++stepNumber)
-              checkTransactionIsMined(result).then(result => {
-                if(result) {
-                  this.sendExerciseTransaction(stepNumber, ++nonce)
-                }
-                else {
-                  this.setStepsModalInfo(-1)
-                }
-              })
-              .catch(() => {
-                this.setStepsModalInfo(-1)
-              })
-            }
-            else {
-              this.setStepsModalInfo(-1)
-            }
-          })
-          .catch(() => {
-            this.setStepsModalInfo(-1)
-          })
-        }
-        else {
-          stepNumber = 2
-          this.sendExerciseTransaction(stepNumber, nonce)
-        }
+        this.needApprove().then(needApproval => {
+          if (needApproval) {
+            this.setStepsModalInfo(++stepNumber, needApproval)
+            allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken, nonce)
+            .then(result => {
+              if (result) {
+                this.setStepsModalInfo(++stepNumber, needApproval)
+                checkTransactionIsMined(result).then(result => {
+                  if(result) {
+                    this.sendExerciseTransaction(stepNumber, ++nonce, needApproval)
+                  }
+                  else {
+                    this.setStepsModalInfo(-1, needApproval)
+                  }
+                })
+                .catch(() => {
+                  this.setStepsModalInfo(-1, needApproval)
+                })
+              }
+              else {
+                this.setStepsModalInfo(-1, needApproval)
+              }
+            })
+            .catch(() => {
+              this.setStepsModalInfo(-1, needApproval)
+            })
+          }
+          else {
+            stepNumber = 2
+            this.sendExerciseTransaction(stepNumber, nonce, needApproval)
+          }
+        })
       })
     }
   }
 
-  sendExerciseTransaction = (stepNumber, nonce) => {
-    this.setStepsModalInfo(++stepNumber)
-    exercise(this.context.web3.selectedAccount, this.props.position.option, toDecimals(this.state.optionsAmount, this.props.position.option.underlyingInfo.decimals, nonce).toString())
-    .then(result => {
-      if (result) {
-        this.setStepsModalInfo(++stepNumber)
-        checkTransactionIsMined(result)
-        .then(result => {
-          if(result) {
-            this.setStepsModalInfo(++stepNumber)
-          }
-          else {
-            this.setStepsModalInfo(-1)
-          }
-        })
-        .catch(() => {
-          this.setStepsModalInfo(-1)
+  needApprove = () => {
+    return new Promise((resolve) => {
+      if (!this.isPayEth()) {
+        allowance(this.context.web3.selectedAccount, getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken).then(result => {
+          var resultValue = new Web3Utils.BN(result)
+          resolve(resultValue.lt(toDecimals(this.state.payValue, this.getPayDecimals())))
         })
       }
       else {
-        this.setStepsModalInfo(-1)
+        resolve(false)
+      }
+    })    
+  }
+
+  sendExerciseTransaction = (stepNumber, nonce, needApproval) => {
+    this.setStepsModalInfo(++stepNumber, needApproval)
+    exercise(this.context.web3.selectedAccount, this.props.position.option, toDecimals(this.state.optionsAmount, this.props.position.option.underlyingInfo.decimals, nonce).toString())
+    .then(result => {
+      if (result) {
+        this.setStepsModalInfo(++stepNumber, needApproval)
+        checkTransactionIsMined(result)
+        .then(result => {
+          if(result) {
+            this.setStepsModalInfo(++stepNumber, needApproval)
+          }
+          else {
+            this.setStepsModalInfo(-1, needApproval)
+          }
+        })
+        .catch(() => {
+          this.setStepsModalInfo(-1, needApproval)
+        })
+      }
+      else {
+        this.setStepsModalInfo(-1, needApproval)
       }
     })
     .catch(() => {
-      this.setStepsModalInfo(-1)
+      this.setStepsModalInfo(-1, needApproval)
     })
   }
 
-  setStepsModalInfo = (stepNumber) => {
-    var isPayEth = this.isPayEth()
-    var title = (!isPayEth && stepNumber <= 2)  ? "Unlock token" : "Exercise"
+  setStepsModalInfo = (stepNumber, needApproval) => {
+    var title = (needApproval && stepNumber <= 2)  ? "Unlock token" : "Exercise"
     var subtitle = ""
     var img = null
     var option = this.props.position.option
-    if (!isPayEth && stepNumber === 1) {
+    if (needApproval && stepNumber === 1) {
       subtitle =  "Confirm on Metamask to unlock "+this.getPaySymbol()+" for minting on ACO" 
       img = <MetamaskLargeIcon/>
     }
-    else if (!isPayEth && stepNumber === 2) {
+    else if (needApproval && stepNumber === 2) {
       subtitle =  "Unlocking "+this.getPaySymbol()+"..."
       img = <SpinnerLargeIcon/>
     }
@@ -131,7 +146,7 @@ class ExerciseAction extends Component {
     }
 
     var steps = []
-    if (!isPayEth) {
+    if (needApproval) {
       steps.push({title: "Unlock", progress: stepNumber > 2 ? 100 : 0, active: true})
     }
     steps.push({title: "Exercise", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false})

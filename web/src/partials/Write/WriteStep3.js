@@ -8,7 +8,7 @@ import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, g
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
-import { allowDeposit } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
@@ -94,78 +94,92 @@ class WriteStep3 extends Component {
     if (this.canConfirm()) {
       getNextNonce(this.context.web3.selectedAccount).then(nonce => {
         var stepNumber = 0
-        if (!this.isCollateralEth()) {
-          this.setStepsModalInfo(++stepNumber)
+        this.needApprove().then(needApproval => {
+        if (needApproval) {
+          this.setStepsModalInfo(++stepNumber, needApproval)
           allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.collaterizeValue, this.getCollateralDecimals()), getCollateralInfo(this.props.option).address, this.props.option.acoToken, nonce)
           .then(result => {
             if (result) {
-              this.setStepsModalInfo(++stepNumber)
+              this.setStepsModalInfo(++stepNumber, needApproval)
               checkTransactionIsMined(result).then(result => {
                 if(result) {
-                  this.sendMintTransaction(stepNumber, ++nonce)
+                  this.sendMintTransaction(stepNumber, ++nonce, needApproval)
                 }
                 else {
-                  this.setStepsModalInfo(-1)
+                  this.setStepsModalInfo(-1, needApproval)
                 }
               })
               .catch(() => {
-                this.setStepsModalInfo(-1)
+                this.setStepsModalInfo(-1, needApproval)
               })
             }
             else {
-              this.setStepsModalInfo(-1)
+              this.setStepsModalInfo(-1, needApproval)
             }
           })
           .catch(() => {
-            this.setStepsModalInfo(-1)
+            this.setStepsModalInfo(-1, needApproval)
           })
         }
         else {
           stepNumber = 2
-          this.sendMintTransaction(stepNumber, nonce)
-        }
+          this.sendMintTransaction(stepNumber, nonce, needApproval)
+        }})
       })
     }
   }
 
-  sendMintTransaction = (stepNumber, nonce) => {
-    this.setStepsModalInfo(++stepNumber)
-    mint(this.context.web3.selectedAccount, this.props.option, toDecimals(this.state.collaterizeValue, this.getCollateralDecimals()).toString(), nonce)
-    .then(result => {
-      if (result) {
-        this.setStepsModalInfo(++stepNumber)
-        checkTransactionIsMined(result)
-        .then(result => {
-          if(result) {
-            this.setStepsModalInfo(++stepNumber)
-          }
-          else {
-            this.setStepsModalInfo(-1)
-          }
-        })
-        .catch(() => {
-          this.setStepsModalInfo(-1)
+  needApprove = () => {
+    return new Promise((resolve) => {
+      if (!this.isCollateralEth()) {
+        allowance(this.context.web3.selectedAccount, getCollateralInfo(this.props.option).address, this.props.option.acoToken).then(result => {
+          var resultValue = new Web3Utils.BN(result)
+          resolve(resultValue.lt(toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())))
         })
       }
       else {
-        this.setStepsModalInfo(-1)
+        resolve(false)
+      }
+    })    
+  }
+
+  sendMintTransaction = (stepNumber, nonce, needApproval) => {
+    this.setStepsModalInfo(++stepNumber, needApproval)
+    mint(this.context.web3.selectedAccount, this.props.option, toDecimals(this.state.collaterizeValue, this.getCollateralDecimals()).toString(), nonce)
+    .then(result => {
+      if (result) {
+        this.setStepsModalInfo(++stepNumber, needApproval)
+        checkTransactionIsMined(result)
+        .then(result => {
+          if(result) {
+            this.setStepsModalInfo(++stepNumber, needApproval)
+          }
+          else {
+            this.setStepsModalInfo(-1, needApproval)
+          }
+        })
+        .catch(() => {
+          this.setStepsModalInfo(-1, needApproval)
+        })
+      }
+      else {
+        this.setStepsModalInfo(-1, needApproval)
       }
     })
     .catch(() => {
-      this.setStepsModalInfo(-1)
+      this.setStepsModalInfo(-1, needApproval)
     })
   }
 
-  setStepsModalInfo = (stepNumber) => {
-    var isCollateralEth = this.isCollateralEth()
-    var title = (!isCollateralEth && stepNumber <= 2)  ? "Unlock token" : "Mint"
+  setStepsModalInfo = (stepNumber, needApprove) => {
+    var title = (needApprove && stepNumber <= 2)  ? "Unlock token" : "Mint"
     var subtitle = ""
     var img = null
-    if (!isCollateralEth && stepNumber === 1) {
+    if (needApprove && stepNumber === 1) {
       subtitle =  "Confirm on Metamask to unlock "+this.getCollaterizeAssetSymbol()+" for minting on ACO" 
       img = <MetamaskLargeIcon/>
     }
-    else if (!isCollateralEth && stepNumber === 2) {
+    else if (needApprove && stepNumber === 2) {
       subtitle =  "Unlocking "+this.getCollaterizeAssetSymbol()+"..."
       img = <SpinnerLargeIcon/>
     }
@@ -187,7 +201,7 @@ class WriteStep3 extends Component {
     }
 
     var steps = []
-    if (!isCollateralEth) {
+    if (needApprove) {
       steps.push({title: "Unlock", progress: stepNumber > 2 ? 100 : 0, active: true})
     }
     steps.push({title: "Mint", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false})
