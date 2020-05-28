@@ -37,11 +37,12 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Emitted when collateral is withdrawn from the contract.
-     * @param account Address of the collateral destination.
+     * @param account Address of the account.
+     * @param recipient Address of the collateral destination.
      * @param amount Amount of collateral withdrawn.
      * @param fee The fee amount charged on the withdrawal.
      */
-    event CollateralWithdraw(address indexed account, uint256 amount, uint256 fee);
+    event CollateralWithdraw(address indexed account, address indexed recipient, uint256 amount, uint256 fee);
     
     /**
      * @dev Emitted when the collateral is used on an assignment.
@@ -430,7 +431,7 @@ contract ACOToken is ERC20 {
     /**
      * @dev Function to burn tokens from a specific account and send the collateral to its address.
      * The token allowance must be respected.
-     * The collateral is returned to the account address, not to the transaction sender.
+     * The collateral is sent to the transaction sender.
      * NOTE: The function only works when the token is NOT expired yet. 
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens to be burned.
@@ -450,11 +451,12 @@ contract ACOToken is ERC20 {
     /**
      * @dev Function to get the collateral from a specific account sent back to its address .
      * The token allowance must be respected.
-     * The collateral is returned to the account address, not to the transaction sender.
+     * The collateral is sent to the transaction sender.
      * NOTE: The function only works when the token IS expired. 
      * @param account Address of the account.
      */
     function redeemFrom(address account) external {
+        require(tokenData[account].amount <= allowance(account, msg.sender), "ACOToken::redeemFrom: No allowance");
         _redeem(account);
     }
     
@@ -472,7 +474,7 @@ contract ACOToken is ERC20 {
      * @dev Function to exercise the tokens from an account, paying to get the equivalent collateral.
      * The token allowance must be respected.
      * The paid amount is sent to the collateral owners that were assigned.
-     * The collateral is transferred to the account address, not to the transaction sender.
+     * The collateral is transferred to the transaction sender.
      * NOTE: The function only works when the token is NOT expired. 
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
@@ -496,7 +498,7 @@ contract ACOToken is ERC20 {
      * @dev Function to exercise the tokens from a specific account, paying to get the equivalent collateral sent to its address.
      * The token allowance must be respected.
      * The paid amount is sent to the collateral owners (on accounts list) that were assigned.
-     * The collateral is transferred to the account address, not to the transaction sender.
+     * The collateral is transferred to the transaction sender.
      * NOTE: The function only works when the token is NOT expired. 
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
@@ -603,29 +605,29 @@ contract ACOToken is ERC20 {
     /**
      * @dev Internal function to transfer collateral. 
      * When there is a fee, the calculated fee is also transferred to the destination fee address.
-     * @param recipient Destination address for the collateral.
+     * The collateral destination is always the transaction sender address.
+     * @param account Address of the account.
      * @param collateralAmount Amount of collateral to be redeemed.
      * @param fee Amount of fee charged.
      */
-    function _transferCollateral(address recipient, uint256 collateralAmount, uint256 fee) internal {
-        require(recipient != address(0), "ACOToken::_transferCollateral: Invalid recipient");
-
+    function _transferCollateral(address account, uint256 collateralAmount, uint256 fee) internal {
+        
         totalCollateral = totalCollateral.sub(collateralAmount.add(fee));
         
         address _collateral = collateral();
         if (_isEther(_collateral)) {
-            payable(recipient).transfer(collateralAmount);
+            payable(msg.sender).transfer(collateralAmount);
             if (fee > 0) {
                 feeDestination.transfer(fee);   
             }
         } else {
-            _transferERC20(_collateral, recipient, collateralAmount);
+            _transferERC20(_collateral, msg.sender, collateralAmount);
             if (fee > 0) {
                 _transferERC20(_collateral, feeDestination, fee);
             }
         }
         
-        emit CollateralWithdraw(recipient, collateralAmount, fee);
+        emit CollateralWithdraw(account, msg.sender, collateralAmount, fee);
     }
     
     /**

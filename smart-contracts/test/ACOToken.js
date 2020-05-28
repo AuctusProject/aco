@@ -791,48 +791,50 @@ describe("ACOToken", function() {
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1.add(val2)});    
 
-      await buidlerEthT1003C.connect(addr1).approve(await owner.getAddress(), val1.add(val2)); 
-      await buidlerEthT1003C.connect(owner).burnFrom(await addr1.getAddress(), val1); 
+      await buidlerEthT1003C.connect(addr1).approve(await addr3.getAddress(), val1.add(val2)); 
+      await buidlerEthT1003C.connect(addr3).burnFrom(await addr1.getAddress(), val1); 
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val3.add(val2));  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val2);
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val3.add(val2));
       expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(val2);
       expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(val3);
-      expect(await buidlerEthT1003C.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(val2);
+      expect(await buidlerEthT1003C.allowance(await addr1.getAddress(), await addr3.getAddress())).to.equal(val2);
       
       await buidlerEthT1003C.connect(addr2).mintPayable({value: val1.add(val3)});   
       await buidlerEthT1003C.connect(addr2).transfer(await addr1.getAddress(), val1.add(val3)); 
 
-      await buidlerEthT1003C.connect(owner).burnFrom(await addr1.getAddress(), val2); 
+      await buidlerEthT1003C.connect(addr3).burnFrom(await addr1.getAddress(), val2); 
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val3.add(val3).add(val1));  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1.add(val3));
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val3);
       expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(val3);
       expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.allowance(await addr1.getAddress(), await addr3.getAddress())).to.equal(0);
       
       await token2.connect(addr1).approve(buidlerT1T210000P.address, value1.add(value2));
       await buidlerT1T210000P.connect(addr1).mint(value1.add(value2)); 
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value2).sub(value1));   
       
-      await buidlerT1T210000P.connect(addr1).approve(await owner.getAddress(), amount1.add(amount2)); 
-      await buidlerT1T210000P.connect(owner).burnFrom(await addr1.getAddress(), amount1.add(amount2.div(2))); 
+      await buidlerT1T210000P.connect(addr1).approve(await addr3.getAddress(), amount1.add(amount2)); 
+      await buidlerT1T210000P.connect(addr3).burnFrom(await addr1.getAddress(), amount1.add(amount2.div(2))); 
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(value2);  
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount2);
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value2.div(2));
       expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(value2.div(2));
       expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value2.div(2)));
-      expect(await buidlerT1T210000P.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(amount2.div(2));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value1.add(value2)));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(value1.add(value2.div(2)));
+      expect(await buidlerT1T210000P.allowance(await addr1.getAddress(), await addr3.getAddress())).to.equal(amount2.div(2));
 
       await buidlerT1T210000P.connect(addr1).transfer(await addr2.getAddress(), amount2.div(2));
-      await buidlerT1T210000P.connect(owner).burnFrom(await addr1.getAddress(), amount2.div(2)); 
+      await buidlerT1T210000P.connect(addr3).burnFrom(await addr1.getAddress(), amount2.div(2)); 
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(value2.div(2));  
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value1.add(value2)));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(value1.add(value2));
       expect(await buidlerT1T210000P.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(0);
 
       await buidlerT1T210000P.connect(addr2).burn(amount2.div(2)); 
@@ -847,7 +849,7 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value2);
       expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(value2);
       expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value2));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value1.add(value2)).sub(value2));
       expect(await buidlerT1T210000P.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(0);
     });
     it("Check fail to burn", async function () {
@@ -1528,9 +1530,11 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)));
 
       await buidlerEthT1003P.connect(addr3).approve(await owner.getAddress(), a1.add(a1));
       await buidlerT1T210000C.connect(addr3).approve(await owner.getAddress(), v1.add(v1));
@@ -1561,10 +1565,12 @@ describe("ACOToken", function() {
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).add(v1).sub(fee1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)));
       expect(await addr1.getBalance()).to.equal(b1.add(a1));
       expect(await addr2.getBalance()).to.equal(b2.add(a1));
       expect(await addr3.getBalance()).to.equal(b3);
@@ -1588,10 +1594,12 @@ describe("ACOToken", function() {
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
       expect(await addr1.getBalance()).to.equal(b1.add(a1));
       expect(await addr2.getBalance()).to.equal(b2.add(a1));
       expect(await addr3.getBalance()).to.equal(b3);
@@ -1626,12 +1634,14 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003P.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerEthT1003P.assignableCollateral(await addr3.getAddress())).to.equal(0);
       
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
       expect(await addr1.getBalance()).to.equal(b11);
       expect(await addr2.getBalance()).to.equal(b21.add(a1));
       expect(await addr3.getBalance()).to.equal(b31.add(a1));
@@ -1653,12 +1663,14 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000C.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerT1T210000C.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1).add(v2).sub(fee1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1).add(fee1));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1));
       expect(await addr1.getBalance()).to.equal(b11);
       expect(await addr2.getBalance()).to.equal(b21.add(a1));
       expect(await addr3.getBalance()).to.equal(b31.add(a1));
@@ -1692,12 +1704,14 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003P.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerEthT1003P.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1).add(v2).sub(fee1).add(v2).sub(fee1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1).add(fee1).add(fee1));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v2).sub(fee1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1));
       expect(await addr1.getBalance()).to.equal(b12);
       expect(await addr2.getBalance()).to.equal(b22);
       expect(await addr3.getBalance()).to.equal(b32.add(a2.add(1)));
@@ -1719,12 +1733,15 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000C.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerT1T210000C.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1).add(v2).sub(fee1).add(v2).sub(fee1).add(v2).sub(fee1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1).add(fee1).add(fee1).add(fee1));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v2).sub(fee1).add(v2).sub(fee1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1).sub(e2));
+
       expect(await addr1.getBalance()).to.equal(b12);
       expect(await addr2.getBalance()).to.equal(b22);
       expect(await addr3.getBalance()).to.equal(b32.add(a2.add(1)));
@@ -2272,9 +2289,11 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)));
 
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
       expect((await buidlerEthT1003P.getExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
@@ -2302,12 +2321,14 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003P.assignableCollateral(await addr2.getAddress())).to.equal(v1.sub(1));
       expect(await buidlerEthT1003P.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)));
       expect(await addr1.getBalance()).to.equal(b1);
       expect(await addr2.getBalance()).to.equal(b2.add(a1));
       expect(await addr3.getBalance()).to.equal(b3.add(a1));
@@ -2329,12 +2350,14 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000C.assignableCollateral(await addr2.getAddress())).to.equal(v1);
       expect(await buidlerT1T210000C.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1).sub(fee1).add(v1).add(v1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).sub(fee1).add(v1).add(v1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
       expect(await addr1.getBalance()).to.equal(b1);
       expect(await addr2.getBalance()).to.equal(b2.add(a1));
       expect(await addr3.getBalance()).to.equal(b3.add(a1));
@@ -2368,12 +2391,14 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003P.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerEthT1003P.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1).sub(fee1).add(v1).add(v1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee2).sub(1));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).sub(fee2));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).sub(fee1).add(v1).add(v1).add(v1).sub(fee2));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
       expect(await addr1.getBalance()).to.equal(b11);
       expect(await addr2.getBalance()).to.equal(b21.add(a1));
       expect(await addr3.getBalance()).to.equal(b31);
@@ -2395,12 +2420,14 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000C.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerT1T210000C.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(fee1).sub(fee1).add(v1).add(v1));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee2).sub(1).add(fee2));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3).add(v1).sub(fee2).add(v1).sub(fee2));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).sub(fee1).add(v1).add(v1).add(v1).sub(fee2).add(v1).sub(fee2));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e2));
       expect(await addr1.getBalance()).to.equal(b11);
       expect(await addr2.getBalance()).to.equal(b21.add(a1));
       expect(await addr3.getBalance()).to.equal(b31);
@@ -2573,8 +2600,10 @@ describe("ACOToken", function() {
       await network.provider.send("evm_increaseTime", [-86400]);
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1}); 
+      await buidlerEthT1003C.connect(addr1).approve(await addr2.getAddress(), val1);
       await token2.connect(addr1).approve(buidlerT1T210000P.address, value1);
       await buidlerT1T210000P.connect(addr1).mint(value1); 
+      await buidlerT1T210000P.connect(addr1).approve(await addr3.getAddress(), amount1);
 
       await network.provider.send("evm_increaseTime", [86400]);
 
@@ -2591,7 +2620,8 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(value1);
 
       await network.provider.send("evm_increaseTime", [-86400]);
 
@@ -2616,32 +2646,36 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(value1);
 
       await network.provider.send("evm_increaseTime", [-86400]);
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1}); 
       await buidlerEthT1003C.connect(addr1).transfer(await addr2.getAddress(), val1);
+      await buidlerEthT1003C.connect(addr1).approve(await addr2.getAddress(), val1);
       await token2.connect(addr1).approve(buidlerT1T210000P.address, value1);
       await buidlerT1T210000P.connect(addr1).mint(value1); 
       await buidlerT1T210000P.connect(addr1).transfer(await addr2.getAddress(), amount1);
+      await buidlerT1T210000P.connect(addr1).approve(await addr3.getAddress(), amount1);
       
       await network.provider.send("evm_increaseTime", [86400]);
 
-      await buidlerEthT1003C.connect(owner).redeemFrom(await addr1.getAddress());
+      await buidlerEthT1003C.connect(addr2).redeemFrom(await addr1.getAddress());
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(0);  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(0);
 
-      await buidlerT1T210000P.connect(addr1).redeemFrom(await addr1.getAddress());
+      await buidlerT1T210000P.connect(addr3).redeemFrom(await addr1.getAddress());
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(0);  
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Balance.sub(value1).sub(value1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(value1.add(value1));
 
       await network.provider.send("evm_increaseTime", [-86400]);
     });
@@ -2654,14 +2688,21 @@ describe("ACOToken", function() {
       let amount1 = value1.mul(precision).div(price2);
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1}); 
+      await buidlerEthT1003C.connect(addr1).approve(await addr3.getAddress(), val1);
       await token2.connect(addr1).approve(buidlerT1T210000P.address, value1);
       await buidlerT1T210000P.connect(addr1).mint(value1); 
+      await buidlerT1T210000P.connect(addr1).approve(await addr3.getAddress(), amount1);
 
       await buidlerEthT1003C.connect(owner).mintPayable({value: val1}); 
       await buidlerEthT1003C.connect(owner).transfer(await addr2.getAddress(), val1);
+      await buidlerEthT1003C.connect(owner).approve(await addr3.getAddress(), val1);
       await token2.connect(owner).approve(buidlerT1T210000P.address, value1);
       await buidlerT1T210000P.connect(owner).mint(value1); 
       await buidlerT1T210000P.connect(owner).transfer(await addr2.getAddress(), amount1);
+      await buidlerT1T210000P.connect(owner).approve(await addr3.getAddress(), amount1);
+      
+      await buidlerEthT1003C.connect(addr2).approve(await addr3.getAddress(), val1);
+      await buidlerT1T210000P.connect(addr2).approve(await addr3.getAddress(), amount1);
 
       await expect(
         buidlerEthT1003C.connect(addr1).redeem()
@@ -2672,11 +2713,11 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_redeem: Token not expired yet");
 
       await expect(
-        buidlerEthT1003C.connect(owner).redeemFrom(await addr1.getAddress())
+        buidlerEthT1003C.connect(addr3).redeemFrom(await addr1.getAddress())
       ).to.be.revertedWith("ACOToken::_redeem: Token not expired yet");
 
       await expect(
-        buidlerT1T210000P.connect(addr1).redeemFrom(await addr1.getAddress())
+        buidlerT1T210000P.connect(addr3).redeemFrom(await addr1.getAddress())
       ).to.be.revertedWith("ACOToken::_redeem: Token not expired yet");
       
       await network.provider.send("evm_increaseTime", [86400]);  
@@ -2690,12 +2731,53 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_redeemCollateral: No collateral available");
 
       await expect(
-        buidlerEthT1003C.connect(owner).redeemFrom(await addr2.getAddress())
+        buidlerEthT1003C.connect(addr3).redeemFrom(await addr2.getAddress())
       ).to.be.revertedWith("ACOToken::_redeemCollateral: No collateral available");
 
       await expect(
-        buidlerT1T210000P.connect(addr2).redeemFrom(await addr2.getAddress())
+        buidlerT1T210000P.connect(addr3).redeemFrom(await addr2.getAddress())
       ).to.be.revertedWith("ACOToken::_redeemCollateral: No collateral available");
+
+      await expect(
+        buidlerEthT1003C.connect(addr2).redeemFrom(await addr1.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+
+      await expect(
+        buidlerT1T210000P.connect(addr2).redeemFrom(await addr1.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+
+      await expect(
+        buidlerEthT1003C.connect(addr2).redeemFrom(await owner.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+
+      await expect(
+        buidlerT1T210000P.connect(addr2).redeemFrom(await owner.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+
+      await network.provider.send("evm_increaseTime", [-86400]);
+
+      await buidlerEthT1003C.connect(addr1).approve(await addr3.getAddress(), val1.sub(1));
+      await buidlerT1T210000P.connect(addr1).approve(await addr3.getAddress(), amount1.sub(1));
+      await buidlerEthT1003C.connect(owner).approve(await addr3.getAddress(), val1.sub(1));
+      await buidlerT1T210000P.connect(owner).approve(await addr3.getAddress(), amount1.sub(1));
+      
+      await network.provider.send("evm_increaseTime", [86400]);  
+
+      await expect(
+        buidlerEthT1003C.connect(addr3).redeemFrom(await addr1.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+
+      await expect(
+        buidlerT1T210000P.connect(addr3).redeemFrom(await addr1.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+
+      await expect(
+        buidlerEthT1003C.connect(addr3).redeemFrom(await owner.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+
+      await expect(
+        buidlerT1T210000P.connect(addr3).redeemFrom(await owner.getAddress())
+      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
 
       await network.provider.send("evm_increaseTime", [-86400]);
     });
