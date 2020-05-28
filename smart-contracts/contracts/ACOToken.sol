@@ -348,9 +348,9 @@ contract ACOToken is ERC20 {
     }
     
     /**
-     * @dev Function to get the collateral redeemed on exercise and the respective fee.
+     * @dev Function to get the collateral to be received on an exercise and the respective fee.
      * @param tokenAmount Amount of tokens.
-     * @return The collateral to be redeemed and the respective fee.
+     * @return The collateral to be received and the respective fee.
      */
     function getCollateralOnExercise(uint256 tokenAmount) public view returns(uint256, uint256) {
         uint256 collateralAmount = getCollateralAmount(tokenAmount);
