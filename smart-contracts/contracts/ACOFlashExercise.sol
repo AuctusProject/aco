@@ -10,7 +10,7 @@ import "./Address.sol";
 
 /**
  * @title ACOFlashExercise
- * @dev Contract to flash exercise ACO tokens.
+ * @dev Contract to exercise ACO tokens using Uniswap Flash Swap.
  */
 contract ACOFlashExercise is IUniswapV2Callee {
     
@@ -64,10 +64,10 @@ contract ACOFlashExercise is IUniswapV2Callee {
     }
     
     /**
-     * @dev Function to get the estimated collateral return through a flash exercise.
+     * @dev Function to get the estimated collateral to be received through a flash exercise.
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
-     * @return The estimated collateral return through a flash exercise.
+     * @return The estimated collateral to be received through a flash exercise.
      */
     function getEstimatedReturn(address acoToken, uint256 tokenAmount) public view returns(uint256) {
         if (tokenAmount > 0) {
@@ -103,9 +103,9 @@ contract ACOFlashExercise is IUniswapV2Callee {
     }
     
     /**
-     * @dev Function to flash exercise ACO token.
+     * @dev Function to flash exercise ACO tokens.
      * The flash exercise uses the flash swap functionality on Uniswap.
-     * No asset is required to exercise the ACO token because the own collateral redeemed is used to pay this requirement.
+     * No asset is required to exercise the ACO token because the own collateral redeemed is used to fulfill the terms of the contract.
      * The account will receive the remaining difference.
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
@@ -116,9 +116,9 @@ contract ACOFlashExercise is IUniswapV2Callee {
     }
     
     /**
-     * @dev Function to flash exercise ACO token.
+     * @dev Function to flash exercise ACO tokens.
      * The flash exercise uses the flash swap functionality on Uniswap.
-     * No asset is required to exercise the ACO token because the own collateral redeemed is used to pay this requirement.
+     * No asset is required to exercise the ACO token because the own collateral redeemed is used to fulfill the terms of the contract.
      * The account will receive the remaining difference.
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
@@ -211,7 +211,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
     }
     
     /**
-     * @dev Internal function to flash exercise ACO token.
+     * @dev Internal function to flash exercise ACO tokens.
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
      * @param minimumCollateral The minimum amount of collateral accepted to be received on the flash exercise.
