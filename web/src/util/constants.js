@@ -4,6 +4,7 @@ const zero = new Web3Utils.BN(0);
 const negative1 = new Web3Utils.BN(-1);
 
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
+export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
