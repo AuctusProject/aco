@@ -113,7 +113,7 @@
 
 li.dropdown {
   padding: 0 10px;
-  height: 45px;
+  max-height: 45px;
 }
 
 .nav-item.dropdown.metamask {
@@ -133,7 +133,7 @@ li.dropdown {
 .dropdown-menu {
   background-color: #454545 !important;
   right: 0;
-  left: unset;
+  left: unset !important;
 }
 
 .dropdown-item {
