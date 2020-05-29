@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount } from '../../util/acoTokenMethods'
-import { formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl } from '../../util/constants'
+import { formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -13,17 +13,27 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
+import { getEstimatedReturn, hasUniswapPair, flashExercise } from '../../util/acoFlashExerciseMethods'
+import { hasFlashExercise } from '../../util/acoFactoryMethods'
 
-class ExerciseAction extends Component { 
+class ExerciseAction extends Component {
   constructor(props) {
-    super(props)    
-    this.state = { optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: ""}
+    super(props)
+    this.state = { flashAvailable: null, selectedTab: 1, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
   }
 
   componentDidMount = () => {
-    getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result => 
-      this.setState({payAssetBalance: result})
-      )
+    getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result =>
+      this.setState({ payAssetBalance: result })
+    )
+    if (hasFlashExercise(this.props.position.option)) {
+      hasUniswapPair(this.props.position.option.acoToken).then(result => {
+        this.setState({ flashAvailable: result })
+      })
+    }
+    else {
+      this.setState({ flashAvailable: false })
+    }
   }
 
   componentDidUpdate = (prevProps) => {
@@ -40,29 +50,29 @@ class ExerciseAction extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken, nonce)
-            .then(result => {
-              if (result) {
-                this.setStepsModalInfo(++stepNumber, needApproval)
-                checkTransactionIsMined(result).then(result => {
-                  if(result) {
-                    this.sendExerciseTransaction(stepNumber, ++nonce, needApproval)
-                  }
-                  else {
-                    this.setStepsModalInfo(-1, needApproval)
-                  }
-                })
-                .catch(() => {
+            this.sendAllowDeposit()
+              .then(result => {
+                if (result) {
+                  this.setStepsModalInfo(++stepNumber, needApproval)
+                  checkTransactionIsMined(result).then(result => {
+                    if (result) {
+                      this.sendExerciseTransaction(stepNumber, ++nonce, needApproval)
+                    }
+                    else {
+                      this.setStepsModalInfo(-1, needApproval)
+                    }
+                  })
+                    .catch(() => {
+                      this.setStepsModalInfo(-1, needApproval)
+                    })
+                }
+                else {
                   this.setStepsModalInfo(-1, needApproval)
-                })
-              }
-              else {
+                }
+              })
+              .catch(() => {
                 this.setStepsModalInfo(-1, needApproval)
-              }
-            })
-            .catch(() => {
-              this.setStepsModalInfo(-1, needApproval)
-            })
+              })
           }
           else {
             stepNumber = 2
@@ -75,89 +85,124 @@ class ExerciseAction extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-      if (!this.isPayEth()) {
-        allowance(this.context.web3.selectedAccount, getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken).then(result => {
-          var resultValue = new Web3Utils.BN(result)
-          resolve(resultValue.lt(toDecimals(this.state.payValue, this.getPayDecimals())))
-        })
+      if (this.state.selectedTab === 1) {
+        if (!this.isPayEth()) {
+          allowance(this.context.web3.selectedAccount, getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken).then(result => {
+            var resultValue = new Web3Utils.BN(result)
+            resolve(resultValue.lt(toDecimals(this.state.payValue, this.getPayDecimals())))
+          })
+        }
+        else {
+          resolve(false)
+        }
       }
       else {
-        resolve(false)
+        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, acoFlashExerciseAddress).then(result => {
+          var resultValue = new Web3Utils.BN(result)
+          resolve(resultValue.lt(this.getOptionAmountToDecimals()))
+        })
       }
-    })    
+    })
+  }
+
+  sendAllowDeposit = (nonce) => {
+    if (this.state.selectedTab === 1) {
+      return allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken, nonce)
+    }
+    else {
+      return allowDeposit(this.context.web3.selectedAccount, this.getOptionAmountToDecimals().toString(), this.props.position.option.acoToken, acoFlashExerciseAddress, nonce)
+    }
+  }
+
+  sendExercise = (nonce) => {
+    if (this.state.selectedTab === 1) {
+      return exercise(this.context.web3.selectedAccount, this.props.position.option, this.getOptionAmountToDecimals().toString(), nonce)
+    }
+    else {
+      return flashExercise(this.context.web3.selectedAccount, this.props.position.option.acoToken, this.getOptionAmountToDecimals().toString(), this.getMinimumReceivedAmountToDecimals().toString(), nonce)
+    }
+  }
+
+  getOptionAmountToDecimals = () => {
+    return toDecimals(this.state.optionsAmount, this.props.position.option.underlyingInfo.decimals)
+  }
+
+  getMinimumReceivedAmountToDecimals = () => {
+    return toDecimals(this.state.minimumReceivedAmount, getCollateralInfo(this.props.position.option).decimals)
   }
 
   sendExerciseTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
-    exercise(this.context.web3.selectedAccount, this.props.position.option, toDecimals(this.state.optionsAmount, this.props.position.option.underlyingInfo.decimals, nonce).toString())
-    .then(result => {
-      if (result) {
-        this.setStepsModalInfo(++stepNumber, needApproval)
-        checkTransactionIsMined(result)
-        .then(result => {
-          if(result) {
-            this.setStepsModalInfo(++stepNumber, needApproval)
-          }
-          else {
-            this.setStepsModalInfo(-1, needApproval)
-          }
-        })
-        .catch(() => {
+    this.sendExercise()
+      .then(result => {
+        if (result) {
+          this.setStepsModalInfo(++stepNumber, needApproval)
+          checkTransactionIsMined(result)
+            .then(result => {
+              if (result) {
+                this.setStepsModalInfo(++stepNumber, needApproval)
+              }
+              else {
+                this.setStepsModalInfo(-1, needApproval)
+              }
+            })
+            .catch(() => {
+              this.setStepsModalInfo(-1, needApproval)
+            })
+        }
+        else {
           this.setStepsModalInfo(-1, needApproval)
-        })
-      }
-      else {
+        }
+      })
+      .catch(() => {
         this.setStepsModalInfo(-1, needApproval)
-      }
-    })
-    .catch(() => {
-      this.setStepsModalInfo(-1, needApproval)
-    })
+      })
   }
 
   setStepsModalInfo = (stepNumber, needApproval) => {
-    var title = (needApproval && stepNumber <= 2)  ? "Unlock token" : "Exercise"
+    var title = (needApproval && stepNumber <= 2) ? "Unlock token" : "Exercise"
     var subtitle = ""
     var img = null
     var option = this.props.position.option
     if (needApproval && stepNumber === 1) {
-      subtitle =  "Confirm on Metamask to unlock "+this.getPaySymbol()+" for minting on ACO" 
-      img = <MetamaskLargeIcon/>
+      subtitle = "Confirm on Metamask to unlock " + this.getPaySymbol() + " for minting on ACO"
+      img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {
-      subtitle =  "Unlocking "+this.getPaySymbol()+"..."
-      img = <SpinnerLargeIcon/>
+      subtitle = "Unlocking " + this.getPaySymbol() + "..."
+      img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle =  "Confirm on Metamask to send "+this.state.optionsAmount+" "+option.acoTokenInfo.symbol+" and "+this.state.payValue+" "+this.getPaySymbol()+", you'll receive "+this.state.collateralValue+" "+this.getReceiveSymbol()+" by exercising."
-      img = <MetamaskLargeIcon/>
+      subtitle = "Confirm on Metamask to send " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol + " and " + this.state.payValue + " " + this.getPaySymbol() + ", you'll receive " + this.state.collateralValue + " " + this.getReceiveSymbol() + " by exercising."
+      img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {
-      subtitle =  "Exercising "+this.state.optionsAmount+" "+option.acoTokenInfo.symbol+"..."
-      img = <SpinnerLargeIcon/>
+      subtitle = "Exercising " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol + "..."
+      img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 5) {
-      subtitle = "You have successfully exercised the options and received "+this.state.collateralValue+" "+this.getReceiveSymbol()+" on your wallet."
-      img = <DoneLargeIcon/>
+      subtitle = "You have successfully exercised the options and received " + this.state.collateralValue + " " + this.getReceiveSymbol() + " on your wallet."
+      img = <DoneLargeIcon />
     }
     else if (stepNumber === -1) {
       subtitle = "An error ocurred. Please try again."
-      img = <ErrorLargeIcon/>
+      img = <ErrorLargeIcon />
     }
 
     var steps = []
     if (needApproval) {
-      steps.push({title: "Unlock", progress: stepNumber > 2 ? 100 : 0, active: true})
+      steps.push({ title: "Unlock", progress: stepNumber > 2 ? 100 : 0, active: true })
     }
-    steps.push({title: "Exercise", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false})
+    steps.push({ title: "Exercise", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false })
     this.setState({
       stepsModalInfo: {
-        title: title, 
-        subtitle: subtitle, 
-        steps: steps, 
-        img: img, 
-        isDone: (stepNumber === 5 || stepNumber === -1), 
-        onDoneButtonClick: (stepNumber === 5 ? this.onDoneButtonClick : this.onHideStepsModal)}
+        title: title,
+        subtitle: subtitle,
+        steps: steps,
+        img: img,
+        isDone: (stepNumber === 5 || stepNumber === -1),
+        onDoneButtonClick: (stepNumber === 5 ? this.onDoneButtonClick : this.onHideStepsModal)
+      }
     })
   }
 
@@ -166,15 +211,17 @@ class ExerciseAction extends Component {
   }
 
   onHideStepsModal = () => {
-    this.setState({stepsModalInfo: null})
+    this.setState({ stepsModalInfo: null })
   }
-  
+
   canConfirm = () => {
-    return this.state.optionsAmount !== null && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() && !this.isInsufficientFundsToPay()
+    return this.state.optionsAmount !== null && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
+      ((this.state.selectedTab === 1 && !this.isInsufficientFundsToPay()) ||
+        (this.state.selectedTab === 2 && this.state.flashAvailable && this.state.minimumReceivedAmount !== null && this.state.minimumReceivedAmount !== "" && this.state.minimumReceivedAmount > 0))
   }
 
   isInsufficientFunds = () => {
-    return toDecimals(this.state.optionsAmount, this.props.position.option.underlyingInfo.decimals).gt(new Web3Utils.BN(this.props.position.openPosition))
+    return this.getOptionAmountToDecimals().gt(new Web3Utils.BN(this.props.position.openPosition))
   }
 
   getPayDifference = () => {
@@ -191,7 +238,17 @@ class ExerciseAction extends Component {
   }
 
   onOptionsAmountChange = (value) => {
-    this.setState({ optionsAmount: value, collateralValue: this.getCollateralValue(value), payValue:this.getPayValue(value), exerciseFee: this.getExerciseFee(value) })
+    this.setState({ optionsAmount: value, collateralValue: this.getCollateralValue(value), payValue: this.getPayValue(value), exerciseFee: this.getExerciseFee(value) }, () => this.getEstimatedReturn())
+  }
+
+  onMinimumReceivedAmountChange = (value) => {
+    this.setState({ minimumReceivedAmount: value })
+  }
+
+  getEstimatedReturn = () => {
+    getEstimatedReturn(this.props.position.option.acoToken, this.getOptionAmountToDecimals().toString()).then(estimatedReturn => {
+      this.setState({ estimatedReturn: estimatedReturn })
+    })
   }
 
   getTotalCollateralValue = (optionsAmount) => {
@@ -205,7 +262,7 @@ class ExerciseAction extends Component {
 
   getExerciseFee = (optionsAmount) => {
     var totalCollateralValue = this.getTotalCollateralValue(optionsAmount)
-    return (totalCollateralValue * (this.props.position.option.acoFee/acoFeePrecision))
+    return (totalCollateralValue * (this.props.position.option.acoFee / acoFeePrecision))
   }
 
   getPayValue = (optionsAmount) => {
@@ -245,41 +302,70 @@ class ExerciseAction extends Component {
       .replace("{OPTION_STRIKE_PRICE}", getOptionFormattedPrice(this.props.position.option))
   }
 
+  selectTab = (selectedTab) => () => {
+    this.setState({ selectedTab: selectedTab })
+  }
+
   render() {
     return <div className="exercise-action">
-        <div className="confirm-card">
+      <div class="btn-group pill-button-group">
+        <button onClick={this.selectTab(1)} type="button" class={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>
+        <button onClick={this.selectTab(2)} type="button" class={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>FLASH EXERCISE</button>
+      </div>
+      <div className="confirm-card">
         <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>
-        <div className={"confirm-card-body "+(this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
-          <div className="balance-column">
-            <div>Amount available to exercise: <span>{getFormattedOpenPositionAmount(this.props.position)} options</span></div>
-          </div>
-          <div className="card-separator"></div>
-          <div className="input-row">
-            <div className="input-column">
-              <div className="input-label">Amount</div>
-              <div className="input-field">
-                <DecimalInput tabIndex="-1" onChange={this.onOptionsAmountChange} value={this.state.optionsAmount}></DecimalInput>
-                <div className="max-btn" onClick={this.onMaxClick}>MAX</div>
+        <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
+          {this.state.selectedTab === 2 && <>
+            <>
+              <div>With Flash Exercise, you can exercise an option using flash swaps of Uniswap V2 and just receive the net profit.</div>
+              <div className="card-separator"></div>
+              {!this.state.flashAvailable && <div>This option doesn't support Flash Exercise.</div>}
+            </>
+          </>}
+          {(this.state.selectedTab === 1 || this.state.flashAvailable) && <>
+            <div className="balance-column">
+              <div>Amount available to exercise: <span>{getFormattedOpenPositionAmount(this.props.position)} options</span></div>
+            </div>
+            <div className="card-separator"></div>
+            <div className="input-row">
+              <div className="input-column">
+                <div className="input-label">Amount</div>
+                <div className="input-field">
+                  <DecimalInput tabIndex="-1" onChange={this.onOptionsAmountChange} value={this.state.optionsAmount}></DecimalInput>
+                  <div className="max-btn" onClick={this.onMaxClick}>MAX</div>
+                </div>
               </div>
             </div>
-          </div>
-          {(!this.state.optionsAmount || this.state.optionsAmount === "" || this.isInsufficientFunds()) && <div className="card-separator"></div>}
-          {(!this.state.optionsAmount || this.state.optionsAmount === "" || this.isInsufficientFunds()) && <div>{this.getOptionExerciseDescription()}</div>}
+            {this.state.selectedTab === 1 && (!this.state.optionsAmount || this.state.optionsAmount === "" || this.isInsufficientFunds()) &&
+              <>
+                <div className="card-separator"></div>
+                <div>{this.getOptionExerciseDescription()}</div>
+              </>
+            }
+          </>}
         </div>
-        {this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds() && 
+        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds() &&
           <div className="confirm-card-body highlight-background">
             <div>
               <div className="summary-title">SUMMARY</div>
               <table className="summary-table">
                 <tbody>
-                  <tr className={this.isInsufficientFundsToPay() ? "insufficient-funds-error" : ""}>
-                    <td>You'll {(this.props.position.option.isCall ? "pay" : "send")}</td>
-                    <td>{this.state.payValue} {this.getPaySymbol()}</td>
-                  </tr>
-                  <tr>
-                    <td>You'll receive</td>
-                    <td>{this.state.collateralValue} {this.getReceiveSymbol()}</td>
-                  </tr>
+                  {this.state.selectedTab === 1 && <>
+                    <tr className={this.isInsufficientFundsToPay() ? "insufficient-funds-error" : ""}>
+                      <td>You'll {(this.props.position.option.isCall ? "pay" : "send")}</td>
+                      <td>{this.state.payValue} {this.getPaySymbol()}</td>
+                    </tr>
+                    <tr>
+                      <td>You'll receive</td>
+                      <td>{this.state.collateralValue} {this.getReceiveSymbol()}</td>
+                    </tr>
+                  </>}
+                  {this.state.selectedTab === 2 && <>
+                    <tr>
+                      <td>Estimated profit</td>
+                      <td>{this.state.estimatedReturn} {this.getReceiveSymbol()}</td>
+                    </tr>
+                  </>}
                   {this.state.exerciseFee > 0 && <tr>
                     <td>Exercise fee</td>
                     <td>{this.state.exerciseFee} {this.getReceiveSymbol()}</td>
@@ -287,16 +373,28 @@ class ExerciseAction extends Component {
                 </tbody>
               </table>
               {this.isInsufficientFundsToPay() && <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>}
-              {this.isInsufficientFundsToPay() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl+this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
+              {this.isInsufficientFundsToPay() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
             </div>
+          </div>}
+        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.selectedTab === 2 && this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds() &&
+          <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
+            <div className="input-row">
+              <div className="input-column">
+                <div className="input-label">Set minimum amount to be received</div>
+                <div className="input-field">
+                  <DecimalInput tabIndex="-1" onChange={this.onMinimumReceivedAmountChange} value={this.state.minimumReceivedAmount}></DecimalInput>
+                  <div className="coin-symbol">{this.getReceiveSymbol()}</div>
+                </div>
+              </div>
+            </div>
+          </div>}
+        {(this.state.selectedTab === 1 || this.state.flashAvailable) && <div className={"confirm-card-actions " + ((this.state.selectedTab === 1 && this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
+          <div className="aco-button cancel-btn" onClick={this.props.onCancelClick}>Go back</div>
+          <div className={"aco-button action-btn " + (this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
         </div>}
-        <div className={"confirm-card-actions " + ((this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
-          <div className="aco-button cancel-btn" onClick={this.props.onCancelClick}>Cancel</div>
-          <div className={"aco-button action-btn "+(this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
-        </div>
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
-      </div>
+    </div>
   }
 }
 
