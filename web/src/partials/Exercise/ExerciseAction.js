@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount } from '../../util/acoTokenMethods'
-import { formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress } from '../../util/constants'
+import { zero, formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -32,7 +32,7 @@ class ExerciseAction extends Component {
       })
     }
     else {
-      this.setState({ flashAvailable: false })
+      this.setState({ flashAvailable: true })
     }
   }
 
@@ -160,20 +160,27 @@ class ExerciseAction extends Component {
   }
 
   setStepsModalInfo = (stepNumber, needApproval) => {
-    var title = (needApproval && stepNumber <= 2) ? "Unlock token" : "Exercise"
+    var title = (needApproval && stepNumber <= 2) ? "Unlock token" : (this.state.selectedTab === 1 ? "Exercise" : "Flash Exercise")
     var subtitle = ""
     var img = null
     var option = this.props.position.option
+    var unlockSymbol =  (this.state.selectedTab === 1 ? this.getPaySymbol() : option.acoTokenInfo.symbol)
     if (needApproval && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to unlock " + this.getPaySymbol() + " for minting on ACO"
+      subtitle = "Confirm on Metamask to unlock " + unlockSymbol + " for using on ACO"
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {
-      subtitle = "Unlocking " + this.getPaySymbol() + "..."
+      subtitle = "Unlocking " + unlockSymbol + "..."
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to send " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol + " and " + this.state.payValue + " " + this.getPaySymbol() + ", you'll receive " + this.state.collateralValue + " " + this.getReceiveSymbol() + " by exercising."
+      subtitle = "Confirm on Metamask to send " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol 
+      if (this.state.selectedTab === 1) {
+        subtitle += " and " + this.state.payValue + " " + this.getPaySymbol() + ", you'll receive " + this.state.collateralValue + " " + this.getReceiveSymbol() + " by exercising."
+      }
+      else {
+        subtitle += " and you'll receive a minimum of " + this.state.minimumReceivedAmount + " " + this.getReceiveSymbol() + " by exercising."
+      }
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {
@@ -181,7 +188,13 @@ class ExerciseAction extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 5) {
-      subtitle = "You have successfully exercised the options and received " + this.state.collateralValue + " " + this.getReceiveSymbol() + " on your wallet."
+      subtitle = "You have successfully exercised the options"
+      if (this.state.selectedTab === 1) {
+        subtitle += " and received " + this.state.collateralValue + " " + this.getReceiveSymbol() + " on your wallet."
+      }
+      else {
+        subtitle += "."
+      }
       img = <DoneLargeIcon />
     }
     else if (stepNumber === -1) {
@@ -306,6 +319,22 @@ class ExerciseAction extends Component {
     this.setState({ selectedTab: selectedTab })
   }
 
+  isFlashOutOfMoney = () => {
+    return this.state.selectedTab === 2 && this.state.flashAvailable && this.getEstimatedReturnBN().eq(zero)
+  }
+
+  isMinimumAboveEstimated = () => {
+    return this.state.selectedTab === 2 && this.state.flashAvailable && this.getEstimatedReturnBN().lt(this.getMinimumReceivedAmountToDecimals())
+  }
+
+  getEstimatedReturnBN = () => {
+    return new Web3Utils.BN(this.state.estimatedReturn)
+  }
+
+  getEstimatedReturnFromDecimals = () => {
+    return !this.state.estimatedReturn ? "0" : fromDecimals(this.state.estimatedReturn, getCollateralInfo(this.props.position.option).decimals)
+  }
+
   render() {
     return <div className="exercise-action">
       <div class="btn-group pill-button-group">
@@ -344,7 +373,7 @@ class ExerciseAction extends Component {
             }
           </>}
         </div>
-        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds() &&
+        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
           <div className="confirm-card-body highlight-background">
             <div>
               <div className="summary-title">SUMMARY</div>
@@ -363,7 +392,7 @@ class ExerciseAction extends Component {
                   {this.state.selectedTab === 2 && <>
                     <tr>
                       <td>Estimated profit</td>
-                      <td>{this.state.estimatedReturn} {this.getReceiveSymbol()}</td>
+                      <td>{this.getEstimatedReturnFromDecimals()} {this.getReceiveSymbol()}</td>
                     </tr>
                   </>}
                   {this.state.exerciseFee > 0 && <tr>
@@ -372,11 +401,16 @@ class ExerciseAction extends Component {
                   </tr>}
                 </tbody>
               </table>
-              {this.isInsufficientFundsToPay() && <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>}
-              {this.isInsufficientFundsToPay() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
+              {this.isInsufficientFundsToPay() && <>
+               <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
+               <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>
+              </>}
+              {this.isFlashOutOfMoney() && 
+                <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>
+              }
             </div>
           </div>}
-        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.selectedTab === 2 && this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds() &&
+        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.selectedTab === 2 && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
           <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
             <div className="input-row">
               <div className="input-column">
@@ -387,8 +421,11 @@ class ExerciseAction extends Component {
                 </div>
               </div>
             </div>
+            {this.isMinimumAboveEstimated() && 
+              <div className="insufficient-funds-message">The entered minimum amount to be received is above the estimated, the transaction will most likely fail.</div>
+            }
           </div>}
-        {(this.state.selectedTab === 1 || this.state.flashAvailable) && <div className={"confirm-card-actions " + ((this.state.selectedTab === 1 && this.state.optionsAmount && this.state.optionsAmount !== "" && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
+        {(this.state.selectedTab === 1 || this.state.flashAvailable) && <div className={"confirm-card-actions " + ((this.state.selectedTab === 1 && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
           <div className="aco-button cancel-btn" onClick={this.props.onCancelClick}>Go back</div>
           <div className={"aco-button action-btn " + (this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
         </div>}

@@ -207,5 +207,5 @@ function getPositionForOption(option, userAccount) {
 }
 
 export function hasFlashExercise(option) {
-    return acoImplementationVersionMap[option.acoTokenImplementation] > 1
+    return acoImplementationVersionMap[option.acoTokenImplementation] !== 1
 }

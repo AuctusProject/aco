@@ -1,6 +1,6 @@
 import Web3Utils from 'web3-utils'
 
-const zero = new Web3Utils.BN(0);
+export const zero = new Web3Utils.BN(0);
 const negative1 = new Web3Utils.BN(-1);
 
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
