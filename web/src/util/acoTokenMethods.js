@@ -148,13 +148,15 @@ export function getCollateralAmount(optionInfo, tokenAmount) {
 }
 
 export function getTokenStrikePriceRelation(optionInfo, tokenAmount) {
+    if (!tokenAmount || parseFloat(tokenAmount) === 0) {
+        return ""
+    }
     return fromDecimals(fromDecimals(new Web3Utils.BN(optionInfo.strikePrice).mul(toDecimals(tokenAmount, optionInfo.underlyingInfo.decimals)), parseInt(optionInfo.strikeAssetInfo.decimals)), parseInt(optionInfo.underlyingInfo.decimals))
 }
 
 export function getOpenPositionAmount(position) {
     return fromDecimals(new Web3Utils.BN(position.balance).sub(new Web3Utils.BN(position.currentCollateralizedTokens)), 0)
 }
-
 
 export function getFormattedOpenPositionAmount(position) {
     var optionInfo = position.option
