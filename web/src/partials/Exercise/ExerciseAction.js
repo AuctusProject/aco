@@ -32,7 +32,7 @@ class ExerciseAction extends Component {
       })
     }
     else {
-      this.setState({ flashAvailable: true })
+      this.setState({ flashAvailable: false })
     }
   }
 
