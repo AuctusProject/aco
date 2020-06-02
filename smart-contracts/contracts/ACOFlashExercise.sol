@@ -3,10 +3,9 @@ pragma solidity ^0.6.6;
 import "./IWETH.sol";
 import "./IUniswapV2Pair.sol";
 import "./IUniswapV2Callee.sol";
-import "./IUniswapV2Router01.sol";
+import "./IUniswapV2Factory.sol";
 import "./UniswapV2Library.sol";
 import "./IACOToken.sol";
-import "./Address.sol";
 
 /**
  * @title ACOFlashExercise
@@ -18,11 +17,11 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @dev The Uniswap factory address.
      */
     address immutable public uniswapFactory;
-    
+
     /**
      * @dev The WETH address used on Uniswap.
      */
-    IWETH immutable public WETH;
+    address immutable public weth;
     
     /**
      * @dev Selector for ERC20 approve function.
@@ -34,9 +33,9 @@ contract ACOFlashExercise is IUniswapV2Callee {
      */
     bytes4 immutable internal _transferSelector;
     
-    constructor(address _uniswapFactory, address _uniswapRouter) public {
+    constructor(address _uniswapFactory, address _weth) public {
         uniswapFactory = _uniswapFactory;
-        WETH = IWETH(IUniswapV2Router01(_uniswapRouter).WETH());
+        weth = _weth;
         
         _approveSelector = bytes4(keccak256(bytes("approve(address,uint256)")));
         _transferSelector = bytes4(keccak256(bytes("transfer(address,uint256)")));
@@ -55,12 +54,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
     function getUniswapPair(address acoToken) public view returns(address) {
         address underlying = _getUniswapToken(IACOToken(acoToken).underlying());
         address strikeAsset = _getUniswapToken(IACOToken(acoToken).strikeAsset());
-        address pair = UniswapV2Library.pairFor(uniswapFactory, underlying, strikeAsset);
-        if (Address.isContract(pair)) {
-            return pair;   
-        } else {
-            return address(0);
-        }
+        return IUniswapV2Factory(uniswapFactory).getPair(underlying, strikeAsset);
     }
     
     /**
@@ -154,13 +148,13 @@ contract ACOFlashExercise is IUniswapV2Callee {
         {
         address token0 = IUniswapV2Pair(msg.sender).token0();
         address token1 = IUniswapV2Pair(msg.sender).token1();
-        require(msg.sender == UniswapV2Library.pairFor(uniswapFactory, token0, token1), "ACOFlashExercise::uniswapV2Call: Invalid transaction sender"); 
+        require(msg.sender == IUniswapV2Factory(uniswapFactory).getPair(token0, token1), "ACOFlashExercise::uniswapV2Call: Invalid transaction sender"); 
         require(amount0Out == 0 || amount1Out == 0, "ACOFlashExercise::uniswapV2Call: Invalid out amounts"); 
         
-        address[] memory path = new address[](2);
-        path[0] = amount0Out == 0 ? token0 : token1;
-        path[1] = amount0Out == 0 ? token1 : token0;
-        amountRequired = UniswapV2Library.getAmountsIn(uniswapFactory, (amount1Out + amount0Out), path)[0];
+        (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(msg.sender).getReserves();
+        uint256 reserveIn = amount0Out == 0 ? reserve0 : reserve1; 
+        uint256 reserveOut = amount0Out == 0 ? reserve1 : reserve0; 
+        amountRequired = UniswapV2Library.getAmountIn((amount0Out + amount1Out), reserveIn, reserveOut);
         }
         
         address acoToken;
@@ -184,7 +178,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
         
         if (_isEther(exerciseAddress)) {
             ethValue = expectedAmount;
-            WETH.withdraw(expectedAmount);
+            IWETH(weth).withdraw(expectedAmount);
         } else {
             _callApproveERC20(exerciseAddress, acoToken, expectedAmount);
         }
@@ -200,8 +194,8 @@ contract ACOFlashExercise is IUniswapV2Callee {
         address uniswapPayment;
         if (_isEther(collateral)) {
             payable(from).transfer(remainingAmount);
-            WETH.deposit{value: amountRequired}();
-            uniswapPayment = address(WETH);
+            IWETH(weth).deposit{value: amountRequired}();
+            uniswapPayment = weth;
         } else {
             _callTransferERC20(collateral, from, remainingAmount); 
             uniswapPayment = collateral;
@@ -247,7 +241,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
      */
     function _getUniswapToken(address token) internal view returns(address) {
         if (_isEther(token)) {
-            return address(WETH);
+            return weth;
         } else {
             return token;
         }
