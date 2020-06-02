@@ -13,19 +13,20 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
+import Loading from '../Util/Loading'
 import { getEstimatedReturn, hasUniswapPair, flashExercise } from '../../util/acoFlashExerciseMethods'
 import { hasFlashExercise } from '../../util/acoFactoryMethods'
 
 class ExerciseAction extends Component {
   constructor(props) {
     super(props)
-    this.state = { flashAvailable: null, selectedTab: 1, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
+    this.state = { flashAvailable: null, selectedTab: null, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
   }
 
   componentDidMount = () => {
-    getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result =>
-      this.setState({ payAssetBalance: result })
-    )
+    getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result => {
+      this.setState({ payAssetBalance: result, selectedTab: ((result === "0") ? 2 : 1) })
+    })
     if (hasFlashExercise(this.props.position.option)) {
       hasUniswapPair(this.props.position.option.acoToken).then(result => {
         this.setState({ flashAvailable: result })
@@ -337,6 +338,8 @@ class ExerciseAction extends Component {
 
   render() {
     return <div className="exercise-action">
+      {this.state.selectedTab === null && <Loading></Loading>}
+      {this.state.selectedTab !== null && <>
       <div class="btn-group pill-button-group">
         <button onClick={this.selectTab(1)} type="button" class={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>
         <button onClick={this.selectTab(2)} type="button" class={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>FLASH EXERCISE</button>
@@ -401,7 +404,7 @@ class ExerciseAction extends Component {
                   </tr>}
                 </tbody>
               </table>
-              {this.isInsufficientFundsToPay() && <>
+              {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
                <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
                <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>
               </>}
@@ -430,6 +433,7 @@ class ExerciseAction extends Component {
           <div className={"aco-button action-btn " + (this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
         </div>}
       </div>
+      </>}
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
     </div>
   }
