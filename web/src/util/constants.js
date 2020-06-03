@@ -151,6 +151,15 @@ export function removeDecimals(strNumber) {
     return strNumber.split(".")[0]
 }
 
+export function formatWithPrecision(number, significantDigits = 4) {
+    if (number > Math.pow(10, significantDigits-1)) {
+        return (number).toFixed(0)
+    }
+    else {
+        return number.toPrecision(significantDigits)
+    }
+}
+
 export function getBinanceSymbolForPair(pair) {
     var underlyingSymbol = pair.underlyingSymbol.toLowerCase()
     if (symbolsMappedToBaseAsset[underlyingSymbol.toUpperCase()]){

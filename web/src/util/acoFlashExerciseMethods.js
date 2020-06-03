@@ -30,3 +30,8 @@ export function getEstimatedReturn(acoToken, tokenAmount) {
     const contract = getAcoFlashExerciseTokenContract()
     return contract.methods.getEstimatedReturn(acoToken, tokenAmount).call()
 }
+
+export function getFlashExerciseData(acoToken, tokenAmount) {
+    const contract = getAcoFlashExerciseTokenContract()
+    return contract.methods.getExerciseData(acoToken, tokenAmount).call()
+}

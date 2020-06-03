@@ -48,6 +48,11 @@
     background-color: #2b2b2b;
 }
 
+.summary-table td span {
+    display: block;
+    font-size: 10px;
+}
+
 .insufficient-funds-message {
     margin-top: 12px;
     margin-bottom: 4px;

@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount } from '../../util/acoTokenMethods'
-import { zero, formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress } from '../../util/constants'
+import { zero, formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -14,7 +14,7 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import Loading from '../Util/Loading'
-import { getEstimatedReturn, hasUniswapPair, flashExercise } from '../../util/acoFlashExerciseMethods'
+import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/acoFlashExerciseMethods'
 import { hasFlashExercise } from '../../util/acoFactoryMethods'
 
 class ExerciseAction extends Component {
@@ -252,18 +252,36 @@ class ExerciseAction extends Component {
   }
 
   onOptionsAmountChange = (value) => {
-    this.setState({ optionsAmount: value, collateralValue: this.getCollateralValue(value), payValue: this.getPayValue(value), exerciseFee: this.getExerciseFee(value) }, () => this.getEstimatedReturn())
+    this.setState({ optionsAmount: value, collateralValue: this.getCollateralValue(value), payValue: this.getPayValue(value), exerciseFee: this.getExerciseFee(value) }, () => this.getEstimatedInfo())
   }
 
   onMinimumReceivedAmountChange = (value) => {
     this.setState({ minimumReceivedAmount: value })
   }
 
-  getEstimatedReturn = () => {
-    getEstimatedReturn(this.props.position.option.acoToken, this.getOptionAmountToDecimals().toString()).then(estimatedReturn => {
-      this.setState({ estimatedReturn: estimatedReturn })
+  getEstimatedInfo = () => {
+    getEstimatedReturn(this.props.position.option.acoToken, this.getOptionAmountToDecimals().toString()).then(result => {
+      var estimatedReturn = fromDecimals(result, getCollateralInfo(this.props.position.option).decimals)
+      this.setState({ estimatedReturn: result, minimumReceivedAmount: formatWithPrecision(estimatedReturn*0.85) })
+    })
+    getFlashExerciseData(this.props.position.option.acoToken, this.getOptionAmountToDecimals().toString()).then(exerciseData => {
+      this.setPriceFromExerciseData(exerciseData)
     })
   }
+
+  setPriceFromExerciseData = (exerciseData) => {
+    var amountRequired = new Web3Utils.BN(exerciseData[0])
+    var expectedAmount = new Web3Utils.BN(exerciseData[1])
+    var precision = new Web3Utils.BN(10).pow(new Web3Utils.BN(this.props.position.option.underlyingInfo.decimals))
+    var price = null
+    if (this.props.position.option.isCall) {
+      price = expectedAmount.mul(precision).div(amountRequired)
+    }
+    else {
+      price = amountRequired.mul(precision).div(expectedAmount)
+    }
+    this.setState({ estimatedPrice: price })
+  }  
 
   getTotalCollateralValue = (optionsAmount) => {
     return getCollateralAmount(this.props.position.option, optionsAmount)
@@ -336,6 +354,14 @@ class ExerciseAction extends Component {
     return !this.state.estimatedReturn ? "0" : fromDecimals(this.state.estimatedReturn, getCollateralInfo(this.props.position.option).decimals)
   }
 
+  getEstimatedPriceFromDecimals = () => {
+    return !this.state.estimatedPrice ? "-" : fromDecimals(this.state.estimatedPrice, this.props.position.option.strikeAssetInfo.decimals)
+  }
+
+  getEstimatedPriceSymbol = () => {
+    return !this.state.estimatedPrice ? "" : (this.props.position.option.strikeAssetInfo.symbol + "/"+ this.props.position.option.underlyingInfo.symbol)
+  }
+
   render() {
     return <div className="exercise-action">
       {this.state.selectedTab === null && <Loading></Loading>}
@@ -394,7 +420,11 @@ class ExerciseAction extends Component {
                   </>}
                   {this.state.selectedTab === 2 && <>
                     <tr>
-                      <td>Estimated profit</td>
+                      <td>Settlement price<span>(estimated)</span></td>
+                      <td>{this.getEstimatedPriceFromDecimals()} {this.getEstimatedPriceSymbol()}</td>
+                    </tr>
+                    <tr>
+                      <td>Total profit<span>(estimated)</span></td>
                       <td>{this.getEstimatedReturnFromDecimals()} {this.getReceiveSymbol()}</td>
                     </tr>
                   </>}
@@ -406,7 +436,7 @@ class ExerciseAction extends Component {
               </table>
               {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
                <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
-               <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>
+               {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
               </>}
               {this.isFlashOutOfMoney() && 
                 <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>
