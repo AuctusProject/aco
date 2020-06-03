@@ -420,11 +420,11 @@ class ExerciseAction extends Component {
                   </>}
                   {this.state.selectedTab === 2 && <>
                     <tr>
-                      <td>Settlement price (estimated)</td>
+                      <td>Settlement price<span>(estimated)</span></td>
                       <td>{this.getEstimatedPriceFromDecimals()} {this.getEstimatedPriceSymbol()}</td>
                     </tr>
                     <tr>
-                      <td>Total profit (estimated)</td>
+                      <td>Total profit<span>(estimated)</span></td>
                       <td>{this.getEstimatedReturnFromDecimals()} {this.getReceiveSymbol()}</td>
                     </tr>
                   </>}
