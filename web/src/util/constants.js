@@ -153,7 +153,7 @@ export function removeDecimals(strNumber) {
 
 export function formatWithPrecision(number, significantDigits = 4) {
     if (number > Math.pow(10, significantDigits-1)) {
-        return (significantDigits).toFixed(0)
+        return (number).toFixed(0)
     }
     else {
         return number.toPrecision(significantDigits)
