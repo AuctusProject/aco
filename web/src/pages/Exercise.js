@@ -37,7 +37,7 @@ class Exercise extends Component {
     return <div className="py-4">
       {this.canLoad() && <>
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
-        <div className="page-title">EXERCISE</div>
+        {this.props.selectedPair && this.state.position === null && <div className="page-title">EXERCISE</div>}
         {this.props.selectedPair && this.state.position === null && <div className="page-subtitle">Select which option series you would like to exercise</div>}
         {!this.props.selectedPair && <Loading/>}
         {this.props.selectedPair && this.state.position === null && <ExercisePositions {...this.props} setPosition={this.setPosition}></ExercisePositions>}

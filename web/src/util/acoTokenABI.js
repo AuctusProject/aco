@@ -85,6 +85,12 @@ export const acoTokenABI =
 				"type": "address"
 			},
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
 				"indexed": false,
 				"internalType": "uint256",
 				"name": "amount",
@@ -490,6 +496,30 @@ export const acoTokenABI =
 		],
 		"name": "getCollateralAmount",
 		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "getCollateralOnExercise",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
 			{
 				"internalType": "uint256",
 				"name": "",

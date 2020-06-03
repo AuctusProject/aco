@@ -1,14 +1,16 @@
 import Web3Utils from 'web3-utils'
 
-const zero = new Web3Utils.BN(0);
+export const zero = new Web3Utils.BN(0);
 const negative1 = new Web3Utils.BN(-1);
 
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
+export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
 export const symbolsMappedToBaseAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_BASE_ASSET)
+export const acoImplementationVersionMap = JSON.parse(process.env.REACT_APP_ACO_IMPLEMENTATION_VERSION)
 
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
@@ -147,6 +149,15 @@ export function toDecimals(input, decimals) {
 
 export function removeDecimals(strNumber) {
     return strNumber.split(".")[0]
+}
+
+export function formatWithPrecision(number, significantDigits = 4) {
+    if (number > Math.pow(10, significantDigits-1)) {
+        return (number).toFixed(0)
+    }
+    else {
+        return number.toPrecision(significantDigits)
+    }
 }
 
 export function getBinanceSymbolForPair(pair) {
