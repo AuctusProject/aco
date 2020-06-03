@@ -436,7 +436,7 @@ class ExerciseAction extends Component {
               </table>
               {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
                <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
-               <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>
+               {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
               </>}
               {this.isFlashOutOfMoney() && 
                 <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>
