@@ -129,6 +129,35 @@ export const acoFlashExerciseABI =
 				"internalType": "address",
 				"name": "acoToken",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "getExerciseData",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "acoToken",
+				"type": "address"
 			}
 		],
 		"name": "getUniswapPair",

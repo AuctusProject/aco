@@ -58,12 +58,12 @@ contract ACOFlashExercise is IUniswapV2Callee {
     }
     
     /**
-     * @dev Function to get the estimated collateral to be received through a flash exercise.
+     * @dev Function to get the required amount of collateral to be paid to Uniswap and the expected amount to exercise the ACO token.
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
-     * @return The estimated collateral to be received through a flash exercise.
+     * @return The required amount of collateral to be paid to Uniswap and the expected amount to exercise the ACO token.
      */
-    function getEstimatedReturn(address acoToken, uint256 tokenAmount) public view returns(uint256) {
+    function getExerciseData(address acoToken, uint256 tokenAmount) public view returns(uint256, uint256) {
         if (tokenAmount > 0) {
             address pair = getUniswapPair(acoToken);
             if (pair != address(0)) {
@@ -86,11 +86,25 @@ contract ACOFlashExercise is IUniswapV2Callee {
                 
                 if (reserveIn > 0 && reserveOut > 0) {
                     uint256 amountRequired = UniswapV2Library.getAmountIn(expectedAmount, reserveIn, reserveOut);
-                    (uint256 collateralAmount,) = IACOToken(acoToken).getCollateralOnExercise(tokenAmount);
-                    if (amountRequired < collateralAmount) {
-                        return collateralAmount - amountRequired;
-                    }
+                    return (amountRequired, expectedAmount);
                 }
+            }
+        }
+        return (0, 0);
+    }
+    
+    /**
+     * @dev Function to get the estimated collateral to be received through a flash exercise.
+     * @param acoToken Address of the ACO token.
+     * @param tokenAmount Amount of tokens to be exercised.
+     * @return The estimated collateral to be received through a flash exercise.
+     */
+    function getEstimatedReturn(address acoToken, uint256 tokenAmount) public view returns(uint256) {
+        (uint256 amountRequired,) = getExerciseData(acoToken, tokenAmount);
+        if (amountRequired > 0) {
+            (uint256 collateralAmount,) = IACOToken(acoToken).getCollateralOnExercise(tokenAmount);
+            if (amountRequired < collateralAmount) {
+                return collateralAmount - amountRequired;
             }
         }
         return 0;
