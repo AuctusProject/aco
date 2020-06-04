@@ -32,11 +32,13 @@ class TradeOptionsList extends Component {
     if (orders && orders.length > 0) {
       sortedOrders = orders.filter(order => order.side === side).sort((o1, o2) => (side === 0) ? o1.price.comparedTo(o2.price) : o2.price.comparedTo(o1.price))
       bestOrder = sortedOrders.length > 0 ? sortedOrders[0] : null
-      bestOrder.totalSize = bestOrder.size
-      for (let index = 1; index < sortedOrders.length; index++) {
-        const order = sortedOrders[index];
-        if (order.price.eq(bestOrder.price)) {
-          bestOrder.totalSize = bestOrder.totalSize.plus(order.size)
+      if (bestOrder) {
+        bestOrder.totalSize = bestOrder.size
+        for (let index = 1; index < sortedOrders.length; index++) {
+          const order = sortedOrders[index];
+          if (order.price.eq(bestOrder.price)) {
+            bestOrder.totalSize = bestOrder.totalSize.plus(order.size)
+          }
         }
       }
     }
