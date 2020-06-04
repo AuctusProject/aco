@@ -1,7 +1,7 @@
 import './TradeMenu.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { fromDecimals, OPTION_TYPES } from '../util/constants'
+import { fromDecimals, OPTION_TYPES, groupBy } from '../util/constants'
 import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faEnvelope, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
@@ -13,16 +13,9 @@ class TradeMenu extends Component {
     this.props.onSelectOption(option)
   }
 
-  groupBy = (xs, key) => {
-    return xs.reduce(function(rv, x) {
-      (rv[x[key]] = rv[x[key]] || []).push(x);
-      return rv;
-    }, {});
-  }
-
   render() {
     var pair = this.props.selectedPair    
-    var grouppedOptions = this.props.options ? this.groupBy(this.props.options, "isCall") : {}
+    var grouppedOptions = this.props.options ? groupBy(this.props.options, "isCall") : {}
     var pairTitle = pair.underlyingSymbol + pair.strikeAssetSymbol
     return (
       <div className="trade-menu">

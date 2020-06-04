@@ -2,11 +2,13 @@
     background-color: #1a1a1a;
     width: 300px;
     height: calc(100vh - 62px);
+    overflow: auto;
 }
 
 .trade-menu-pair-balance-info {
     padding: 8px 15px;
     margin-bottom: 20px;
+    height: 158px;
 }
 
 .trade-menu-balance-title {
@@ -188,8 +190,9 @@
 .trade-menu .beta-alert {
     border: none;
     padding: 0;
-    font-size: 13px;
+    font-size: 12px;
     margin: 4px 0;
+    justify-content: left;
 }
 
 .trade-menu .beta-alert svg {

@@ -1,0 +1,88 @@
+.trade-options-list {
+    overflow: auto;
+}
+
+.trade-options-list .aco-table {
+    min-width: calc(100% - 80px);
+}
+
+.trade-options-list .aco-table thead:first-of-type .option-expiry-title {
+    margin-top: 0px;
+}
+
+.option-expiry-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+    margin-top: 32px;
+    font-size: 14px;
+}
+
+.option-expiry-title > div {
+    margin-left: 10px;
+    margin-right: 10px;
+    flex: 1;
+    text-align: center;
+}
+
+.option-expiry-title .option-badge {
+    margin: auto;
+}
+
+.aco-table thead th.strike-col {
+    background-color: #3C3C3C;;
+}
+
+.aco-table tbody td.strike-col {
+    background-color: #404040;
+    font-weight: 500;
+}
+
+.aco-table thead .option-expiry-title-cell {
+    background-color: #242424;
+    text-align: center;
+}
+
+.bid-price {
+    color: #0ec812;
+}
+
+.ask-price {
+    color: #ed2e2e;
+}
+
+.expiration-time {
+    display: flex;
+    flex-direction: column;
+}
+
+.expiration-from-now {
+    font-size: 12px;
+    font-weight: 300;
+}
+
+.size-col {
+    width: 60px;
+}
+
+.bid-col { 
+    width: 60px;
+}
+
+.ask-col { 
+    width: 60px;
+}
+
+.size-col { 
+    width: 60px;
+}
+
+.balance-col { 
+    width: 80px;
+}
+
+.strike-col { 
+    width: 80px;
+}

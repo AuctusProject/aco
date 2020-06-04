@@ -12,6 +12,8 @@ import { Erc20App } from './components/erc20/erc20_app';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
 import { history, store } from './store';
+import { Token } from './util/types';
+import { getAllOrdersAsUIOrdersWithoutOrdersInfo } from './services/orders';
 
 if (['development', 'production'].includes(process.env.NODE_ENV) && !window.localStorage.debug) {
     // Log only the app constant id to the console
@@ -36,6 +38,9 @@ declare global {
 window.TradeApp = {
     setNetwork: (networkId:number) => {
         setNetwork(networkId)
+    },
+    getAllOrdersAsUIOrdersWithoutOrdersInfo: (baseToken: Token, quoteToken: Token) => {
+        return getAllOrdersAsUIOrdersWithoutOrdersInfo(baseToken, quoteToken, null)
     },
     mount: (props: any) => {
         ReactModal.setAppElement('#trade-app');

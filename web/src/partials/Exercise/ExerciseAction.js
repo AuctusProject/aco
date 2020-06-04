@@ -366,9 +366,9 @@ class ExerciseAction extends Component {
     return <div className="exercise-action">
       {this.state.selectedTab === null && <Loading></Loading>}
       {this.state.selectedTab !== null && <>
-      <div class="btn-group pill-button-group">
-        <button onClick={this.selectTab(1)} type="button" class={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>
-        <button onClick={this.selectTab(2)} type="button" class={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>FLASH EXERCISE</button>
+      <div className="btn-group pill-button-group">
+        <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>
+        <button onClick={this.selectTab(2)} type="button" className={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>FLASH EXERCISE</button>
       </div>
       <div className="confirm-card">
         <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>
