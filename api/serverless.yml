@@ -1,0 +1,21 @@
+org: auctus
+app: aco
+service: aco
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: prod
+  region: us-east-1
+  environment: ${ssm:/aws/reference/secretsmanager/aco/lambda/${opt:stage, self:provider.stage}.env.json~true}
+  
+functions:
+  tokens:
+    handler: handler.tokens
+    timeout: 30
+    events:
+      - http:
+          path: /tokens
+          method: get
+          cors: true
+  
