@@ -71,10 +71,10 @@ class TradeOptionsList extends Component {
     var bestBid = this.getBestBid(option)
     var bestAsk = this.getBestAsk(option)
     return  <>
-      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? fromDecimals(bestBid.totalSize, option.strikeAssetInfo.decimals) : "-"}</td>
+      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? fromDecimals(bestBid.totalSize, option.underlyingInfo.decimals) : "-"}</td>
       <td className="bid-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? <span className="bid-price">{formatWithPrecision(bestBid.price)}</span> : "-"}</td>
       <td className="ask-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? <span className="ask-price">{formatWithPrecision(bestAsk.price)}</span> : "-"}</td>
-      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.totalSize, option.strikeAssetInfo.decimals) : "-"}</td>
+      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.totalSize, option.underlyingInfo.decimals) : "-"}</td>
       <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
     </>    
   }

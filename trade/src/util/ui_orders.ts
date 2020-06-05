@@ -65,9 +65,9 @@ const ordersToUIOrdersWithOrdersInfo = (
         const size = isSell ? order.makerAssetAmount : order.takerAssetAmount;
 
         const makerAssetAddress = assetDataUtils.decodeERC20AssetData(order.makerAssetData).tokenAddress;
-        const makerAssetTokenDecimals = makerAssetAddress === baseToken.address ? baseToken.decimals : quoteToken.decimals;
+        const makerAssetTokenDecimals = makerAssetAddress.toLowerCase() === baseToken.address.toLowerCase() ? baseToken.decimals : quoteToken.decimals;
         const makerAssetAmountInUnits = tokenAmountInUnitsToBigNumber(order.makerAssetAmount, makerAssetTokenDecimals);
-        const takerAssetTokenDecimals = makerAssetAddress === baseToken.address ? quoteToken.decimals : baseToken.decimals;
+        const takerAssetTokenDecimals = makerAssetAddress.toLowerCase() === baseToken.address.toLowerCase() ? quoteToken.decimals : baseToken.decimals;
         const takerAssetAmountInUnits = tokenAmountInUnitsToBigNumber(order.takerAssetAmount, takerAssetTokenDecimals);
 
         const filled = isSell
