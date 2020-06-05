@@ -31,7 +31,7 @@ class WriteStep1 extends Component {
   }
 
   getTypeTooltip = (optionType) => {
-    return <ReactTooltip class="option-type-tooltip" id={optionType.id + ".option-tooltip"}>
+    return <ReactTooltip className="option-type-tooltip" id={optionType.id + ".option-tooltip"}>
       {optionType.id === 1 && <div>Receive money today for your willingness to sell ETH at the strike price. This potential income-generating options strategy is referred to as the covered call.</div>}
       {optionType.id === 2 && <div>Receive money today for your willingness to buy ETH at the strike price. It may seem a little counter-intuitive, but you can write puts to buy ETH. This options strategy is referred to as the cash-secured put.</div>}
     </ReactTooltip>

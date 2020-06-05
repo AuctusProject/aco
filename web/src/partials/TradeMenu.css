@@ -2,11 +2,11 @@
     background-color: #1a1a1a;
     width: 300px;
     height: calc(100vh - 62px);
+    overflow: auto;
 }
 
 .trade-menu-pair-balance-info {
     padding: 8px 15px;
-    margin-bottom: 20px;
 }
 
 .trade-menu-balance-title {
@@ -26,13 +26,17 @@
     padding: 8px 0;
 }
 
+.pair-balance-item {
+    border-bottom: 1px solid #737373;
+}
+
 .pair-balance-item:last-child {
-    border-top: 1px solid #737373;
+    border-bottom: none;
 }
 
 .trade-menu-pair-symbol,
 .trade-menu-pair-balance {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 300;
     font-stretch: normal;
     font-style: normal;
@@ -64,17 +68,16 @@
     margin: 0 15px 8px;
 }
 
-.option-type-wrapper {
+.option-expirations-wrapper {
     border-bottom: solid 1px #000000;
     margin-bottom: 15px;
 }
 
-.option-type-wrapper:last-child {
+.option-expirations-wrapper:last-child {
     border-bottom: none;
 }
 
-.option-balance-item,
-.empty-options-message {
+.option-expiration-item {
     font-size: 11px;
     font-weight: 300;
     font-stretch: normal;
@@ -88,36 +91,22 @@
     position: relative;
 }
 
-.option-balance-item {
+.option-expiration-item {
     cursor: pointer;
 }
 
-.option-balance-item:hover,
-.option-balance-item.active {
+.option-expiration-item:hover,
+.option-expiration-item.active {
     color: white;
     background-color: #242424;
-}
-
-.option-balance {
-    min-width: 40px;
-    flex-wrap: nowrap;
-    flex-grow: 1;
-    flex-shrink: 0;
-    text-align: right;
-}
-
-.option-symbol {
-    max-width: 100%;
-    flex-grow: 1;
 }
 
 .trade-menu-content {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     align-items: center;
     width: 100%;
-    height: calc(100% - 178px);
+    min-height: calc(100% - 57px);
 }
 
 .trade-menu-content > div {
@@ -131,6 +120,7 @@
     align-items: stretch;
     width: 100%;
     padding-bottom: 14px;
+    height: 57px;
 }
 
 .trade-menu-footer-links {
@@ -188,8 +178,9 @@
 .trade-menu .beta-alert {
     border: none;
     padding: 0;
-    font-size: 13px;
+    font-size: 12px;
     margin: 4px 0;
+    justify-content: left;
 }
 
 .trade-menu .beta-alert svg {

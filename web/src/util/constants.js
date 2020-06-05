@@ -6,6 +6,7 @@ const negative1 = new Web3Utils.BN(-1);
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
 export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
+export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
@@ -180,6 +181,13 @@ export function getNumberWithSignal(number) {
     }
 }
 
+export function groupBy(xs, key) {
+    return xs.reduce(function(rv, x) {
+      (rv[x[key]] = rv[x[key]] || []).push(x);
+      return rv;
+    }, {});
+}
+
 export function sortBy(array, property) {
     return array.sort((a,b) => {
         return (a[property] === b[property])? 0 : ((a[property] > b[property]) ? -1 : 1);
@@ -190,4 +198,19 @@ export function sortByFn(array, propertyFn) {
     return array.sort((a,b) => {
         return (propertyFn(a) === propertyFn(b))? 0 : ((propertyFn(a) > propertyFn(b)) ? -1 : 1);
     })
+}
+
+export const getTimeToExpiry = (expiryTimeInSeconds) => {
+    let timeInSeconds = expiryTimeInSeconds - (new Date().getTime()/ONE_SECOND)
+    let seconds = timeInSeconds;
+    const days = Math.floor(seconds / (3600 * 24));
+    seconds -= days * 3600 * 24;
+    const hours = Math.floor(seconds / 3600);
+    seconds -= hours * 3600;
+    const minutes = Math.floor(seconds / 60);
+    return {
+        days,
+        hours,
+        minutes
+    };
 }

@@ -3,17 +3,17 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
 import TradeMenu from '../partials/TradeMenu'
-import { CHAIN_ID, formatDate, fromDecimals } from '../util/constants'
+import TradeOptionsList from '../partials/TradeOptionsList'
+import { CHAIN_ID } from '../util/constants'
 import { listOptions } from '../util/acoFactoryMethods'
-import { balanceOf, getBalanceOfAsset, getOptionFormattedPrice } from '../util/acoTokenMethods'
-import OptionBadge from '../partials/OptionBadge'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { balanceOf, getBalanceOfAsset } from '../util/acoTokenMethods'
+
+export const ALL_OPTIONS_KEY = "all"
 
 class Trade extends Component {
   constructor(props) {
     super(props)
-    this.state = {options:null, balances:{}}
+    this.state = {options:null, balances:{}, orderBooks:{}, selectedExpiryTime: ALL_OPTIONS_KEY}
   }
   
   componentDidMount = () => {
@@ -22,6 +22,7 @@ class Trade extends Component {
     }
     else {
       this.loadOptions()
+      window.TradeApp.setNetwork(parseInt(CHAIN_ID))
     }
   }
 
@@ -29,12 +30,15 @@ class Trade extends Component {
     if (this.props.selectedPair !== prevProps.selectedPair) {
       this.loadOptions()
     }
+    else if (this.props.accountToggle !== prevProps.accountToggle) {
+      this.loadOptionsData()
+    }
   }
 
   loadOptions = () => {
     if (this.props.selectedPair) {
       listOptions(this.props.selectedPair, null, true).then(options => {
-        this.setState({options: options}, this.loadBalances)
+        this.setState({options: options}, this.loadOptionsData)
         this.selectOption(options)
       })
     }
@@ -48,6 +52,27 @@ class Trade extends Component {
       }
     }
     this.onSelectOption(null)
+  }
+
+  loadOptionsData = () => {
+    this.loadBalances()
+    this.loadOrderBook()
+  }
+
+  loadOrderBook = () => {
+    for (let i = 0; i < this.state.options.length; i++) {
+      let option = this.state.options[i]
+      var marketDetails = this.getMarketDetails(option)
+      var baseToken = marketDetails.baseToken
+      var quoteToken = marketDetails.quoteToken
+      baseToken.address = baseToken.addresses[CHAIN_ID]
+      quoteToken.address = quoteToken.addresses[CHAIN_ID]
+      window.TradeApp.getAllOrdersAsUIOrders(baseToken, quoteToken).then(orderBook => {
+        var orderBooks = this.state.orderBooks
+        orderBooks[option.acoToken] = orderBook
+        this.setState({orderBooks: orderBooks})
+      })
+    }
   }
 
   loadBalances = () => {
@@ -84,17 +109,21 @@ class Trade extends Component {
   }
 
   onSelectOption = (option) => {
-    this.setState({selectedOption: option}, () => {
+    this.setState({selectedOption: option, selectedExpiryTime: option ? null : ALL_OPTIONS_KEY}, () => {
       if(option != null) {
         this.props.history.push('/trade/'+option.acoToken)
         window.TradeApp.unmount()
-        window.TradeApp.setNetwork(parseInt(CHAIN_ID))
         window.TradeApp.mount(this.getMarketDetails(option))
       }
       else {
         this.props.history.push('/trade')
       }
-    })    
+    })
+  }
+
+  onSelectExpiryTime = (expiryTime) => {
+    this.setState({selectedExpiryTime: expiryTime, selectedOption: null})
+    this.props.history.push('/trade')
   }
 
   getMarketDetails = (selectedOption) => {
@@ -120,48 +149,11 @@ class Trade extends Component {
   }
 
   render() {
-    var pair = this.props.selectedPair
-    var pairTitle = pair ? (pair.underlyingSymbol + pair.strikeAssetSymbol) : ""    
     return <div className="trade-page">
       {this.props.selectedPair && this.canLoad() && 
       <>
-        <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances}/>
-        {!this.state.selectedOption && 
-        <div className="trade-options-list py-5">          
-          <div className="page-title">{pairTitle} options</div>
-          <table className="aco-table mx-auto">
-            <thead>
-              <tr>
-                <th>TYPE</th>
-                <th>SYMBOL</th>
-                <th>STRIKE</th>
-                <th>EXPIRATION</th>
-                <th>BALANCE</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {(!this.state.options || this.state.options.length === 0) && 
-                <tr>
-                  {!this.state.options && <td colSpan="6">Loading...</td>}
-                  {this.state.options && this.state.options.length === 0 && <td colSpan="6">No options for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
-                </tr>
-              }
-              {this.state.options && this.state.options.map(option => 
-              <tr key={option.acoToken}>
-                <td><OptionBadge isCall={option.isCall}></OptionBadge></td>
-                <td>{option.acoTokenInfo.symbol}</td>
-                <td>{getOptionFormattedPrice(option)}</td>
-                <td>{formatDate(option.expiryTime)}</td>
-                <td>{this.state.balances[option.acoToken] ? fromDecimals(this.state.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
-                <td>
-                  <div className="action-btn" onClick={() => this.onSelectOption(option)}>TRADE</div>
-                </td>
-              </tr>)}
-            </tbody>
-          </table>   
-        </div>
-        }
+        <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
+        {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
         {this.state.selectedOption && <div id="trade-app"></div>}
       </>}
     </div>

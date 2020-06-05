@@ -1,0 +1,14 @@
+{
+    "name": "aco-serverless",
+    "version": "0.0.1",
+    "main": "handler.js",
+    "dependencies": {
+        "axios": "^0.19.2",
+        "ethereumjs-tx": "^2.1.2",
+        "nodemailer": "^6.4.6",
+        "web3-utils": "^1.2.6"
+    },
+    "devDependencies": {
+        "serverless": "^1.72.0"
+    }
+}
