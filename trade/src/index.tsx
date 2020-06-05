@@ -12,8 +12,9 @@ import { Erc20App } from './components/erc20/erc20_app';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
 import { history, store } from './store';
+import { initWalletBeginCommon } from './store/blockchain/actions';
 import { Token } from './util/types';
-import { getAllOrdersAsUIOrdersWithoutOrdersInfo } from './services/orders';
+import { getAllOrdersAsUIOrdersWithoutOrdersInfo, getAllOrdersAsUIOrders } from './services/orders';
 
 if (['development', 'production'].includes(process.env.NODE_ENV) && !window.localStorage.debug) {
     // Log only the app constant id to the console
@@ -41,6 +42,10 @@ window.TradeApp = {
     },
     getAllOrdersAsUIOrdersWithoutOrdersInfo: (baseToken: Token, quoteToken: Token) => {
         return getAllOrdersAsUIOrdersWithoutOrdersInfo(baseToken, quoteToken, null)
+    },
+    getAllOrdersAsUIOrders: async (baseToken: Token, quoteToken: Token) => {
+        await store.dispatch(initWalletBeginCommon() as any)
+        return getAllOrdersAsUIOrders(baseToken, quoteToken, null)
     },
     mount: (props: any) => {
         ReactModal.setAppElement('#trade-app');

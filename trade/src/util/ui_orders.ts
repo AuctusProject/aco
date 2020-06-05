@@ -4,13 +4,12 @@ import { OrderInfo } from '@0x/types';
 
 import { UI_DECIMALS_DISPLAYED_PRICE_ETH } from '../common/constants';
 
-import { getKnownTokens } from './known_tokens';
 import { tokenAmountInUnitsToBigNumber } from './tokens';
 import { OrderBookItem, OrderSide, Token, UIOrder } from './types';
 
-export const ordersToUIOrders = (orders: SignedOrder[], baseToken: Token, ordersInfo?: OrderInfo[]): UIOrder[] => {
-    if (ordersInfo) {
-        return ordersToUIOrdersWithOrdersInfo(orders, ordersInfo, baseToken);
+export const ordersToUIOrders = (orders: SignedOrder[], baseToken: Token, ordersInfo?: OrderInfo[], quoteToken?: Token): UIOrder[] => {
+    if (ordersInfo && quoteToken) {
+        return ordersToUIOrdersWithOrdersInfo(orders, ordersInfo, baseToken, quoteToken);
     } else {
         return ordersToUIOrdersWithoutOrderInfo(orders, baseToken);
     }
@@ -46,6 +45,7 @@ const ordersToUIOrdersWithOrdersInfo = (
     orders: SignedOrder[],
     ordersInfo: OrderInfo[],
     baseToken: Token,
+    quoteToken: Token
 ): UIOrder[] => {
     if (ordersInfo.length !== orders.length) {
         throw new Error(
@@ -65,11 +65,9 @@ const ordersToUIOrdersWithOrdersInfo = (
         const size = isSell ? order.makerAssetAmount : order.takerAssetAmount;
 
         const makerAssetAddress = assetDataUtils.decodeERC20AssetData(order.makerAssetData).tokenAddress;
-        const makerAssetTokenDecimals = getKnownTokens().getTokenByAddress(makerAssetAddress).decimals;
+        const makerAssetTokenDecimals = makerAssetAddress === baseToken.address ? baseToken.decimals : quoteToken.decimals;
         const makerAssetAmountInUnits = tokenAmountInUnitsToBigNumber(order.makerAssetAmount, makerAssetTokenDecimals);
-
-        const takerAssetAddress = assetDataUtils.decodeERC20AssetData(order.takerAssetData).tokenAddress;
-        const takerAssetTokenDecimals = getKnownTokens().getTokenByAddress(takerAssetAddress).decimals;
+        const takerAssetTokenDecimals = makerAssetAddress === baseToken.address ? quoteToken.decimals : baseToken.decimals;
         const takerAssetAmountInUnits = tokenAmountInUnitsToBigNumber(order.takerAssetAmount, takerAssetTokenDecimals);
 
         const filled = isSell
