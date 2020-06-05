@@ -5,6 +5,7 @@ import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry
 import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'
+import { ALL_OPTIONS_KEY } from '../pages/Trade'
 
 class TradeOptionsList extends Component {
   getOptionsGrouppedByDateAndPrice = () => {
@@ -100,7 +101,6 @@ class TradeOptionsList extends Component {
     var grouppedOptions = this.getOptionsGrouppedByDateAndPrice()
     var pairTitle = pair.underlyingSymbol + pair.strikeAssetSymbol
     return (<div className="trade-options-list py-5">
-          <div className="page-title">{pairTitle} options</div>
           <table className="aco-table mx-auto">
             {this.props.options && this.props.options.length === 0 && 
               <thead>
@@ -112,7 +112,8 @@ class TradeOptionsList extends Component {
               </thead>
             }
             {grouppedOptions && Object.keys(grouppedOptions).map(expiryTime => (
-              <>
+              (this.props.selectedExpiryTime === ALL_OPTIONS_KEY || this.props.selectedExpiryTime === expiryTime) &&
+              <React.Fragment key={expiryTime}>
                 <thead>
                   <tr>
                     <td className="option-expiry-title-cell" colSpan="11">
@@ -150,7 +151,7 @@ class TradeOptionsList extends Component {
                     {this.optionRowInfo(this.getOptionFromType(grouppedOptions[expiryTime][strike], false))}
                   </tr>)}
                 </tbody>
-              </>
+              </React.Fragment>
           ))}
           </table>
         </div>)

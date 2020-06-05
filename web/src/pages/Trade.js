@@ -8,11 +8,12 @@ import { CHAIN_ID } from '../util/constants'
 import { listOptions } from '../util/acoFactoryMethods'
 import { balanceOf, getBalanceOfAsset } from '../util/acoTokenMethods'
 
+export const ALL_OPTIONS_KEY = "all"
 
 class Trade extends Component {
   constructor(props) {
     super(props)
-    this.state = {options:null, balances:{}, orderBooks:{}}
+    this.state = {options:null, balances:{}, orderBooks:{}, selectedExpiryTime: ALL_OPTIONS_KEY}
   }
   
   componentDidMount = () => {
@@ -108,7 +109,7 @@ class Trade extends Component {
   }
 
   onSelectOption = (option) => {
-    this.setState({selectedOption: option}, () => {
+    this.setState({selectedOption: option, selectedExpiryTime: option ? null : ALL_OPTIONS_KEY}, () => {
       if(option != null) {
         this.props.history.push('/trade/'+option.acoToken)
         window.TradeApp.unmount()
@@ -117,7 +118,12 @@ class Trade extends Component {
       else {
         this.props.history.push('/trade')
       }
-    })    
+    })
+  }
+
+  onSelectExpiryTime = (expiryTime) => {
+    this.setState({selectedExpiryTime: expiryTime, selectedOption: null})
+    this.props.history.push('/trade')
   }
 
   getMarketDetails = (selectedOption) => {
@@ -146,8 +152,8 @@ class Trade extends Component {
     return <div className="trade-page">
       {this.props.selectedPair && this.canLoad() && 
       <>
-        <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances}/>
-        {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
+        <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
+        {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
         {this.state.selectedOption && <div id="trade-app"></div>}
       </>}
     </div>
