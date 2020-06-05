@@ -288,7 +288,7 @@ export const initWallet: ThunkCreator<Promise<any>> = () => {
     };
 };
 
-const initWalletBeginCommon: ThunkCreator<Promise<any>> = () => {
+export const initWalletBeginCommon: ThunkCreator<Promise<any>> = () => {
     return async (dispatch, getState, { initializeWeb3Wrapper }) => {
         const web3Wrapper = await initializeWeb3Wrapper();
 

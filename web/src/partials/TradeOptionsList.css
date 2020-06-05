@@ -10,6 +10,11 @@
     margin-top: 0px;
 }
 
+.trade-options-list .aco-table td,
+.trade-options-list .aco-table th {
+    padding: 0 6px;
+}
+
 .option-expiry-title {
     display: flex;
     flex-direction: row;

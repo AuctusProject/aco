@@ -29,6 +29,9 @@ class Trade extends Component {
     if (this.props.selectedPair !== prevProps.selectedPair) {
       this.loadOptions()
     }
+    else if (this.props.accountToggle !== prevProps.accountToggle) {
+      this.loadOptionsData()
+    }
   }
 
   loadOptions = () => {
@@ -63,7 +66,7 @@ class Trade extends Component {
       var quoteToken = marketDetails.quoteToken
       baseToken.address = baseToken.addresses[CHAIN_ID]
       quoteToken.address = quoteToken.addresses[CHAIN_ID]
-      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo(baseToken, quoteToken).then(orderBook => {
+      window.TradeApp.getAllOrdersAsUIOrders(baseToken, quoteToken).then(orderBook => {
         var orderBooks = this.state.orderBooks
         orderBooks[option.acoToken] = orderBook
         this.setState({orderBooks: orderBooks})

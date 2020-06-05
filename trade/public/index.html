@@ -46,6 +46,21 @@
                 "address":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"
               }).then(r => console.log(r))
 
+            window.TradeApp.getAllOrdersAsUIOrders({
+                "decimals":18,
+                "symbol":"ACO ETH-10T18D-P-10JUL20-0000UTC",
+                "name":"ACO ETH-10T18D-P-10JUL20-0000UTC",
+                "expiryTime":"1590566400",
+                "address":"0x670db9A251542C5bC4b001E77c254577438Fea3C"
+              },
+              {
+                "decimals":18,
+                "symbol":"T18D",
+                "name":"T18D",
+                "expiryTime":null,
+                "address":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"
+              }).then(r => console.log(r))
+
             window.TradeApp.mount(
               {"baseToken":{"decimals":18,"symbol":"ACO ETH-10T18D-P-10JUL20-0000UTC",
               "name":"ACO ETH-10T18D-P-10JUL20-0000UTC","icon":null,"primaryColor":null,

@@ -39,7 +39,7 @@ export const getAllOrdersAsUIOrders = async (baseToken: Token, quoteToken: Token
         const [ordersInfo] = await contractWrappers.devUtils
             .getOrderRelevantStates(orders, orders.map(o => o.signature))
             .callAsync();
-        return ordersToUIOrders(orders, baseToken, ordersInfo);
+        return ordersToUIOrders(orders, baseToken, ordersInfo, quoteToken);
     } catch (err) {
         logger.error(`There was an error getting the orders' info from exchange.`, err);
         throw err;
@@ -69,7 +69,7 @@ export const getUserOrdersAsUIOrders = async (baseToken: Token, quoteToken: Toke
         const [ordersInfo] = await contractWrappers.devUtils
             .getOrderRelevantStates(myOrders, myOrders.map(o => o.signature))
             .callAsync();
-        return ordersToUIOrders(myOrders, baseToken, ordersInfo);
+        return ordersToUIOrders(myOrders, baseToken, ordersInfo, quoteToken);
     } catch (err) {
         logger.error(`There was an error getting the orders' info from exchange.`, err);
         throw err;
