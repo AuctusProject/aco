@@ -161,8 +161,8 @@ class Home extends Component {
         </nav>
         <div className="container">
           <div className="head">
-            <h1>A PROTOCOL FOR<br />DECENTRALIZED OPTIONS</h1>
-            <h2>Trade, mint and exercise call or put options, in a trustless and decentralized manner without having to rely on any third party.</h2>
+            <h1>TRADE ETHEREUM<br/>CALL &amp; PUT OPTIONS</h1>
+            <h2>No sign up required. Start trading non-custodial options immediately.</h2>
             <div>
               <div className="home-btn solid-green mr-0 mr-sm-4" onClick={() => this.onAction("trade")}>
                 <div><TradeIcon />TRADE OPTIONS</div>
@@ -197,10 +197,10 @@ class Home extends Component {
               </div>
               <span className={"feature-division d-none d-lg-block" + this.state.whyShowAnimation}></span>
               <div className={"home-feature trustless-exercise m-3 m-lg-0" + this.state.whyAnimation}>
-                <span><img src="/images/trustless-exercise.png" alt="Trustless Exercise" /></span>
+                <span><img src="/images/flash-exercise.png" alt="Flash Exercise" /></span>
                 <div>
-                  <strong>Trustless Exercise</strong>
-                  <div>At any time before expiration, holders can exercise options at their discretion.</div>
+                  <strong>Flash Exercise</strong>
+                  <div>Exercise options using Uniswap V2 Flash Swaps.</div>
                 </div>
               </div>
               <span className={"feature-division d-none d-lg-block" + this.state.whyShowAnimation}></span>
@@ -223,29 +223,29 @@ class Home extends Component {
             <div className="row">
               <div className={"home-case col-12 col-lg-6 " + this.state.case1class} onClick={() => this.onCase(1)} onMouseEnter={() => this.hoverCase(1)} onMouseLeave={() => this.leaveCase(1)}>
                 <div className={this.state.case1Animation} ref={(ref) => this.case1Ref = ref}>
-                  <strong>BUY CALL OPTIONS</strong>
-                  <div>Taking a call option can give you time to decide if you want to buy the crypto asset at a specific price.</div>
+                  <strong>BUY ETH CALL OPTIONS</strong>
+                  <div><span>Take advantage of leverage</span>Determine your risk going into a trade, and control a larger position size with fewer dollars.</div>
                   <span>Learn more<FontAwesomeIcon icon={faArrowRight} /></span>
                 </div>
               </div>
               <div className={"home-case col-12 col-lg-6 " + this.state.case2class} onClick={() => this.onCase(2)} onMouseEnter={() => this.hoverCase(2)} onMouseLeave={() => this.leaveCase(2)}>
                 <div className={this.state.case1Animation}>
-                  <strong>BUY PUT OPTIONS</strong>
-                  <div>Taking a call option can give you time to decide if you want to buy the crypto asset at a specific price.</div>
+                  <strong>BUY ETH PUT OPTIONS</strong>
+                  <div><span>Hedge ETH risk</span>Protect your ETH position against negative moves in the market without limiting the upside potential.</div>
                   <span>Learn more<FontAwesomeIcon icon={faArrowRight} /></span>
                 </div>
               </div>
               <div className={"home-case col-12 col-lg-6 " + this.state.case3class} onClick={() => this.onCase(3)} onMouseEnter={() => this.hoverCase(3)} onMouseLeave={() => this.leaveCase(3)}>
                 <div className={this.state.case2Animation} ref={(ref) => this.case2Ref = ref}>
-                  <strong>WRITE COVERED CALL OPTIONS</strong>
-                  <div><span>Earn Premiums on ETH</span>Earn income today for being willing to assume the obligation of selling your crypto at a specific price.</div>
+                  <strong>WRITE ETH CALL OPTIONS</strong>
+                  <div><span>Earn Income on ETH</span>Receive money today for your willingness to sell your ETH at a higher price.</div>
                   <span>Learn more<FontAwesomeIcon icon={faArrowRight} /></span>
                 </div>
               </div>
               <div className={"home-case col-12 col-lg-6 " + this.state.case4class} onClick={() => this.onCase(4)} onMouseEnter={() => this.hoverCase(4)} onMouseLeave={() => this.leaveCase(4)}>
                 <div className={this.state.case2Animation}>
-                  <strong>WRITE SECURED PUT OPTIONS</strong>
-                  <div><span>Earn Premiums on USDC</span>Earn income today for being willing to assume the obligation of buying crypto at a specific price.</div>
+                  <strong>WRITE ETH PUT OPTIONS</strong>
+                  <div><span>Earn Income on USDC</span>Generate some additional income while waiting to buy ETH at a price below the current.</div>
                   <span>Learn more<FontAwesomeIcon icon={faArrowRight} /></span>
                 </div>
               </div>
