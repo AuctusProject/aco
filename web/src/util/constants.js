@@ -214,3 +214,27 @@ export const getTimeToExpiry = (expiryTimeInSeconds) => {
         minutes
     };
 }
+
+
+export const getMarketDetails = (selectedOption) => {
+    return {
+        baseToken: {
+            "decimals": parseInt(selectedOption.underlyingInfo.decimals),
+            "symbol": selectedOption.acoTokenInfo.symbol,
+            "name": selectedOption.acoTokenInfo.symbol,
+            "icon": null,
+            "primaryColor": null,
+            "expiryTime": selectedOption.expiryTime,
+            "addresses": { [CHAIN_ID]: selectedOption.acoToken },
+        },
+        quoteToken: {
+            "decimals": parseInt(selectedOption.strikeAssetInfo.decimals),
+            "symbol": selectedOption.strikeAssetInfo.symbol,
+            "name": selectedOption.strikeAssetInfo.symbol,
+            "icon": null,
+            "primaryColor": null,
+            "expiryTime": null,
+            "addresses": { [CHAIN_ID]: selectedOption.strikeAsset },
+        }
+    }
+}

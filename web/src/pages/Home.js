@@ -2,11 +2,16 @@ import './Home.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { getNetworkName, CHAIN_ID } from '../util/constants'
+import { groupBy, getNetworkName, CHAIN_ID, getMarketDetails, formatDate } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { error } from '../util/sweetalert'
 import TradeIcon from '../partials/Util/TradeIcon'
+import { getTokensList } from '../util/acoApi'
+import { getPairsFromOptions } from '../util/acoFactoryMethods'
+import PairDropdown from '../partials/PairDropdown'
+import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeOptionsList'
+import { ALL_OPTIONS_KEY } from './Trade'
 
 class Home extends Component {
 
@@ -14,6 +19,10 @@ class Home extends Component {
     super(props)
     this.isMobile = window.innerWidth < 768
     this.state = {
+      pairs: null,
+      options: null,
+      orderBooks: {},
+      selectedExpiryTime: ALL_OPTIONS_KEY,
       whyAnimation: (this.isMobile ? "" : " unshown "),
       whyShowAnimation: (this.isMobile ? "" : " unshown "),
       case1Animation: (this.isMobile ? "" : " unshown "),
@@ -32,10 +41,14 @@ class Home extends Component {
   }
 
   componentDidMount = () => {
+    if (window.location.pathname !== "/") {
+      this.props.history.replace('/')
+    }
     if (!this.isMobile) {
       document.addEventListener("scroll", () => this.setAnimations(), false)
       setTimeout(() => this.setAnimations(), 10)
     }
+    this.loadAvailableOptions()
   }
 
   setAnimations = () => {
@@ -125,13 +138,60 @@ class Home extends Component {
     }
   }
 
-  componentDidMount() {
-    if (window.location.pathname !== "/") {
-      this.props.history.replace('/')
+  loadAvailableOptions = () => {
+    getTokensList().then(result => {
+      var pairs = getPairsFromOptions(result)
+      this.setState({options: result, pairs: pairs}, this.loadOrderBook)
+    })
+  }
+
+  onPairSelected = (selectedPair) => {
+    this.props.onPairSelected(selectedPair)
+    this.setState({selectedExpiryTime: ALL_OPTIONS_KEY})
+  }
+
+  loadOrderBook = () => {
+    for (let i = 0; i < this.state.options.length; i++) {
+      let option = this.state.options[i]
+      var marketDetails = getMarketDetails(option)
+      var baseToken = marketDetails.baseToken
+      var quoteToken = marketDetails.quoteToken
+      baseToken.address = baseToken.addresses[CHAIN_ID]
+      quoteToken.address = quoteToken.addresses[CHAIN_ID]
+      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo(baseToken, quoteToken).then(orderBook => {
+        var orderBooks = this.state.orderBooks
+        orderBooks[option.acoToken] = orderBook
+        this.setState({orderBooks: orderBooks})
+      })
     }
   }
 
+  onSelectOption = (option) => {
+    this.props.history.push('/trade/'+option.acoToken)
+  }
+
+  onSelectMintOption = (option) => {
+    this.props.history.push('/mint/'+option.acoToken)
+  }
+  
+  getOptionsFromPair = () => {
+    return this.state.options && this.props.selectedPair ? this.state.options.filter(o => 
+      o.underlyingInfo.symbol === this.props.selectedPair.underlyingSymbol && 
+      o.strikeAssetInfo.symbol === this.props.selectedPair.strikeAssetSymbol) : []
+  }
+
+  getExpirations = () => {
+    var filteredOptions = this.getOptionsFromPair()
+    var grouppedOptions = filteredOptions ? groupBy(filteredOptions, "expiryTime") : {}
+    return Object.keys(grouppedOptions)
+  }
+
+  selectExpiryTime = (selectedExpiryTime) => {
+    this.setState({selectedExpiryTime: selectedExpiryTime})
+  }
+
   render() {
+    var filteredOptions = this.getOptionsFromPair()
     return (
     <div className="home">
       <section id="head">
@@ -213,6 +273,25 @@ class Home extends Component {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+      <section id="available-options">
+        <div className="container">
+          <h2 className="home-title">Available Options</h2>
+          <ul className="pair-dropdown-wrapper"><PairDropdown {...this.props} pairs={this.state.pairs} selectedPair={this.props.selectedPair} onPairSelected={this.onPairSelected} ></PairDropdown></ul>
+          {this.props.selectedPair && <div className="expiration-options">
+            <div className={"expiration-option " + (this.state.selectedExpiryTime === ALL_OPTIONS_KEY ? "active" : "")} onClick={() => this.selectExpiryTime(ALL_OPTIONS_KEY)}>ALL</div>
+            {this.getExpirations().map(expiration => <div className={"expiration-option " + (this.state.selectedExpiryTime === expiration ? "active" : "")} onClick={() => this.selectExpiryTime(expiration)}>{formatDate(expiration)}</div>)}
+          </div>}
+          {this.props.selectedPair && <TradeOptionsList 
+            {...this.props} 
+            mode={TradeOptionsListLayoutMode.Home} 
+            selectedPair={this.props.selectedPair} 
+            selectedExpiryTime={this.state.selectedExpiryTime} 
+            onSelectOption={this.onSelectOption} 
+            onSelectMintOption={this.onSelectMintOption} 
+            options={filteredOptions}
+            orderBooks={this.state.orderBooks}/>}
         </div>
       </section>
       <section id="use-cases">

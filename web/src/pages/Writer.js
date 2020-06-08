@@ -11,16 +11,33 @@ import Burn from '../partials/Write/Burn'
 import Loading from '../partials/Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { getOption } from '../util/acoFactoryMethods'
 
 class Writer extends Component {
   constructor() {
     super()
-    this.state = { currentStep: 1}
+    this.state = { currentStep: 0}
   }
 
   componentDidMount = () => {
     if (!this.canLoad()) {
       this.props.history.push('/')
+    }
+    else {
+      var tokenAddress = this.props.match.params.tokenAddress && this.props.match.params.tokenAddress.toLowerCase()
+      if (tokenAddress) {
+        getOption(tokenAddress).then(option => {
+          if (option) {
+            this.setState({optionType: option.isCall ? 1 : 2, option: option, currentStep: 3})
+          }
+          else {
+            this.setState({currentStep: 1})
+          }
+        })
+      }
+      else {
+        this.setState({currentStep: 1})
+      }
     }
   }
 

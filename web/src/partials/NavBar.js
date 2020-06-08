@@ -7,12 +7,21 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 import { etherscanUrl, ellipsisCenterOfUsername } from '../util/constants'
 import PairDropdown from './PairDropdown'
+import { listPairs } from '../util/acoFactoryMethods'
 
 class NavBar extends Component {
   constructor(props){
     super(props)
 		this.state = {
+      pairs: null
     }
+  }
+
+  componentDidMount = () => {
+    listPairs().then(pairs => {
+      this.setState({pairs:pairs})
+      this.props.onPairsLoaded(pairs)
+    })
   }
 
   render() {
@@ -36,7 +45,7 @@ class NavBar extends Component {
                 <NavLink className="nav-item link-nav" to="/exercise">Exercise</NavLink>
               </ul>
               <ul className="navbar-nav">
-                <PairDropdown {...this.props}></PairDropdown>
+                <PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown>
               </ul>
               <ul className="navbar-nav">
                 {username &&
