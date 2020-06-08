@@ -18,6 +18,13 @@ const setError = (statusCode, error) => {
 
 module.exports.tokens = (event, context, callback) => {
   web3Interface.acoTokens().then((response) => {
-    callback(null, {statusCode: 200, body: JSON.stringify(response)});
+    callback(null, {
+      statusCode: 200, 
+      headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Credentials": true
+      }, 
+      body: JSON.stringify(response)
+    });
   }).catch((err) => setError(null, err).then(error => callback(null, error)));
 };
