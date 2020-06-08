@@ -6,8 +6,6 @@ import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
-import { getOptionFormattedPrice } from '../util/acoTokenMethods'
-import { toDecimal } from 'web3-utils'
 
 export const TradeOptionsListLayoutMode = {
   Trade: 0,
