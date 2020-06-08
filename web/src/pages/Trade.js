@@ -3,8 +3,8 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
 import TradeMenu from '../partials/TradeMenu'
-import TradeOptionsList from '../partials/TradeOptionsList'
-import { CHAIN_ID } from '../util/constants'
+import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeOptionsList'
+import { CHAIN_ID, getMarketDetails } from '../util/constants'
 import { listOptions } from '../util/acoFactoryMethods'
 import { balanceOf, getBalanceOfAsset } from '../util/acoTokenMethods'
 
@@ -33,6 +33,9 @@ class Trade extends Component {
     else if (this.props.accountToggle !== prevProps.accountToggle) {
       this.loadOptionsData()
     }
+    else if (!this.props.match.params.tokenAddress && prevProps.match.params.tokenAddress) {
+      this.onSelectOption(null)
+    }
   }
 
   loadOptions = () => {
@@ -45,8 +48,9 @@ class Trade extends Component {
   }
 
   selectOption = (options) => {
+    var tokenAddress = this.props.match.params.tokenAddress && this.props.match.params.tokenAddress.toLowerCase()
     for (let i = 0; i < options.length; i++) {
-      if (options[i].acoToken === this.props.match.params.tokenAddress) {
+      if (options[i].acoToken.toLowerCase() === tokenAddress) {
         this.onSelectOption(options[i])
         return;
       }
@@ -62,7 +66,7 @@ class Trade extends Component {
   loadOrderBook = () => {
     for (let i = 0; i < this.state.options.length; i++) {
       let option = this.state.options[i]
-      var marketDetails = this.getMarketDetails(option)
+      var marketDetails = getMarketDetails(option)
       var baseToken = marketDetails.baseToken
       var quoteToken = marketDetails.quoteToken
       baseToken.address = baseToken.addresses[CHAIN_ID]
@@ -113,7 +117,7 @@ class Trade extends Component {
       if(option != null) {
         this.props.history.push('/trade/'+option.acoToken)
         window.TradeApp.unmount()
-        window.TradeApp.mount(this.getMarketDetails(option))
+        window.TradeApp.mount(getMarketDetails(option))
       }
       else {
         this.props.history.push('/trade')
@@ -126,34 +130,12 @@ class Trade extends Component {
     this.props.history.push('/trade')
   }
 
-  getMarketDetails = (selectedOption) => {
-    return {baseToken: {
-        "decimals": parseInt(selectedOption.underlyingInfo.decimals),
-        "symbol": selectedOption.acoTokenInfo.symbol,
-        "name":  selectedOption.acoTokenInfo.name,
-        "icon": null,
-        "primaryColor": null,
-        "expiryTime": selectedOption.expiryTime,
-        "addresses": {[CHAIN_ID]:selectedOption.acoTokenInfo.address},
-      },
-      quoteToken: {
-        "decimals": parseInt(selectedOption.strikeAssetInfo.decimals),
-        "symbol": selectedOption.strikeAssetInfo.symbol,
-        "name":  selectedOption.strikeAssetInfo.name,
-        "icon": null,
-        "primaryColor": null,
-        "expiryTime": null,
-        "addresses": {[CHAIN_ID]:selectedOption.strikeAssetInfo.address},
-      }
-    }
-  }
-
   render() {
     return <div className="trade-page">
       {this.props.selectedPair && this.canLoad() && 
       <>
         <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
-        {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
+        {!this.state.selectedOption && <TradeOptionsList {...this.props} mode={TradeOptionsListLayoutMode.Trade} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
         <div id="trade-app" className={!this.state.selectedOption ? "d-none" : ""}></div>
       </>}
     </div>

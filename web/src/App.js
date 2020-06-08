@@ -99,7 +99,7 @@ class App extends Component {
                   render={ routeProps => <Terms {...routeProps} /> }
                 />
                 <Route 
-                  path={`/mint/`}
+                  path={`/mint/:tokenAddress?`}
                   render={ routeProps => <Writer 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -127,6 +127,8 @@ class App extends Component {
                   exact={true}
                   render={ routeProps => <Home
                     {...routeProps}
+                    onPairSelected={this.onPairSelected} 
+                    selectedPair={this.state.selectedPair}
                     signIn={this.showSignInModal}
                   /> }
                 />

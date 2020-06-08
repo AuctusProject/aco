@@ -3,7 +3,9 @@
 }
 
 .trade-options-list .aco-table {
-    min-width: calc(100% - 80px);
+    width: calc(100% - 80px);
+    min-width: 960px;
+    overflow-x: auto;
 }
 
 .trade-options-list .aco-table thead:first-of-type .option-expiry-title {
@@ -90,4 +92,12 @@
 
 .strike-col { 
     width: 80px;
+}
+
+.action-col {
+    width: 190px;
+}
+
+.action-col .action-btn:first-child{
+    margin-right: 10px;
 }

@@ -77,28 +77,32 @@ function fillTokensInformations(options, assetsAddresses) {
     })
 }
 
-
 export const listPairs = () => {
     return new Promise((resolve, reject) => {
         getAllAvailableOptions().then(options => {
-            var pairs = {}
-            for (let i = 0; i < options.length; i++) {
-                const option = options[i];
-                if (!pairs[option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol]) {
-                    pairs[option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol] = {
-                        id: option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol,
-                        underlying: option.underlying,
-                        underlyingInfo: option.underlyingInfo,
-                        underlyingSymbol: option.underlyingInfo.symbol,
-                        strikeAsset: option.strikeAsset,
-                        strikeAssetInfo: option.strikeAssetInfo,
-                        strikeAssetSymbol: option.strikeAssetInfo.symbol
-                    }
-                }
-            }
-            resolve(Object.values(pairs))
+            var pairs = getPairsFromOptions(options)
+            resolve(pairs)
         })
     })
+}
+
+export const getPairsFromOptions = (options) => {
+    var pairs = {}
+    for (let i = 0; i < options.length; i++) {
+        const option = options[i];
+        if (!pairs[option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol]) {
+            pairs[option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol] = {
+                id: option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol,
+                underlying: option.underlying,
+                underlyingInfo: option.underlyingInfo,
+                underlyingSymbol: option.underlyingInfo.symbol,
+                strikeAsset: option.strikeAsset,
+                strikeAssetInfo: option.strikeAssetInfo,
+                strikeAssetSymbol: option.strikeAssetInfo.symbol
+            }
+        }
+    }
+    return Object.values(pairs);
 }
 
 export const listOptions = (pair, optionType = null, removeExpired = false) => {
@@ -120,14 +124,31 @@ export const listOptions = (pair, optionType = null, removeExpired = false) => {
     })
 }
 
+
+export const getOption = (address, removeExpired=true) => {
+    return new Promise((resolve, reject) => {
+        getAllAvailableOptions().then(availableOptions => {
+            for (let i = 0; i < availableOptions.length; i++) {
+                const option = availableOptions[i];
+                if (option.acoToken.toLowerCase() === address.toLowerCase() && 
+                    (!removeExpired || ((option.expiryTime * ONE_SECOND) > new Date().getTime()))) {
+                    resolve(option)
+                    return
+                }
+            }
+            resolve(null)
+        })
+    })
+}
+
 export const getOptionPairIdFromAddress = (optionAddress) => {
     return new Promise((resolve, reject) => {
         getAllAvailableOptions().then(availableOptions => {
             for (let i = 0; i < availableOptions.length; i++) {
                 const option = availableOptions[i];
-                if (option.acoToken === optionAddress) {
+                if (option.acoToken.toLowerCase() === optionAddress.toLowerCase()) {
                     resolve(option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol)
-                    return;
+                    return
                 }
             }
             resolve(null)

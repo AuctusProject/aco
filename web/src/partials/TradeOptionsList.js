@@ -7,7 +7,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
 
+export const TradeOptionsListLayoutMode = {
+  Trade: 0,
+  Home: 1
+}
+
 class TradeOptionsList extends Component {
+  
+  componentDidMount = () => {
+    this.wrapperDiv.scrollBy((this.tableEl.getBoundingClientRect().width - this.wrapperDiv.getBoundingClientRect().width) / 2, 0)
+  }
+
   getOptionsGrouppedByDateAndPrice = () => {
     var grouppedOptions = this.props.options ? groupBy(this.props.options, "expiryTime") : {}
     var expirations = Object.keys(grouppedOptions)
@@ -56,27 +66,41 @@ class TradeOptionsList extends Component {
     this.props.onSelectOption(option)
   }
 
+  onMintClick = (option) => {
+    this.props.onSelectMintOption(option)
+  }
+
   optionRowInfo = (option) => {
     if (!option) {
       return <>
         <td colSpan="5">N/A</td>
       </>
     }
+    var actionBtnTd = <td className="action-col">
+      <div className="action-btn" onClick={() => this.onSelectOption(option)}>TRADE</div>
+      <div className="action-btn outline-btn" onClick={() => this.onMintClick(option)}>MINT</div>
+    </td>
+
     if (!this.props.orderBooks[option.acoToken]) {
       return <>
+        {this.props.mode === TradeOptionsListLayoutMode.Home && option.isCall && actionBtnTd}
         <td className="clickable" onClick={() => this.onSelectOption(option)} colSpan="4"><FontAwesomeIcon icon={faSpinner} className="fa-spin"/></td>
-        <td className="clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
+        {this.props.mode === TradeOptionsListLayoutMode.Trade && <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>}
+        {this.props.mode === TradeOptionsListLayoutMode.Home && !option.isCall && actionBtnTd}
       </>
     }
     var bestBid = this.getBestBid(option)
     var bestAsk = this.getBestAsk(option)
+    
     return  <>
+      {this.props.mode === TradeOptionsListLayoutMode.Home && option.isCall && actionBtnTd}
       <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? fromDecimals(bestBid.totalSize, option.underlyingInfo.decimals) : "-"}</td>
       <td className="bid-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? <span className="bid-price">{formatWithPrecision(bestBid.price)}</span> : "-"}</td>
       <td className="ask-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? <span className="ask-price">{formatWithPrecision(bestAsk.price)}</span> : "-"}</td>
       <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.totalSize, option.underlyingInfo.decimals) : "-"}</td>
-      <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
-    </>    
+      {this.props.mode === TradeOptionsListLayoutMode.Trade && <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>}
+      {this.props.mode === TradeOptionsListLayoutMode.Home && !option.isCall && actionBtnTd}
+    </>
   }
 
   getOptionFromType = (optionsList, isCall) => {
@@ -100,8 +124,8 @@ class TradeOptionsList extends Component {
     var pair = this.props.selectedPair    
     var grouppedOptions = this.getOptionsGrouppedByDateAndPrice()
     var pairTitle = pair.underlyingSymbol + pair.strikeAssetSymbol
-    return (<div className="trade-options-list py-5">
-          <table className="aco-table mx-auto">
+    return (<div ref={ref => this.wrapperDiv = ref} className="trade-options-list py-5">
+          <table ref={ref => this.tableEl = ref} className="aco-table mx-auto">
             {this.props.options && this.props.options.length === 0 && 
               <thead>
                 <tr>
@@ -130,17 +154,19 @@ class TradeOptionsList extends Component {
                 </thead>
                 <thead>
                   <tr>
+                    {this.props.mode === TradeOptionsListLayoutMode.Home && <th className="action-col"></th>}
                     <th className="size-col">SIZE</th>
                     <th className="bid-col">BID</th>
                     <th className="ask-col">ASK</th>
                     <th className="size-col">SIZE</th>
-                    <th className="balance-col">BALANCE</th>
+                    {this.props.mode === TradeOptionsListLayoutMode.Trade && <th className="balance-col">BALANCE</th>}
                     <th className="strike-col">STRIKE</th>
                     <th className="size-col">SIZE</th>
                     <th className="bid-col">BID</th>
                     <th className="ask-col">ASK</th>
                     <th className="size-col">SIZE</th>
-                    <th className="balance-col">BALANCE</th>
+                    {this.props.mode === TradeOptionsListLayoutMode.Home && <th className="action-col"></th>}
+                    {this.props.mode === TradeOptionsListLayoutMode.Trade && <th className="balance-col">BALANCE</th>}
                   </tr>
                 </thead>
                 <tbody>
