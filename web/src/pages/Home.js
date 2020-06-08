@@ -48,6 +48,7 @@ class Home extends Component {
       document.addEventListener("scroll", () => this.setAnimations(), false)
       setTimeout(() => this.setAnimations(), 10)
     }
+    window.TradeApp.setNetwork(parseInt(CHAIN_ID))
     this.loadAvailableOptions()
   }
 

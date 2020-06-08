@@ -1,19 +1,20 @@
 import './TradeOptionsList.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry } from '../util/constants'
+import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry, toDecimals } from '../util/constants'
 import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
+import { getOptionFormattedPrice } from '../util/acoTokenMethods'
+import { toDecimal } from 'web3-utils'
 
 export const TradeOptionsListLayoutMode = {
   Trade: 0,
   Home: 1
 }
 
-class TradeOptionsList extends Component {
-  
+class TradeOptionsList extends Component {  
   componentDidMount = () => {
     this.wrapperDiv.scrollBy((this.tableEl.getBoundingClientRect().width - this.wrapperDiv.getBoundingClientRect().width) / 2, 0)
   }
@@ -41,7 +42,7 @@ class TradeOptionsList extends Component {
     var sortedOrders = []
     var bestOrder = null
     if (orders && orders.length > 0) {
-      sortedOrders = orders.filter(order => order.side === side && order.status === 3).sort((o1, o2) => (side === 0) ? o1.price.comparedTo(o2.price) : o2.price.comparedTo(o1.price))
+      sortedOrders = orders.filter(order => order.side === side && (this.props.mode === TradeOptionsListLayoutMode.Home || order.status === 3)).sort((o1, o2) => (side === 0) ? o1.price.comparedTo(o2.price) : o2.price.comparedTo(o1.price))
       bestOrder = sortedOrders.length > 0 ? sortedOrders[0] : null
       if (bestOrder) {
         bestOrder.totalSize = bestOrder.size
@@ -57,9 +58,16 @@ class TradeOptionsList extends Component {
             }
           }
         }
+        if (this.props.mode === TradeOptionsListLayoutMode.Home) {
+          this.formatPrice(bestOrder, option)
+        }
       }
     }
     return bestOrder
+  }
+
+  formatPrice = (order, option) => {
+    order.formatedPrice = parseFloat(fromDecimals(toDecimals(order.price, option.underlyingInfo.decimals), option.strikeAssetInfo.decimals))
   }
 
   onSelectOption = (option) => {
@@ -95,8 +103,19 @@ class TradeOptionsList extends Component {
     return  <>
       {this.props.mode === TradeOptionsListLayoutMode.Home && option.isCall && actionBtnTd}
       <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? fromDecimals(bestBid.totalSize, option.underlyingInfo.decimals) : "-"}</td>
-      <td className="bid-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? <span className="bid-price">{formatWithPrecision(bestBid.price)}</span> : "-"}</td>
-      <td className="ask-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? <span className="ask-price">{formatWithPrecision(bestAsk.price)}</span> : "-"}</td>
+      <td className="bid-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ?
+        <span className="bid-price">{this.props.mode === TradeOptionsListLayoutMode.Home ?
+          formatWithPrecision(bestBid.formatedPrice) :
+          formatWithPrecision(bestBid.price)}
+        </span>
+         : "-"}
+      </td>
+      <td className="ask-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? 
+        <span className="ask-price">{this.props.mode === TradeOptionsListLayoutMode.Home ?
+          formatWithPrecision(bestAsk.formatedPrice) :
+          formatWithPrecision(bestAsk.price)}
+        </span> : "-"}
+      </td>
       <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.totalSize, option.underlyingInfo.decimals) : "-"}</td>
       {this.props.mode === TradeOptionsListLayoutMode.Trade && <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>}
       {this.props.mode === TradeOptionsListLayoutMode.Home && !option.isCall && actionBtnTd}
