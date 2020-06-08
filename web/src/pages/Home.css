@@ -564,7 +564,7 @@
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 .expiration-option {
@@ -576,8 +576,7 @@
     letter-spacing: 0.5px;
     text-align: center;
     color: #666666;
-    margin-left: 4px;
-    margin-right: 4px;
+    margin: 4px;
     cursor: pointer;
 }
 

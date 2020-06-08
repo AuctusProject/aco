@@ -281,7 +281,7 @@ class Home extends Component {
           <ul className="pair-dropdown-wrapper"><PairDropdown {...this.props} pairs={this.state.pairs} selectedPair={this.props.selectedPair} onPairSelected={this.onPairSelected} ></PairDropdown></ul>
           {this.props.selectedPair && <div className="expiration-options">
             <div className={"expiration-option " + (this.state.selectedExpiryTime === ALL_OPTIONS_KEY ? "active" : "")} onClick={() => this.selectExpiryTime(ALL_OPTIONS_KEY)}>ALL</div>
-            {this.getExpirations().map(expiration => <div className={"expiration-option " + (this.state.selectedExpiryTime === expiration ? "active" : "")} onClick={() => this.selectExpiryTime(expiration)}>{formatDate(expiration)}</div>)}
+            {this.getExpirations().map(expiration => <div key={expiration} className={"expiration-option " + (this.state.selectedExpiryTime === expiration ? "active" : "")} onClick={() => this.selectExpiryTime(expiration)}>{formatDate(expiration)}</div>)}
           </div>}
           {this.props.selectedPair && <TradeOptionsList 
             {...this.props} 
