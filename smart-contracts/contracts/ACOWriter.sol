@@ -14,12 +14,17 @@ contract ACOWriter {
     /**
      * @dev Address for 0x exchange.
      */
-    address public immutable exchange;
+    address immutable public exchange;
     
     /**
      * @dev The WETH address.
      */
     address immutable public weth;
+    
+    /**
+     * @dev Address for 0x ERC20 proxy.
+     */
+    address immutable public erc20proxy;
     
     /**
      * @dev Selector for ERC20 balanceOf function.
@@ -34,16 +39,17 @@ contract ACOWriter {
     /**
      * @dev Selector for ERC20 transferFrom function.
      */
-    bytes4 internal immutable _transferFromSelector;
+    bytes4 immutable internal _transferFromSelector;
     
     /**
      * @dev Selector for ERC20 approve function.
      */
     bytes4 immutable internal _approveSelector;
     
-    constructor(address _exchange, address _weth) public {
+    constructor(address _exchange, address _weth, address _erc20proxy) public {
         exchange = _exchange;
         weth =_weth;
+        erc20proxy = _erc20proxy;
         
         _balanceOfSelector = bytes4(keccak256(bytes("balanceOf(address)")));
         _transferSelector = bytes4(keccak256(bytes("transfer(address,uint256)")));
@@ -83,7 +89,7 @@ contract ACOWriter {
      */
     function _sellACOTokens(address acoToken, I0x.Order[] memory orders, bytes[] memory signatures) internal {
         uint256 acoBalance = _balanceOfERC20(acoToken, address(this));
-        _approveERC20(acoToken, exchange, acoBalance);
+        _approveERC20(acoToken, erc20proxy, acoBalance);
         I0x(exchange).marketSellOrdersFillOrKill{value: address(this).balance}(orders, acoBalance, signatures);
         
         address token = IACOToken(acoToken).strikeAsset();
