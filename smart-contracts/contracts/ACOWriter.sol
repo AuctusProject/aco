@@ -52,32 +52,25 @@ contract ACOWriter {
     }
     
     /**
-     * @dev Function to write ACO tokens expecting to receive ether to mint the ACO tokens.
+     * @dev Function to write ACO tokens.
      * The tokens are minted then sold on the 0x exchange. The transaction sender receive the profit. 
      * @param acoToken Address of the ACO token.
+     * @param collateralAmount Amount of collateral deposited.
      * @param orders List of 0x orders.
      * @param signatures List of 0x signatures.
      */
-    function writePayable(address acoToken, I0x.Order[] memory orders, bytes[] memory signatures) public payable {
-        require(msg.value > 0,  "ACOWriter:: Invalid collateral amount");
-        IACOToken(acoToken).mintToPayable{value: msg.value}(msg.sender);
+    function write(address acoToken, uint256 collateralAmount, I0x.Order[] memory orders, bytes[] memory signatures) public payable {
+        require(msg.value > 0,  "ACOWriter::write: Invalid msg value");
+        require(collateralAmount > 0,  "ACOWriter::write: Invalid collateral amount");
         
-        _sellACOTokens(acoToken, orders, signatures);
-    }
-    
-    /**
-     * @dev Function to write ACO tokens expecting to receive an ERC20 token to mint the ACO tokens.
-     * The tokens are minted then sold on the 0x exchange. The transaction sender receive the profit. 
-     * @param acoToken Address of the ACO token.
-     * @param orders List of 0x orders.
-     * @param signatures List of 0x signatures.
-     */
-    function write(address acoToken, uint256 collateralAmount, I0x.Order[] memory orders, bytes[] memory signatures) public {
-        require(collateralAmount > 0,  "ACOWriter:: Invalid collateral amount");
         address _collateral = IACOToken(acoToken).collateral();
-        _transferFromERC20(_collateral, msg.sender, address(this), collateralAmount);
-        _approveERC20(_collateral, acoToken, collateralAmount);
-        IACOToken(acoToken).mintTo(msg.sender, collateralAmount);
+        if (_isEther(_collateral)) {
+            IACOToken(acoToken).mintToPayable{value: collateralAmount}(msg.sender);
+        } else {
+            _transferFromERC20(_collateral, msg.sender, address(this), collateralAmount);
+            _approveERC20(_collateral, acoToken, collateralAmount);
+            IACOToken(acoToken).mintTo(msg.sender, collateralAmount);
+        }
         
         _sellACOTokens(acoToken, orders, signatures);
     }
@@ -91,16 +84,28 @@ contract ACOWriter {
     function _sellACOTokens(address acoToken, I0x.Order[] memory orders, bytes[] memory signatures) internal {
         uint256 acoBalance = _balanceOfERC20(acoToken, address(this));
         _approveERC20(acoToken, exchange, acoBalance);
-        I0x(exchange).marketSellOrdersFillOrKill(orders, acoBalance, signatures);
+        I0x(exchange).marketSellOrdersFillOrKill{value: address(this).balance}(orders, acoBalance, signatures);
         
         address token = IACOToken(acoToken).strikeAsset();
-        if(token == address(0)) {
+        if(_isEther(token)) {
             IWETH(weth).withdraw(_balanceOfERC20(weth, address(this)));
-            msg.sender.transfer(address(this).balance);
         } else {
             _transferERC20(token, msg.sender, _balanceOfERC20(token, address(this)));
         }
+        
+        if (address(this).balance > 0) {
+            msg.sender.transfer(address(this).balance);
+        }
     }
+    
+    /**
+     * @dev Internal function to get if the address is for Ethereum (0x0).
+     * @param _address Address to be checked.
+     * @return Whether the address is for Ethereum.
+     */ 
+    function _isEther(address _address) internal pure returns(bool) {
+        return _address == address(0);
+    } 
     
     /**
      * @dev Internal function to get balance of ERC20 tokens.
