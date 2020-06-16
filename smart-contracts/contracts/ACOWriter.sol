@@ -58,6 +58,15 @@ contract ACOWriter {
     }
     
     /**
+     * @dev Function to guarantee that the contract will receive ether only from the 0x exchange.
+     */
+    receive() external payable {
+        if (msg.sender != exchange) {
+            revert();
+        }
+    }
+    
+    /**
      * @dev Function to write ACO tokens.
      * The tokens are minted then sold on the 0x exchange. The transaction sender receive the profit. 
      * @param acoToken Address of the ACO token.
