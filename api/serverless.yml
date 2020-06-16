@@ -18,4 +18,11 @@ functions:
           path: /tokens
           method: get
           cors: true
-  
+  deribit:
+    handler: handler.deribitTicker
+    timeout: 30
+    events:
+      - http:
+          path: /deribit/ticker
+          method: get
+          cors: true
