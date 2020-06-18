@@ -70,10 +70,11 @@ class OptionChart extends Component {
         max = this.props.strikePrice
       }
       var step = Math.round(precision * (max - min) / this.props.points) / precision
+      var extraPoints = Math.ceil(this.props.points / 4);
       if ((this.props.isBuy && this.props.isCall) || (!this.props.isBuy && !this.props.isCall)) {
-        min = min - 2 * step
+        min = min - extraPoints * step
       } else {
-        max = max + 2 * step
+        max = max + extraPoints * step
       }
       var x = min
       while (x <= max) {
