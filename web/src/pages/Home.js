@@ -2,13 +2,12 @@ import './Home.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { groupBy, getNetworkName, CHAIN_ID, getMarketDetails, formatDate } from '../util/constants'
+import { groupBy, CHAIN_ID, getMarketDetails, formatDate } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { error } from '../util/sweetalert'
 import TradeIcon from '../partials/Util/TradeIcon'
 import { getTokensList } from '../util/acoApi'
-import { getPairsFromOptions } from '../util/acoFactoryMethods'
+import { getPairsFromOptions, getOptionsFromPair } from '../util/acoFactoryMethods'
 import PairDropdown from '../partials/PairDropdown'
 import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeOptionsList'
 import { ALL_OPTIONS_KEY } from './Trade'
@@ -116,11 +115,7 @@ class Home extends Component {
   }
 
   onGetStart(type) {
-    if (this.context && this.context.web3 && this.context.web3.hasMetamask && !this.context.web3.validNetwork) {
-      error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
-    } else {
-      this.props.signIn(this.getUrlFromType(type))
-    }
+    this.props.signIn(this.getUrlFromType(type), this.context)
   }
 
   onAction(type) {
@@ -176,9 +171,7 @@ class Home extends Component {
   }
   
   getOptionsFromPair = () => {
-    return this.state.options && this.props.selectedPair ? this.state.options.filter(o => 
-      o.underlyingInfo.symbol === this.props.selectedPair.underlyingSymbol && 
-      o.strikeAssetInfo.symbol === this.props.selectedPair.strikeAssetSymbol) : []
+    return getOptionsFromPair(this.state.options, this.props.selectedPair)
   }
 
   getExpirations = () => {

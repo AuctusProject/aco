@@ -30,7 +30,6 @@ class MetamaskModal extends Component {
     var hasMetamask = this.context && this.context.web3 && this.context.web3.hasMetamask
     var username = this.context && this.context.web3 && this.context.web3.selectedAccount
     if (username) {
-      this.props.history.push('/mint')
       this.props.onHide()
     }
     return (

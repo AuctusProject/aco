@@ -1,0 +1,17 @@
+.simple-dropdown {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+}
+
+.simple-dropdown-placeholder {
+    color: #4c4c4c;
+}
+
+.simple-dropdown .dropdown-toggle.empty-select::after {
+    color: #4c4c4c;
+}

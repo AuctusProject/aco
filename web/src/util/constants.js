@@ -51,9 +51,15 @@ export const ellipsisCenterOfUsername = (username) => {
     return username
 }
 
-export const formatDate = (expiryTime) => {
-    var options = { year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' };
-    return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + " UTC"
+export const formatDate = (expiryTime, shortDate= false) => {
+    var options = {}
+    if (shortDate) {
+        options = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }
+    }
+    else {
+        options = { year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' }
+    }
+    return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + (shortDate ? "" : " UTC")
 }
 
 export const isEther = (assetAddress) => {
