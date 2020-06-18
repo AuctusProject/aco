@@ -59,8 +59,10 @@ class Trade extends Component {
   }
 
   loadOptionsData = () => {
-    this.loadBalances()
-    this.loadOrderBook()
+    if (this.state.options) {
+      this.loadBalances()
+      this.loadOrderBook()
+    }
   }
 
   loadOrderBook = () => {
