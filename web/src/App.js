@@ -15,6 +15,9 @@ import Writer from './pages/Writer'
 import Exercise from './pages/Exercise'
 import ApiTickerProvider from './util/ApiTickerProvider'
 import Trade from './pages/Trade'
+import Simple from './pages/Simple'
+import { getNetworkName, CHAIN_ID } from './util/constants'
+import { error } from './util/sweetalert'
 
 class App extends Component {
   constructor() {
@@ -31,8 +34,12 @@ class App extends Component {
     window.localStorage.setItem('METAMASK_ACCOUNTS_AVAILABLE', '0')
   }
 
-  showSignInModal = (redirectUrl) => {
-    this.setState({showSignIn: true, redirectUrl: redirectUrl})
+  showSignInModal = (redirectUrl, context) => {
+    if (context && context.web3 && context.web3.hasMetamask && !context.web3.validNetwork) {
+      error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
+    } else {
+      this.setState({showSignIn: true, redirectUrl: redirectUrl})
+    }    
   }
 
   onCloseSignIn = (navigate) => {
@@ -45,8 +52,10 @@ class App extends Component {
     }
     else {
       if (!previousAccount) {
-        this.props.history.push(this.state.redirectUrl)
-        this.setState({redirectUrl: null})
+        if (this.state.redirectUrl) {
+          this.props.history.push(this.state.redirectUrl) 
+          this.setState({redirectUrl: null})
+        }
       }
       this.setState({accountToggle:!this.state.accountToggle})
     }
@@ -118,6 +127,17 @@ class App extends Component {
                   path={`/trade/:tokenAddress?`}
                   render={ routeProps => <Trade 
                     {...routeProps}
+                    selectedPair={this.state.selectedPair}
+                    accountToggle={this.state.accountToggle}
+                  /> }
+                />
+                
+                <Route 
+                  path={`/simple/:tokenAddress?`}
+                  render={ routeProps => <Simple 
+                    {...routeProps}
+                    signIn={this.showSignInModal}
+                    onPairSelected={this.onPairSelected} 
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                   /> }

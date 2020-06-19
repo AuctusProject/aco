@@ -71,7 +71,7 @@ class NavBar extends Component {
                 }
                 {!username && 
                   <li className="nav-item mx-lg-2">
-                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn("/mint")}>SIGN IN</div>
+                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn("/mint", this.context)}>SIGN IN</div>
                   </li>
                 }
               </ul>

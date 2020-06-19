@@ -164,7 +164,7 @@ export function getFormattedOpenPositionAmount(position) {
 }
 
 export function getOptionFormattedPrice(option) {
-    return fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals) + " " + option.strikeAssetInfo.symbol
+    return fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals, 4, 1) + " " + option.strikeAssetInfo.symbol
 }
 
 export function getOptionCollateralFormatedValue(value, option) {

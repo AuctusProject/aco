@@ -1,0 +1,93 @@
+.simple-buy-tab {
+    padding: 20px 10px;
+}
+
+.simple-buy-tab .inputs-wrapper {
+    display: flex;
+    justify-content: space-between;
+}
+
+.simple-buy-tab .input-label {
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.6px;
+    text-align: center;
+    color: #e6e6e6;
+}
+
+.simple-buy-tab .input-field input {
+    font-size: 16px;
+    width: 100%;
+    color: #e6e6e6
+}
+
+.type-toggle {    
+    border: none;
+}
+
+.type-toggle .option-badge {
+    height: 100%;
+    width: 50%;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    cursor: pointer;
+}
+
+.type-toggle .option-badge.active {
+    cursor: default;
+}
+
+.type-toggle .option-badge.unselected {
+    background: transparent;
+    border: solid 1px #4c4c4c;
+}
+
+.type-toggle .option-badge.unselected:not(:hover) {
+    color: #4c4c4c;
+}
+
+.type-toggle .option-badge:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: 0;
+}
+
+.type-toggle .option-badge:last-child {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+}
+
+.simple-buy-tab select {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    color: #e6e6e6;
+    font-size: 16px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.8px;
+    border: none;
+}
+
+.simple-buy-tab .input-column {
+    max-width: unset;
+    flex: 1;
+    margin: 0 10px;
+}
+
+.simple-buy-tab .input-column .input-field {
+    width: unset;
+    min-width: 115px;
+}
+
+.action-button-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+}

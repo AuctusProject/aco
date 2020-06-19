@@ -25,10 +25,10 @@ function getAllAvailableOptions() {
             const acoFactoryContract = getAcoFactoryContract()
             acoFactoryContract.getPastEvents('NewAcoToken', { fromBlock: 0, toBlock: 'latest' }).then((events) => {
                 var assetsAddresses = []
-                availableOptions = []
+                var acoOptions = []
                 for (let i = 0; i < events.length; i++) {
                     const eventValues = events[i].returnValues;
-                    availableOptions.push(eventValues)
+                    acoOptions.push(eventValues)
                     if (!assetsAddresses.includes(eventValues.strikeAsset)) {
                         assetsAddresses.push(eventValues.strikeAsset)
                     }
@@ -36,7 +36,10 @@ function getAllAvailableOptions() {
                         assetsAddresses.push(eventValues.underlying)
                     }
                 }
-                fillTokensInformations(availableOptions, assetsAddresses).then(options => resolve(options))
+                fillTokensInformations(acoOptions, assetsAddresses).then(options => {
+                    availableOptions = acoOptions
+                    resolve(options)
+                })
             })
         }
     })
@@ -103,6 +106,12 @@ export const getPairsFromOptions = (options) => {
         }
     }
     return Object.values(pairs);
+}
+  
+export const getOptionsFromPair = (options, selectedPair) => {
+    return options && selectedPair ? options.filter(o => 
+        o.underlyingInfo.symbol === selectedPair.underlyingSymbol && 
+        o.strikeAssetInfo.symbol === selectedPair.strikeAssetSymbol) : []
 }
 
 export const listOptions = (pair, optionType = null, removeExpired = false) => {

@@ -109,13 +109,13 @@ class Trade extends Component {
   }
 
   componentWillUnmount = () => {
-    if (window.TradeApp && this.state.selectedOption) {
+    if (window.TradeApp) {
       window.TradeApp.unmount()
     }
   }
 
   onSelectOption = (option) => {
-    this.setState({selectedOption: option, selectedExpiryTime: option ? null : ALL_OPTIONS_KEY}, () => {
+    this.setState({selectedOption: option, selectedExpiryTime: option ? null : this.state.selectedExpiryTime}, () => {
       if(option != null) {
         this.props.history.push('/trade/'+option.acoToken)
         window.TradeApp.unmount()

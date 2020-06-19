@@ -80,6 +80,12 @@
     margin-right: 6px;
 }
 
+.home-btn.medium svg {
+    height: 16px;
+    width: auto;
+    margin-right: 8px;
+}
+
 .home-btn span {
     font-size: 10px;
     font-weight: 300;
@@ -97,6 +103,20 @@
     width: 120px;
     height: 35px;
     font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.25px;
+}
+
+.home-btn.medium span {
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    margin-top: 0px;
+}
+
+.home-btn.medium {
+    min-width: 120px;
+    height: 40px;
+    font-size: 14px;
     font-weight: bold;
     letter-spacing: 0.25px;
 }
