@@ -31,47 +31,16 @@
         setTimeout(() => {
           if (window.TradeApp) {
             window.TradeApp.setNetwork(42)
-            window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo({
-                "decimals":18,
-                "symbol":"ACO ETH-10T18D-P-10JUL20-0000UTC",
-                "name":"ACO ETH-10T18D-P-10JUL20-0000UTC",
-                "expiryTime":"1590566400",
-                "address":"0x670db9A251542C5bC4b001E77c254577438Fea3C"
-              },
-              {
-                "decimals":18,
-                "symbol":"T18D",
-                "name":"T18D",
-                "expiryTime":null,
-                "address":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"
-              }).then(r => console.log(r))
-
-            window.TradeApp.getAllOrdersAsUIOrders({
-                "decimals":18,
-                "symbol":"ACO ETH-10T18D-P-10JUL20-0000UTC",
-                "name":"ACO ETH-10T18D-P-10JUL20-0000UTC",
-                "expiryTime":"1590566400",
-                "address":"0x670db9A251542C5bC4b001E77c254577438Fea3C"
-              },
-              {
-                "decimals":18,
-                "symbol":"T18D",
-                "name":"T18D",
-                "expiryTime":null,
-                "address":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"
-              }).then(r => console.log(r))
 
             window.TradeApp.mount(
-              {"baseToken":{"decimals":18,"symbol":"ACO ETH-10T18D-P-10JUL20-0000UTC",
-              "name":"ACO ETH-10T18D-P-10JUL20-0000UTC","icon":null,"primaryColor":null,
-              "expiryTime":"1594339200",
-              "addresses":{"42":"0x670db9A251542C5bC4b001E77c254577438Fea3C"}},
-              "quoteToken":{"decimals":18,"symbol":"T18D","name":"T18D","icon":null,"primaryColor":null,
-              "expiryTime":null,"addresses":{"42":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"}}}
+              // {"baseToken":{"decimals":18,"symbol":"ACO ETH-10T18D-P-10JUL20-0000UTC",
+              // "name":"ACO ETH-10T18D-P-10JUL20-0000UTC","icon":null,"primaryColor":null,
+              // "expiryTime":"1594339200",
+              // "addresses":{"42":"0x670db9A251542C5bC4b001E77c254577438Fea3C"}},
+              // "quoteToken":{"decimals":18,"symbol":"T18D","name":"T18D","icon":null,"primaryColor":null,
+              // "expiryTime":null,"addresses":{"42":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"}}}
+              {"baseToken":{"decimals":18,"symbol":"ACO ETH-200T18D-C-26JUN20-0800UTC","name":"ACO ETH-200T18D-C-26JUN20-0800UTC","icon":null,"primaryColor":null,"expiryTime":"1593158400","addresses":{"42":"0x6DdE52E7cc28bab9E27B023CD138aCD25633E1cB"}},"quoteToken":{"decimals":18,"symbol":"T18D","name":"T18D","icon":null,"primaryColor":null,"expiryTime":null,"addresses":{"42":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"}}}
             )
-            //{"baseToken":{"decimals":18,"symbol":"ACO ETH-200USDC-C-29MAY20-0800UTC","name":"ACO ETH-200USDC-C-29MAY20-0800UTC","icon":null,"primaryColor":null,"expiryTime":"1590739200","addresses":{"1":"0x4a1f4ce939ee589c26F1F302Df8B0b3Fc348Dea6"}},"quoteToken":{"decimals":6,"symbol":"USDC","name":"USD//C","icon":null,"primaryColor":null,"expiryTime":null,"addresses":{"1":"0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"}}}
-            //{"baseToken":{"decimals":18,"symbol":"ACO ETH-0.02T08D-C-27MAY20-0800UTC","name":"ACO ETH-0.02T08D-C-27MAY20-0800UTC","icon":null,"primaryColor":null,"expiryTime":"1590566400","addresses":{"42":"0xB3b2F6284d72414822CF8C55f6d91Da90f09F68B"}},"quoteToken":{"decimals":8,"symbol":"T08D","name":"T08D","icon":null,"primaryColor":null,"expiryTime":null,"addresses":{"42":"0x4000132b399B6C85E465b60c9D897b6745149Fee"}}}
-            //window.TradeApp.mount({"baseToken":{"decimals":18,"symbol":"ACO ETH-210T18D-C-18MAY20-1900UTC","name":"ACO ETH-210T18D-C-18MAY20-1900UTC","icon":null,"primaryColor":null,"expiryTime":"1589828400","addresses":{"42":"0x376aFc787bcD3A7B3f50157522B39A104c590550"}},"quoteToken":{"decimals":18,"symbol":"T18D","name":"T18D","icon":null,"primaryColor":null,"expiryTime":null,"addresses":{"42":"0x3dE77a2d48F328564D8ee97Ec22224b7b914a823"}}})
           }
           else {
             loadAsync()

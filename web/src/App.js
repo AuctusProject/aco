@@ -16,7 +16,7 @@ import Exercise from './pages/Exercise'
 import ApiTickerProvider from './util/ApiTickerProvider'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getNetworkName, CHAIN_ID } from './util/constants'
+import { getNetworkName, CHAIN_ID, getMarketDetails } from './util/constants'
 import { error } from './util/sweetalert'
 
 class App extends Component {
@@ -26,8 +26,13 @@ class App extends Component {
       showSignIn: false,
       loading: true,
       selectedPair: null,
-      accountToggle: false
+      accountToggle: false,
+      orderBooks:{}
     }
+  }
+
+  componentDidMount = () => {
+    window.TradeApp.setNetwork(parseInt(CHAIN_ID))
   }
 
   signOut() {
@@ -81,6 +86,32 @@ class App extends Component {
     this.setState({pairs: pairs})
   }
 
+  loadOrderbookFromOptions = (options, includeWeb3) => {
+    for (let i = 0; i < options.length; i++) {
+      let option = options[i]
+      this.loadOrderbookFromOption(option, includeWeb3)
+    }
+  }
+
+  loadOrderbookFromOption = (option, includeWeb3) => {
+    if (option) {
+      var marketDetails = getMarketDetails(option)
+      var baseToken = marketDetails.baseToken
+      var quoteToken = marketDetails.quoteToken
+      baseToken.address = baseToken.addresses[CHAIN_ID]
+      quoteToken.address = quoteToken.addresses[CHAIN_ID]
+
+      var orderbookFunction = includeWeb3 ? window.TradeApp.getAllOrdersAsUIOrders : 
+      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo;
+
+      orderbookFunction(baseToken, quoteToken).then(orderBook => {
+        var orderBooks = this.state.orderBooks
+        orderBooks[option.acoToken] = orderBook
+        this.setState({ orderBooks: orderBooks })
+      })
+    }
+  }
+
   render() {
     var showNavbar = window.location.pathname !== "/"
     var showFooter = window.location.pathname.indexOf("trade") < 0
@@ -129,9 +160,10 @@ class App extends Component {
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    orderBooks={this.state.orderBooks}
+                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                   /> }
-                />
-                
+                />                
                 <Route 
                   path={`/simple/:tokenAddress?`}
                   render={ routeProps => <Simple 
@@ -140,6 +172,8 @@ class App extends Component {
                     onPairSelected={this.onPairSelected} 
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    orderBooks={this.state.orderBooks}
+                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                   /> }
                 />
                 <Route 
@@ -149,6 +183,8 @@ class App extends Component {
                     {...routeProps}
                     onPairSelected={this.onPairSelected} 
                     selectedPair={this.state.selectedPair}
+                    orderBooks={this.state.orderBooks}
+                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                     signIn={this.showSignInModal}
                   /> }
                 />

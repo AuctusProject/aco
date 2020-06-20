@@ -1,11 +1,12 @@
 import './TradeOptionsList.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry, toDecimals } from '../util/constants'
+import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry } from '../util/constants'
 import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
+import { getBestBid, getBestAsk } from '../util/orderbookUtil'
 
 export const TradeOptionsListLayoutMode = {
   Trade: 0,
@@ -25,47 +26,6 @@ class TradeOptionsList extends Component {
       grouppedOptions[expirations[index]] = groupBy(optionsFromExpiration, "strikePrice")
     }
     return grouppedOptions
-  }
-
-  getBestBid = (option) => {
-    return this.getBestOrder(option, 1)
-  }
-
-  getBestAsk = (option) => {
-    return this.getBestOrder(option, 0)    
-  }
-
-  getBestOrder = (option, side) => {
-    var orders = this.props.orderBooks[option.acoToken]
-    var sortedOrders = []
-    var bestOrder = null
-    if (orders && orders.length > 0) {
-      sortedOrders = orders.filter(order => order.side === side && (this.props.mode === TradeOptionsListLayoutMode.Home || order.status === 3)).sort((o1, o2) => (side === 0) ? o1.price.comparedTo(o2.price) : o2.price.comparedTo(o1.price))
-      bestOrder = sortedOrders.length > 0 ? sortedOrders[0] : null
-      if (bestOrder) {
-        bestOrder.totalSize = bestOrder.size
-        if (bestOrder.filled) {
-          bestOrder.totalSize = bestOrder.totalSize.minus(bestOrder.filled)
-        }
-        for (let index = 1; index < sortedOrders.length; index++) {
-          const order = sortedOrders[index];
-          if (order.price.eq(bestOrder.price)) {
-            bestOrder.totalSize = bestOrder.totalSize.plus(order.size)
-            if (order.filled) {
-              bestOrder.totalSize = bestOrder.totalSize.minus(order.filled)
-            }
-          }
-        }
-        if (this.props.mode === TradeOptionsListLayoutMode.Home) {
-          this.formatPrice(bestOrder, option)
-        }
-      }
-    }
-    return bestOrder
-  }
-
-  formatPrice = (order, option) => {
-    order.formatedPrice = parseFloat(fromDecimals(toDecimals(order.price, option.underlyingInfo.decimals), option.strikeAssetInfo.decimals))
   }
 
   onSelectOption = (option) => {
@@ -95,8 +55,8 @@ class TradeOptionsList extends Component {
         {this.props.mode === TradeOptionsListLayoutMode.Home && !option.isCall && actionBtnTd}
       </>
     }
-    var bestBid = this.getBestBid(option)
-    var bestAsk = this.getBestAsk(option)
+    var bestBid = getBestBid(option, this.props.orderBooks[option.acoToken], this.props.mode)
+    var bestAsk = getBestAsk(option, this.props.orderBooks[option.acoToken], this.props.mode)
     
     return  <>
       {this.props.mode === TradeOptionsListLayoutMode.Home && option.isCall && actionBtnTd}

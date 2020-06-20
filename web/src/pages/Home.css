@@ -121,7 +121,7 @@
     letter-spacing: 0.25px;
 }
 
-.home-btn.white, .home-btn.green:hover, .home-btn.black:hover {
+.home-btn.white, .home-btn.green:not(.disabled):hover, .home-btn.black:hover {
     color: #ffffff;
     border-color: #ffffff;
 }
@@ -142,7 +142,7 @@
     background-color: #a8c708;
 }
 
-.home-btn.solid-white, .home-btn.solid-green:hover {
+.home-btn.solid-white, .home-btn.solid-green:not(.disabled):hover {
     color: #404040;
     border-color: #ffffff;
     background-color: #ffffff;

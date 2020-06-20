@@ -6,7 +6,7 @@ import { getLogger } from '../util/logger';
 
 import { getWethTokenFromTokensMetaDataByNetworkId, mapTokensMetaDataToTokenByNetworkId } from './token_meta_data';
 import { Token } from './types';
-import { UI_DECIMALS_DISPLAYED_DEFAULT_PRECISION } from '../common/constants';
+import { UI_DECIMALS_DISPLAYED_DEFAULT_PRECISION, CHAIN_ID } from '../common/constants';
 
 const logger = getLogger('Tokens::known_tokens .ts');
 
@@ -104,6 +104,17 @@ export class KnownTokens {
     public getTokens = (): Token[] => {
         return this._tokens;
     };
+}
+
+export const addTokensAndInit = (tokens: TokenMetaData[]) => {
+    var knownTokens = getKnownTokens()
+    for (let index = 0; index < tokens.length; index++) {
+        const token = tokens[index];
+        if (!knownTokens.isKnownAddress(token.addresses[CHAIN_ID])) {
+            KNOWN_TOKENS_META_DATA.push(token)
+        }
+    }
+    initKnownTokens()
 }
 
 let knownTokens: KnownTokens;

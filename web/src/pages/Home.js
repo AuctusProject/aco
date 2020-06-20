@@ -2,7 +2,7 @@ import './Home.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { groupBy, CHAIN_ID, getMarketDetails, formatDate } from '../util/constants'
+import { groupBy, formatDate } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import TradeIcon from '../partials/Util/TradeIcon'
@@ -20,7 +20,6 @@ class Home extends Component {
     this.state = {
       pairs: null,
       options: null,
-      orderBooks: {},
       selectedExpiryTime: ALL_OPTIONS_KEY,
       whyAnimation: (this.isMobile ? "" : " unshown "),
       whyShowAnimation: (this.isMobile ? "" : " unshown "),
@@ -47,7 +46,6 @@ class Home extends Component {
       document.addEventListener("scroll", () => this.setAnimations(), false)
       setTimeout(() => this.setAnimations(), 10)
     }
-    window.TradeApp.setNetwork(parseInt(CHAIN_ID))
     this.loadAvailableOptions()
   }
 
@@ -147,19 +145,7 @@ class Home extends Component {
   }
 
   loadOrderBook = () => {
-    for (let i = 0; i < this.state.options.length; i++) {
-      let option = this.state.options[i]
-      var marketDetails = getMarketDetails(option)
-      var baseToken = marketDetails.baseToken
-      var quoteToken = marketDetails.quoteToken
-      baseToken.address = baseToken.addresses[CHAIN_ID]
-      quoteToken.address = quoteToken.addresses[CHAIN_ID]
-      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo(baseToken, quoteToken).then(orderBook => {
-        var orderBooks = this.state.orderBooks
-        orderBooks[option.acoToken] = orderBook
-        this.setState({orderBooks: orderBooks})
-      })
-    }
+    this.props.loadOrderbookFromOptions(this.state.options, (this.context && this.context.web3 && this.context.web3.hasMetamask && this.context.web3.validNetwork && this.context.web3.selectedAccount))
   }
 
   onSelectOption = (option) => {
@@ -285,7 +271,7 @@ class Home extends Component {
             onSelectOption={this.onSelectOption} 
             onSelectMintOption={this.onSelectMintOption} 
             options={filteredOptions}
-            orderBooks={this.state.orderBooks}/>}
+            orderBooks={this.props.orderBooks}/>}
         </div>
       </section>
       <section id="use-cases">

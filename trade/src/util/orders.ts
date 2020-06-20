@@ -20,7 +20,7 @@ interface BuildLimitOrderParams {
     quoteTokenAddress: string;
 }
 
-interface BuildMarketOrderParams {
+export interface BuildMarketOrderParams {
     amount: BigNumber;
     orders: UIOrder[];
 }

@@ -76,8 +76,8 @@
 
 .simple-buy-tab .input-column {
     max-width: unset;
-    flex: 1;
     margin: 0 10px;
+    text-align: center;
 }
 
 .simple-buy-tab .input-column .input-field {
@@ -85,9 +85,48 @@
     min-width: 115px;
 }
 
+.simple-buy-tab .input-column.strike-column,
+.simple-buy-tab .input-column.expiration-column {
+    width: 175px;
+    min-width: 175px;
+    max-width: 175px;
+}
+
+.prices-wrapper .separator {
+    border-top: solid 0.5px #737373;
+    margin: 16px 0;
+}
+
+.prices-wrapper .input-label {
+    height: unset;
+    padding-bottom: 8px;
+}
+
 .action-button-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
     margin-top: 20px;
+}
+
+.simple-buy-tab .chart-and-prices {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 20px 0;
+}
+
+.simple-buy-tab .option-chart-wrapper {
+    width: calc(100% - 200px);
+    margin: 0 10px;
+}
+
+.simple-buy-tab .prices-wrapper {
+    width: 170px;
+    margin: 0 10px;
+}
+
+.home-btn.disabled {
+    opacity: 0.5;
+    cursor: default;
 }
