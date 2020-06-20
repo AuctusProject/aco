@@ -2,19 +2,13 @@ pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
 import "./IACOToken.sol";
-import "./I0x.sol";
 import "./IWETH.sol";
 
 /**
  * @title ACOWriter
- * @dev Contract to write ACO tokens. Minting them and selling on the 0x.
+ * @dev Contract to write ACO tokens. Minting them and then selling through the 0x protocol.
  */
 contract ACOWriter {
-    
-    /**
-     * @dev Address for 0x exchange.
-     */
-    address immutable public exchange;
     
     /**
      * @dev The WETH address.
@@ -46,8 +40,36 @@ contract ACOWriter {
      */
     bytes4 immutable internal _approveSelector;
     
-    constructor(address _exchange, address _weth, address _erc20proxy) public {
-        exchange = _exchange;
+    /**
+     * @dev Internal data to control the exchange address.
+     */
+    address internal _exchange;
+    
+    /**
+     * @dev Internal data to control the reentrancy.
+     */
+    bool internal _notEntered;
+    
+    /**
+     * @dev Modifier to handle with the exchange address during the transaction.
+     */
+    modifier setExchange(address exchange) {
+        _exchange = exchange;
+        _;
+        _exchange = address(0);
+    }
+    
+    /**
+     * @dev Modifier to prevents a contract from calling itself during the function execution.
+     */
+    modifier nonReentrant() {
+        require(_notEntered, "ACOWriter::Reentry");
+        _notEntered = false;
+        _;
+        _notEntered = true;
+    }
+    
+    constructor(address _weth, address _erc20proxy) public {
         weth =_weth;
         erc20proxy = _erc20proxy;
         
@@ -55,13 +77,15 @@ contract ACOWriter {
         _transferSelector = bytes4(keccak256(bytes("transfer(address,uint256)")));
         _transferFromSelector = bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
         _approveSelector = bytes4(keccak256(bytes("approve(address,uint256)")));
+        
+        _notEntered = true;
     }
     
     /**
-     * @dev Function to guarantee that the contract will receive ether only from the 0x exchange.
+     * @dev Function to guarantee that the contract will receive ether only from the exchange.
      */
     receive() external payable {
-        if (msg.sender != exchange) {
+        if (msg.sender != _exchange) {
             revert();
         }
     }
@@ -71,10 +95,20 @@ contract ACOWriter {
      * The tokens are minted then sold on the 0x exchange. The transaction sender receive the profit. 
      * @param acoToken Address of the ACO token.
      * @param collateralAmount Amount of collateral deposited.
-     * @param orders List of 0x orders.
-     * @param signatures List of 0x signatures.
+     * @param exchangeAddress Address to sell the tokens.
+     * @param exchangeData Data to be sent to the exchange.
      */
-    function write(address acoToken, uint256 collateralAmount, I0x.Order[] memory orders, bytes[] memory signatures) public payable {
+    function write(
+        address acoToken, 
+        uint256 collateralAmount, 
+        address exchangeAddress, 
+        bytes memory exchangeData
+    ) 
+        nonReentrant 
+        setExchange(exchangeAddress) 
+        public 
+        payable 
+    {
         require(msg.value > 0,  "ACOWriter::write: Invalid msg value");
         require(collateralAmount > 0,  "ACOWriter::write: Invalid collateral amount");
         
@@ -87,23 +121,26 @@ contract ACOWriter {
             IACOToken(acoToken).mintTo(msg.sender, collateralAmount);
         }
         
-        _sellACOTokens(acoToken, orders, signatures);
+        _sellACOTokens(acoToken, exchangeData);
     }
     
     /**
      * @dev Internal function to sell the ACO tokens and transfer the profit to the transaction sender.
      * @param acoToken Address of the ACO token.
-     * @param orders List of 0x orders.
-     * @param signatures List of 0x signatures.
+     * @param exchangeData Data to be sent to the exchange.
      */
-    function _sellACOTokens(address acoToken, I0x.Order[] memory orders, bytes[] memory signatures) internal {
+    function _sellACOTokens(address acoToken, bytes memory exchangeData) internal {
         uint256 acoBalance = _balanceOfERC20(acoToken, address(this));
         _approveERC20(acoToken, erc20proxy, acoBalance);
-        I0x(exchange).marketSellOrdersFillOrKill{value: address(this).balance}(orders, acoBalance, signatures);
+        (bool success,) = _exchange.call{value: address(this).balance}(exchangeData);
+        require(success, "ACOWriter::_sellACOTokens: Error on call the exchange");
         
         address token = IACOToken(acoToken).strikeAsset();
         if(_isEther(token)) {
-            IWETH(weth).withdraw(_balanceOfERC20(weth, address(this)));
+            uint256 wethBalance = _balanceOfERC20(weth, address(this));
+            if (wethBalance > 0) {
+                IWETH(weth).withdraw(wethBalance);
+            }
         } else {
             _transferERC20(token, msg.sender, _balanceOfERC20(token, address(this)));
         }
