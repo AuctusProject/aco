@@ -1,11 +1,11 @@
 pragma solidity ^0.6.6;
 
-import "./IWETH.sol";
-import "./IUniswapV2Pair.sol";
-import "./IUniswapV2Callee.sol";
-import "./IUniswapV2Factory.sol";
-import "./UniswapV2Library.sol";
-import "./IACOToken.sol";
+import "../interfaces/IWETH.sol";
+import "../interfaces/IUniswapV2Pair.sol";
+import "../interfaces/IUniswapV2Callee.sol";
+import "../interfaces/IUniswapV2Factory.sol";
+import "../libs/UniswapV2Library.sol";
+import "../interfaces/IACOToken.sol";
 
 /**
  * @title ACOFlashExercise

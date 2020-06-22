@@ -1,6 +1,6 @@
 pragma solidity ^0.6.6;
 
-import "./ACOFactory.sol";
+import "../ACOFactory.sol";
 
 /**
  * @title ACOFactoryForTest

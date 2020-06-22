@@ -1,6 +1,6 @@
 pragma solidity ^0.6.6;
 
-import "./Address.sol";
+import "./libs/Address.sol";
 
 /**
  * @title ACOProxy

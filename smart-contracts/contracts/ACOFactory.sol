@@ -1,8 +1,8 @@
 pragma solidity ^0.6.6;
 
-import "./Address.sol";
-import "./BokkyPooBahsDateTimeLibrary.sol";
-import "./Strings.sol";
+import "./libs/Address.sol";
+import "./libs/BokkyPooBahsDateTimeLibrary.sol";
+import "./libs/Strings.sol";
 
 /**
  * @title ACOFactory
