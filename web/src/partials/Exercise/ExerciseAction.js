@@ -117,7 +117,7 @@ class ExerciseAction extends Component {
 
   sendExercise = (nonce) => {
     if (this.state.selectedTab === 1) {
-      return exercise(this.context.web3.selectedAccount, this.props.position.option, this.getOptionAmountToDecimals().toString(), nonce)
+      return exercise(this.context.web3.selectedAccount, this.props.position.option, this.getOptionAmountToDecimals().toString(), toDecimals(this.state.payValue, this.getPayDecimals()), nonce)
     }
     else {
       return flashExercise(this.context.web3.selectedAccount, this.props.position.option.acoToken, this.getOptionAmountToDecimals().toString(), this.getMinimumReceivedAmountToDecimals().toString(), nonce)
