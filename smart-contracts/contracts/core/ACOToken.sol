@@ -1,9 +1,9 @@
 pragma solidity ^0.6.6;
 
 import "./ERC20.sol";
-import "./libs/Address.sol";
-import "./libs/BokkyPooBahsDateTimeLibrary.sol";
-import "./libs/Strings.sol";
+import "../libs/Address.sol";
+import "../libs/BokkyPooBahsDateTimeLibrary.sol";
+import "../libs/Strings.sol";
 
 /**
  * @title ACOToken
