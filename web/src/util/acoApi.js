@@ -66,7 +66,6 @@ export function getOpynQuote(optionData, isBuy, tokenAmount) {
     return new Promise(function(resolve,reject) {
         getOpynTokenList().then((list) =>
         {
-            var data = null
             if (list) {
                 var opynData = null
                 for (var i = 0; i < list.length; ++i) {
@@ -79,7 +78,7 @@ export function getOpynQuote(optionData, isBuy, tokenAmount) {
                                  (BigInt(10 ** (-1 * parseInt(list[i].oTokenExchangeRateExp) + optionData.strikeAssetInfo.decimals + parseInt(list[i].strikePriceExp))) / BigInt(list[i].strikePriceValue))) {
                                 opynData = list[i]
                                 break
-                            } else if (!optionData.isCall && strikePrice === (BigInt(list[i].strikePriceValue) * BigInt(10 ** optionData.strikeAssetInfo.decimals))) {
+                            } else if (!optionData.isCall && strikePrice === (BigInt(list[i].strikePriceValue) * BigInt(10 ** ((-1 * parseInt(list[i].oTokenExchangeRateExp) + parseInt(list[i].strikePriceExp)))))) {
                                 opynData = list[i]
                                 break
                             }
@@ -105,11 +104,13 @@ export function getOpynQuote(optionData, isBuy, tokenAmount) {
                         } else {
                             resolve(null)
                         }
-                    })
-                    .catch(err => reject(err))
+                    }).catch(err => reject(err))
+                } else {
+                    resolve(null)
                 }
+            } else {
+                resolve(null)
             }
-            resolve(data)
         }).catch(err => reject(err))
     })
 }
