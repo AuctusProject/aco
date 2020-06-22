@@ -89,7 +89,10 @@
     "builddev": "node scripts/builddev.js"
   },
   "eslintConfig": {
-    "extends": "react-app"
+    "extends": "react-app",
+    "globals": {
+      "BigInt": true
+    }
   },
   "browserslist": {
     "production": [

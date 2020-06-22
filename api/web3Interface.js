@@ -29,6 +29,14 @@ const callEthereum = (method, methodData, secondParam = "latest") => {
   });
 };
 
+const addressToData = (address) => {
+  return address.substring(2).padStart(64, '0');
+};
+
+const numberToData = (num) => {
+  return num.toString(16).padStart(64, '0');
+};
+
 const isEther = (token) => {
   return token === "0x0" || token === "0x0000000000000000000000000000000000000000";
 };
@@ -82,6 +90,19 @@ const getDecimals = (token) => {
   });
 };
 
+const quoteOpyn = (opynExchange, opynToken, swappedToken, amount, isBuy) => {
+  return new Promise((resolve, reject) => {
+    let data = (isBuy ? "0xbec165e7" : "0x3ed9c978") + addressToData(opynToken) + addressToData(swappedToken) + numberToData(amount)
+    callEthereum("eth_call", {"to": opynExchange, "data": data}).then((result) => {
+      if (result) {
+        resolve(BigInt(result).toString(10));
+      } else {
+        resolve(null);
+      }
+    }).catch((err) => reject(err));
+  });
+};
+
 const listAcoTokens = () => {   
   return new Promise((resolve, reject) => { 
     return callEthereum("eth_getLogs", {"address": [process.env.ACO_FACTORY], "fromBlock": fromBlock, "topics": ["0x830ecf50af8281b7fc6c07ca94ed228468437e79a01755686fbb541d37103cb2"]}, null).then((result) => {
@@ -114,6 +135,24 @@ const listAcoTokens = () => {
       }
       resolve(response);
     }).catch((err) => reject(err));
+  });
+};
+
+module.exports.opynQuote = (queryArguments) => { 
+  return new Promise((resolve, reject) => {
+    if ((queryArguments.isBuy !== true && queryArguments.isBuy !== false) || !queryArguments.exchange || 
+      !queryArguments.token || !queryArguments.swappedToken || !queryArguments.amount) {
+      resolve(null);
+    } else {
+      let data = (queryArguments.isBuy ? "0xbec165e7" : "0x3ed9c978") + addressToData(queryArguments.token) + addressToData(queryArguments.swappedToken) + numberToData(queryArguments.amount);
+      callEthereum("eth_call", {"to": queryArguments.exchange, "data": data}).then((result) => {
+        if (result) {
+          resolve(BigInt(result).toString(10));
+        } else {
+          resolve(null);
+        }
+      }).catch((err) => reject(err));
+    }
   });
 };
 
