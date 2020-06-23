@@ -126,9 +126,9 @@ class Home extends Component {
 
   getUrlFromType = (type) => {
     if (type === "trade") {
-      return "/trade"
+      return "/advanced/trade"
     } else if (type === "earn") {
-      return "/mint"
+      return "/advanced/mint"
     }
   }
 
@@ -149,11 +149,11 @@ class Home extends Component {
   }
 
   onSelectOption = (option) => {
-    this.props.history.push('/trade/'+option.acoToken)
+    this.props.history.push('/advanced/trade/'+option.acoToken)
   }
 
   onSelectMintOption = (option) => {
-    this.props.history.push('/mint/'+option.acoToken)
+    this.props.history.push('/advanced/mint/'+option.acoToken)
   }
   
   getOptionsFromPair = () => {

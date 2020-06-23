@@ -1,6 +1,6 @@
 import './Simple.css'
 import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
+import { withRouter, NavLink } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { getPairsFromOptions, getOptionsFromPair } from '../util/acoFactoryMethods'
 import { getTokensList } from '../util/acoApi'
@@ -49,23 +49,23 @@ class Simple extends Component {
         <div className="simple-box">
           <ul className="nav nav-tabs justify-content-center" id="simpleTabs" role="tablist">
             <li className="nav-item">
-              <a className="nav-link active" id="buy-tab" data-toggle="tab" href="#buy" role="tab" aria-controls="buy" aria-selected="true">Buy</a>
+              <NavLink className="nav-link" to={`/buy`}>Buy</NavLink>
             </li>
             <li className="nav-item">
-              <a className="nav-link" id="write-tab" data-toggle="tab" href="#write" role="tab" aria-controls="write" aria-selected="false">Write</a>
+              <NavLink className="nav-link" to={`/write`}>Write</NavLink>
             </li>
             <li className="nav-item">
-              <a className="nav-link" id="manage-tab" data-toggle="tab" href="#manage" role="tab" aria-controls="manage" aria-selected="false">Manage</a>
+              <NavLink className="nav-link" to={`/manage`}>Manage</NavLink>
             </li>
           </ul>
           <div className="tab-content" id="simpleTabsContent">
-            <div className="tab-pane fade show active" id="buy" role="tabpanel" aria-labelledby="buy-tab">
+            <div className={"tab-pane fade" + (window.location.pathname.indexOf("buy") > 0 ? " show active" : "")}>
               <SimpleBuyTab {...this.props} isConnected={this.isConnected()} options={filteredOptions}/>
             </div>
-            <div className="tab-pane fade" id="write" role="tabpanel" aria-labelledby="write-tab">
+            <div className={"tab-pane fade" + (window.location.pathname.indexOf("write") > 0 ? " show active" : "")}>
               <SimpleWriteTab {...this.props} isConnected={this.isConnected()} options={filteredOptions}/>
             </div>
-            <div className="tab-pane fade" id="manage" role="tabpanel" aria-labelledby="manage-tab">
+            <div className={"tab-pane fade" + (window.location.pathname.indexOf("manage") > 0 ? " show active" : "")}>
               <SimpleManageTab {...this.props} isConnected={this.isConnected()} options={filteredOptions}/>
             </div>
           </div>

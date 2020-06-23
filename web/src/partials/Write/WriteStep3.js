@@ -218,7 +218,7 @@ class WriteStep3 extends Component {
   }
 
   onDoneButtonClick = () => {
-    this.props.history.push('/trade/'+this.props.option.acoToken)
+    this.props.history.push('/advanced/trade/'+this.props.option.acoToken)
   }
 
   onHideStepsModal = () => {
