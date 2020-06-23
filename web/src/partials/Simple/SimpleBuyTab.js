@@ -16,12 +16,13 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { getDeribiData, getOpynQuote } from '../../util/acoApi'
 import StepsModal from '../StepsModal/StepsModal'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
     super(props)
-    this.state = { selectedType: 1, selectedOption: null }
+    this.state = { selectedType: 1, selectedOption: null, opynPrice: null, deribitPrice: null }
   }
 
   componentDidMount = () => {
@@ -37,7 +38,7 @@ class SimpleBuyTab extends Component {
   }
 
   onQtyChange = (value) => {
-    this.setState({ qtyValue: value}, () => this.refreshSwapQuote(this.state.selectedOption))
+    this.setState({qtyValue: value}, () => this.refresh(this.state.selectedOption))
   }
 
   selectType = (type) => {
@@ -92,8 +93,36 @@ class SimpleBuyTab extends Component {
 
   setSelectedOption = () => {
     var selectedOption = this.getSelectedOption()
-    this.refreshSwapQuote(selectedOption)
+    this.refresh(selectedOption)
     this.setState({selectedOption: selectedOption})
+  }
+
+  setDeribitPrice = (selectedOption) => {
+    if (selectedOption) {
+      getDeribiData(selectedOption).then((r) => {
+        if (r) {
+          this.setState({deribitPrice: r.best_ask_price})
+        } else {
+          this.setState({deribitPrice: null})
+        }
+      }).catch((e) => {
+        this.setState({deribitPrice: null})
+        console.error(e)
+      })
+    } else {
+      this.setState({deribitPrice: null})
+    }
+  }
+
+  setOpynPrice = (selectedOption) => {
+    if (selectedOption && !!this.state.qtyValue) {
+      getOpynQuote(selectedOption, true, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString()).then((r) => this.setState({opynPrice: r})).catch((e) => {
+        this.setState({opynPrice: null})
+        console.error(e)
+      })
+    } else {
+      this.setState({opynPrice: null})
+    }
   }
 
   getSelectedOption = () => {
@@ -282,6 +311,12 @@ class SimpleBuyTab extends Component {
     return null
   }
 
+  refresh = (selectedOption) => {
+    this.setOpynPrice(selectedOption)
+    this.setDeribitPrice(selectedOption)
+    this.refreshSwapQuote(selectedOption)
+  }
+
   refreshSwapQuote = (selectedOption) => {
     this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
       if (selectedOption && this.state.qtyValue && this.state.qtyValue > 0) {
@@ -377,8 +412,8 @@ class SimpleBuyTab extends Component {
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
             <div className="price-value">ACO: {this.formatAcoPrice(optionPrice)}</div>
-            <div className="price-value">ACO: $20</div>
-            <div className="price-value">ACO: $20</div>
+            <div className="price-value"><div>Opyn:</div><div>{selectedOption && this.state.opynPrice ? fromDecimals(this.state.opynPrice, selectedOption.strikeAssetInfo.decimals) : "NA"}</div></div>
+            <div className="price-value"><div>Deribit:</div><div>{selectedOption && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, selectedOption.strikeAssetInfo.decimals) : "NA"}</div></div>
           </div>
         </div>
       </div>

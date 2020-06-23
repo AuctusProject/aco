@@ -1,6 +1,6 @@
 pragma solidity ^0.6.6;
 
-import "./ERC20.sol";
+import "../core/ERC20.sol";
 
 /**
  * @title ERC20ForTest

@@ -24,6 +24,26 @@ class NavBar extends Component {
     })
   }
 
+  isAdvanced = () => {
+    return window.location.pathname.indexOf("advanced") > 0
+  }
+
+  changeMode = () => {
+    if (window.location.pathname.indexOf("buy") > 0) {
+      this.props.history.push("/advanced/trade")
+    } else if (window.location.pathname.indexOf("write") > 0) {
+      this.props.history.push("/advanced/mint")
+    } else if (window.location.pathname.indexOf("manage") > 0) {
+      this.props.history.push("/advanced/exercise")
+    } else if (window.location.pathname.indexOf("trade") > 0) {
+      this.props.history.push("/buy")
+    } else if (window.location.pathname.indexOf("mint") > 0) {
+      this.props.history.push("/write")
+    } else if (window.location.pathname.indexOf("exercise") > 0) {
+      this.props.history.push("/manage")
+    }
+  }
+ 
   render() {
     var username = this.context && this.context.web3 && this.context.web3.selectedAccount
     var validNetwork = this.context && this.context.web3 && this.context.web3.validNetwork
@@ -39,13 +59,19 @@ class NavBar extends Component {
               <span className="navbar-toggler-icon"></span>
             </button>
             <div className="collapse navbar-collapse" id="navbarResponsive">
-              <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items">
-                <NavLink className="nav-item link-nav" to="/trade">Trade</NavLink>
-                <NavLink className="nav-item link-nav" to="/mint">Mint</NavLink>
-                <NavLink className="nav-item link-nav" to="/exercise">Exercise</NavLink>
-              </ul>
+              {this.isAdvanced() && 
               <ul className="navbar-nav">
                 <PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown>
+              </ul>}
+              {this.isAdvanced() && 
+              <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items">
+                <NavLink className="nav-item link-nav" to="/advanced/trade">Trade</NavLink>
+                <NavLink className="nav-item link-nav" to="/advanced/mint">Mint</NavLink>
+                <NavLink className="nav-item link-nav" to="/advanced/exercise">Exercise</NavLink>
+              </ul>}
+              <ul className="navbar-nav ml-auto">
+                <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>
+                <div className="app-mode" onClick={() => this.changeMode()}>{this.isAdvanced() ? "Basic" : "Advanced"}<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
               </ul>
               <ul className="navbar-nav">
                 {username &&
@@ -71,7 +97,7 @@ class NavBar extends Component {
                 }
                 {!username && 
                   <li className="nav-item mx-lg-2">
-                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn("/mint", this.context)}>SIGN IN</div>
+                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn((this.isAdvanced() ? "/advanced/mint" : "/write"), this.context)}>SIGN IN</div>
                   </li>
                 }
               </ul>

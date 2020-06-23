@@ -39,3 +39,9 @@ module.exports.deribitTicker = (event, context, callback) => {
     callback(null, successCallback(response));
   }).catch((err) => setError(null, err).then(error => callback(null, error)));
 };
+
+module.exports.opynQuote = (event, context, callback) => {
+  web3Interface.opynQuote(event.queryStringParameters).then((response) => {
+    callback(null, successCallback(response));
+  }).catch((err) => setError(null, err).then(error => callback(null, error)));
+};

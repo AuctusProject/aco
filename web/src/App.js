@@ -65,14 +65,6 @@ class App extends Component {
       this.setState({accountToggle:!this.state.accountToggle})
     }
   }
-  
-  needNavigate = () => {
-    return window.location.pathname.indexOf("privacy") < 0 && 
-      window.location.pathname.indexOf("terms") < 0 &&
-      window.location.pathname.indexOf("exercise") < 0 &&
-      window.location.pathname.indexOf("trade") < 0 &&
-      window.location.pathname !== "/"
-  }
 
   onLoaded = () => {
     this.setState({loading: false})
@@ -139,7 +131,7 @@ class App extends Component {
                   render={ routeProps => <Terms {...routeProps} /> }
                 />
                 <Route 
-                  path={`/mint/:tokenAddress?`}
+                  path={`/advanced/mint/:tokenAddress?`}
                   render={ routeProps => <Writer 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -147,7 +139,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/exercise`}
+                  path={`/advanced/exercise`}
                   render={ routeProps => <Exercise 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -155,7 +147,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/trade/:tokenAddress?`}
+                  path={`/advanced/trade/:tokenAddress?`}
                   render={ routeProps => <Trade 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -165,7 +157,7 @@ class App extends Component {
                   /> }
                 />                
                 <Route 
-                  path={`/simple/:tokenAddress?`}
+                  path={[`/buy/:tokenAddress?`, `/write/:tokenAddress?`, `/manage/:tokenAddress?`]}
                   render={ routeProps => <Simple 
                     {...routeProps}
                     signIn={this.showSignInModal}

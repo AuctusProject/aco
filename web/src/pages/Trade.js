@@ -104,19 +104,19 @@ class Trade extends Component {
   onSelectOption = (option) => {
     this.setState({selectedOption: option, selectedExpiryTime: option ? null : this.state.selectedExpiryTime}, () => {
       if(option != null) {
-        this.props.history.push('/trade/'+option.acoToken)
+        this.props.history.push('/advanced/trade/'+option.acoToken)
         window.TradeApp.unmount()
         window.TradeApp.mount(getMarketDetails(option))
       }
       else {
-        this.props.history.push('/trade')
+        this.props.history.push('/advanced/trade')
       }
     })
   }
 
   onSelectExpiryTime = (expiryTime) => {
     this.setState({selectedExpiryTime: expiryTime, selectedOption: null})
-    this.props.history.push('/trade')
+    this.props.history.push('/advanced/trade')
   }
 
   render() {

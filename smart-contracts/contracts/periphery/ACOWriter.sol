@@ -1,8 +1,8 @@
 pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
-import "./IACOToken.sol";
-import "./IWETH.sol";
+import "../interfaces/IACOToken.sol";
+import "../interfaces/IWETH.sol";
 
 /**
  * @title ACOWriter
