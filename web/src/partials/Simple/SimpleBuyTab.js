@@ -180,7 +180,7 @@ class SimpleBuyTab extends Component {
 
   sendBuyTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
-    sendTransactionWithNonce(null, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
+    sendTransactionWithNonce(this.state.swapQuote.gasPrice, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber, needApproval)
@@ -411,9 +411,9 @@ class SimpleBuyTab extends Component {
           <div className="separator"></div>
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
-            <div className="price-value">ACO: {this.formatAcoPrice(optionPrice)}</div>
-            <div className="price-value"><div>Opyn:</div><div>{selectedOption && this.state.opynPrice ? fromDecimals(this.state.opynPrice, selectedOption.strikeAssetInfo.decimals) : "NA"}</div></div>
-            <div className="price-value"><div>Deribit:</div><div>{selectedOption && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, selectedOption.strikeAssetInfo.decimals) : "NA"}</div></div>
+            <div className="price-value"><div>ACO:</div><div>{this.formatAcoPrice(optionPrice)}</div></div>
+            <div className="price-value"><div>Opyn:</div><div>{selectedOption && this.state.opynPrice ? fromDecimals(this.state.opynPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
+            <div className="price-value"><div>Deribit:</div><div>{selectedOption && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
           </div>
         </div>
       </div>

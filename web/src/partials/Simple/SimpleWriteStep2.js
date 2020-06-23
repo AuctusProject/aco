@@ -2,7 +2,6 @@ import './SimpleWriteStep2.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, acoWriteAddress, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
 import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
@@ -121,7 +120,7 @@ class SimpleWriteStep2 extends Component {
     var writeValue = this.getWriteValue(collateral)
 
     this.setStepsModalInfo(++stepNumber, needApproval)
-    write(this.context.web3.selectedAccount, this.props.option.acoToken, collateral.toString(), this.state.swapQuote.to, this.state.swapQuote.data, writeValue, nonce)
+    write(this.context.web3.selectedAccount, this.props.option.acoToken, collateral.toString(), this.state.swapQuote.to, this.state.swapQuote.data, writeValue, this.state.swapQuote.gasPrice, nonce)
     .then(result => {
       if (result) {
         this.setStepsModalInfo(++stepNumber, needApproval)

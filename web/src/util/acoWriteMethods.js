@@ -13,8 +13,8 @@ function getAcoWriteContract() {
     return acoWriteContract
 }
 
-export function write(from, acoToken, collateralAmount, exchangeAddress, exchangeData, value, nonce) {
+export function write(from, acoToken, collateralAmount, exchangeAddress, exchangeData, value, gasPrice, nonce) {
     const contract = getAcoWriteContract()
     var data = contract.methods.write(acoToken, collateralAmount, exchangeAddress, exchangeData).encodeABI()
-    return sendTransactionWithNonce(null, null, from, acoWriteAddress, value, data, null, nonce)
+    return sendTransactionWithNonce(gasPrice, null, from, acoWriteAddress, value, data, null, nonce)
 }
