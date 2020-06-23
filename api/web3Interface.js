@@ -134,7 +134,7 @@ module.exports.opynQuote = (queryArguments) => {
     } else {
       let data = ((queryArguments.isBuy === true || queryArguments.isBuy === "true") ? "0xbec165e7" : "0x3ed9c978") + addressToData(queryArguments.token) + addressToData(queryArguments.swappedToken) + numberToData(BigInt(queryArguments.amount));
       callEthereum("eth_call", {"to": queryArguments.exchange, "data": data}).then((result) => {
-        if (result) {
+        if (result && result !== "0x") {
           resolve(BigInt(result).toString(10));
         } else {
           resolve(null);

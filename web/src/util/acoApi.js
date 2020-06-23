@@ -88,18 +88,12 @@ export function getOpynQuote(optionData, isBuy, tokenAmount) {
                     Axios.get(apiUrl + "opyn/quote?isBuy=" + (isBuy ? "true" : "false") + "&exchange=" + opynData.optionsExchangeAddress + "&token=" + opynData.address + "&swappedToken=" + (optionData.isCall ? opynData.underlying : opynData.strike) + "&amount=" + (BigInt(tokenAmount) * BigInt(10 ** (-1 * parseInt(opynData.oTokenExchangeRateExp))) / BigInt(10 ** optionData.acoTokenInfo.decimals)).toString(10))
                     .then(res => {
                         if (res && res.data) {
-                            if (isBuy) {
-                                if (optionData.isCall) {
-                                    resolve((BigInt(res.data) * BigInt(optionData.strikePrice) / BigInt(10 ** optionData.strikeAssetInfo.decimals)).toString(10))
-                                } else {
-                                    resolve(res.data)
-                                }
+                            if (optionData.isCall) {
+                                resolve((BigInt(res.data) * BigInt(optionData.strikePrice) / BigInt(10 ** optionData.strikeAssetInfo.decimals)).toString(10))
+                            } else if (isBuy) {
+                                resolve(res.data)
                             } else {
-                                if (optionData.isCall) {
-                                    //TODO understand how calculate this price
-                                } else {
-                                    resolve((BigInt(res.data) * BigInt(10 ** optionData.strikeAssetInfo.decimals) / BigInt(optionData.strikePrice)).toString(10))
-                                }
+                                resolve((BigInt(res.data) * BigInt(10 ** optionData.strikeAssetInfo.decimals) / BigInt(optionData.strikePrice)).toString(10))
                             }
                         } else {
                             resolve(null)
