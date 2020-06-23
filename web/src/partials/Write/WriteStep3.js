@@ -3,8 +3,8 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
-import { uniswapUrl, formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther } from '../../util/constants'
-import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount } from '../../util/acoTokenMethods'
+import { uniswapUrl, formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther, zero } from '../../util/constants'
+import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount, getCollateralAddress } from '../../util/acoTokenMethods'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -41,8 +41,8 @@ class WriteStep3 extends Component {
   }
 
   onMaxClick = () => {
-    var tolerance = Web3Utils.toBN(ethTransactionTolerance * Math.pow(10, this.getCollateralDecimals()))
-    var balance = fromDecimals((this.state.collateralBalance > tolerance) ? (this.state.collateralBalance.sub(tolerance)) : 0, this.getCollateralDecimals())
+    var tolerance = this.isCollateralEth() ? Web3Utils.toBN(ethTransactionTolerance * Math.pow(10, this.getCollateralDecimals())) : zero
+    var balance = fromDecimals((this.state.collateralBalance > tolerance) ? (this.state.collateralBalance.sub(tolerance)) : zero, this.getCollateralDecimals())
     this.onCollaterizeChange(balance)
   }
 
@@ -83,11 +83,11 @@ class WriteStep3 extends Component {
   }
 
   getCollaterizeAssetAddress = () => {
-    return getCollateralInfo(this.props.option).address
+    return getCollateralAddress(this.props.option)
   }
 
   isCollateralEth = () => {
-    return isEther(getCollateralInfo(this.props.option).address)
+    return isEther(this.getCollaterizeAssetAddress())
   }
 
   onConfirm = () => {
@@ -97,7 +97,7 @@ class WriteStep3 extends Component {
         this.needApprove().then(needApproval => {
         if (needApproval) {
           this.setStepsModalInfo(++stepNumber, needApproval)
-          allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.collaterizeValue, this.getCollateralDecimals()), getCollateralInfo(this.props.option).address, this.props.option.acoToken, nonce)
+          allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.collaterizeValue, this.getCollateralDecimals()), getCollateralAddress(this.props.option), this.props.option.acoToken, nonce)
           .then(result => {
             if (result) {
               this.setStepsModalInfo(++stepNumber, needApproval)
@@ -132,7 +132,7 @@ class WriteStep3 extends Component {
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isCollateralEth()) {
-        allowance(this.context.web3.selectedAccount, getCollateralInfo(this.props.option).address, this.props.option.acoToken).then(result => {
+        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), this.props.option.acoToken).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())))
         })

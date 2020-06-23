@@ -90,6 +90,9 @@ class OptionChart extends Component {
       yAxes.gridLines.borderDash = [step/2, step/2]
       this.setState({chart: chart, xAxes: xAxes, yAxes: yAxes})
     }
+    else {
+      this.setState({chart: {}, xAxes: {}, yAxes: {}})
+    }
   }
 
   componentDidUpdate = (prevProps) => {

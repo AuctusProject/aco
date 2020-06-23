@@ -26,3 +26,8 @@ export function getSwapQuote(buyToken, sellToken, amount, isBuy) {
         );
     })
 }
+
+export function isInsufficientLiquidity(err) {
+  return err && err.response && err.response.data && err.response.data.validationErrors && 
+    err.response.data.validationErrors.filter(v => v.reason === "INSUFFICIENT_ASSET_LIQUIDITY").length > 0
+}

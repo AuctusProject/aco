@@ -5,6 +5,7 @@ const negative1 = new Web3Utils.BN(-1);
 
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
 export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
+export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
 export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
@@ -15,12 +16,13 @@ export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
 export const symbolsMappedToBaseAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_BASE_ASSET)
 export const acoImplementationVersionMap = JSON.parse(process.env.REACT_APP_ACO_IMPLEMENTATION_VERSION)
-
+export const swapQuoteBuySize = "100000000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const ethTransactionTolerance = 0.01;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
+export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
 
 export const OPTION_TYPES = {
     1: {
@@ -190,6 +192,10 @@ export function getNumberWithSignal(number) {
     }
 }
 
+export function formatPercentage(percentage, decimals = 2) {
+    return (percentage * 100).toFixed(decimals) + "%"
+}
+
 export function groupBy(xs, key) {
     return xs.reduce(function(rv, x) {
       (rv[x[key]] = rv[x[key]] || []).push(x);
@@ -210,7 +216,7 @@ export function sortByFn(array, propertyFn) {
 }
 
 export const getTimeToExpiry = (expiryTimeInSeconds) => {
-    let timeInSeconds = expiryTimeInSeconds - (new Date().getTime()/ONE_SECOND)
+    let timeInSeconds = getSecondsToExpiry(expiryTimeInSeconds)
     let seconds = timeInSeconds;
     const days = Math.floor(seconds / (3600 * 24));
     seconds -= days * 3600 * 24;
@@ -222,6 +228,10 @@ export const getTimeToExpiry = (expiryTimeInSeconds) => {
         hours,
         minutes
     };
+}
+
+export const getSecondsToExpiry = (expiryTimeInSeconds) => {
+    return expiryTimeInSeconds - (new Date().getTime()/ONE_SECOND)
 }
 
 

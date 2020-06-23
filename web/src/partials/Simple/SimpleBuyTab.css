@@ -20,7 +20,13 @@
 .simple-buy-tab .input-field input {
     font-size: 16px;
     width: 100%;
-    color: #e6e6e6
+    color: #e6e6e6;
+    text-align: center;
+}
+
+.simple-buy-tab .input-field input::placeholder {
+    color: #4c4c4c;
+    opacity: 1;
 }
 
 .type-toggle {    

@@ -2,7 +2,7 @@ import './ExerciseAction.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount } from '../../util/acoTokenMethods'
+import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount, getExerciseAddress } from '../../util/acoTokenMethods'
 import { zero, formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
@@ -88,7 +88,7 @@ class ExerciseAction extends Component {
     return new Promise((resolve) => {
       if (this.state.selectedTab === 1) {
         if (!this.isPayEth()) {
-          allowance(this.context.web3.selectedAccount, getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken).then(result => {
+          allowance(this.context.web3.selectedAccount, getExerciseAddress(this.props.position.option), this.props.position.option.acoToken).then(result => {
             var resultValue = new Web3Utils.BN(result)
             resolve(resultValue.lt(toDecimals(this.state.payValue, this.getPayDecimals())))
           })
@@ -108,7 +108,7 @@ class ExerciseAction extends Component {
 
   sendAllowDeposit = (nonce) => {
     if (this.state.selectedTab === 1) {
-      return allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseInfo(this.props.position.option).address, this.props.position.option.acoToken, nonce)
+      return allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseAddress(this.props.position.option), this.props.position.option.acoToken, nonce)
     }
     else {
       return allowDeposit(this.context.web3.selectedAccount, this.getOptionAmountToDecimals().toString(), this.props.position.option.acoToken, acoFlashExerciseAddress, nonce)
@@ -308,7 +308,7 @@ class ExerciseAction extends Component {
 
   getPayAddress = () => {
     var option = this.props.position.option
-    return getExerciseInfo(option).address
+    return getExerciseAddress(option)
   }
 
   getPayDecimals = () => {
@@ -318,7 +318,7 @@ class ExerciseAction extends Component {
 
   isPayEth = () => {
     var option = this.props.position.option
-    return isEther(getExerciseInfo(option).address)
+    return isEther(getExerciseAddress(option))
   }
 
   getReceiveSymbol = () => {

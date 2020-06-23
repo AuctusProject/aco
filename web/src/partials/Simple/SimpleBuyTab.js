@@ -8,14 +8,15 @@ import SimpleDropdown from '../SimpleDropdown'
 import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
-import { getSwapQuote } from '../../util/zrxApi'
+import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
 import Web3Utils from 'web3-utils'
-import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
+import { checkTransactionIsMined, getNextNonce, sendTransactionWithNonce } from '../../util/web3Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { allowDeposit, allowance } from '../../util/erc20Methods'
+import StepsModal from '../StepsModal/StepsModal'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -40,8 +41,8 @@ class SimpleBuyTab extends Component {
   }
 
   selectType = (type) => {
-    var strikeOptions = this.filterStrikeOptions(type)
-    this.setState({ selectedType: type, strikeOptions: strikeOptions}, this.setSelectedOption)
+    var [strikeOptions, expirationOptions] = this.filterStrikeAndExpirationOptions(type)
+    this.setState({ selectedType: type, strikeOptions: strikeOptions, expirationOptions: expirationOptions}, this.setSelectedOption)
   }
 
   onStrikeChange = (strikeOption) => {
@@ -65,7 +66,8 @@ class SimpleBuyTab extends Component {
     return expirationOptions
   }
 
-  filterStrikeOptions = (type) => {
+  filterStrikeAndExpirationOptions = (type) => {
+    var expirationOptions = this.state.expirationOptions
     var filteredOptions = this.props.options ? this.props.options.filter(o => o.isCall === (type === 1)) : []
     var grouppedOptions = groupBy(filteredOptions, "strikePrice")
     var hasCurrentSelectedStrike = false
@@ -78,7 +80,10 @@ class SimpleBuyTab extends Component {
     if (!hasCurrentSelectedStrike) {
       this.setState({selectedStrike: null, selectedExpiration: null}, this.setSelectedOption)
     }
-    return strikeOptions
+    else if (this.state.selectedStrike) {
+      expirationOptions = this.filterExpirationOptions(this.state.selectedStrike, type)
+    }
+    return [strikeOptions, expirationOptions]
   }
 
   onExpirationChange = (expirationOption) => {
@@ -111,7 +116,7 @@ class SimpleBuyTab extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.state.selectedOption.strikeAssetInfo.address, erc20Proxy, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.state.selectedOption.strikeAsset, erc20Proxy, nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -146,7 +151,7 @@ class SimpleBuyTab extends Component {
 
   sendBuyTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
-    this.sendTransactionWithNonce(null, null, this.context.web3.selectedAccount, this.state.swapInfo.to, this.state.swapInfo.value, this.state.swapInfo.data, null, nonce)
+    sendTransactionWithNonce(null, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber, needApproval)
@@ -187,11 +192,11 @@ class SimpleBuyTab extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to buy " + this.state.qtyAmount + " " + option.acoTokenInfo.symbol  + "."
+      subtitle = "Confirm on Metamask to buy " + this.state.qtyValue + " " + option.acoTokenInfo.symbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {
-      subtitle = "Buying " + this.state.qtyAmount + " " + option.acoTokenInfo.symbol + "..."
+      subtitle = "Buying " + this.state.qtyValue + " " + option.acoTokenInfo.symbol + "..."
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 5) {
@@ -218,14 +223,22 @@ class SimpleBuyTab extends Component {
         onDoneButtonClick: (stepNumber === 5 ? this.onDoneButtonClick : this.onHideStepsModal)
       }
     })
+  }  
+
+  onDoneButtonClick = () => {
+    this.setState({ stepsModalInfo: null })    
+  }
+
+  onHideStepsModal = () => {
+    this.setState({ stepsModalInfo: null })
   }
 
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isPayEth()) {
-        allowance(this.context.web3.selectedAccount, this.state.selectedOption.strikeAssetInfo.address, erc20Proxy).then(result => {
+        allowance(this.context.web3.selectedAccount, this.state.selectedOption.strikeAsset, erc20Proxy).then(result => {
           var resultValue = new Web3Utils.BN(result)
-          resolve(resultValue.lt(toDecimals(this.state.payValue, this.getPayDecimals())))
+          resolve(resultValue.lt(toDecimals(this.getTotalToBePaid(), this.state.selectedOption.strikeAssetInfo.decimals)))
         })
       }
       else {
@@ -235,7 +248,7 @@ class SimpleBuyTab extends Component {
   }
   
   isPayEth = () => {
-    return isEther(this.state.selectedOption.strikeAssetInfo.address)
+    return isEther(this.state.selectedOption.strikeAsset)
   }
 
   onConnectClick = () => {
@@ -243,7 +256,7 @@ class SimpleBuyTab extends Component {
   }
 
   getButtonMessage = () => {
-    if (!this.state.qtyValue || this.state.qtyValue < 0) {
+    if (!this.state.qtyValue || this.state.qtyValue <= 0) {
       return "Enter an amount"
     }
     if (!this.state.selectedStrike) {
@@ -272,10 +285,10 @@ class SimpleBuyTab extends Component {
   refreshSwapQuote = (selectedOption) => {
     this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
       if (selectedOption && this.state.qtyValue && this.state.qtyValue > 0) {
-        getSwapQuote(selectedOption.acoToken, selectedOption.strikeAsset, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString(), true).then(swapInfo => {
-          this.setState({swapQuote: swapInfo, errorMessage: null, loadingSwap: false})
+        getSwapQuote(selectedOption.acoToken, selectedOption.strikeAsset, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString(), true).then(swapQuote => {
+          this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false})
         }).catch((err) => {
-          if (this.isInsufficientLiquidity(err)) {
+          if (isInsufficientLiquidity(err)) {
             this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false})
           }
           else {
@@ -287,11 +300,6 @@ class SimpleBuyTab extends Component {
         this.setState({swapQuote: null, errorMessage: null, loadingSwap: false})
       }
     })
-  }
-
-  isInsufficientLiquidity = (err) => {
-    return err && err.response && err.response.data && err.response.data.validationErrors && 
-      err.response.data.validationErrors.filter(v => v.reason === "INSUFFICIENT_ASSET_LIQUIDITY").length > 0
   }
 
   getTotalToBePaid = () => {
@@ -308,6 +316,13 @@ class SimpleBuyTab extends Component {
     var totalToBePaid = this.getTotalToBePaid()
     if (totalToBePaid) {
       return totalToBePaid + " " + this.props.selectedPair.strikeAssetSymbol
+    }
+    return "-"
+  }
+
+  formatAcoPrice = (optionPrice) => {
+    if (optionPrice) {
+      return formatWithPrecision(optionPrice) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
   }
@@ -361,13 +376,12 @@ class SimpleBuyTab extends Component {
           <div className="separator"></div>
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
-            <div className="price-value">ACO: {optionPrice && formatWithPrecision(optionPrice)}</div>
+            <div className="price-value">ACO: {this.formatAcoPrice(optionPrice)}</div>
             <div className="price-value">ACO: $20</div>
             <div className="price-value">ACO: $20</div>
           </div>
         </div>
       </div>
-      
       <div className="action-button-wrapper">
         {this.canBuy() ?
           (this.props.isConnected ? 
@@ -381,6 +395,7 @@ class SimpleBuyTab extends Component {
             <div>{this.state.loadingSwap ? "Loading..." : this.getButtonMessage()}</div>
           </div>}
       </div>
+      {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
     </div>
   }
 }
