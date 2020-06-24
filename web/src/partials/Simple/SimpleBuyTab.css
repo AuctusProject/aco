@@ -143,22 +143,22 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
+    justify-content: center;
     font-size: 14px;
-    font-weight: 500;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.35px;
-    text-align: left;
-    color: #e6e6e6;
+    letter-spacing: 0.4px;
 }
 
-.price-value .price-origin {
-    font-size: 14px;
-    font-weight: 300;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.35px;
+.price-value > div:first-child {
+    text-align: right;
     color: #a6a6a6;
+    width: 51px;
+}
+
+.price-value > div:last-child {
+    font-weight: 500;
+    text-align: left;
+    color: #e6e6e6;
+    padding-left: 6px;
+    letter-spacing: 0.2px;
+    width: calc(100% - 51px);
 }
