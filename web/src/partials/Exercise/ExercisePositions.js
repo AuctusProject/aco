@@ -17,12 +17,14 @@ class ExercisePositions extends Component {
   
   componentDidUpdate = (prevProps) => {
     if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.accountToggle !== prevProps.accountToggle) {
+      this.props.accountToggle !== prevProps.accountToggle ||
+      (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
       this.componentDidMount()
     }
   }
 
   componentDidMount = () => {
+    this.props.updated()
     listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
       this.setState({positions: positions})
     })

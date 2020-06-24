@@ -1,7 +1,8 @@
-import './ExerciseAction.css'
+import './ExerciseModal.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import Modal from 'react-bootstrap/Modal'
 import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount, getExerciseAddress } from '../../util/acoTokenMethods'
 import { zero, formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
@@ -17,7 +18,7 @@ import Loading from '../Util/Loading'
 import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/acoFlashExerciseMethods'
 import { hasFlashExercise } from '../../util/acoFactoryMethods'
 
-class ExerciseAction extends Component {
+class ExerciseModal extends Component {
   constructor(props) {
     super(props)
     this.state = { flashAvailable: null, selectedTab: null, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
@@ -40,7 +41,7 @@ class ExerciseAction extends Component {
   componentDidUpdate = (prevProps) => {
     if (this.props.selectedPair !== prevProps.selectedPair ||
       this.props.accountToggle !== prevProps.accountToggle) {
-      this.props.onCancelClick()
+      this.props.onHide(false)
     }
   }
 
@@ -221,7 +222,7 @@ class ExerciseAction extends Component {
   }
 
   onDoneButtonClick = () => {
-    this.props.onCancelClick()
+    this.props.onHide(true)
   }
 
   onHideStepsModal = () => {
@@ -363,113 +364,118 @@ class ExerciseAction extends Component {
   }
 
   render() {
-    return <div className="exercise-action">
-      {this.state.selectedTab === null && <Loading></Loading>}
-      {this.state.selectedTab !== null && <>
-      <div className="btn-group pill-button-group">
-        <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>
-        <button onClick={this.selectTab(2)} type="button" className={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>FLASH EXERCISE</button>
-      </div>
-      <div className="confirm-card">
-        <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>
-        <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
-          {this.state.selectedTab === 2 && <>
-            <>
-              <div>With Flash Exercise, you can exercise an option using flash swaps of Uniswap V2 and just receive the net profit.</div>
-              <div className="card-separator"></div>
-              {!this.state.flashAvailable && <div>This option doesn't support Flash Exercise.</div>}
-            </>
-          </>}
-          {(this.state.selectedTab === 1 || this.state.flashAvailable) && <>
-            <div className="balance-column">
-              <div>Amount available to exercise: <span>{getFormattedOpenPositionAmount(this.props.position)} options</span></div>
-            </div>
-            <div className="card-separator"></div>
-            <div className="input-row">
-              <div className="input-column">
-                <div className="input-label">Amount</div>
-                <div className="input-field">
-                  <DecimalInput tabIndex="-1" onChange={this.onOptionsAmountChange} value={this.state.optionsAmount}></DecimalInput>
-                  <div className="max-btn" onClick={this.onMaxClick}>MAX</div>
-                </div>
-              </div>
-            </div>
-            {this.state.selectedTab === 1 && (!this.state.optionsAmount || this.state.optionsAmount === "" || this.isInsufficientFunds()) &&
-              <>
-                <div className="card-separator"></div>
-                <div>{this.getOptionExerciseDescription()}</div>
-              </>
-            }
-          </>}
-        </div>
-        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
-          <div className="confirm-card-body highlight-background">
-            <div>
-              <div className="summary-title">SUMMARY</div>
-              <table className="summary-table">
-                <tbody>
-                  {this.state.selectedTab === 1 && <>
-                    <tr className={this.isInsufficientFundsToPay() ? "insufficient-funds-error" : ""}>
-                      <td>You'll {(this.props.position.option.isCall ? "pay" : "send")}</td>
-                      <td>{this.state.payValue} {this.getPaySymbol()}</td>
-                    </tr>
-                    <tr>
-                      <td>You'll receive</td>
-                      <td>{this.state.collateralValue} {this.getReceiveSymbol()}</td>
-                    </tr>
-                  </>}
-                  {this.state.selectedTab === 2 && <>
-                    <tr>
-                      <td>Settlement price<span>(estimated)</span></td>
-                      <td>{this.getEstimatedPriceFromDecimals()} {this.getEstimatedPriceSymbol()}</td>
-                    </tr>
-                    <tr>
-                      <td>Total profit<span>(estimated)</span></td>
-                      <td>{this.getEstimatedReturnFromDecimals()} {this.getReceiveSymbol()}</td>
-                    </tr>
-                  </>}
-                  {this.state.exerciseFee > 0 && <tr>
-                    <td>Exercise fee</td>
-                    <td>{this.state.exerciseFee} {this.getReceiveSymbol()}</td>
-                  </tr>}
-                </tbody>
-              </table>
-              {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
-               <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
-               {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
+    return (<Modal className="exercise-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
+      <Modal.Header closeButton></Modal.Header>
+      <Modal.Body>
+        <div className="exercise-action">
+          {this.state.selectedTab === null && <Loading></Loading>}
+          {this.state.selectedTab !== null && <>
+          <div className="btn-group pill-button-group">
+            <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>
+            <button onClick={this.selectTab(2)} type="button" className={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>FLASH EXERCISE</button>
+          </div>
+          <div className="confirm-card">
+            <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>
+            <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
+              {this.state.selectedTab === 2 && <>
+                <>
+                  <div>With Flash Exercise, you can exercise an option using flash swaps of Uniswap V2 and just receive the net profit.</div>
+                  <div className="card-separator"></div>
+                  {!this.state.flashAvailable && <div>This option doesn't support Flash Exercise.</div>}
+                </>
               </>}
-              {this.isFlashOutOfMoney() && 
-                <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>
-              }
-            </div>
-          </div>}
-        {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.selectedTab === 2 && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
-          <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
-            <div className="input-row">
-              <div className="input-column">
-                <div className="input-label">Set minimum amount to be received</div>
-                <div className="input-field">
-                  <DecimalInput tabIndex="-1" onChange={this.onMinimumReceivedAmountChange} value={this.state.minimumReceivedAmount}></DecimalInput>
-                  <div className="coin-symbol">{this.getReceiveSymbol()}</div>
+              {(this.state.selectedTab === 1 || this.state.flashAvailable) && <>
+                <div className="balance-column">
+                  <div>Amount available to exercise: <span>{getFormattedOpenPositionAmount(this.props.position)} options</span></div>
                 </div>
-              </div>
+                <div className="card-separator"></div>
+                <div className="input-row">
+                  <div className="input-column">
+                    <div className="input-label">Amount</div>
+                    <div className="input-field">
+                      <DecimalInput tabIndex="-1" onChange={this.onOptionsAmountChange} value={this.state.optionsAmount}></DecimalInput>
+                      <div className="max-btn" onClick={this.onMaxClick}>MAX</div>
+                    </div>
+                  </div>
+                </div>
+                {this.state.selectedTab === 1 && (!this.state.optionsAmount || this.state.optionsAmount === "" || this.isInsufficientFunds()) &&
+                  <>
+                    <div className="card-separator"></div>
+                    <div>{this.getOptionExerciseDescription()}</div>
+                  </>
+                }
+              </>}
             </div>
-            {this.isMinimumAboveEstimated() && 
-              <div className="insufficient-funds-message">The entered minimum amount to be received is above the estimated, the transaction will most likely fail.</div>
-            }
-          </div>}
-        {(this.state.selectedTab === 1 || this.state.flashAvailable) && <div className={"confirm-card-actions " + ((this.state.selectedTab === 1 && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
-          <div className="aco-button cancel-btn" onClick={this.props.onCancelClick}>Go back</div>
-          <div className={"aco-button action-btn " + (this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
-        </div>}
-      </div>
-      </>}
-      {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
-    </div>
+            {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
+              <div className="confirm-card-body highlight-background">
+                <div>
+                  <div className="summary-title">SUMMARY</div>
+                  <table className="summary-table">
+                    <tbody>
+                      {this.state.selectedTab === 1 && <>
+                        <tr className={this.isInsufficientFundsToPay() ? "insufficient-funds-error" : ""}>
+                          <td>You'll {(this.props.position.option.isCall ? "pay" : "send")}</td>
+                          <td>{this.state.payValue} {this.getPaySymbol()}</td>
+                        </tr>
+                        <tr>
+                          <td>You'll receive</td>
+                          <td>{this.state.collateralValue} {this.getReceiveSymbol()}</td>
+                        </tr>
+                      </>}
+                      {this.state.selectedTab === 2 && <>
+                        <tr>
+                          <td>Settlement price<span>(estimated)</span></td>
+                          <td>{this.getEstimatedPriceFromDecimals()} {this.getEstimatedPriceSymbol()}</td>
+                        </tr>
+                        <tr>
+                          <td>Total profit<span>(estimated)</span></td>
+                          <td>{this.getEstimatedReturnFromDecimals()} {this.getReceiveSymbol()}</td>
+                        </tr>
+                      </>}
+                      {this.state.exerciseFee > 0 && <tr>
+                        <td>Exercise fee</td>
+                        <td>{this.state.exerciseFee} {this.getReceiveSymbol()}</td>
+                      </tr>}
+                    </tbody>
+                  </table>
+                  {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
+                  <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
+                  {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
+                  </>}
+                  {this.isFlashOutOfMoney() && 
+                    <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>
+                  }
+                </div>
+              </div>}
+            {(this.state.selectedTab === 1 || this.state.flashAvailable) && this.state.selectedTab === 2 && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
+              <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
+                <div className="input-row">
+                  <div className="amount-to-receive">
+                    <div className="input-label">Set minimum amount to be received</div>
+                    <div className="input-field">
+                      <DecimalInput tabIndex="-1" onChange={this.onMinimumReceivedAmountChange} value={this.state.minimumReceivedAmount}></DecimalInput>
+                      <div className="coin-symbol">{this.getReceiveSymbol()}</div>
+                    </div>
+                  </div>
+                </div>
+                {this.isMinimumAboveEstimated() && 
+                  <div className="insufficient-funds-message">The entered minimum amount to be received is above the estimated, the transaction will most likely fail.</div>
+                }
+              </div>}
+              {(this.state.selectedTab === 1 || this.state.flashAvailable) && <div className={"confirm-card-actions " + ((this.state.selectedTab === 1 && this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
+                <div className="aco-button cancel-btn" onClick={() => this.props.onHide(false)}>Go back</div>
+                <div className={"aco-button action-btn " + (this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
+              </div>}
+            </div>
+            </>}
+            {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
+          </div>
+        </Modal.Body>
+      </Modal>)
   }
 }
 
-ExerciseAction.contextTypes = {
+ExerciseModal.contextTypes = {
   web3: PropTypes.object
 }
-export default withRouter(ExerciseAction)
+export default withRouter(ExerciseModal)

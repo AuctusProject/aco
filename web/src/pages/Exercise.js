@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ExercisePositions from '../partials/Exercise/ExercisePositions'
-import ExerciseAction from '../partials/Exercise/ExerciseAction'
+import ExerciseModal from '../partials/Exercise/ExerciseModal'
 import Loading from '../partials/Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
@@ -11,7 +11,7 @@ import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 class Exercise extends Component {
   constructor() {
     super()
-    this.state = { position: null}
+    this.state = {position: null, refresh: false}
   }
 
   
@@ -29,19 +29,19 @@ class Exercise extends Component {
     this.setState({position: position})
   }
 
-  onCancelClick = () => {
-    this.setPosition(null)
+  onCancelClick = (shouldRefresh) => {
+    this.setState({position: null, refresh: !!shouldRefresh})
   }
 
   render() {
     return <div className="py-4">
       {this.canLoad() && <>
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
-        {this.props.selectedPair && this.state.position === null && <div className="page-title">EXERCISE</div>}
-        {this.props.selectedPair && this.state.position === null && <div className="page-subtitle">Select which option series you would like to exercise</div>}
+        {this.props.selectedPair && <div className="page-title">EXERCISE</div>}
+        {this.props.selectedPair && <div className="page-subtitle">Select which option series you would like to exercise</div>}
         {!this.props.selectedPair && <Loading/>}
-        {this.props.selectedPair && this.state.position === null && <ExercisePositions {...this.props} setPosition={this.setPosition}></ExercisePositions>}
-        {this.props.selectedPair && this.state.position !== null && <ExerciseAction {...this.props} position={this.state.position} onCancelClick={this.onCancelClick}></ExerciseAction>}
+        {this.props.selectedPair && <ExercisePositions {...this.props} setPosition={this.setPosition} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></ExercisePositions>}
+        {this.props.selectedPair && this.state.position !== null && <ExerciseModal {...this.props} position={this.state.position} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></ExerciseModal>}
       </>}
       </div>
   }
