@@ -7,6 +7,7 @@ import ExerciseModal from '../partials/Exercise/ExerciseModal'
 import Loading from '../partials/Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { PositionsLayoutMode } from '../util/constants'
 
 class Exercise extends Component {
   constructor() {
@@ -40,7 +41,7 @@ class Exercise extends Component {
         {this.props.selectedPair && <div className="page-title">EXERCISE</div>}
         {this.props.selectedPair && <div className="page-subtitle">Select which option series you would like to exercise</div>}
         {!this.props.selectedPair && <Loading/>}
-        {this.props.selectedPair && <ExercisePositions {...this.props} setPosition={this.setPosition} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></ExercisePositions>}
+        {this.props.selectedPair && <ExercisePositions {...this.props} mode={PositionsLayoutMode.Advanced} setPosition={this.setPosition} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></ExercisePositions>}
         {this.props.selectedPair && this.state.position !== null && <ExerciseModal {...this.props} position={this.state.position} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></ExerciseModal>}
       </>}
       </div>

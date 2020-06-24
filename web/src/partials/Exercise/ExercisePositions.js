@@ -24,10 +24,12 @@ class ExercisePositions extends Component {
   }
 
   componentDidMount = () => {
-    this.props.updated()
-    listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
-      this.setState({positions: positions})
-    })
+    if (this.props.selectedPair && this.context.web3.selectedAccount) {
+      this.props.updated()
+      listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+        this.setState({positions: positions})
+      })
+    }
   }
 
   setPosition = (position) => {

@@ -12,6 +12,7 @@ import Loading from '../partials/Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { getOption } from '../util/acoFactoryMethods'
+import { PositionsLayoutMode } from '../util/constants'
 
 class Writer extends Component {
   constructor() {
@@ -76,7 +77,7 @@ class Writer extends Component {
           {this.state.currentStep === 1 && <WriteStep1 {...this.props} setOptionType={this.setOptionType}></WriteStep1>}
           {this.state.currentStep === 2 && <WriteStep2 {...this.props} optionType={this.state.optionType} setOption={this.setOption}></WriteStep2>}
           {this.state.currentStep === 3 && <WriteStep3 {...this.props} option={this.state.option} onCancelClick={this.onCancelClick}></WriteStep3>}
-          {this.state.currentStep === 1 && <WrittenOptionsPositions {...this.props} onBurnPositionSelect={this.onBurnPositionSelect}></WrittenOptionsPositions>}
+          {this.state.currentStep === 1 && <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Advanced} onBurnPositionSelect={this.onBurnPositionSelect}></WrittenOptionsPositions>}
           {this.state.currentStep === 4 && <Burn {...this.props} position={this.state.position} onCancelClick={this.onCancelClick}></Burn>}
         </>}
       </>}

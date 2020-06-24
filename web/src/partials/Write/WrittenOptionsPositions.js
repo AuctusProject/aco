@@ -3,8 +3,8 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { getOptionsPositions } from '../../util/acoFactoryMethods'
-import { getOptionCollateralFormatedValue, getOptionTokenAmountFormatedValue, redeem, getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
-import { ONE_SECOND, getNumberWithSignal } from '../../util/constants'
+import { getOptionCollateralFormatedValue, getOptionTokenAmountFormatedValue, redeem, getFormattedOpenPositionAmount, getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { ONE_SECOND, getNumberWithSignal, formatDate, PositionsLayoutMode } from '../../util/constants'
 import { checkTransactionIsMined } from '../../util/web3Methods'
 import StepsModal from '../StepsModal/StepsModal'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
@@ -29,7 +29,9 @@ class WrittenOptionsPositions extends Component {
   }
 
   componentDidMount = () => {
-    getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => this.setState({ positions: positions }))
+    if (this.props.selectedPair && this.context.web3.selectedAccount) {
+      getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => this.setState({ positions: positions }))
+    }
   }
 
   onBurnClick = (position) => () => {
@@ -122,11 +124,12 @@ class WrittenOptionsPositions extends Component {
         <thead>
           <tr>
             <th>TYPE</th>
-            <th>SYMBOL</th>
+            <th>EXPIRATION</th>
+            <th>STRIKE PRICE</th>
             <th>TOTAL MINTED</th>
-            <th>WALLET BALANCE</th>
-            <th>OPEN POSITION</th>
-            <th>TOTAL COLLATERAL<br />(assignable/unassignable)</th>
+            {this.props.mode === PositionsLayoutMode.Advanced && <th>WALLET BALANCE</th>}
+            {this.props.mode === PositionsLayoutMode.Advanced && <th>OPEN POSITION</th>}
+            <th>TOTAL COLLATERAL{this.props.mode === PositionsLayoutMode.Advanced && <><br />(assignable/unassignable)</>}</th>
             <th></th>
           </tr>
         </thead>
@@ -134,12 +137,13 @@ class WrittenOptionsPositions extends Component {
           {this.state.positions.map(position =>
             <tr key={position.option.acoToken}>
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>
-              <td>{position.option.acoTokenInfo.symbol}</td>
+              <td>{formatDate(position.option.expiryTime, true)}</td>
+              <td>{getOptionFormattedPrice(position.option)}</td>
               <td>{getOptionTokenAmountFormatedValue(position.currentCollateralizedTokens, position.option)}</td>
-              <td>{getOptionTokenAmountFormatedValue(position.balance, position.option)}</td>
-              <td>{getNumberWithSignal(getFormattedOpenPositionAmount(position))}</td>
-              <td>{getOptionCollateralFormatedValue(position.currentCollateral, position.option)}<br />
-              ({getOptionCollateralFormatedValue(position.assignableCollateral, position.option)}/{getOptionCollateralFormatedValue(position.unassignableCollateral, position.option)})
+              {this.props.mode === PositionsLayoutMode.Advanced && <td>{getOptionTokenAmountFormatedValue(position.balance, position.option)}</td>}
+              {this.props.mode === PositionsLayoutMode.Advanced && <td>{getNumberWithSignal(getFormattedOpenPositionAmount(position))}</td>}
+              <td>{getOptionCollateralFormatedValue(position.currentCollateral, position.option)}
+              {this.props.mode === PositionsLayoutMode.Advanced && <><br />({getOptionCollateralFormatedValue(position.assignableCollateral, position.option)}/{getOptionCollateralFormatedValue(position.unassignableCollateral, position.option)})</>}
               </td>
               <td>
                 {!this.isExpired(position) && <div className="position-actions">

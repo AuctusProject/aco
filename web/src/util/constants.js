@@ -35,6 +35,11 @@ export const OPTION_TYPES = {
     }
 }
 
+export const PositionsLayoutMode = {
+    Basic: 0,
+    Advanced: 1
+}  
+
 export function getOptionName(isCall) {
     return isCall ? OPTION_TYPES[1].name : OPTION_TYPES[2].name
 }
