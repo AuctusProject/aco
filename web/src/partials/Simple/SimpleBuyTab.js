@@ -411,9 +411,9 @@ class SimpleBuyTab extends Component {
           <div className="separator"></div>
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
-            <div className="price-value"><div>ACO:</div><div>{this.formatAcoPrice(optionPrice)}</div></div>
-            <div className="price-value"><div>Opyn:</div><div>{selectedOption && this.state.opynPrice ? fromDecimals(this.state.opynPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
-            <div className="price-value"><div>Deribit:</div><div>{selectedOption && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
+            <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatAcoPrice(optionPrice)}</div></div>
+            <div className="price-value"><div className="price-origin">Opyn:</div><div>{selectedOption && this.state.opynPrice ? fromDecimals(this.state.opynPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
+            <div className="price-value"><div className="price-origin">Deribit:</div><div>{selectedOption && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ import DoneLargeIcon from '../Util/DoneLargeIcon'
 import { allowDeposit, allowance } from '../../util/erc20Methods'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { write } from '../../util/acoWriteMethods'
+import { getDeribiData, getOpynQuote } from '../../util/acoApi'
 
 class SimpleWriteStep2 extends Component {
   constructor(props) {
@@ -51,7 +52,7 @@ class SimpleWriteStep2 extends Component {
   }
 
   onCollaterizeChange = (value) => {
-    this.setState({ collaterizeValue: value }, this.refreshSwapQuote)
+    this.setState({ collaterizeValue: value }, this.refresh)
   }
 
   onMaxClick = () => {
@@ -247,6 +248,41 @@ class SimpleWriteStep2 extends Component {
     return null
   }
 
+  refresh = () => {
+    this.setOpynPrice()
+    this.setDeribitPrice()
+    this.refreshSwapQuote()    
+  }
+
+  setDeribitPrice = () => {
+    var selectedOption = this.props.option
+    if (selectedOption) {
+      getDeribiData(selectedOption).then((r) => {
+        if (r) {
+          this.setState({deribitPrice: r.best_ask_price})
+        } else {
+          this.setState({deribitPrice: null})
+        }
+      }).catch((e) => {
+        this.setState({deribitPrice: null})
+      })
+    } else {
+      this.setState({deribitPrice: null})
+    }
+  }
+
+  setOpynPrice = () => {
+    var selectedOption = this.props.option
+    var optionsAmount = this.getOptionsAmount()
+    if (selectedOption && optionsAmount && optionsAmount > 0) {
+      getOpynQuote(selectedOption, true, toDecimals(optionsAmount, selectedOption.acoTokenInfo.decimals).toString()).then((r) => this.setState({opynPrice: r})).catch((e) => {
+        this.setState({opynPrice: null})
+      })
+    } else {
+      this.setState({opynPrice: null})
+    }
+  }
+  
   refreshSwapQuote = () => {
     this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
       var optionsAmount = this.getOptionsAmount()
@@ -314,6 +350,20 @@ class SimpleWriteStep2 extends Component {
     return formatDate(option.expiryTime, true)
   }
 
+  getAcoOptionPrice = () => {    
+    if (this.state.swapQuote) {
+      return parseFloat(this.state.swapQuote.price)
+    }
+    return null
+  }
+
+  formatAcoPrice = (optionPrice) => {
+    if (optionPrice) {
+      return formatWithPrecision(optionPrice) + " " + this.props.selectedPair.strikeAssetSymbol
+    }
+    return "-"
+  }
+
   render() {
     return <div className="simple-write-step2">
       <div className="collateral-input">
@@ -330,29 +380,40 @@ class SimpleWriteStep2 extends Component {
         </div>
         <div className="summary-wrapper">
           <div className="summary-title">SUMMARY</div>
-          <div className="summary-item summary-highlight">
-            <div className="summary-item-label">Premiums to earn</div>
-            <div className="summary-item-value">{this.getOptionPremium()}</div>
-          </div>
-          <div className="summary-item summary-highlight">
-            <div className="summary-item-label">Annualized return</div>
-            <div className="summary-item-value">{this.getFormattedAnnualizedReturn()}</div>
-          </div>
-          <div className="summary-item">
-            <div className="summary-item-label">Return if flat</div>
-            <div className="summary-item-value">{this.getFormattedReturnIfFlat()}</div>
-          </div>
-          <div className="summary-item">
-            <div className="summary-item-label">Amount of options to be sold</div>
-            <div className="summary-item-value">{this.getFormattedOptionsAmount()}</div>
-          </div>
-          <div className="summary-item">
-            <div className="summary-item-label">Strike price</div>
-            <div className="summary-item-value">{getOptionFormattedPrice(this.props.option)}</div>
-          </div>
-          <div className="summary-item">
-            <div className="summary-item-label">Expiration</div>
-            <div className="summary-item-value">{this.getExpiration()}</div>
+          <div className="summary-content">
+            <div className="summary-items">
+              <div className="summary-item summary-highlight">
+                <div className="summary-item-label">Premiums to earn</div>
+                <div className="summary-item-value">{this.getOptionPremium()}</div>
+              </div>
+              <div className="summary-item summary-highlight">
+                <div className="summary-item-label">Annualized return</div>
+                <div className="summary-item-value">{this.getFormattedAnnualizedReturn()}</div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-item-label">Return if flat</div>
+                <div className="summary-item-value">{this.getFormattedReturnIfFlat()}</div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-item-label">Amount of options to be sold</div>
+                <div className="summary-item-value">{this.getFormattedOptionsAmount()}</div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-item-label">Strike price</div>
+                <div className="summary-item-value">{getOptionFormattedPrice(this.props.option)}</div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-item-label">Expiration</div>
+                <div className="summary-item-value">{this.getExpiration()}</div>
+              </div>
+            </div>
+            <div className="similar-prices">
+              <div className="ref-label">REF</div>
+              <div className="similar-label">(similar options)</div>
+              <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatAcoPrice(this.getAcoOptionPrice())}</div></div>
+              <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.props.option && this.state.opynPrice ? fromDecimals(this.state.opynPrice, this.props.option.strikeAssetInfo.decimals) : "-"}</div></div>
+              <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.props.option && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, this.props.option.strikeAssetInfo.decimals) : "-"}</div></div>
+            </div>
           </div>
         </div>
       </div>

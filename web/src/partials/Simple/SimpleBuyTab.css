@@ -1,5 +1,7 @@
 .simple-buy-tab {
     padding: 20px 10px;
+    width: 720px;
+    margin: auto;
 }
 
 .simple-buy-tab .inputs-wrapper {
@@ -142,5 +144,21 @@
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 0 25px;
+    padding: 0 12px;
+    font-size: 14px;
+    font-weight: 500;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: left;
+    color: #e6e6e6;
+}
+
+.price-value .price-origin {
+    font-size: 14px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    color: #a6a6a6;
 }
