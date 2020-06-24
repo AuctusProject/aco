@@ -26,6 +26,7 @@ class Simple extends Component {
   loadAvailableOptions = () => {
     getTokensList().then(result => {
       var pairs = getPairsFromOptions(result)
+      this.props.onPairsLoaded(pairs)
       this.setState({options: result, pairs: pairs})
     })
   }

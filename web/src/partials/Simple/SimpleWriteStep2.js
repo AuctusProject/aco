@@ -25,8 +25,13 @@ class SimpleWriteStep2 extends Component {
   }
 
   componentDidMount = () => {
-    getBalanceOfCollateralAsset(this.props.option, this.context.web3.selectedAccount)
-    .then(result => this.setState({collateralBalance: result}))
+    if (this.context.web3.selectedAccount) {
+      getBalanceOfCollateralAsset(this.props.option, this.context.web3.selectedAccount)
+      .then(result => this.setState({collateralBalance: result}))
+    }
+    else {
+      this.setState({collateralBalance: null})
+    }
   }
 
   componentDidUpdate = (prevProps) => {
@@ -371,7 +376,7 @@ class SimpleWriteStep2 extends Component {
         <DecimalInput placeholder="0.0000" tabIndex="-1" onChange={this.onCollaterizeChange} value={this.state.collaterizeValue}></DecimalInput>
         <div className="max-and-balance">
           <div className="max-btn" onClick={this.onMaxClick}>MAX</div>
-          <div className="balance"><b>Balance: </b>{this.state.collateralBalance ? (fromDecimals(this.state.collateralBalance.toString(), this.getCollateralDecimals(), 2) + " " + this.getCollaterizeAssetSymbol()) : ""}</div>
+          <div className="balance"><b>Balance: </b>{this.state.collateralBalance ? (fromDecimals(this.state.collateralBalance.toString(), this.getCollateralDecimals(), 2) + " " + this.getCollaterizeAssetSymbol()) : "-"}</div>
         </div>
       </div>
       <div className="chart-and-summary">
