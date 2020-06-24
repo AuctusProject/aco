@@ -23,6 +23,9 @@ class WrittenOptionsPositions extends Component {
   componentDidUpdate = (prevProps) => {
     if (this.props.selectedPair !== prevProps.selectedPair ||
       this.props.accountToggle !== prevProps.accountToggle) {
+      if (this.props.loadedPositions) {
+        this.props.loadedPositions(null)
+      }
       this.setState({ positions: null })
       this.componentDidMount()
     }
@@ -30,7 +33,12 @@ class WrittenOptionsPositions extends Component {
 
   componentDidMount = () => {
     if (this.props.selectedPair && this.context.web3.selectedAccount) {
-      getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => this.setState({ positions: positions }))
+      getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+        if (this.props.loadedPositions) {
+          this.props.loadedPositions(positions)
+        }
+        this.setState({ positions: positions })
+      })
     }
   }
 
@@ -116,7 +124,7 @@ class WrittenOptionsPositions extends Component {
   }
 
   render() {
-    return (!this.state.positions ? <Loading/> :
+    return (!this.state.positions ? (this.props.mode === PositionsLayoutMode.Advanced ? <Loading/> : null) :
       (this.state.positions.length === 0  ? <></> :
        <div className="written-options-positions">
       <div className="page-title">MANAGE YOUR WRITTEN OPTIONS POSITIONS</div>
@@ -133,7 +141,13 @@ class WrittenOptionsPositions extends Component {
             <th></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody>          
+          {(!this.state.positions || this.state.positions.length === 0) && 
+              <tr>
+                {!this.state.positions && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>Loading...</td>}
+                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
+              </tr>
+          }
           {this.state.positions.map(position =>
             <tr key={position.option.acoToken}>
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>

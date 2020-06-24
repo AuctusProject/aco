@@ -6,7 +6,8 @@ import OptionBadge from '../OptionBadge'
 import { getOptionFormattedPrice, getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
 import { listPositionsForExercise } from '../../util/acoFactoryMethods'
 import { confirm } from '../../util/sweetalert'
-import { getBinanceSymbolForPair, fromDecimals, formatDate } from '../../util/constants'
+import { getBinanceSymbolForPair, fromDecimals, formatDate, PositionsLayoutMode } from '../../util/constants'
+import Loading from '../Util/Loading'
 
 
 class ExercisePositions extends Component {
@@ -19,6 +20,10 @@ class ExercisePositions extends Component {
     if (this.props.selectedPair !== prevProps.selectedPair ||
       this.props.accountToggle !== prevProps.accountToggle ||
       (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
+      if (this.props.loadedPositions) {
+        this.props.loadedPositions(null)
+      }
+      this.setState({positions: null})
       this.componentDidMount()
     }
   }
@@ -27,6 +32,9 @@ class ExercisePositions extends Component {
     if (this.props.selectedPair && this.context.web3.selectedAccount) {
       this.props.updated()
       listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+        if (this.props.loadedPositions) {
+          this.props.loadedPositions(positions)
+        }
         this.setState({positions: positions})
       })
     }
@@ -77,11 +85,13 @@ class ExercisePositions extends Component {
 
   render() {
     return <div>
+        {!this.state.positions ? null :
+        (this.props.mode === PositionsLayoutMode.Basic && this.state.positions.length === 0  ? <></> :
         <table className="aco-table mx-auto">
           <thead>
             <tr>
               <th>TYPE</th>
-              <th>SYMBOL</th>
+              {this.props.mode === PositionsLayoutMode.Advanced && <th>SYMBOL</th>}
               <th>STRIKE</th>
               <th>EXPIRATION</th>
               <th>AVAILABLE TO EXERCISE</th>
@@ -91,14 +101,14 @@ class ExercisePositions extends Component {
           <tbody>
             {(!this.state.positions || this.state.positions.length === 0) && 
               <tr>
-                {!this.state.positions && <td colSpan="6">Loading...</td>}
-                {this.state.positions && this.state.positions.length === 0 && <td colSpan="6">No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
+                {!this.state.positions && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>Loading...</td>}
+                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
               </tr>
             }
             {this.state.positions && this.state.positions.map(position => 
             <tr key={position.option.acoToken}>
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>
-              <td>{position.option.acoTokenInfo.symbol}</td>
+              {this.props.mode === PositionsLayoutMode.Advanced && <td>{position.option.acoTokenInfo.symbol}</td>}
               <td>{getOptionFormattedPrice(position.option)}</td>
               <td>{formatDate(position.option.expiryTime)}</td>
               <td>{getFormattedOpenPositionAmount(position)}</td>
@@ -107,7 +117,7 @@ class ExercisePositions extends Component {
               </td>
             </tr>)}
           </tbody>
-        </table>      
+        </table>)}
       </div>
   }
 }
