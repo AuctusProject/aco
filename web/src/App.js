@@ -162,6 +162,7 @@ class App extends Component {
                     {...routeProps}
                     signIn={this.showSignInModal}
                     onPairSelected={this.onPairSelected} 
+                    onPairsLoaded={this.onPairsLoaded}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                     orderBooks={this.state.orderBooks}

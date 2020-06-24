@@ -1,5 +1,7 @@
 .simple-buy-tab {
     padding: 20px 10px;
+    width: 720px;
+    margin: auto;
 }
 
 .simple-buy-tab .inputs-wrapper {

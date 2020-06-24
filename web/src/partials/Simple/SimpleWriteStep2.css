@@ -66,26 +66,41 @@
 }
 
 .chart-and-summary .write-chart-wrapper {
-    width: calc(100% - 220px);
+    width: calc(100% - 370px);
     margin: 0 10px;
     align-self: stretch;
     background-color: #363636;
     padding: 8px;
 }
 
+
 .chart-and-summary .summary-wrapper {
+    width: 350px;
+    display: flex;
+    flex-direction: column;
+    border: solid 1px #404040;
+}
+
+.summary-content {
+    display: flex;
+    flex-direction: row;
+}
+
+.summary-items {
+    display: flex;
+    flex-direction: column;
     width: 200px;
-    background-color: #2d2d2d;
 }
 
 .summary-wrapper .summary-title {   
     padding: 8px;
     background-color: #363636;
     margin-bottom: 0;
+    text-align: left;
 }
 
 .summary-wrapper .summary-highlight {   
-    background-color: #363636;
+    background-color: #2d2d2d;
 }
 
 .summary-item {
@@ -95,16 +110,6 @@
     justify-content: space-between;
     padding: 8px;
     position: relative;
-}
-
-.summary-item:not(:last-child)::after {
-    content: " ";
-    height: 1px;
-    width: calc(100% - 10px);
-    left: 5px;
-    background-color: #464646;
-    position: absolute;
-    bottom: 0;
 }
 
 .summary-item.summary-highlight .summary-item-label {
@@ -133,4 +138,31 @@
     color: #e6e6e6;
     white-space: nowrap;
     padding-left: 5px;
+}
+
+.similar-prices {
+    width: 150px;
+}
+
+.ref-label {
+    font-size: 15px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.38px;
+    text-align: center;
+    color: #e6e6e6;
+    margin-top: 20px;
+}
+
+.similar-label {
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+    text-align: center;
+    color: #7d7d7d;
+    margin-top: 6px;
+    margin-bottom: 20px;
 }
