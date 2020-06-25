@@ -13,7 +13,8 @@ class NavBar extends Component {
   constructor(props){
     super(props)
 		this.state = {
-      pairs: null
+      pairs: null,
+      showAdvancedTootlip: false
     }
   }
 
@@ -24,8 +25,19 @@ class NavBar extends Component {
     })
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
+      this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
+    }
+  }
+
   isAdvanced = () => {
     return window.location.pathname.indexOf("advanced") > 0
+  }
+
+  onDismissAdvancedTooltip = () => {
+    this.setState({showAdvancedTootlip: false})
+    window.localStorage.setItem('DISMISS_ADVANCED_TOOLTIP', '1')
   }
 
   changeMode = () => {
@@ -72,6 +84,11 @@ class NavBar extends Component {
               <ul className="navbar-nav nav-modes ml-auto">
                 <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>
                 <div className="app-mode" onClick={() => this.changeMode()}>{this.isAdvanced() ? "Basic" : "Advanced"}<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
+                {this.state.showAdvancedTootlip && window.innerWidth >= 992 && !this.isAdvanced() &&
+                <div className="advanced-tooltip">
+                  Go to advanced mode to trade options with limit orders.
+                  <div className="action-btn" onClick={() => this.onDismissAdvancedTooltip()}>Dismiss</div>
+                </div>}
               </ul>
               <ul className="navbar-nav">
                 {username &&
