@@ -38,7 +38,7 @@ class SimpleSellModal extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.state.selectedOption.acoToken, erc20Proxy, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.position.option.acoToken, erc20Proxy, nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -103,7 +103,7 @@ class SimpleSellModal extends Component {
     var title = (needApproval && stepNumber <= 2) ? "Unlock token" : "Sell"
     var subtitle = ""
     var img = null
-    var option = this.state.selectedOption
+    var option = this.props.position.option
     var unlockSymbol =  (option.strikeAssetInfo.symbol)
     if (needApproval && stepNumber === 1) {
       subtitle = "Confirm on Metamask to unlock " + unlockSymbol + "."
@@ -114,11 +114,11 @@ class SimpleSellModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to sell " + this.state.qtyValue + " " + option.acoTokenInfo.symbol  + "."
+      subtitle = "Confirm on Metamask to sell " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {
-      subtitle = "Selling " + this.state.qtyValue + " " + option.acoTokenInfo.symbol + "..."
+      subtitle = "Selling " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol + "..."
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 5) {
@@ -149,6 +149,7 @@ class SimpleSellModal extends Component {
 
   onDoneButtonClick = () => {
     this.setState({ stepsModalInfo: null })    
+    this.props.onHide(true)
   }
 
   onHideStepsModal = () => {
@@ -157,9 +158,9 @@ class SimpleSellModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-        allowance(this.context.web3.selectedAccount, this.state.selectedOption.acoToken, erc20Proxy).then(result => {
+        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, erc20Proxy).then(result => {
           var resultValue = new Web3Utils.BN(result)
-          resolve(resultValue.lt(toDecimals(this.getTotalToBePaid(), this.state.selectedOption.acoTokenInfo.decimals)))
+          resolve(resultValue.lt(this.getOptionAmountToDecimals()))
         })
     })
   }
@@ -293,7 +294,7 @@ class SimpleSellModal extends Component {
               </div>}
             <div className={"confirm-card-actions " + ((this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds()) ? "highlight-background" : "")}>
               <div className="aco-button cancel-btn" onClick={() => this.props.onHide(false)}>Go back</div>
-              <div className={"aco-button action-btn " + (this.canSell() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
+              <div className={"aco-button action-btn " + (this.canSell() ? "" : "disabled")} onClick={this.onSellClick}>Confirm</div>
             </div>
           </div>
           {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
