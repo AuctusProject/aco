@@ -531,3 +531,55 @@ label {
 * {
   outline: none !important;
 }
+
+.aco-modal .modal-content {
+  background-color: #202020;
+}
+
+.aco-modal .modal-header {
+  padding: 10px 20px;
+  border-bottom: 0;
+  min-height: 24px;
+  position: relative;
+  background-color: #343434;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 1;
+  font-size: 18px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: 0.45px;
+  text-align: center;
+  color: #ffffff;
+}
+
+.aco-modal.no-header .modal-header {
+  background-color: transparent;
+  padding: 0;
+}
+
+.aco-modal .modal-header .close {
+  right: 5px;
+  top: -2px;
+  padding: 0;
+  margin: 0;
+  font-size: 24px;
+  color: rgb(196,196,196);
+  text-shadow: none;
+  font-weight: 300;
+  position: absolute;
+}
+
+.aco-modal .modal-body {
+  padding: 0;
+}
+
+.aco-modal .modal-dialog {
+  width: 322px;
+}
+
+.modal-backdrop.show {
+  opacity: 0.7;
+}

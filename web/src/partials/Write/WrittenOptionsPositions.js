@@ -22,7 +22,8 @@ class WrittenOptionsPositions extends Component {
 
   componentDidUpdate = (prevProps) => {
     if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.accountToggle !== prevProps.accountToggle) {
+        this.props.accountToggle !== prevProps.accountToggle ||
+        (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
       if (this.props.loadedPositions) {
         this.props.loadedPositions(null)
       }
@@ -32,13 +33,14 @@ class WrittenOptionsPositions extends Component {
   }
 
   componentDidMount = () => {
-    if (this.props.selectedPair && this.context.web3.selectedAccount) {
-      getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
-        if (this.props.loadedPositions) {
-          this.props.loadedPositions(positions)
-        }
-        this.setState({ positions: positions })
-      })
+      if (this.props.selectedPair && this.context.web3.selectedAccount) {
+          this.props.updated()
+          getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+            if (this.props.loadedPositions) {
+              this.props.loadedPositions(positions)
+            }
+            this.setState({ positions: positions })
+          })
     }
   }
 

@@ -1,7 +1,8 @@
-import './Burn.css'
+import './BurnModal.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import Modal from 'react-bootstrap/Modal'
 import { getOptionCollateralFormatedValue, getTokenAmount, getOptionTokenAmountFormatedValue, getCollateralInfo, burn } from '../../util/acoTokenMethods'
 import { fromDecimals, toDecimals } from '../../util/constants'
 import { checkTransactionIsMined } from '../../util/web3Methods'
@@ -13,7 +14,7 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 
-class Burn extends Component {
+class BurnModal extends Component {
   constructor(props) {
     super(props)    
     this.state = { collateralValue: "", optionsAmount: ""}
@@ -23,7 +24,7 @@ class Burn extends Component {
     if (this.props.selectedPair !== prevProps.selectedPair || 
       this.props.position !== prevProps.position ||
       this.props.accountToggle !== prevProps.accountToggle) {
-        this.props.onCancelClick()
+        this.props.onHide(false)
     }
   }
 
@@ -94,7 +95,7 @@ class Burn extends Component {
   }
 
   onDoneButtonClick = () => {
-    this.props.onCancelClick()
+    this.props.onHide(true)
   }
 
   onHideStepsModal = () => {
@@ -147,48 +148,52 @@ class Burn extends Component {
   }
 
   render() {
-    return <div className="burn-options">
-        <div className="page-title">BURN</div>
-        <div className="page-subtitle">Burn options to redeem your collateral back before expiration</div>
-        <div className="confirm-card">
-        <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>
-        <div className={"confirm-card-body "+(this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
-          <div className="balance-column">
-            <div>Amount in collateral: <span>{getOptionCollateralFormatedValue(this.props.position.unassignableCollateral, this.props.position.option)}</span></div>
-            <div>Amount available to burn: <span>{getOptionTokenAmountFormatedValue(this.props.position.unassignableTokens,this.props.position.option)} options</span></div>
-          </div>
-          <div className="card-separator"></div>
-          <div className="input-row">
-            <div className="input-column">
-              <div className="input-label">{this.getCollateralAssetSymbol()} to redeem back</div>
-              <div className="input-field">
-                <DecimalInput tabIndex="-1" onChange={this.onCollateralChange} value={this.state.collateralValue}></DecimalInput>
-                <div className="max-btn" onClick={this.onMaxClick}>MAX</div>
+    return (<Modal className="aco-modal burn-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
+      <Modal.Header closeButton>BURN</Modal.Header>
+      <Modal.Body>
+        <div className="burn-options">
+          <div className="page-subtitle">Burn options to redeem your collateral back before expiration</div>
+          <div className="confirm-card">
+          <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>
+          <div className={"confirm-card-body "+(this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
+            <div className="balance-column">
+              <div>Amount in collateral: <span>{getOptionCollateralFormatedValue(this.props.position.unassignableCollateral, this.props.position.option)}</span></div>
+              <div>Amount available to burn: <span>{getOptionTokenAmountFormatedValue(this.props.position.unassignableTokens,this.props.position.option)} options</span></div>
+            </div>
+            <div className="card-separator"></div>
+            <div className="input-row">
+              <div className="input-column">
+                <div className="input-label">{this.getCollateralAssetSymbol()} to redeem back</div>
+                <div className="input-field">
+                  <DecimalInput tabIndex="-1" onChange={this.onCollateralChange} value={this.state.collateralValue}></DecimalInput>
+                  <div className="max-btn" onClick={this.onMaxClick}>MAX</div>
+                </div>
+              </div>
+              <div className="equal-symbol">=</div>
+              <div className="input-column">
+                <div className="input-label">Amount of options to burn</div>
+                <div className="input-field">
+                  <DecimalInput tabIndex="-1" onChange={this.onOptionsAmountChange} value={this.state.optionsAmount}></DecimalInput>
+                </div>
               </div>
             </div>
-            <div className="equal-symbol">=</div>
-            <div className="input-column">
-              <div className="input-label">Amount of options to burn</div>
-              <div className="input-field">
-                <DecimalInput tabIndex="-1" onChange={this.onOptionsAmountChange} value={this.state.optionsAmount}></DecimalInput>
-              </div>
+            <div className="card-separator"></div>
+            <div>
             </div>
           </div>
-          <div className="card-separator"></div>
-          <div>
+          <div className="confirm-card-actions">
+            <div className="aco-button cancel-btn" onClick={() => this.props.onHide(false)}>Cancel</div>
+            <div className={"aco-button action-btn "+(this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
           </div>
         </div>
-        <div className="confirm-card-actions">
-          <div className="aco-button cancel-btn" onClick={this.props.onCancelClick}>Cancel</div>
-          <div className={"aco-button action-btn "+(this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
+        {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
         </div>
-      </div>
-      {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
-      </div>
+      </Modal.Body>
+    </Modal>)
   }
 }
 
-Burn.contextTypes = {
+BurnModal.contextTypes = {
   web3: PropTypes.object
 }
-export default withRouter(Burn)
+export default withRouter(BurnModal)

@@ -23,3 +23,7 @@
 .insufficient-funds-error .balance-column div span {
     color: #FF0000;
 }
+
+.burn-options {
+    padding-top: 10px;
+}

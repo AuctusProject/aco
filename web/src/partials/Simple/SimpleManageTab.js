@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import WrittenOptionsPositions from '../Write/WrittenOptionsPositions'
-import Burn from '../Write/Burn'
+import BurnModal from '../Write/BurnModal'
 import ExercisePositions from '../Exercise/ExercisePositions'
 import ExerciseModal from '../Exercise/ExerciseModal'
 import { PositionsLayoutMode } from '../../util/constants'
@@ -13,11 +13,19 @@ import SimpleSellModal from './SimpleSellModal'
 class SimpleManageTab extends Component {
   constructor(props) {
     super(props)
-    this.state = {position: null, writtenPositions: null, exercisePositions:null }
+    this.state = { position: null, writtenPositions: null, exercisePositions: null, refreshExercise: false, refreshWrite: false}
   }
 
-  onCancelClick = (shouldRefresh) => {
-    this.setState({burnPosition: null, exercisePosition: null, sellPosition: null, refresh: !!shouldRefresh})
+  onCancelBurnClick = (shouldRefresh) => {
+    this.setState({burnPosition: null, refreshWrite: !!shouldRefresh})
+  }
+
+  onCancelExerciseClick = (shouldRefresh) => {
+    this.setState({exercisePosition: null, refreshExercise: !!shouldRefresh})
+  }
+
+  onCancelSellClick = (shouldRefresh) => {
+    this.setState({sellPosition: null, refreshExercise: !!shouldRefresh})
   }
 
   onBurnPositionSelect = (position) => {
@@ -60,15 +68,15 @@ class SimpleManageTab extends Component {
         this.state.exercisePositions && this.state.exercisePositions.length === 0 && <>
           <div className="page-subtitle">No open positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>
         </>}
-        <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedWrittenPositions} onBurnPositionSelect={this.onBurnPositionSelect}></WrittenOptionsPositions>
+        <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedWrittenPositions} onBurnPositionSelect={this.onBurnPositionSelect}  refresh={this.state.refreshWrite} updated={() => this.setState({refreshWrite: false})}></WrittenOptionsPositions>
         {this.state.exercisePositions && this.state.exercisePositions.length > 0 && <div className="page-title">MANAGE LONG OPTIONS POSITIONS</div>}
-        <ExercisePositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedExercisePositions} setPosition={this.onExercisePositionSelect} setSellPosition={this.onSellPositionSelect} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></ExercisePositions>  
+        <ExercisePositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedExercisePositions} setSellPosition={this.onSellPositionSelect} setPosition={this.onExercisePositionSelect} refresh={this.state.refreshExercise} updated={() => this.setState({refreshExercise: false})}></ExercisePositions>  
 
         {!this.state.writtenPositions &&
         !this.state.exercisePositions && <Loading/>}
-        {this.state.burnPosition && <Burn {...this.props} position={this.state.burnPosition} onCancelClick={this.onCancelClick}></Burn>}
-        {this.state.exercisePosition && <ExerciseModal {...this.props} position={this.state.exercisePosition} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></ExerciseModal>}
-        {this.state.sellPosition && <SimpleSellModal {...this.props} position={this.state.sellPosition} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></SimpleSellModal>}
+        {this.state.burnPosition && <BurnModal {...this.props} position={this.state.burnPosition} onHide={this.onCancelBurnClick}></BurnModal>}
+        {this.state.exercisePosition && <ExerciseModal {...this.props} position={this.state.exercisePosition} onHide={this.onCancelExerciseClick}></ExerciseModal>}
+        {this.state.sellPosition && <SimpleSellModal {...this.props} position={this.state.sellPosition} onHide={this.onCancelSellClick}/>}
       </>}
     </div>
   }

@@ -244,7 +244,8 @@ class SimpleSellModal extends Component {
   }
 
   render() {
-    return (<Modal className="exercise-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
+    return (<Modal className="aco-modal sell-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
+      <Modal.Header closeButton>SELL</Modal.Header>
       <Modal.Body>
       <div className="exercise-action">
           <div className="confirm-card">
