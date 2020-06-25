@@ -7,8 +7,6 @@ import { getOptionFormattedPrice, getFormattedOpenPositionAmount } from '../../u
 import { listPositionsForExercise } from '../../util/acoFactoryMethods'
 import { confirm } from '../../util/sweetalert'
 import { getBinanceSymbolForPair, fromDecimals, formatDate, PositionsLayoutMode } from '../../util/constants'
-import Loading from '../Util/Loading'
-
 
 class ExercisePositions extends Component {
   constructor() {
@@ -83,10 +81,14 @@ class ExercisePositions extends Component {
     this.props.setPosition(position)
   }
 
+  onSellClick = (position) => () => {
+    this.props.setSellPosition(position)
+  }
+
   render() {
     return <div>
         {!this.state.positions ? null :
-        (this.props.mode === PositionsLayoutMode.Basic && this.state.positions.length === 0  ? <></> :
+        (this.props.mode === PositionsLayoutMode.Basic && this.state.positions.length === 0  ? null :
         <table className="aco-table mx-auto">
           <thead>
             <tr>
@@ -113,7 +115,8 @@ class ExercisePositions extends Component {
               <td>{formatDate(position.option.expiryTime)}</td>
               <td>{getFormattedOpenPositionAmount(position)}</td>
               <td>
-              <div className="action-btn" onClick={this.onExerciseClick(position)}>EXERCISE</div>
+                {this.props.mode === PositionsLayoutMode.Basic && <div className="action-btn mr-2" onClick={this.onSellClick(position)}>SELL EARLY</div>}
+                <div className="action-btn" onClick={this.onExerciseClick(position)}>EXERCISE</div>
               </td>
             </tr>)}
           </tbody>
