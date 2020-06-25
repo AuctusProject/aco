@@ -8,6 +8,8 @@ import PairDropdown from '../partials/PairDropdown'
 import SimpleBuyTab from '../partials/Simple/SimpleBuyTab'
 import SimpleWriteTab from '../partials/Simple/SimpleWriteTab'
 import SimpleManageTab from '../partials/Simple/SimpleManageTab'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 
 class Simple extends Component {
   constructor() {
@@ -46,6 +48,7 @@ class Simple extends Component {
   render() {
     var filteredOptions = this.getOptionsFromPair()
     return <div className="py-4">
+      <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
         <ul className="pair-dropdown-wrapper"><PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown></ul>
         <div className="simple-box">
           <ul className="nav nav-tabs justify-content-center" id="simpleTabs" role="tablist">
