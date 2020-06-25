@@ -157,8 +157,8 @@ class BurnModal extends Component {
           <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>
           <div className={"confirm-card-body "+(this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
             <div className="balance-column">
-              <div>Amount in collateral: <span>{getOptionCollateralFormatedValue(this.props.position.unassignableCollateral, this.props.position.option)}</span></div>
               <div>Amount available to burn: <span>{getOptionTokenAmountFormatedValue(this.props.position.unassignableTokens,this.props.position.option)} options</span></div>
+              <div>Amount in collateral: <span>{getOptionCollateralFormatedValue(this.props.position.unassignableCollateral, this.props.position.option)}</span></div>
             </div>
             <div className="card-separator"></div>
             <div className="input-row">

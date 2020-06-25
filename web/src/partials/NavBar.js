@@ -69,7 +69,7 @@ class NavBar extends Component {
                 <NavLink className="nav-item link-nav" to="/advanced/mint">Mint</NavLink>
                 <NavLink className="nav-item link-nav" to="/advanced/exercise">Exercise</NavLink>
               </ul>}
-              <ul className="navbar-nav ml-auto">
+              <ul className="navbar-nav nav-modes ml-auto">
                 <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>
                 <div className="app-mode" onClick={() => this.changeMode()}>{this.isAdvanced() ? "Basic" : "Advanced"}<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
               </ul>

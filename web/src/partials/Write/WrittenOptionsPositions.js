@@ -45,11 +45,17 @@ class WrittenOptionsPositions extends Component {
   }
 
   onBurnClick = (position) => () => {
-    this.props.onBurnPositionSelect(position)
+    if (this.isBurnable(position)) {
+      this.props.onBurnPositionSelect(position)
+    }
   }
 
   isExpired = (position) => {
     return (position.option.expiryTime * ONE_SECOND) < new Date().getTime()
+  }
+
+  isBurnable = (position) => {
+    return position.unassignableCollateral > 0
   }
 
   onRedeemClick = (position) => () => {
@@ -162,13 +168,10 @@ class WrittenOptionsPositions extends Component {
               {this.props.mode === PositionsLayoutMode.Advanced && <><br />({getOptionCollateralFormatedValue(position.assignableCollateral, position.option)}/{getOptionCollateralFormatedValue(position.unassignableCollateral, position.option)})</>}
               </td>
               <td>
-                {!this.isExpired(position) && <div className="position-actions">
-                  <div title="Available only after expiry">Redeem collateral</div>
-                  <div className="clickable" onClick={this.onBurnClick(position)}>Burn to redeem collateral</div>
-                </div>}
-                {this.isExpired(position) && <div className="position-actions">
-                  <div className="clickable" onClick={this.onRedeemClick(position)}>Redeem collateral</div>
-                </div>}
+                {!this.isExpired(position) && 
+                <div className={"grid-btn action-btn" + (this.isBurnable(position) ? "" : " disabled")} title={(this.isBurnable(position) ? "" : "You don't have any options to burn")} onClick={this.onBurnClick(position)}>Reduce Position</div>}
+                {this.isExpired(position) && 
+                <div className="grid-btn action-btn" onClick={this.onRedeemClick(position)}>Redeem Collateral</div>}
               </td>
             </tr>)}
         </tbody>

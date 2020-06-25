@@ -15,3 +15,9 @@
 .position-actions div.clickable {
     color: #139bf2;
 }
+
+.grid-btn {
+    padding-right: 0px;
+    padding-left: 0px;
+    width: 150px;
+}

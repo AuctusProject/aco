@@ -188,3 +188,10 @@ li.dropdown {
   line-height: 1;
   margin-left: 7px;
 }
+
+.nav-modes {
+  flex-direction: row !important;
+  justify-content: center;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
