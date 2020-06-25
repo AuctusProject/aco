@@ -6,11 +6,13 @@ import WrittenOptionsPositions from '../Write/WrittenOptionsPositions'
 import BurnModal from '../Write/BurnModal'
 import ExercisePositions from '../Exercise/ExercisePositions'
 import ExerciseModal from '../Exercise/ExerciseModal'
+import { PositionsLayoutMode } from '../../util/constants'
+import Loading from '../Util/Loading'
 
 class SimpleManageTab extends Component {
   constructor(props) {
     super(props)
-    this.state = {position: null, refreshExercise: false, refreshWrite: false}
+      this.state = { position: null, writtenPositions: null, exercisePositions: null, refreshExercise: false, refreshWrite: false}
   }
 
   onCancelWriteClick = (shouldRefresh) => {
@@ -28,16 +30,44 @@ class SimpleManageTab extends Component {
   onExercisePositionSelect = (position) => {
     this.setState({burnPosition: null, exercisePosition: position})
   }
+  
+  onConnectClick = () => {
+    this.props.signIn(null, this.context)
+  }
+
+  loadedExercisePositions = (positions) => {
+    this.setState({exercisePositions: positions})
+  }
+
+  loadedWrittenPositions = (positions) => {
+    this.setState({writtenPositions: positions})
+  }
 
   render() {
     return <div className="simple-manage-tab">
-      <WrittenOptionsPositions {...this.props} onBurnPositionSelect={this.onBurnPositionSelect} refresh={this.state.refreshWrite} updated={() => this.setState({refreshWrite: false})}></WrittenOptionsPositions>
-      <div className="page-title">MANAGE LONG OPTIONS POSITIONS</div>
-      <ExercisePositions {...this.props} setPosition={this.onExercisePositionSelect} refresh={this.state.refreshExercise} updated={() => this.setState({refreshExercise: false})}></ExercisePositions>
+      {!this.context.web3.selectedAccount && <>
+        <div class="page-title mb-0">MANAGE YOUR POSITIONS</div>
+        <div class="page-subtitle">Connect your account to load your wallet information.</div>
+        <div className="action-button-wrapper">
+          <div className="home-btn medium solid-green" onClick={this.onConnectClick}>
+            <div>CONNECT ACCOUNT</div>
+          </div>
+        </div>
+      </>}
+      {this.context.web3.selectedAccount && <> 
+        {this.state.writtenPositions && this.state.writtenPositions.length === 0 && 
+        this.state.exercisePositions && this.state.exercisePositions.length === 0 && <>
+          <div class="page-subtitle">No open positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>
+        </>}
+            <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedWrittenPositions} onBurnPositionSelect={this.onBurnPositionSelect} refresh={this.state.refreshWrite} updated={() => this.setState({ refreshWrite: false })}></WrittenOptionsPositions>
+        {this.state.exercisePositions && this.state.exercisePositions.length > 0 && <div className="page-title">MANAGE LONG OPTIONS POSITIONS</div>}
+        <ExercisePositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedExercisePositions} setPosition={this.onExercisePositionSelect} refresh={this.state.refreshExercise} updated={() => this.setState({refreshExercise: false})}></ExercisePositions>  
 
-      {this.state.burnPosition && <BurnModal {...this.props} position={this.state.burnPosition} onHide={(shouldRefresh) => this.onCancelWriteClick(shouldRefresh)}></BurnModal>}
-      {this.state.exercisePosition && <ExerciseModal {...this.props} position={this.state.exercisePosition} onHide={(shouldRefresh) => this.onCancelExerciseClick(shouldRefresh)}></ExerciseModal>}
-      
+        {!this.state.writtenPositions &&
+        !this.state.exercisePositions && <Loading/>}
+        {this.state.burnPosition && <BurnModal {...this.props} position={this.state.burnPosition} onHide={(shouldRefresh) => this.onCancelWriteClick(shouldRefresh)}></BurnModal>}
+        {this.state.exercisePosition && <ExerciseModal {...this.props} position={this.state.exercisePosition} onHide={(shouldRefresh) => this.onCancelExerciseClick(shouldRefresh)}></ExerciseModal>}
+      </>}
     </div>
   }
 }
