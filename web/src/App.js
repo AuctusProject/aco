@@ -27,6 +27,7 @@ class App extends Component {
       loading: true,
       selectedPair: null,
       accountToggle: false,
+      toggleAdvancedTooltip: false,
       orderBooks:{}
     }
   }
@@ -119,7 +120,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
+            {showNavbar && <NavBar toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -166,6 +167,7 @@ class App extends Component {
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                     orderBooks={this.state.orderBooks}
+                    toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
                     loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                   /> }
                 />

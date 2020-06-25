@@ -195,3 +195,42 @@ li.dropdown {
   padding-top: 12px;
   padding-bottom: 12px;
 }
+
+.advanced-tooltip {
+  display: flex;
+  flex-direction: column;
+  max-width: 160px;
+  z-index: 1000;
+  padding: 6px 16px;
+  background-color: #111111;
+  border-radius: 5px;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  position: absolute;
+  border: 1px solid transparent;
+  color: #ffffff;
+  top: 45px;
+  right: 190px;
+}
+
+.advanced-tooltip::after {
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  top: -6px;
+  left: 50%;
+  margin-left: -8px;
+  border-bottom-color: #111111;
+  border-bottom-style: solid;
+  border-bottom-width: 6px;
+  content: "";
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.advanced-tooltip .action-btn {
+  padding: 0;
+  width: 65px;
+  text-transform: none;
+  margin-top: 6px;
+}

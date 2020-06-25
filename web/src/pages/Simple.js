@@ -18,6 +18,7 @@ class Simple extends Component {
   }
   
   componentDidMount = () => {
+    this.props.toggleAdvancedTooltip()
     this.loadAvailableOptions()
   }
 

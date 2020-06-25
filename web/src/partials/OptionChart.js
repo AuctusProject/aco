@@ -50,8 +50,8 @@ class OptionChart extends Component {
           lineTension: 0.01,
           showLine: true,
           pointRadius: 0,
-          hitRadius: 4,
-          hoverRadius: 4,
+          hitRadius: 0,
+          hoverRadius: 0,
           hoverBorderWidth: 0,
           data: [],
           backgroundColor: '#a8c708'
@@ -139,28 +139,12 @@ class OptionChart extends Component {
         options={{
           responsive: true,
           maintainAspectRatio: false,
-          tooltips: {
-            displayColors: false,
-            bodyFontFamily: 'Roboto',
-            bodyFontSize: 12,
-            bodyFontColor: '#ffffff',
-            callbacks: {
-              label: (tooltipItem, data) => {
-                const dataset = data.datasets[tooltipItem.datasetIndex]
-                let text = "Price: " + dataset.data[tooltipItem.index].x + "  "
-                if (dataset.data[tooltipItem.index].y < 0) {
-                  text += "Loss: " 
-                } else {
-                  text += "Profit: " 
-                }
-                return text + dataset.data[tooltipItem.index].y
-              },
-              title: () => ''
-            }
-          },
           scales: {
             xAxes: [this.state.xAxes],
             yAxes: [this.state.yAxes]
+          },
+          tooltips: {
+            enabled: false
           }
         }} />
     </div>)

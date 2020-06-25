@@ -126,9 +126,9 @@ class Home extends Component {
 
   getUrlFromType = (type) => {
     if (type === "trade") {
-      return "/advanced/trade"
+      return "/buy"
     } else if (type === "earn") {
-      return "/advanced/mint"
+      return "/write"
     }
   }
 
@@ -189,11 +189,11 @@ class Home extends Component {
               </ul>
               <ul className="navbar-nav nav-btns mt-2 mt-sm-0">
                 <div className="home-btn small white" onClick={() => this.onAction("trade")}>
-                  <div><TradeIcon />TRADE OPTIONS</div>
+                  <div><TradeIcon />BUY OPTIONS</div>
                 </div>
                 <div className="home-btn small white" onClick={() => this.onAction("earn")}>
                   <div>EARN INCOME</div>
-                  <span>(Mint &amp; Sell options)</span>
+                  <span>(Write options)</span>
                 </div>
               </ul>
             </div>
@@ -205,11 +205,11 @@ class Home extends Component {
             <h2>No sign up required. Start trading non-custodial options immediately.</h2>
             <div>
               <div className="home-btn solid-green mr-0 mr-sm-4" onClick={() => this.onAction("trade")}>
-                <div><TradeIcon />TRADE OPTIONS</div>
+                <div><TradeIcon />BUY OPTIONS</div>
               </div>
               <div className="home-btn green mt-3 mt-sm-0" onClick={() => this.onAction("earn")}>
                 <div>EARN INCOME</div>
-                <span>(Mint &amp; Sell options)</span>
+                <span>(Write options)</span>
               </div>
             </div>
           </div>
@@ -331,11 +331,11 @@ class Home extends Component {
             <h5>Start trading decentralized options on our 0x-based decentralized exchange (DEX)</h5>
             <div>
               <div className="home-btn solid-white mr-0 mr-sm-4" onClick={() => this.onAction("trade")}>
-                <div><TradeIcon />TRADE OPTIONS</div>
+                <div><TradeIcon />BUY OPTIONS</div>
               </div>
               <div className="home-btn black mt-3 mt-sm-0" onClick={() => this.onAction("earn")}>
                 <div>EARN INCOME</div>
-                <span>(Mint &amp; Sell options)</span>
+                <span>(Write options)</span>
               </div>
             </div>
             <span>Powered by<a target="_blank"  rel="noopener noreferrer" href="https://0x.org/"><img src="/images/0x.png" alt="0x" /></a></span>
