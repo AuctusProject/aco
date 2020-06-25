@@ -11,6 +11,26 @@
 }
 
 .simple-box .nav-tabs .nav-link {
+    position: relative;
+}
+
+.earn-badge {
+    border-radius: 5px;
+    background-color: #a8c708;
+    font-size: 14px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: center;
+    color: #242424;
+    position: absolute;    
+    top: 10px;
+    right: 12px;
+    padding: 0px 4px;
+}
+
+.simple-box .nav-tabs .nav-link {
     border: 0;
     border-bottom: 6px solid;
     border-bottom-color: transparent;

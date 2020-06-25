@@ -74,7 +74,7 @@ class Writer extends Component {
         <StepIndicator totalSteps={3} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>
         {!this.props.selectedPair && <Loading/>}
         {this.props.selectedPair &&  <>
-          {this.state.currentStep === 1 || this.state.currentStep === 4 && <WriteStep1 {...this.props} setOptionType={this.setOptionType}></WriteStep1>}
+          {(this.state.currentStep === 1 || this.state.currentStep === 4) && <WriteStep1 {...this.props} setOptionType={this.setOptionType}></WriteStep1>}
           {this.state.currentStep === 2 && <WriteStep2 {...this.props} optionType={this.state.optionType} setOption={this.setOption}></WriteStep2>}
           {this.state.currentStep === 3 && <WriteStep3 {...this.props} option={this.state.option} onCancelClick={this.onCancelClick}></WriteStep3>}
           {this.state.currentStep === 4 && <BurnModal {...this.props} position={this.state.position} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></BurnModal>}

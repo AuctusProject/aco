@@ -53,7 +53,7 @@ class Simple extends Component {
               <NavLink className="nav-link" to={`/buy`}>Buy</NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to={`/write`}>Write</NavLink>
+              <NavLink className="nav-link" to={`/write`}>Write<div className="earn-badge">Earn</div></NavLink>
             </li>
             <li className="nav-item">
               <NavLink className="nav-link" to={`/manage`}>Manage</NavLink>
