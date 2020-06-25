@@ -92,7 +92,7 @@ contract ACOWriter {
     
     /**
      * @dev Function to write ACO tokens.
-     * The tokens are minted then sold on the 0x exchange. The transaction sender receive the profit. 
+     * The tokens are minted then sold on the 0x exchange. The transaction sender receive the premium. 
      * @param acoToken Address of the ACO token.
      * @param collateralAmount Amount of collateral deposited.
      * @param exchangeAddress Address to sell the tokens.
@@ -125,7 +125,7 @@ contract ACOWriter {
     }
     
     /**
-     * @dev Internal function to sell the ACO tokens and transfer the profit to the transaction sender.
+     * @dev Internal function to sell the ACO tokens and transfer the premium to the transaction sender.
      * @param acoToken Address of the ACO token.
      * @param exchangeData Data to be sent to the exchange.
      */
