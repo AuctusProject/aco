@@ -124,28 +124,3 @@
     align-items: center;
     width: 100%;
 }
-
-.exercise-modal .modal-content {
-    background-color: #202020;
-}
-
-.exercise-modal .modal-header {
-    padding: 0;
-    border-bottom: 0;
-}
-
-.exercise-modal .modal-header .close {
-    padding: 0 5px;
-    margin: 0 0 0 auto;
-    color: rgb(196,196,196);
-    text-shadow: none;
-    font-weight: 300;
-}
-
-.exercise-modal .modal-body {
-    padding: 0;
-}
-
-.exercise-modal .modal-dialog {
-    width: 320px;
-}

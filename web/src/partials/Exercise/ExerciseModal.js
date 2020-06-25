@@ -271,17 +271,19 @@ class ExerciseModal extends Component {
   }
 
   setPriceFromExerciseData = (exerciseData) => {
-    var amountRequired = new Web3Utils.BN(exerciseData[0])
-    var expectedAmount = new Web3Utils.BN(exerciseData[1])
-    var precision = new Web3Utils.BN(10).pow(new Web3Utils.BN(this.props.position.option.underlyingInfo.decimals))
-    var price = null
-    if (this.props.position.option.isCall) {
-      price = expectedAmount.mul(precision).div(amountRequired)
+    if (exerciseData) {
+      var amountRequired = new Web3Utils.BN(exerciseData["0"])
+      var expectedAmount = new Web3Utils.BN(exerciseData["1"])
+      var precision = new Web3Utils.BN(10).pow(new Web3Utils.BN(this.props.position.option.underlyingInfo.decimals))
+      var price = null
+      if (this.props.position.option.isCall) {
+        price = expectedAmount.mul(precision).div(amountRequired)
+      }
+      else {
+        price = amountRequired.mul(precision).div(expectedAmount)
+      }
+      this.setState({ estimatedPrice: price })
     }
-    else {
-      price = amountRequired.mul(precision).div(expectedAmount)
-    }
-    this.setState({ estimatedPrice: price })
   }  
 
   getTotalCollateralValue = (optionsAmount) => {
@@ -364,7 +366,7 @@ class ExerciseModal extends Component {
   }
 
   render() {
-    return (<Modal className="exercise-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
+    return (<Modal className="aco-modal no-header exercise-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
       <Modal.Header closeButton></Modal.Header>
       <Modal.Body>
         <div className="exercise-action">

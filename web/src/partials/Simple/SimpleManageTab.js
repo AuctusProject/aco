@@ -3,18 +3,22 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import WrittenOptionsPositions from '../Write/WrittenOptionsPositions'
-import Burn from '../Write/Burn'
+import BurnModal from '../Write/BurnModal'
 import ExercisePositions from '../Exercise/ExercisePositions'
 import ExerciseModal from '../Exercise/ExerciseModal'
 
 class SimpleManageTab extends Component {
   constructor(props) {
     super(props)
-    this.state = {position: null }
+    this.state = {position: null, refreshExercise: false, refreshWrite: false}
   }
 
-  onCancelClick = () => {
-    this.setState({burnPosition: null, exercisePosition: null})
+  onCancelWriteClick = (shouldRefresh) => {
+    this.setState({burnPosition: null, refreshWrite: !!shouldRefresh})
+  }
+
+  onCancelExerciseClick = (shouldRefresh) => {
+    this.setState({exercisePosition: null, refreshExercise: !!shouldRefresh})
   }
 
   onBurnPositionSelect = (position) => {
@@ -27,15 +31,12 @@ class SimpleManageTab extends Component {
 
   render() {
     return <div className="simple-manage-tab">
-      {!this.state.burnPosition && !this.state.exercisePosition &&
-      <> 
-        <WrittenOptionsPositions {...this.props} onBurnPositionSelect={this.onBurnPositionSelect}></WrittenOptionsPositions>
-        <div class="page-title">MANAGE LONG OPTIONS POSITIONS</div>
-        <ExercisePositions {...this.props} setPosition={this.onExercisePositionSelect} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></ExercisePositions>
-      </>
-      }
-      {this.state.burnPosition && <Burn {...this.props} position={this.state.burnPosition} onCancelClick={this.onCancelClick}></Burn>}
-      {this.state.exercisePosition && <ExerciseModal {...this.props} position={this.state.exercisePosition} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></ExerciseModal>}
+      <WrittenOptionsPositions {...this.props} onBurnPositionSelect={this.onBurnPositionSelect} refresh={this.state.refreshWrite} updated={() => this.setState({refreshWrite: false})}></WrittenOptionsPositions>
+      <div className="page-title">MANAGE LONG OPTIONS POSITIONS</div>
+      <ExercisePositions {...this.props} setPosition={this.onExercisePositionSelect} refresh={this.state.refreshExercise} updated={() => this.setState({refreshExercise: false})}></ExercisePositions>
+
+      {this.state.burnPosition && <BurnModal {...this.props} position={this.state.burnPosition} onHide={(shouldRefresh) => this.onCancelWriteClick(shouldRefresh)}></BurnModal>}
+      {this.state.exercisePosition && <ExerciseModal {...this.props} position={this.state.exercisePosition} onHide={(shouldRefresh) => this.onCancelExerciseClick(shouldRefresh)}></ExerciseModal>}
       
     </div>
   }
