@@ -117,11 +117,7 @@ class Home extends Component {
   }
 
   onAction(type) {
-    if (!this.context || !this.context.web3 || !this.context.web3.hasMetamask || !this.context.web3.validNetwork || !this.context.web3.selectedAccount) {
-      this.onGetStart(type)
-    } else {
-      this.props.history.push(this.getUrlFromType(type))
-    }
+    this.props.history.push(this.getUrlFromType(type))
   }
 
   getUrlFromType = (type) => {
@@ -149,11 +145,19 @@ class Home extends Component {
   }
 
   onSelectOption = (option) => {
-    this.props.history.push('/advanced/trade/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/trade/'+option.acoToken)
   }
 
   onSelectMintOption = (option) => {
-    this.props.history.push('/advanced/mint/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/mint/'+option.acoToken)
+  }
+
+  redirectToAdvancedAction(url) {
+    if (!this.context || !this.context.web3 || !this.context.web3.hasMetamask || !this.context.web3.validNetwork || !this.context.web3.selectedAccount) {
+      this.props.signIn(url, this.context)
+    } else {
+      this.props.history.push(url)
+    }
   }
   
   getOptionsFromPair = () => {
