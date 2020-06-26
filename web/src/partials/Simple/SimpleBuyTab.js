@@ -32,7 +32,8 @@ class SimpleBuyTab extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair) {
+    if (this.props.selectedPair !== prevProps.selectedPair ||
+      this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
       this.selectType(this.state.selectedType)
     }
   }

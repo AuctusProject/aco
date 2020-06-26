@@ -14,7 +14,7 @@ import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 class Simple extends Component {
   constructor() {
     super()
-    this.state = { pairs: null }
+    this.state = { pairs: null, toggleOptionsLoaded: false }
   }
   
   componentDidMount = () => {
@@ -30,7 +30,7 @@ class Simple extends Component {
     getTokensList().then(result => {
       var pairs = getPairsFromOptions(result)
       this.props.onPairsLoaded(pairs)
-      this.setState({options: result, pairs: pairs})
+      this.setState({options: result, pairs: pairs, toggleOptionsLoaded: !this.state.toggleOptionsLoaded})
     })
   }
 
@@ -65,13 +65,13 @@ class Simple extends Component {
           </ul>
           <div className="tab-content" id="simpleTabsContent">
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("buy") > 0 ? " show active" : "")}>
-              <SimpleBuyTab {...this.props} isConnected={this.isConnected()} options={filteredOptions}/>
+              <SimpleBuyTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded}/>
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("write") > 0 ? " show active" : "")}>
-              <SimpleWriteTab {...this.props} isConnected={this.isConnected()} options={filteredOptions}/>
+              <SimpleWriteTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded}/>
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("manage") > 0 ? " show active" : "")}>
-              <SimpleManageTab {...this.props} isConnected={this.isConnected()} options={filteredOptions}/>
+              <SimpleManageTab {...this.props} isConnected={this.isConnected()}/>
             </div>
           </div>
         </div>

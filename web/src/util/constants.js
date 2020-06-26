@@ -16,7 +16,7 @@ export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
 export const symbolsMappedToBaseAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_BASE_ASSET)
 export const acoImplementationVersionMap = JSON.parse(process.env.REACT_APP_ACO_IMPLEMENTATION_VERSION)
-export const swapQuoteBuySize = "100000000";
+export const swapQuoteBuySize = "1000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const ethTransactionTolerance = 0.01;
