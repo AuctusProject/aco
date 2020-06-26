@@ -22,7 +22,8 @@ class SimpleWriteTab extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair) {
+    if (this.props.selectedPair !== prevProps.selectedPair ||
+      this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
         this.loadOptionsSwapQuotes()
     }
     else if (this.state.currentPairPrice == null && !!this.getPairCurrentPrice()){

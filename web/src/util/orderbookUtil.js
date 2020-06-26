@@ -43,5 +43,5 @@ const getBestOrder = (option, side, orders, mode) => {
 }
 
 const formatPrice = (order, option) => {
-    order.formatedPrice = parseFloat(fromDecimals(toDecimals(order.price, option.underlyingInfo.decimals), option.strikeAssetInfo.decimals))
+    order.formatedPrice = order.status === null ? parseFloat(fromDecimals(toDecimals(order.price, option.underlyingInfo.decimals), option.strikeAssetInfo.decimals)) : order.price
 }

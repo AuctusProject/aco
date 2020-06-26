@@ -26,7 +26,7 @@ export function isStrikeStableCoin(optionData) {
 
 export function getDeribiData(optionData) {
     return new Promise(function(resolve,reject) {
-        if (!isStrikeStableCoin(optionData.strikeAssetInfo.symbol) || (optionData.underlyingInfo.symbol !== "TBTC" &&
+        if (!isStrikeStableCoin(optionData) || (optionData.underlyingInfo.symbol !== "TBTC" &&
         optionData.underlyingInfo.symbol !== "WBTC" && optionData.underlyingInfo.symbol !== "ETH")) {
             resolve(null)
         } else {
