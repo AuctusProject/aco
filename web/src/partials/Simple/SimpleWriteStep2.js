@@ -21,7 +21,7 @@ import { getDeribiData, getOpynQuote } from '../../util/acoApi'
 class SimpleWriteStep2 extends Component {
   constructor(props) {
     super(props)
-    this.state = {swapQuote: null, collateralBalance: null, collaterizeValue: null}
+    this.state = {swapQuote: null, collateralBalance: null, collaterizeValue: "1.000"}
   }
 
   componentDidMount = () => {
@@ -32,6 +32,7 @@ class SimpleWriteStep2 extends Component {
     else {
       this.setState({collateralBalance: null})
     }
+    this.refresh()
   }
 
   componentDidUpdate = (prevProps) => {
