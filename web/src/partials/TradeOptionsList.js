@@ -39,7 +39,7 @@ class TradeOptionsList extends Component {
   optionRowInfo = (option) => {
     if (!option) {
       return <>
-        <td colSpan="5">N/A</td>
+        <td colSpan={this.props.mode === TradeOptionsListLayoutMode.Trade ? "5": "4"}>N/A</td>
       </>
     }
 

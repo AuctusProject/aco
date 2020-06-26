@@ -149,7 +149,7 @@ class SimpleWriteTab extends Component {
     var filteredOptions = (this.props.options && this.state.swapQuotes) ? this.props.options.filter(o => !!this.state.swapQuotes[o.acoToken] && !!this.state.swapQuotes[o.acoToken].returnIfFlat && this.state.swapQuotes[o.acoToken].returnIfFlat > 0) : []
     var grouppedOptions = groupBy(filteredOptions, "isCall")
     return <div className="simple-write-tab">
-      {this.state.swapQuotes ? <>
+      {this.state.swapQuotes && this.state.currentPairPrice ? <>
         {this.state.currentStep !== 3 && <StepIndicator totalSteps={2} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>}
         {this.props.selectedPair && filteredOptions.length === 0 && <div className="text-center">No options available for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>}
         {this.state.currentStep === 1 && Object.keys(grouppedOptions).map(isCall => (
