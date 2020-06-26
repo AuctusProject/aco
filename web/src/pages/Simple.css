@@ -14,6 +14,10 @@
     position: relative;
 }
 
+.simple-box #simpleTabs {
+    margin-bottom: 0;
+}
+
 .earn-badge {
     border-radius: 5px;
     background-color: #a8c708;
@@ -51,7 +55,7 @@
 .simple-box .nav-tabs .nav-link.active {
     color: #495057;
     background-color: transparent;
-    border-bottom-color: 4px solid #fff;
+    border-bottom-color: #fff;
     font-weight: bold;
     color: #ffffff;
 }
