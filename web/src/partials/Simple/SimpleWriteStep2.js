@@ -279,7 +279,7 @@ class SimpleWriteStep2 extends Component {
   setOpynPrice = () => {
     var selectedOption = this.props.option
     var optionsAmount = this.getOptionsAmount()
-    if (selectedOption && optionsAmount && optionsAmount > 0) {
+    if (selectedOption && optionsAmount && parseFloat(optionsAmount) > 0) {
       getOpynQuote(selectedOption, true, toDecimals(optionsAmount, selectedOption.acoTokenInfo.decimals).toString()).then((r) => this.setState({opynPrice: r})).catch((e) => {
         this.setState({opynPrice: null})
       })
