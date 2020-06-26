@@ -23,11 +23,27 @@ const axesProprerties = JSON.stringify({
   }
 })
 
+const baseChart = {
+  datasets: [{
+    fill: false,
+    borderColor: '#a8c708',
+    borderWidth: 2,
+    lineTension: 0.01,
+    showLine: true,
+    pointRadius: 0,
+    hitRadius: 0,
+    hoverRadius: 0,
+    hoverBorderWidth: 0,
+    data: [],
+    backgroundColor: '#a8c708'
+  }]
+}
+
 class OptionChart extends Component {
   constructor() {
     super()
     this.state = {
-      chart: {},
+      chart: baseChart,
       xAxes: {},
       yAxes: {}
     }
@@ -42,27 +58,13 @@ class OptionChart extends Component {
 
   componentDidMount = () => {
     if (!!this.props.optionPrice && !!this.props.strikePrice && !!this.props.quantity && !!this.props.volatility) {
-      var chart = {
-        datasets: [{
-          fill: false,
-          borderColor: '#a8c708',
-          borderWidth: 2,
-          lineTension: 0.01,
-          showLine: true,
-          pointRadius: 0,
-          hitRadius: 0,
-          hoverRadius: 0,
-          hoverBorderWidth: 0,
-          data: [],
-          backgroundColor: '#a8c708'
-        }]
-      }
+      var chart = baseChart
       var precision = this.getPrecision(this.props.strikePrice)
       var offset = Math.round(this.props.strikePrice * this.props.volatility / 100 * precision) / precision
 
       var min
       var max
-      if ((this.props.isBuy && this.props.isCall) || (!this.props.isBuy && !this.props.isCall)) {
+      if (!this.props.isCall) {
         min = this.props.strikePrice
         max = this.props.strikePrice + offset
       } else {
@@ -71,7 +73,7 @@ class OptionChart extends Component {
       }
       var step = Math.round(precision * (max - min) / this.props.points) / precision
       var extraPoints = Math.ceil(this.props.points / 4);
-      if ((this.props.isBuy && this.props.isCall) || (!this.props.isBuy && !this.props.isCall)) {
+      if (!this.props.isCall) {
         min = min - extraPoints * step
       } else {
         max = max + extraPoints * step
@@ -91,7 +93,9 @@ class OptionChart extends Component {
       this.setState({chart: chart, xAxes: xAxes, yAxes: yAxes})
     }
     else {
-      this.setState({chart: {}, xAxes: {}, yAxes: {}})
+      var chart = baseChart
+      chart.datasets[0].data = []
+      this.setState({chart: chart, xAxes: {}, yAxes: {}})
     }
   }
 
