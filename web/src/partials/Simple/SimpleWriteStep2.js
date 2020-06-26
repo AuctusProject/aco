@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, acoWriteAddress, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
-import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice, getCollateralAmount } from '../../util/acoTokenMethods'
 import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
@@ -21,12 +21,12 @@ import { getDeribiData, getOpynQuote } from '../../util/acoApi'
 class SimpleWriteStep2 extends Component {
   constructor(props) {
     super(props)
-    this.state = {swapQuote: null, collateralBalance: null, collaterizeValue: "1.00"}
+    this.state = {swapQuote: null, collateralBalance: null, collaterizeValue: null}
   }
 
   componentDidMount = () => {
     this.refreshAccountBalance()
-    this.refresh()
+    this.setState({collaterizeValue: getCollateralAmount(this.props.option, 1)}, this.refresh)
   }
 
   refreshAccountBalance = () => {
