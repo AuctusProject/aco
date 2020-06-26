@@ -81,8 +81,13 @@ class OptionChart extends Component {
         max = max + extraPoints * step
       }
       var x = min
+      var inflectionPoint = false
       while (x <= max) {
         chart.datasets[0].data.push({x: x, y: this.getProfit(x)})
+        if (!inflectionPoint && x + step > this.props.strikePrice) {
+          chart.datasets[0].data.push({x: this.props.strikePrice, y: this.getProfit(this.props.strikePrice)})
+          inflectionPoint = true
+        }
         x += step
         if (x < max && x + step > max) x = max
       }
