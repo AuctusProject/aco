@@ -179,7 +179,7 @@ class SimpleWriteStep2 extends Component {
       img = <SpinnerLargeIcon/>
     }
     else if (stepNumber === 5) {
-      subtitle = "You have successfully writed "+optionsAmount+" "+this.props.option.acoTokenInfo.symbol+", access Trade if you want to sell them"
+      subtitle = "You have successfully written "+optionsAmount+" "+this.props.option.acoTokenInfo.symbol+"."
       img = <DoneLargeIcon/>
     }
     else if (stepNumber === -1) {
