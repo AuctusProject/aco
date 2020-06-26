@@ -21,10 +21,15 @@ import { getDeribiData, getOpynQuote } from '../../util/acoApi'
 class SimpleWriteStep2 extends Component {
   constructor(props) {
     super(props)
-    this.state = {swapQuote: null, collateralBalance: null, collaterizeValue: "1.000"}
+    this.state = {swapQuote: null, collateralBalance: null, collaterizeValue: "1.00"}
   }
 
   componentDidMount = () => {
+    this.refreshAccountBalance()
+    this.refresh()
+  }
+
+  refreshAccountBalance = () => {
     if (this.context.web3.selectedAccount) {
       getBalanceOfCollateralAsset(this.props.option, this.context.web3.selectedAccount)
       .then(result => this.setState({collateralBalance: result}))
@@ -32,12 +37,11 @@ class SimpleWriteStep2 extends Component {
     else {
       this.setState({collateralBalance: null})
     }
-    this.refresh()
   }
 
   componentDidUpdate = (prevProps) => {
     if (this.props.accountToggle !== prevProps.accountToggle) {
-      this.componentDidMount()
+      this.refreshAccountBalance()
     }
   }
 

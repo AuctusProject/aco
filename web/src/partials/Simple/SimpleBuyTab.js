@@ -6,7 +6,7 @@ import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
 import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance } from '../../util/constants'
-import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { getOptionFormattedPrice, getBalanceOfAsset } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
 import Web3Utils from 'web3-utils'
@@ -22,12 +22,23 @@ import StepsModal from '../StepsModal/StepsModal'
 class SimpleBuyTab extends Component {
   constructor(props) {
     super(props)
-    this.state = { selectedType: 1, selectedOption: null, opynPrice: null, deribitPrice: null, qtyValue: "1.00" }
+    this.state = { selectedType: 1, selectedOption: null, opynPrice: null, deribitPrice: null, qtyValue: "1.00", strikeAssetBalance: null }
   }
 
   componentDidMount = () => {
     if (this.props.selectedPair) {
       this.selectType(this.state.selectedType)
+      this.refreshAccountBalance()
+    }
+  }
+
+  refreshAccountBalance = () => {
+    if (this.context.web3.selectedAccount) {
+      getBalanceOfAsset(this.props.selectedPair.strikeAsset, this.context.web3.selectedAccount)
+      .then(result => this.setState({strikeAssetBalance: result}))
+    }
+    else {
+      this.setState({strikeAssetBalance: null})
     }
   }
 
@@ -35,6 +46,10 @@ class SimpleBuyTab extends Component {
     if (this.props.selectedPair !== prevProps.selectedPair ||
       this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
       this.selectType(this.state.selectedType)
+    }
+    if (this.props.selectedPair !== prevProps.selectedPair ||
+      this.props.accountToggle !== prevProps.accountToggle) {
+      this.refreshAccountBalance()
     }
   }
 
@@ -301,6 +316,9 @@ class SimpleBuyTab extends Component {
     if (!this.state.selectedExpiration) {
       return "Select expiration"
     }
+    if (this.isInsufficientFunds()) {
+      return "Insufficient funds"
+    }
     if (this.state.errorMessage) {
       return this.state.errorMessage
     }
@@ -357,7 +375,7 @@ class SimpleBuyTab extends Component {
   getTotalToBePaidFormatted = () => {
     var totalToBePaid = this.getTotalToBePaid()
     if (totalToBePaid) {
-      return totalToBePaid + " " + this.props.selectedPair.strikeAssetSymbol
+      return formatWithPrecision(totalToBePaid) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
   }
@@ -367,6 +385,15 @@ class SimpleBuyTab extends Component {
       return "$" + formatWithPrecision(price)
     }
     return "-"
+  }
+
+  getStrikeAssetDecimals = () => {
+    return this.state.selectedOption.strikeAssetInfo.decimals
+  }
+
+  isInsufficientFunds = () => {
+    var totalToBePaid = this.getTotalToBePaid()
+    return this.state.selectedOption != null && totalToBePaid !== null && this.state.strikeAssetBalance !== null && this.state.strikeAssetBalance.lt(toDecimals(this.getTotalToBePaid(), this.getStrikeAssetDecimals()))
   }
 
   render() {
