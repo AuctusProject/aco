@@ -21,3 +21,9 @@
 .simple-write-tab .aco-table {
     width: 100%;
 }
+
+
+.simple-write-tab .asset-icon {
+    width: 30px;
+    margin-right: 4px;
+}

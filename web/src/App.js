@@ -18,6 +18,7 @@ import Trade from './pages/Trade'
 import Simple from './pages/Simple'
 import { getNetworkName, CHAIN_ID, getMarketDetails } from './util/constants'
 import { error } from './util/sweetalert'
+import { getGasPrice } from './util/gasStationApi'
 
 class App extends Component {
   constructor() {
@@ -33,6 +34,7 @@ class App extends Component {
   }
 
   componentDidMount = () => {
+    getGasPrice()
     window.TradeApp.setNetwork(parseInt(CHAIN_ID))
   }
 

@@ -39,27 +39,20 @@ class TradeOptionsList extends Component {
   optionRowInfo = (option) => {
     if (!option) {
       return <>
-        <td colSpan="5">N/A</td>
+        <td colSpan={this.props.mode === TradeOptionsListLayoutMode.Trade ? "5": "4"}>N/A</td>
       </>
     }
-    var actionBtnTd = <td className="action-col">
-      <div className="action-btn" onClick={() => this.onSelectOption(option)}>TRADE</div>
-      <div className="action-btn outline-btn" onClick={() => this.onMintClick(option)}>MINT</div>
-    </td>
 
     if (!this.props.orderBooks[option.acoToken]) {
       return <>
-        {this.props.mode === TradeOptionsListLayoutMode.Home && option.isCall && actionBtnTd}
         <td className="clickable" onClick={() => this.onSelectOption(option)} colSpan="4"><FontAwesomeIcon icon={faSpinner} className="fa-spin"/></td>
         {this.props.mode === TradeOptionsListLayoutMode.Trade && <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>}
-        {this.props.mode === TradeOptionsListLayoutMode.Home && !option.isCall && actionBtnTd}
       </>
     }
     var bestBid = getBestBid(option, this.props.orderBooks[option.acoToken], this.props.mode)
     var bestAsk = getBestAsk(option, this.props.orderBooks[option.acoToken], this.props.mode)
     
     return  <>
-      {this.props.mode === TradeOptionsListLayoutMode.Home && option.isCall && actionBtnTd}
       <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? fromDecimals(bestBid.totalSize, option.underlyingInfo.decimals) : "-"}</td>
       <td className="bid-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ?
         <span className="bid-price">{this.props.mode === TradeOptionsListLayoutMode.Home ?
@@ -76,7 +69,6 @@ class TradeOptionsList extends Component {
       </td>
       <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.totalSize, option.underlyingInfo.decimals) : "-"}</td>
       {this.props.mode === TradeOptionsListLayoutMode.Trade && <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>}
-      {this.props.mode === TradeOptionsListLayoutMode.Home && !option.isCall && actionBtnTd}
     </>
   }
 
@@ -117,7 +109,7 @@ class TradeOptionsList extends Component {
               <React.Fragment key={expiryTime}>
                 <thead>
                   <tr>
-                    <td className="option-expiry-title-cell" colSpan="11">
+                    <td className="option-expiry-title-cell" colSpan={this.props.mode === TradeOptionsListLayoutMode.Trade ? "11" : "9"}>
                       <div className="option-expiry-title">
                         <div><OptionBadge isCall={true}/></div>
                         <div className="expiration-time">
@@ -131,7 +123,6 @@ class TradeOptionsList extends Component {
                 </thead>
                 <thead>
                   <tr>
-                    {this.props.mode === TradeOptionsListLayoutMode.Home && <th className="action-col"></th>}
                     <th className="size-col">SIZE</th>
                     <th className="bid-col">BID</th>
                     <th className="ask-col">ASK</th>
@@ -142,7 +133,6 @@ class TradeOptionsList extends Component {
                     <th className="bid-col">BID</th>
                     <th className="ask-col">ASK</th>
                     <th className="size-col">SIZE</th>
-                    {this.props.mode === TradeOptionsListLayoutMode.Home && <th className="action-col"></th>}
                     {this.props.mode === TradeOptionsListLayoutMode.Trade && <th className="balance-col">BALANCE</th>}
                   </tr>
                 </thead>

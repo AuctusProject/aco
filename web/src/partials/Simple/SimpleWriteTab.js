@@ -4,12 +4,14 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import StepIndicator from '../Write/StepIndicator'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { faArrowRight, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getBinanceSymbolForPair, getSecondsToExpiry, formatPercentage, formatWithPrecision, swapQuoteBuySize } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import { getSwapQuote } from '../../util/zrxApi'
 import Loading from '../Util/Loading'
 import SimpleWriteStep2 from './SimpleWriteStep2'
+import { ASSETS_INFO } from '../../util/assets'
+import ReactTooltip from 'react-tooltip'
 
 class SimpleWriteTab extends Component {
   constructor(props) {
@@ -115,7 +117,7 @@ class SimpleWriteTab extends Component {
       }
       else if (!option.isCall && bid > (strikePrice - price)) {
         if (strikePrice > price) {
-          return bid - (strikePrice - price) / strikePrice
+          return (bid - (strikePrice - price)) / strikePrice
         }
         else {
           return bid / strikePrice
@@ -145,16 +147,41 @@ class SimpleWriteTab extends Component {
     return null
   }
 
+  getAssetIcon = (isCall) => {
+    var pair = this.props.selectedPair
+    var iconUrl = null
+    if (isCall === "true") {
+      iconUrl = ASSETS_INFO[pair.underlyingSymbol] ? ASSETS_INFO[pair.underlyingSymbol].icon : null
+    }
+    else {
+      iconUrl = ASSETS_INFO[pair.strikeAssetSymbol] ? ASSETS_INFO[pair.strikeAssetSymbol].icon : null
+    }
+    if (iconUrl) {
+      return <img className="asset-icon" src={iconUrl} alt=""></img>
+    }
+    return null
+  }
+  
+  getTypeTooltip = (isCall) => {    
+    var pair = this.props.selectedPair
+    return <ReactTooltip className="option-type-tooltip" id={isCall + ".option-tooltip"}>
+      {isCall === "true" ? <div>Receive money today for your willingness to sell {pair.underlyingSymbol} at the strike price. This potential income-generating options strategy is referred to as the covered call.</div>
+      : <div>Receive money today for your willingness to buy {pair.underlyingSymbol} at the strike price. It may seem a little counter-intuitive, but you can write puts to buy {pair.underlyingSymbol}. This options strategy is referred to as the cash-secured put.</div>}
+    </ReactTooltip>
+  }
+
   render() {
     var filteredOptions = (this.props.options && this.state.swapQuotes) ? this.props.options.filter(o => !!this.state.swapQuotes[o.acoToken] && !!this.state.swapQuotes[o.acoToken].returnIfFlat && this.state.swapQuotes[o.acoToken].returnIfFlat > 0) : []
     var grouppedOptions = groupBy(filteredOptions, "isCall")
+    
     return <div className="simple-write-tab">
-      {this.state.swapQuotes ? <>
+      {(this.state.currentPairPrice && this.state.swapQuotes) ? <>
         {this.state.currentStep !== 3 && <StepIndicator totalSteps={2} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>}
         {this.props.selectedPair && filteredOptions.length === 0 && <div className="text-center">No options available for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>}
         {this.state.currentStep === 1 && Object.keys(grouppedOptions).map(isCall => (
           <div key={isCall} className="write-option-group">
-            <div className="earn-title">Earn income on {isCall === "true" ? this.props.selectedPair.underlyingSymbol : this.props.selectedPair.strikeAssetSymbol}</div>
+            <div className="earn-title">{this.getAssetIcon(isCall)} Earn income on {isCall === "true" ? this.props.selectedPair.underlyingSymbol : this.props.selectedPair.strikeAssetSymbol} <FontAwesomeIcon data-tip data-for={isCall + ".option-tooltip"} icon={faInfoCircle}></FontAwesomeIcon></div>
+            {this.getTypeTooltip(isCall)}
             <table className="aco-table mx-auto">
               <thead>
                 <tr>

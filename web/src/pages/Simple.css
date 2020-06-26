@@ -14,7 +14,7 @@
     position: relative;
 }
 
-.simple-box #simpleTabs {
+.simple-box #simpleTabs .nav-item {
     margin-bottom: 0;
 }
 

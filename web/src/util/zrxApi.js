@@ -1,5 +1,9 @@
 import Axios from 'axios'
 import { zrxApiUrl } from './constants';
+import { getGasPrice } from './gasStationApi';
+import BigNumber from 'bignumber.js';
+
+const PROTOCOL_FEE_MULTIPLIER = 150000;
 
 export function getSwapQuote(buyToken, sellToken, amount, isBuy) {
     return new Promise(function(resolve,reject){
@@ -12,18 +16,25 @@ export function getSwapQuote(buyToken, sellToken, amount, isBuy) {
         else {
             url += "&sellAmount="+amount
         }
-        Axios.get(url)
-        .then(res => {
-            if (res && res.data) {
-                resolve(res.data)
-            }
-            else {
-                resolve(null)
-            }
-        })
-        .catch(err => 
-            reject(err)
-        );
+        url+="&gasPrice=1"
+        getGasPrice().then(gasPrice => {
+            Axios.get(url)
+            .then(res => {
+                if (res && res.data) {
+                    const ordersFee = res.data.orders.length * PROTOCOL_FEE_MULTIPLIER
+                    const protocolFee = new BigNumber(ordersFee).times(gasPrice)
+                    res.data.value = res.data.value - ordersFee + protocolFee
+                    res.data.gasPrice = gasPrice
+                    resolve(res.data)
+                }
+                else {
+                    resolve(null)
+                }
+            })
+            .catch(err => 
+                reject(err)
+            );
+        })        
     })
 }
 

@@ -11,6 +11,9 @@ export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
+export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
+export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
+export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
@@ -20,6 +23,7 @@ export const swapQuoteBuySize = "1000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const ethTransactionTolerance = 0.01;
+export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
