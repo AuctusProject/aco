@@ -117,7 +117,13 @@ class SimpleBuyTab extends Component {
 
   setOpynPrice = (selectedOption) => {
     if (selectedOption && !!this.state.qtyValue) {
-      getOpynQuote(selectedOption, true, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString()).then((r) => this.setState({opynPrice: r})).catch((e) => {
+      getOpynQuote(selectedOption, true, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString()).then((r) => {
+        if (!!r) {
+          this.setState({opynPrice: parseFloat(fromDecimals(r, selectedOption.strikeAssetInfo.decimals)) / this.state.qtyValue })  
+        } else {
+          this.setState({opynPrice: null})
+        }
+      }).catch((e) => {
         this.setState({opynPrice: null})
         console.error(e)
       })
@@ -356,17 +362,9 @@ class SimpleBuyTab extends Component {
     return "-"
   }
 
-  formatAcoPrice = (optionPrice) => {
-    if (optionPrice) {
-      return formatWithPrecision(optionPrice) + " " + this.props.selectedPair.strikeAssetSymbol
-    }
-    return "-"
-  }
-
-  formatDeribitPrice = () => {
-    var optionPrice = this.state.deribitPrice 
-    if (optionPrice) {
-      return "$" + formatWithPrecision(optionPrice)
+  formatPrice = (price) => {
+    if (price) {
+      return "$" + formatWithPrecision(price)
     }
     return "-"
   }
@@ -420,9 +418,9 @@ class SimpleBuyTab extends Component {
           <div className="separator"></div>
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
-            <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatAcoPrice(optionPrice)}</div></div>
-            <div className="price-value"><div className="price-origin">Opyn:</div><div>{selectedOption && this.state.opynPrice ? fromDecimals(this.state.opynPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
-            <div className="price-value"><div className="price-origin">Deribit:</div><div>{selectedOption ? this.formatDeribitPrice()  : "-"}</div></div>
+            <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatPrice(optionPrice)}</div></div>
+            <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.formatPrice(this.state.opynPrice)}</div></div>
+            <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
           </div>
         </div>
       </div>
