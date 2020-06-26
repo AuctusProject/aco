@@ -19,10 +19,12 @@ class NavBar extends Component {
   }
 
   componentDidMount = () => {
-    listPairs().then(pairs => {
-      this.setState({pairs:pairs})
-      this.props.onPairsLoaded(pairs)
-    })
+    if (this.context && this.context.web3 && this.context.web3.validNetwork) {
+      listPairs().then(pairs => {
+        this.setState({pairs:pairs})
+        this.props.onPairsLoaded(pairs)
+      })
+    }
   }
 
   componentDidUpdate = (prevProps) => {

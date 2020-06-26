@@ -22,7 +22,7 @@ import StepsModal from '../StepsModal/StepsModal'
 class SimpleBuyTab extends Component {
   constructor(props) {
     super(props)
-    this.state = { selectedType: 1, selectedOption: null, opynPrice: null, deribitPrice: null }
+    this.state = { selectedType: 1, selectedOption: null, opynPrice: null, deribitPrice: null, qtyValue: "1.00" }
   }
 
   componentDidMount = () => {
