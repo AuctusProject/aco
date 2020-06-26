@@ -10,5 +10,9 @@ export const ASSETS_INFO = {
     "AUC": {
         symbol: "AUC",
         icon: "/images/auc_icon.png"
+    },
+    "USDC": {
+        symbol: "USDC",
+        icon: "/images/usdc_icon.svg"
     }
 }
