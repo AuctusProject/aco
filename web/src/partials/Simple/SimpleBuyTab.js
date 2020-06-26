@@ -101,7 +101,7 @@ class SimpleBuyTab extends Component {
     if (selectedOption) {
       getDeribiData(selectedOption).then((r) => {
         if (r) {
-          this.setState({deribitPrice: r.best_ask_price})
+          this.setState({deribitPrice: r.best_ask_price * r.underlying_price})
         } else {
           this.setState({deribitPrice: null})
         }
@@ -362,6 +362,14 @@ class SimpleBuyTab extends Component {
     return "-"
   }
 
+  formatDeribitPrice = () => {
+    var optionPrice = this.state.deribitPrice 
+    if (optionPrice) {
+      return "$" + formatWithPrecision(optionPrice)
+    }
+    return "-"
+  }
+
   render() {
     var selectedOption = this.state.selectedOption
     var priceFromDecimals = selectedOption ? parseFloat(fromDecimals(selectedOption.strikePrice, selectedOption.strikeAssetInfo.decimals)) : null
@@ -413,7 +421,7 @@ class SimpleBuyTab extends Component {
             <div className="input-label">Prices per option:</div>
             <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatAcoPrice(optionPrice)}</div></div>
             <div className="price-value"><div className="price-origin">Opyn:</div><div>{selectedOption && this.state.opynPrice ? fromDecimals(this.state.opynPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
-            <div className="price-value"><div className="price-origin">Deribit:</div><div>{selectedOption && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, selectedOption.strikeAssetInfo.decimals) : "-"}</div></div>
+            <div className="price-value"><div className="price-origin">Deribit:</div><div>{selectedOption ? this.formatDeribitPrice()  : "-"}</div></div>
           </div>
         </div>
       </div>

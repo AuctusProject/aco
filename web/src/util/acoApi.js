@@ -19,10 +19,14 @@ export function getTokensList() {
     })
 }
 
+export function isStrikeStableCoin(optionData) {
+    return (optionData.strikeAssetInfo.symbol === "USDC" || optionData.strikeAssetInfo.symbol === "DAI"
+    || optionData.strikeAssetInfo.symbol === "USDT")
+}
+
 export function getDeribiData(optionData) {
     return new Promise(function(resolve,reject) {
-        if ((optionData.strikeAssetInfo.symbol !== "USDC" && optionData.strikeAssetInfo.symbol !== "DAI"
-        && optionData.strikeAssetInfo.symbol !== "USDT") || (optionData.underlyingInfo.symbol !== "TBTC" &&
+        if (!isStrikeStableCoin(optionData.strikeAssetInfo.symbol) || (optionData.underlyingInfo.symbol !== "TBTC" &&
         optionData.underlyingInfo.symbol !== "WBTC" && optionData.underlyingInfo.symbol !== "ETH")) {
             resolve(null)
         } else {

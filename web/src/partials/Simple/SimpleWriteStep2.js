@@ -264,7 +264,7 @@ class SimpleWriteStep2 extends Component {
     if (selectedOption) {
       getDeribiData(selectedOption).then((r) => {
         if (r) {
-          this.setState({deribitPrice: r.best_ask_price})
+          this.setState({deribitPrice: r.best_ask_price * r.underlying_price})
         } else {
           this.setState({deribitPrice: null})
         }
@@ -369,6 +369,14 @@ class SimpleWriteStep2 extends Component {
     return "-"
   }
 
+  formatDeribitPrice = () => {
+    var optionPrice = this.state.deribitPrice 
+    if (optionPrice) {
+      return "$" + formatWithPrecision(optionPrice)
+    }
+    return "-"
+  }
+
   render() {
     return <div className="simple-write-step2">
       <div className="collateral-input">
@@ -417,7 +425,7 @@ class SimpleWriteStep2 extends Component {
               <div className="similar-label">(similar options)</div>
               <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatAcoPrice(this.getAcoOptionPrice())}</div></div>
               <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.props.option && this.state.opynPrice ? fromDecimals(this.state.opynPrice, this.props.option.strikeAssetInfo.decimals) : "-"}</div></div>
-              <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.props.option && this.state.deribitPrice ? fromDecimals(this.state.deribitPrice, this.props.option.strikeAssetInfo.decimals) : "-"}</div></div>
+              <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.props.option ? this.formatDeribitPrice()  : "-"}</div></div>
             </div>
           </div>
         </div>
