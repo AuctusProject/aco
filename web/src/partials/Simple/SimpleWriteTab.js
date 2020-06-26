@@ -115,7 +115,7 @@ class SimpleWriteTab extends Component {
       }
       else if (!option.isCall && bid > (strikePrice - price)) {
         if (strikePrice > price) {
-          return bid - (strikePrice - price) / strikePrice
+          return (bid - (strikePrice - price)) / strikePrice
         }
         else {
           return bid / strikePrice
