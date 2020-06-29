@@ -59,14 +59,19 @@ class OptionChart extends Component {
   }
 
   componentDidMount = () => {
-    if (!!this.props.optionPrice && !!this.props.strikePrice && !!this.props.quantity && !!this.props.volatility) {
+    if (!!this.props.optionPrice && !isNaN(this.props.optionPrice) && !!this.props.strikePrice && !isNaN(this.props.strikePrice) 
+    && !!this.props.quantity && !isNaN(this.props.quantity) && !!this.props.volatility && !isNaN(this.props.volatility) 
+    && (this.props.isBuy || !this.props.isCall || (!!this.props.currentPrice && !isNaN(this.props.currentPrice)))) {
       var chart = this.getBaseChart()
       var precision = this.getPrecision(this.props.strikePrice)
       var offset = Math.round(this.props.strikePrice * this.props.volatility / 100 * precision) / precision
 
       var min
       var max
-      if (this.props.isCall) {
+      if (!this.props.isBuy && this.props.isCall) {
+        min = Math.max(Math.min(this.props.currentPrice, this.props.strikePrice) - offset, 0)
+        max = Math.max(this.props.strikePrice, this.props.currentPrice)
+      } else if (this.props.isCall) {
         min = this.props.strikePrice
         max = this.props.strikePrice + offset
       } else {
@@ -75,7 +80,7 @@ class OptionChart extends Component {
       }
       var step = Math.round(precision * (max - min) / this.props.points) / precision
       var extraPoints = Math.ceil(this.props.points / 3);
-      if (this.props.isCall) {
+      if (this.props.isCall && this.props.isBuy) {
         min = min - extraPoints * step
       } else {
         max = max + extraPoints * step
@@ -105,19 +110,26 @@ class OptionChart extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (prevProps.optionPrice !== this.props.optionPrice || prevProps.strikePrice !== this.props.strikePrice
-      || prevProps.quantity !== this.props.quantity || prevProps.volatility !== this.props.volatility 
-      || prevProps.isBuy !== this.props.isBuy || prevProps.isCall !== this.props.isCall) {
-      this.componentDidMount()
+    if ((!!this.props.optionPrice && !isNaN(this.props.optionPrice) && prevProps.optionPrice !== this.props.optionPrice) || 
+        (!!this.props.strikePrice && !isNaN(this.props.strikePrice) && prevProps.strikePrice !== this.props.strikePrice) ||
+        (!!this.props.quantity && !isNaN(this.props.quantity) && prevProps.quantity !== this.props.quantity) ||
+        (!!this.props.volatility && !isNaN(this.props.volatility) && prevProps.volatility !== this.props.volatility) ||
+        (!this.props.isBuy && this.props.isCall && !!this.props.currentPrice && !isNaN(this.props.currentPrice) && prevProps.currentPrice !== this.props.currentPrice) ||
+        prevProps.isBuy !== this.props.isBuy || prevProps.isCall !== this.props.isCall) {
+        this.componentDidMount()
     }
   }
 
   getProfit = (price) => {
-    var priceDiff = Math.max(this.props.isCall ? (price - this.props.strikePrice) : (this.props.strikePrice - price), 0)
-    if (this.props.isBuy) {
-      return this.props.quantity * (priceDiff - this.props.optionPrice)
+    if (this.props.isBuy || !this.props.isCall) {
+      var profit = Math.max(this.props.isCall ? (price - this.props.strikePrice) : (this.props.strikePrice - price), 0)
+      if (this.props.isBuy) {
+        return this.props.quantity * (profit - this.props.optionPrice)
+      } else {
+        return this.props.quantity * (this.props.optionPrice - profit)
+      }
     } else {
-      return this.props.quantity * (this.props.optionPrice - priceDiff)
+      return this.props.quantity * (this.props.optionPrice + Math.min(price, this.props.strikePrice) - this.props.currentPrice)
     }
   }
 

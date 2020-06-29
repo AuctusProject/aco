@@ -215,7 +215,7 @@ class SimpleWriteTab extends Component {
           </div>
         ))}
         {this.state.currentStep === 2 && this.state.selectedOption &&
-          <SimpleWriteStep2 {...this.props} option={this.state.selectedOption} setSwapQuoteReturns={this.setSwapQuoteReturns} />
+          <SimpleWriteStep2 {...this.props} option={this.state.selectedOption} currentPairPrice={this.state.currentPairPrice} setSwapQuoteReturns={this.setSwapQuoteReturns} />
         }
         </>
         :

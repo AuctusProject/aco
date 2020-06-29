@@ -388,7 +388,7 @@ class SimpleWriteStep2 extends Component {
       </div>
       <div className="chart-and-summary">
         <div className="write-chart-wrapper">
-          <OptionChart isCall={this.props.option.isCall} isBuy={false} strikePrice={parseFloat(fromDecimals(this.props.option.strikePrice, this.props.option.strikeAssetInfo.decimals))} optionPrice={this.getSwapPrice()} quantity={this.getOptionsAmount()}/>
+          <OptionChart isCall={this.props.option.isCall} currentPrice={this.props.currentPairPrice} isBuy={false} strikePrice={parseFloat(fromDecimals(this.props.option.strikePrice, this.props.option.strikeAssetInfo.decimals))} optionPrice={this.getAcoOptionPrice()} quantity={(!!this.getOptionsAmount() && !isNaN(this.getOptionsAmount()) ? parseFloat(this.getOptionsAmount()) : null)}/>
         </div>
         <div className="summary-wrapper">
           <div className="summary-title">SUMMARY</div>
