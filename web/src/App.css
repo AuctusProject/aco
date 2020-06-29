@@ -580,6 +580,8 @@ label {
 
 .aco-modal .modal-dialog {
   width: 322px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .modal-backdrop.show {
