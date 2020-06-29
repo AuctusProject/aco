@@ -154,7 +154,9 @@ export function toDecimals(input, decimals) {
   
     if (!whole) { whole = '0'; }
     if (!fraction) { fraction = '0'; }
-    if (fraction.length > baseLength) { throw new Error(`[ethjs-unit] while converting number ${input} to wei, too many decimal places`); }
+    if (fraction.length > baseLength) { 
+        fraction = fraction.substring(0, baseLength-1)
+     }
   
     while (fraction.length < baseLength) {
       fraction += '0';
