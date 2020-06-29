@@ -182,7 +182,7 @@ class SimpleWriteTab extends Component {
           <div key={isCall} className="write-option-group">
             <div className="earn-title">{this.getAssetIcon(isCall)} Earn income on {isCall === "true" ? this.props.selectedPair.underlyingSymbol : this.props.selectedPair.strikeAssetSymbol} <FontAwesomeIcon data-tip data-for={isCall + ".option-tooltip"} icon={faInfoCircle}></FontAwesomeIcon></div>
             {this.getTypeTooltip(isCall)}
-            <table className="aco-table mx-auto">
+            <table className="aco-table mx-auto table-responsive-sm">
               <thead>
                 <tr>
                   <th>Strike Price</th>

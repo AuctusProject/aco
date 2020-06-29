@@ -136,7 +136,7 @@ class WrittenOptionsPositions extends Component {
       (this.state.positions.length === 0  ? <></> :
        <div className="written-options-positions">
       <div className="page-title">MANAGE YOUR WRITTEN OPTIONS POSITIONS</div>
-      <table className="aco-table mx-auto">
+      <table className="aco-table mx-auto table-responsive-md">
         <thead>
           <tr>
             <th>TYPE</th>

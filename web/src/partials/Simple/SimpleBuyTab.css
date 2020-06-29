@@ -1,6 +1,7 @@
 .simple-buy-tab {
     padding: 20px 10px;
-    width: 720px;
+    max-width: 720px;
+    width: 100%;
     margin: auto;
 }
 
@@ -161,4 +162,31 @@
     padding-left: 6px;
     letter-spacing: 0.2px;
     width: calc(100% - 51px);
+}
+
+@media (max-width: 768px) {
+    .simple-buy-tab .inputs-wrapper {
+        flex-wrap: wrap;
+    }
+
+    .simple-buy-tab .inputs-wrapper .input-column,
+    .simple-buy-tab .inputs-wrapper .input-column.strike-column,
+    .simple-buy-tab .inputs-wrapper .input-column.expiration-column  {
+        width: calc(50% - 20px);
+        min-width: unset;
+        max-width: unset;
+    }
+
+    .simple-buy-tab .chart-and-prices {
+        flex-direction: column;
+    }
+
+    .simple-buy-tab .option-chart-wrapper {
+        width: calc(100% - 20px);
+    }
+
+    .simple-buy-tab .prices-wrapper {
+        width: 200px;
+        margin: 10px auto;
+    }
 }

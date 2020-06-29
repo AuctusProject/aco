@@ -89,7 +89,7 @@ class ExercisePositions extends Component {
     return <div>
         {!this.state.positions ? null :
         (this.props.mode === PositionsLayoutMode.Basic && this.state.positions.length === 0  ? null :
-        <table className="aco-table mx-auto">
+        <table className="aco-table mx-auto table-responsive-md">
           <thead>
             <tr>
               <th>TYPE</th>
@@ -114,7 +114,7 @@ class ExercisePositions extends Component {
               <td>{getOptionFormattedPrice(position.option)}</td>
               <td>{formatDate(position.option.expiryTime)}</td>
               <td>{getFormattedOpenPositionAmount(position)}</td>
-              <td>
+              <td className="exercise-actions-cell">
                 {this.props.mode === PositionsLayoutMode.Basic && <div className="action-btn mr-2" onClick={this.onSellClick(position)}>SELL EARLY</div>}
                 <div className="action-btn" onClick={this.onExerciseClick(position)}>EXERCISE</div>
               </td>

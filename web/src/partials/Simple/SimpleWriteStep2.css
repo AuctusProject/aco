@@ -142,6 +142,7 @@
 
 .similar-prices {
     width: 150px;
+    margin: 0 auto;
 }
 
 .ref-label {
@@ -165,4 +166,20 @@
     color: #7d7d7d;
     margin-top: 6px;
     margin-bottom: 20px;
+}
+
+
+@media (max-width: 768px) {
+    .simple-write-step2 .chart-and-summary {
+        flex-direction: column;
+    }
+
+    .chart-and-summary .write-chart-wrapper {
+        width: calc(100% - 20px);
+    }
+
+    .chart-and-summary .summary-wrapper {
+        width: calc(100% - 20px);
+        margin: 10px auto;
+    }
 }

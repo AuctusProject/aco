@@ -475,7 +475,8 @@ main {
   letter-spacing: 0.6px;
   text-align: center;
   color: #e6e6e6;
-  padding: 0 20px;
+  padding: 0 20px;  
+  word-break: normal;
 }
 
 .aco-table tbody td {
@@ -488,7 +489,8 @@ main {
   font-style: normal;
   letter-spacing: 0.55px;
   text-align: center;
-  color: #e6e6e6;
+  color: #e6e6e6;  
+  word-break: normal;
 }
 
 .aco-table tbody tr.clickable:hover td {

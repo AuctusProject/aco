@@ -12,10 +12,12 @@
 
 .simple-box .nav-tabs .nav-link {
     position: relative;
+    max-width: 100%;
 }
 
 .simple-box #simpleTabs .nav-item {
     margin-bottom: 0;
+    max-width: 33.3%;
 }
 
 .earn-badge {
@@ -30,7 +32,7 @@
     color: #242424;
     position: absolute;    
     top: 10px;
-    right: 12px;
+    left: calc(50% + 22px);
     padding: 0px 4px;
 }
 

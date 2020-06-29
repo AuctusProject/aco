@@ -458,7 +458,7 @@ class SimpleBuyTab extends Component {
               <div>BUY</div>
             </div> :
             <div className="home-btn medium solid-green" onClick={this.onConnectClick}>
-              <div>CONNECT ACCOUNT</div>
+              <div>CONNECT WALLET</div>
             </div>) :
           <div className="home-btn medium solid-green disabled">
             <div>{this.state.loadingSwap ? "Loading..." : this.getButtonMessage()}</div>

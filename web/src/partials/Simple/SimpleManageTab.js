@@ -59,7 +59,7 @@ class SimpleManageTab extends Component {
         <div className="page-subtitle">Connect your account to load your wallet information.</div>
         <div className="action-button-wrapper">
           <div className="home-btn medium solid-green" onClick={this.onConnectClick}>
-            <div>CONNECT ACCOUNT</div>
+            <div>CONNECT WALLET</div>
           </div>
         </div>
       </>}
