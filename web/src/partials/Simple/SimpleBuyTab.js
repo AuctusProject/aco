@@ -433,7 +433,7 @@ class SimpleBuyTab extends Component {
       </div>
       <div className="chart-and-prices">
         <div className="option-chart-wrapper">
-          <OptionChart isCall={this.state.selectedType === 1} isBuy={true} strikePrice={priceFromDecimals} optionPrice={optionPrice} quantity={this.state.qtyValue}/>
+          <OptionChart isCall={this.state.selectedType === 1} isBuy={true} strikePrice={priceFromDecimals} optionPrice={optionPrice} quantity={(!!this.state.qtyValue ? parseFloat(this.state.qtyValue) : null)}/>
         </div>
         <div className="prices-wrapper">
           <div className="input-column">
