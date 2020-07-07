@@ -67,6 +67,7 @@ class TradeMenu extends Component {
               <NavLink to="/privacy">Privacy Policy</NavLink>
               <a target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
               <a target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
+              <a target="_blank" rel="noopener noreferrer" href="https://defipulse.com">DeFi Pulse</a>
             </div>
             <div className="trade-menu-footer-media">
               <div>© 2020 ACO</div>
