@@ -43,18 +43,26 @@ class NavBar extends Component {
   }
 
   changeMode = () => {
+    var url = ""
     if (window.location.pathname.indexOf("buy") > 0) {
-      this.props.history.push("/advanced/trade")
+      url = "/advanced/trade"
     } else if (window.location.pathname.indexOf("write") > 0) {
-      this.props.history.push("/advanced/mint")
+      url = "/advanced/mint"
     } else if (window.location.pathname.indexOf("manage") > 0) {
-      this.props.history.push("/advanced/exercise")
+      url = "/advanced/exercise"
     } else if (window.location.pathname.indexOf("trade") > 0) {
-      this.props.history.push("/buy")
+      url = "/buy"
     } else if (window.location.pathname.indexOf("mint") > 0) {
-      this.props.history.push("/write")
+      url = "/write"
     } else if (window.location.pathname.indexOf("exercise") > 0) {
-      this.props.history.push("/manage")
+      url = "/manage"
+    }
+    
+    if (this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork) {
+      this.props.history.push(url)
+    }
+    else {
+      this.props.signIn(url, this.context)
     }
   }
  
