@@ -200,6 +200,7 @@ contract ACOToken is ERC20 {
         acoFee = _acoFee;
         feeDestination = _feeDestination;
         underlyingDecimals = _getAssetDecimals(_underlying);
+        require(underlyingDecimals < 78, "ACOToken::init: Invalid underlying decimals");
         strikeAssetDecimals = _getAssetDecimals(_strikeAsset);
         underlyingSymbol = _getAssetSymbol(_underlying);
         strikeAssetSymbol = _getAssetSymbol(_strikeAsset);
