@@ -661,12 +661,12 @@ contract ACOToken is ERC20 {
      * @param tokenAmount Amount of tokens.
      */
     function _exerciseOwners(address exerciseAccount, uint256 tokenAmount) internal {
-        uint256 start = _collateralOwners.length - 1;
-        for (uint256 i = start; i >= 0; --i) {
+        uint256 start = _collateralOwners.length;
+        for (uint256 i = start; i > 0; --i) {
             if (tokenAmount == 0) {
                 break;
             }
-            tokenAmount = _exerciseAccount(_collateralOwners[i], tokenAmount, exerciseAccount);
+            tokenAmount = _exerciseAccount(_collateralOwners[i-1], tokenAmount, exerciseAccount);
         }
         require(tokenAmount == 0, "ACOToken::_exerciseOwners: Invalid remaining amount");
     }
