@@ -587,7 +587,7 @@ contract ACOToken is ERC20 {
      * @param recipient Destination address for the tokens.
      * @param amount Amount of tokens.
      */
-    function _transfer(address sender, address recipient, uint256 amount) notExpired internal override {
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
         super._transferAction(sender, recipient, amount);
     }
     
@@ -598,7 +598,7 @@ contract ACOToken is ERC20 {
      * @param spender Address of the spender authorized.
      * @param amount Amount of tokens authorized.
      */
-    function _approve(address owner, address spender, uint256 amount) notExpired internal override {
+    function _approve(address owner, address spender, uint256 amount) internal override {
         super._approveAction(owner, spender, amount);
     }
     
