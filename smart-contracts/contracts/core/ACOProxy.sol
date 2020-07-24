@@ -13,14 +13,14 @@ contract ACOProxy {
      * @param previousAdmin Address of the previous admin.
      * @param newAdmin Address of the new admin.
      */
-    event ProxyAdminUpdated(address previousAdmin, address newAdmin);
+    event ProxyAdminUpdated(address indexed previousAdmin, address indexed newAdmin);
     
     /**
      * @dev Emitted when the proxy implementation has been changed.
      * @param previousImplementation Address of the previous proxy implementation.
      * @param newImplementation Address of the new proxy implementation.
      */
-    event SetImplementation(address previousImplementation, address newImplementation);
+    event SetImplementation(address indexed previousImplementation, address indexed newImplementation);
     
     /**
      * @dev Storage position for the admin address.
