@@ -3,6 +3,7 @@ pragma solidity ^0.6.6;
 import "./IERC20.sol";
 
 interface IACOToken is IERC20 {
+	function init(address _underlying, address _strikeAsset, bool _isCall, uint256 _strikePrice, uint256 _expiryTime, uint256 _acoFee, address payable _feeDestination, uint256 _maxExercisedAccounts) external;
     function name() external view returns(string memory);
     function symbol() external view returns(string memory);
     function decimals() external view returns(uint8);
