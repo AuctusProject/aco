@@ -23,6 +23,7 @@ describe("ACOToken", function() {
   let buidlerT1T210000P;
   let price2;
   let time;
+  let maxExercisedAccounts = 100;
 
   beforeEach(async function () {
     [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
@@ -51,11 +52,11 @@ describe("ACOToken", function() {
 
     time = Math.round(new Date().getTime() / 1000) + 86400;
     price1 = ethers.utils.bigNumberify("3000000");
-    let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, true, price1, time)).wait();
+    let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, true, price1, time, maxExercisedAccounts)).wait();
     buidlerEthT1003C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);  
 
     price2 = ethers.utils.bigNumberify("10000000000000000000000");
-    tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, false, price2, time)).wait();
+    tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, false, price2, time, maxExercisedAccounts)).wait();
     buidlerT1T210000P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);  
   });
 
@@ -1002,7 +1003,7 @@ describe("ACOToken", function() {
       let a3 = v3.mul(precision2).div(price1);
       let one = ethers.utils.bigNumberify("1");
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1}); 
@@ -1100,8 +1101,8 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
 
       let e1 = val3.mul(price1).div(precision2);
-      expect((await buidlerEthT1003C.getExerciseData(val3))[1]).to.equal(e1);  
-      await token1.connect(owner).approve(buidlerEthT1003C.address, e1);
+      expect((await buidlerEthT1003C.getBaseExerciseData(val3))[1]).to.equal(e1);  
+      await token1.connect(owner).approve(buidlerEthT1003C.address, e1.add(await buidlerEthT1003C.maxExercisedAccounts()));
       let b1 = await addr2.getBalance();
       await buidlerEthT1003C.connect(owner).exercise(val3);
 
@@ -1123,17 +1124,17 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.assignableCollateral(await owner.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
-      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(maxExercisedAccounts));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3));
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(ethers.utils.bigNumberify("3"))));
       expect(await addr2.getBalance()).to.equal(b1.add(val3.mul(fee).div(100000)));
 
-      expect((await buidlerT1T210000P.getExerciseData(amount3))[1]).to.equal(amount3);  
-      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3);
+      expect((await buidlerT1T210000P.getBaseExerciseData(amount3))[1]).to.equal(amount3);  
+      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()));
       await buidlerT1T210000P.connect(owner).exercise(amount3);
       let fee2 = value3.mul(fee).div(100000);
  
@@ -1155,16 +1156,16 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await owner.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(1).add(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
-      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2).add(fee2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3));
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(ethers.utils.bigNumberify("3"))).add(value3).sub(fee2));
 
-      expect((await buidlerEthT1003P.getExerciseData(a3))[1]).to.equal(a3);  
-      await buidlerEthT1003P.connect(owner).exercise(a3, {value: a3});
+      expect((await buidlerEthT1003P.getBaseExerciseData(a3))[1]).to.equal(a3);  
+      await buidlerEthT1003P.connect(owner).exercise(a3, {value: a3.add(await buidlerEthT1003P.maxExercisedAccounts())});
       let fee3 = v3.mul(fee).div(100000);
  
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v1.add(v2).add(one));  
@@ -1185,18 +1186,18 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003P.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerEthT1003P.assignableCollateral(await owner.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one).add(1).add(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
-      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2).add(fee2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3));
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(ethers.utils.bigNumberify("3"))).add(value3).sub(fee2));
 
       let e2 = val2.mul(price1).div(precision2);
-      expect((await buidlerEthT1003C.getExerciseData(val2))[1]).to.equal(e2);  
+      expect((await buidlerEthT1003C.getBaseExerciseData(val2))[1]).to.equal(e2);  
       let b2 = await addr2.getBalance();
-      await token1.connect(addr3).approve(buidlerEthT1003C.address, e2);
+      await token1.connect(addr3).approve(buidlerEthT1003C.address, e2.add(await buidlerEthT1003C.maxExercisedAccounts()));
       await buidlerEthT1003C.connect(addr3).exercise(val2);
       
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
@@ -1216,18 +1217,18 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003C.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.assignableCollateral(await owner.getAddress())).to.equal(0);
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).add(e2.div(ethers.utils.bigNumberify("2"))));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one).add(e2.div(ethers.utils.bigNumberify("2"))));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(e2));
-      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).add(e2.div(ethers.utils.bigNumberify("2"))).add(1));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one).add(e2.div(ethers.utils.bigNumberify("2"))).add(1).add(1).add(1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(e2).sub(maxExercisedAccounts));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2).add(fee2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3));
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(ethers.utils.bigNumberify("3"))).add(value3).sub(fee2));
       expect(await addr2.getBalance()).to.equal(b2.add(val2.mul(fee).div(100000)));
 
-      expect((await buidlerT1T210000P.getExerciseData(amount2))[1]).to.equal(amount2);  
-      await token1.connect(addr3).approve(buidlerT1T210000P.address, amount2);
+      expect((await buidlerT1T210000P.getBaseExerciseData(amount2))[1]).to.equal(amount2);  
+      await token1.connect(addr3).approve(buidlerT1T210000P.address, amount2.add(await buidlerT1T210000P.maxExercisedAccounts()));
       await buidlerT1T210000P.connect(addr3).exercise(amount2);
       let fee4 = value2.mul(fee).div(100000);
       
@@ -1248,18 +1249,18 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await owner.getAddress())).to.equal(0);
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(e2).sub(amount2));
-      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))).add(1).add(1));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))).add(1).add(1).add(1).add(1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(e2).sub(amount2).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2).add(fee2).add(fee4));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3).add(value2).sub(fee4));
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(ethers.utils.bigNumberify("3"))).add(value3).sub(fee2));
 
       let amt = a3.mul(ethers.utils.bigNumberify("4"));
-      expect((await buidlerEthT1003P.getExerciseData(amt))[1]).to.equal(amt);  
-      await buidlerEthT1003P.connect(addr3).exercise(amt, {value: amt});
+      expect((await buidlerEthT1003P.getBaseExerciseData(amt))[1]).to.equal(amt);  
+      await buidlerEthT1003P.connect(addr3).exercise(amt, {value: amt.add(await buidlerEthT1003P.maxExercisedAccounts())});
       let t = amt.mul(price1).div(precision2);
       let fee5 = t.mul(fee).div(100000);
 
@@ -1280,10 +1281,10 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003P.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await buidlerEthT1003P.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerEthT1003P.assignableCollateral(await owner.getAddress())).to.equal(0);
-      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).add(fee5).sub(one).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))));
-      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(e2).sub(amount2).add(t).sub(fee5));
-      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3));
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))).add(1).add(1));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).add(fee5).sub(one).add(e2.add(amount2).div(ethers.utils.bigNumberify("2"))).add(1).add(1).add(1).add(1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(e2).sub(amount2).add(t).sub(fee5).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
+      expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(ethers.utils.bigNumberify("3"))).sub(e1).sub(amount3).add(v3).sub(fee3).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2).add(fee2).add(fee4));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3).add(value2).sub(fee4));
@@ -1317,7 +1318,7 @@ describe("ACOToken", function() {
       let a3 = v3.mul(precision2).div(price1);
       let one = ethers.utils.bigNumberify("1");
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1}); 
@@ -1367,11 +1368,15 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid token amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exercise(a3, {value: a3.add(one)})
+        buidlerEthT1003P.connect(owner).exercise(a3, {value: a3})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exercise(a3, {value: a3.sub(one)})
+        buidlerEthT1003P.connect(owner).exercise(a3, {value: a3.add(await buidlerEthT1003P.maxExercisedAccounts()).add(one)})
+      ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
+
+      await expect(
+        buidlerEthT1003P.connect(owner).exercise(a3, {value: a3.add(await buidlerEthT1003P.maxExercisedAccounts()).sub(one)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       await expect(
@@ -1379,7 +1384,12 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       let e1 = val3.mul(price1).div(precision2);
-      await token1.connect(owner).approve(buidlerEthT1003C.address, e1.sub(one));
+      await token1.connect(owner).approve(buidlerEthT1003C.address, e1);
+      await expect(
+        buidlerEthT1003C.connect(owner).exercise(val3)
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
+
+      await token1.connect(owner).approve(buidlerEthT1003C.address, e1.add(await buidlerEthT1003C.maxExercisedAccounts()).sub(one));
       await expect(
         buidlerEthT1003C.connect(owner).exercise(val3)
       ).to.be.revertedWith("ACOToken::_transferFromERC20");
@@ -1388,7 +1398,12 @@ describe("ACOToken", function() {
         buidlerT1T210000P.connect(owner).exercise(amount3)
       ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
-      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.sub(one));
+      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3);
+      await expect(
+        buidlerT1T210000P.connect(owner).exercise(amount3)
+      ).to.be.revertedWith("ACOToken::_transferFromERC20");
+
+      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()).sub(one));
       await expect(
         buidlerT1T210000P.connect(owner).exercise(amount3)
       ).to.be.revertedWith("ACOToken::_transferFromERC20");
@@ -1398,17 +1413,17 @@ describe("ACOToken", function() {
         buidlerEthT1003C.connect(owner).exercise(val3.add(one))
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
-      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.add(one));
+      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()).add(one));
       await expect(
         buidlerT1T210000P.connect(owner).exercise(amount3.add(one))
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exercise(a3.add(one), {value: a3.add(one)})
+        buidlerEthT1003P.connect(owner).exercise(a3.add(one), {value: a3.add(await buidlerEthT1003P.maxExercisedAccounts()).add(one)})
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
-      await token1.connect(owner).approve(buidlerEthT1003C.address, e1);
-      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3);
+      await token1.connect(owner).approve(buidlerEthT1003C.address, e1.add(await buidlerEthT1003C.maxExercisedAccounts()));
+      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()));
 
       await expect(
         buidlerEthT1003C.connect(owner).exercise(val3, {value: one})
@@ -1424,22 +1439,22 @@ describe("ACOToken", function() {
       await buidlerEthT1003P.connect(addr3).transfer(await owner.getAddress(), a3.mul(four));
 
       let e2 = val3.mul(price1).div(precision2);
-      await token1.connect(addr3).approve(buidlerEthT1003C.address, e2);
+      await token1.connect(addr3).approve(buidlerEthT1003C.address, e2.add(await buidlerEthT1003C.maxExercisedAccounts()));
       await expect(
         buidlerEthT1003C.connect(addr3).exercise(val3)
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
 
-      await token1.connect(addr3).approve(buidlerT1T210000P.address, amount3);
+      await token1.connect(addr3).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()));
       await expect(
         buidlerT1T210000P.connect(addr3).exercise(amount3)
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
       ;
       await expect(
-        buidlerEthT1003P.connect(addr3).exercise(a3, {value: a3})
+        buidlerEthT1003P.connect(addr3).exercise(a3, {value: a3.add(await buidlerEthT1003P.maxExercisedAccounts())})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");  
       
-      await token1.connect(owner).approve(buidlerEthT1003C.address, e1);
-      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3);
+      await token1.connect(owner).approve(buidlerEthT1003C.address, e1.add(await buidlerEthT1003C.maxExercisedAccounts()));
+      await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()));
 
       await network.provider.send("evm_increaseTime", [86400]);
 
@@ -1452,7 +1467,7 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::Expired");
       
       await expect(
-        buidlerT1T210000P.connect(owner).exercise(a3, {value: a3})
+        buidlerT1T210000P.connect(owner).exercise(a3, {value: a3.add(await buidlerT1T210000P.maxExercisedAccounts())})
       ).to.be.revertedWith("ACOToken::Expired");
 
       await network.provider.send("evm_increaseTime", [-86400]);
@@ -1475,10 +1490,10 @@ describe("ACOToken", function() {
       let a2 = v2.mul(precision2).div(price1);
       let a3 = v3.mul(precision2).div(price1);
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
       let buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await token1.connect(addr1).approve(buidlerEthT1003P.address, v1);
@@ -1540,13 +1555,13 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr3).approve(await owner.getAddress(), v1.add(v1));
 
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
-      expect((await buidlerEthT1003P.getExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
-      expect((await buidlerT1T210000C.getExerciseData(v1.add(v1)))[1]).to.equal(e1);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v1.add(v1)))[1]).to.equal(e1);  
 
       let b1 = await addr1.getBalance();
       let b2 = await addr2.getBalance();
       let b3 = await addr3.getBalance();
-      await buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1)});
+      await buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1).add(await buidlerEthT1003P.maxExercisedAccounts())});
       let fee1 = v1.add(v1).mul(fee).div(100000);
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v1.add(v3).add(1));  
@@ -1571,11 +1586,11 @@ describe("ACOToken", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)));
-      expect(await addr1.getBalance()).to.equal(b1.add(a1));
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
+      expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(await buidlerT1T210000C.maxExercisedAccounts()));
       await buidlerT1T210000C.connect(owner).exerciseFrom(await addr3.getAddress(), v1.add(v1));
 
       expect(await buidlerT1T210000C.totalCollateral()).to.equal(v1.add(v3));  
@@ -1596,12 +1611,12 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
-      expect(await addr1.getBalance()).to.equal(b1.add(a1));
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(maxExercisedAccounts));
+      expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
 
       await buidlerEthT1003P.connect(addr2).transfer(await addr1.getAddress(), a1);
@@ -1612,13 +1627,13 @@ describe("ACOToken", function() {
       await buidlerEthT1003P.connect(addr1).approve(await owner.getAddress(), a1.add(a1));
       await buidlerT1T210000C.connect(addr1).approve(await owner.getAddress(), v1.add(v1));
 
-      expect((await buidlerEthT1003P.getExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
-      expect((await buidlerT1T210000C.getExerciseData(v1.add(v1)))[1]).to.equal(e1);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v1.add(v1)))[1]).to.equal(e1);  
 
       let b11 = await addr1.getBalance();
       let b21 = await addr2.getBalance();
       let b31 = await addr3.getBalance();
-      await buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a1.add(a1), {value: a1.add(a1)});
+      await buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a1.add(a1), {value: a1.add(a1).add(await buidlerEthT1003P.maxExercisedAccounts())});
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v2.add(1).add(1));  
       expect(await buidlerEthT1003P.balanceOf(await addr1.getAddress())).to.equal(0); 
@@ -1638,15 +1653,15 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(maxExercisedAccounts));
       expect(await addr1.getBalance()).to.equal(b11);
-      expect(await addr2.getBalance()).to.equal(b21.add(a1));
-      expect(await addr3.getBalance()).to.equal(b31.add(a1));
+      expect(await addr2.getBalance()).to.equal(b21.add(a1).add(1));
+      expect(await addr3.getBalance()).to.equal(b31.add(a1).add(1));
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(await buidlerT1T210000C.maxExercisedAccounts()));
       await buidlerT1T210000C.connect(owner).exerciseFrom(await addr1.getAddress(), v1.add(v1));
 
       expect(await buidlerT1T210000C.totalCollateral()).to.equal(v2);  
@@ -1667,13 +1682,13 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1).add(fee1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1).add(1).add(1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
       expect(await addr1.getBalance()).to.equal(b11);
-      expect(await addr2.getBalance()).to.equal(b21.add(a1));
-      expect(await addr3.getBalance()).to.equal(b31.add(a1));
+      expect(await addr2.getBalance()).to.equal(b21.add(a1).add(1));
+      expect(await addr3.getBalance()).to.equal(b31.add(a1).add(1));
 
       await buidlerEthT1003P.connect(addr3).transfer(await addr1.getAddress(), a2.add(1));
       await buidlerT1T210000C.connect(addr3).transfer(await addr1.getAddress(), v2);
@@ -1682,13 +1697,13 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr1).approve(await owner.getAddress(), v2);
 
       let e2 = v2.mul(price2).div(precision1);
-      expect((await buidlerEthT1003P.getExerciseData(a2.add(1)))[1]).to.equal(a2.add(1)); 
-      expect((await buidlerT1T210000C.getExerciseData(v2))[1]).to.equal(e2);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a2.add(1)))[1]).to.equal(a2.add(1)); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v2))[1]).to.equal(e2);  
 
       let b12 = await addr1.getBalance();
       let b22 = await addr2.getBalance();
       let b32 = await addr3.getBalance();
-      await buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a2.add(1), {value: a2.add(1)});
+      await buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a2.add(1), {value: a2.add(await buidlerEthT1003P.maxExercisedAccounts()).add(1)});
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(2);  
       expect(await buidlerEthT1003P.balanceOf(await addr1.getAddress())).to.equal(0); 
@@ -1708,15 +1723,15 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1).add(fee1).add(fee1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v2).sub(fee1));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1).add(1).add(1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
       expect(await addr1.getBalance()).to.equal(b12);
       expect(await addr2.getBalance()).to.equal(b22);
-      expect(await addr3.getBalance()).to.equal(b32.add(a2.add(1)));
+      expect(await addr3.getBalance()).to.equal(b32.add(a2.add(1)).add(1));
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e2);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e2.add(await buidlerT1T210000C.maxExercisedAccounts()));
       await buidlerT1T210000C.connect(owner).exerciseFrom(await addr1.getAddress(), v2);
 
       expect(await buidlerT1T210000C.totalCollateral()).to.equal(0);  
@@ -1737,14 +1752,14 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee1).sub(1).add(fee1).add(fee1).add(fee1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v1).add(v1).sub(fee1).add(v2).sub(fee1).add(v2).sub(fee1));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1).sub(e2));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1).add(1).add(1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2).add(1).add(1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e1).sub(e2).sub(maxExercisedAccounts).sub(maxExercisedAccounts).sub(maxExercisedAccounts));
 
       expect(await addr1.getBalance()).to.equal(b12);
       expect(await addr2.getBalance()).to.equal(b22);
-      expect(await addr3.getBalance()).to.equal(b32.add(a2.add(1)));
+      expect(await addr3.getBalance()).to.equal(b32.add(a2.add(1)).add(1));
     });
     it("Check fail to exercise from", async function() {
       let start1Balance = ethers.utils.bigNumberify("10000000000");
@@ -1762,10 +1777,10 @@ describe("ACOToken", function() {
       let a1 = v1.mul(precision2).div(price1);
       let a2 = v2.mul(precision2).div(price1);
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
       let buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await token1.connect(addr1).approve(buidlerEthT1003P.address, v1);
@@ -1794,11 +1809,11 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid token amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1).sub(1)})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1).add(maxExercisedAccounts).sub(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1).add(1)})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1).add(maxExercisedAccounts).add(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       await buidlerEthT1003P.connect(addr3).approve(await owner.getAddress(), a1);
@@ -1806,10 +1821,10 @@ describe("ACOToken", function() {
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1)})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1), {value: a1.add(a1).add(maxExercisedAccounts)})
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(maxExercisedAccounts));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr3.getAddress(), v1.add(v1))
       ).to.be.revertedWith("SafeMath: subtraction overflow");
@@ -1817,13 +1832,13 @@ describe("ACOToken", function() {
       await buidlerEthT1003P.connect(addr3).approve(await owner.getAddress(), a1.add(a1));
       await buidlerT1T210000C.connect(addr3).approve(await owner.getAddress(), v1.add(v1));
       
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.sub(1));
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(maxExercisedAccounts).sub(1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr3.getAddress(), v1.add(v1))
       ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1).add(1), {value: a1.add(a1).add(1)})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr3.getAddress(), a1.add(a1).add(1), {value: a1.add(a1).add(maxExercisedAccounts).add(1)})
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(e1));
@@ -1831,7 +1846,7 @@ describe("ACOToken", function() {
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr3.getAddress(), v1.add(v1).add(1))
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr3.getAddress(), v1.add(v1), {value: 1})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: No ether expected");
@@ -1840,10 +1855,10 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr2).approve(await owner.getAddress(), v1.add(v1));
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr2.getAddress(), a1.add(1), {value: a1.add(1)})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr2.getAddress(), a1.add(1), {value: a1.add(maxExercisedAccounts).add(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(e1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr2.getAddress(), v1.add(1))
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
@@ -1855,10 +1870,10 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr1).approve(await owner.getAddress(), v1.add(v1));
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a1.add(1), {value: a1.add(1)})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a1.add(1), {value: a1.add(maxExercisedAccounts)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(e1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr1.getAddress(), v1.add(1))
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
@@ -1866,7 +1881,7 @@ describe("ACOToken", function() {
       await network.provider.send("evm_increaseTime", [86400]);
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr2.getAddress(), a1, {value: a1})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr2.getAddress(), a1, {value: a1.add(maxExercisedAccounts)})
       ).to.be.revertedWith("ACOToken::Expired");
 
       await expect(
@@ -1893,10 +1908,10 @@ describe("ACOToken", function() {
       let a2 = v2.mul(precision2).div(price1);
       let a3 = v3.mul(precision2).div(price1);
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
       let buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await token1.connect(addr1).approve(buidlerEthT1003P.address, v1);
@@ -1963,13 +1978,13 @@ describe("ACOToken", function() {
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
 
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
-      expect((await buidlerEthT1003P.getExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
-      expect((await buidlerT1T210000C.getExerciseData(v1.add(v1)))[1]).to.equal(e1);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v1.add(v1)))[1]).to.equal(e1);  
 
       let b1 = await addr1.getBalance();
       let b2 = await addr2.getBalance();
       let b3 = await addr3.getBalance();
-      await buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr2.getAddress(), await addr1.getAddress()], {value: a1.add(a1)});
+      await buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr2.getAddress(), await addr1.getAddress()], {value: a1.add(a1).add(2)});
       let fee1 = v1.add(v1).mul(fee).div(100000);
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v1.add(v3).add(1));  
@@ -1996,11 +2011,11 @@ describe("ACOToken", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
-      expect(await addr1.getBalance()).to.equal(b1.add(a1));
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
+      expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2));
       await buidlerT1T210000C.connect(owner).exerciseAccounts(v1.add(v1), [await addr2.getAddress(), await addr1.getAddress()]);
       
       expect(await buidlerT1T210000C.totalCollateral()).to.equal(v1.add(v3));  
@@ -2024,24 +2039,24 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
-      expect(await addr1.getBalance()).to.equal(b1.add(a1));
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
+      expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
 
       await buidlerEthT1003P.connect(addr2).transfer(await owner.getAddress(), a2.sub(a1));
       await buidlerT1T210000C.connect(addr2).transfer(await owner.getAddress(), v1);
 
       let e2 = v3.mul(price2).div(precision1);
-      expect((await buidlerEthT1003P.getExerciseData(a3))[1]).to.equal(a3); 
-      expect((await buidlerT1T210000C.getExerciseData(v3))[1]).to.equal(e2);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a3))[1]).to.equal(a3); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v3))[1]).to.equal(e2);  
 
       let b11 = await addr1.getBalance();
       let b21 = await addr2.getBalance();
       let b31 = await addr3.getBalance();
-      await buidlerEthT1003P.connect(owner).exerciseAccounts(a3, [await addr1.getAddress(), await addr2.getAddress(), await addr3.getAddress()], {value: a3});
+      await buidlerEthT1003P.connect(owner).exerciseAccounts(a3, [await addr1.getAddress(), await addr2.getAddress(), await addr3.getAddress()], {value: a3.add(3)});
       let fee2 = v3.mul(fee).div(100000);
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v1.add(1));  
@@ -2065,14 +2080,14 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee2));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
       expect(await addr1.getBalance()).to.equal(b11);
-      expect(await addr2.getBalance()).to.equal(b21.add(a1));
-      expect(await addr3.getBalance()).to.equal(b31.add(a2).add(1));
+      expect(await addr2.getBalance()).to.equal(b21.add(a1).add(1));
+      expect(await addr3.getBalance()).to.equal(b31.add(a2).add(1).add(1));
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e2);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e2.add(3));
       await buidlerT1T210000C.connect(owner).exerciseAccounts(v3, [await addr1.getAddress(), await addr2.getAddress(), await addr3.getAddress()]);
       
       expect(await buidlerT1T210000C.totalCollateral()).to.equal(v1);  
@@ -2096,12 +2111,12 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1).sub(v1));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1).add(fee2).add(fee2));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2.div(3)));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e2.div(3).mul(2)));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2.div(3)).add(1).add(1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e2.div(3).mul(2)).add(1));
       expect(await addr1.getBalance()).to.equal(b11);
-      expect(await addr2.getBalance()).to.equal(b21.add(a1));
-      expect(await addr3.getBalance()).to.equal(b31.add(a2).add(1));
+      expect(await addr2.getBalance()).to.equal(b21.add(a1).add(1));
+      expect(await addr3.getBalance()).to.equal(b31.add(a2).add(1).add(1));
     });
     it("Check fail to exercise accounts", async function () {
       let start1Balance = ethers.utils.bigNumberify("10000000000");
@@ -2119,10 +2134,10 @@ describe("ACOToken", function() {
       let a1 = v1.mul(precision2).div(price1);
       let a2 = v2.mul(precision2).div(price1);
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
       let buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await token1.connect(addr1).approve(buidlerEthT1003P.address, v1);
@@ -2148,25 +2163,25 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid token amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).sub(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(2).sub(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(2).add(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.sub(1));
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2).sub(1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccounts(v1.add(v1), [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("ACOToken::_transferFromERC20");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1).add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1).add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(2).add(1)})
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr1.getAddress(), await addr3.getAddress()], {value: a1.add(a1)})
+        buidlerEthT1003P.connect(owner).exerciseAccounts(a1.add(a1), [await addr1.getAddress(), await addr3.getAddress()], {value: a1.add(a1).add(2)})
       ).to.be.revertedWith("ACOToken::_exerciseAccounts: Invalid remaining amount");
 
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(e1));
@@ -2174,7 +2189,7 @@ describe("ACOToken", function() {
         buidlerT1T210000C.connect(owner).exerciseAccounts(v1.add(v1).add(1), [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccounts(v1.add(v1), [await addr1.getAddress(), await addr2.getAddress()], {value: 1})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: No ether expected");
@@ -2184,10 +2199,10 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_exerciseAccounts: Invalid remaining amount");
 
       await expect(
-        buidlerEthT1003P.connect(addr2).exerciseAccounts(1, [await addr1.getAddress(), await addr2.getAddress()], {value: 1})
+        buidlerEthT1003P.connect(addr2).exerciseAccounts(1, [await addr1.getAddress(), await addr2.getAddress()], {value: 2 + 1})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
 
-      await token2.connect(addr2).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(addr2).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(addr2).exerciseAccounts(1, [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
@@ -2196,10 +2211,10 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(owner).transfer(await addr2.getAddress(), v1.add(v1));
 
       await expect(
-        buidlerEthT1003P.connect(addr2).exerciseAccounts(a1.add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(1)})
+        buidlerEthT1003P.connect(addr2).exerciseAccounts(a1.add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(2).add(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
 
-      await token2.connect(addr2).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(addr2).approve(buidlerT1T210000C.address, e1.add(e1));
       await expect(
         buidlerT1T210000C.connect(addr2).exerciseAccounts(v1.add(1), [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
@@ -2207,7 +2222,7 @@ describe("ACOToken", function() {
       await network.provider.send("evm_increaseTime", [86400]);
 
       await expect(
-        buidlerEthT1003P.connect(addr2).exerciseAccounts(a1.sub(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.sub(1)})
+        buidlerEthT1003P.connect(addr2).exerciseAccounts(a1.sub(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(2).sub(1)})
       ).to.be.revertedWith("ACOToken::Expired");
 
       await expect(
@@ -2234,10 +2249,10 @@ describe("ACOToken", function() {
       let a2 = v2.mul(precision2).div(price1);
       let a3 = v3.mul(precision2).div(price1);
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
       let buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await token1.connect(addr1).approve(buidlerEthT1003P.address, v1);
@@ -2296,15 +2311,15 @@ describe("ACOToken", function() {
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)));
 
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
-      expect((await buidlerEthT1003P.getExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
-      expect((await buidlerT1T210000C.getExerciseData(v1.add(v1)))[1]).to.equal(e1);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v1.add(v1)))[1]).to.equal(e1);  
       await buidlerEthT1003P.connect(addr1).approve(await owner.getAddress(), a1.add(a1));
       await buidlerT1T210000C.connect(addr1).approve(await owner.getAddress(), v1.add(v1));
 
       let b1 = await addr1.getBalance();
       let b2 = await addr2.getBalance();
       let b3 = await addr3.getBalance();
-      await buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr1.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr3.getAddress(), await addr2.getAddress()], {value: a1.add(a1)});
+      await buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr1.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr3.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(3)});
       let fee1 = v1.add(v1).mul(fee).div(100000);
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v1.add(v3).add(1));  
@@ -2330,10 +2345,10 @@ describe("ACOToken", function() {
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)));
       expect(await addr1.getBalance()).to.equal(b1);
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
-      expect(await addr3.getBalance()).to.equal(b3.add(a1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
+      expect(await addr3.getBalance()).to.equal(b3.add(a1).add(1));
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(3));
       await buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr1.getAddress(), v1.add(v1), [await addr1.getAddress(), await addr3.getAddress(), await addr2.getAddress()]);
     
       expect(await buidlerT1T210000C.totalCollateral()).to.equal(v1.add(v3));  
@@ -2355,26 +2370,26 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).sub(fee1).add(v1).add(v1));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(3));
       expect(await addr1.getBalance()).to.equal(b1);
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
-      expect(await addr3.getBalance()).to.equal(b3.add(a1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
+      expect(await addr3.getBalance()).to.equal(b3.add(a1).add(1));
 
       await buidlerEthT1003P.connect(addr1).transfer(await addr3.getAddress(), a2);
       await buidlerT1T210000C.connect(addr1).transfer(await addr3.getAddress(), v2);
 
       let e2 = v1.mul(price2).div(precision1);
-      expect((await buidlerEthT1003P.getExerciseData(a1))[1]).to.equal(a1); 
-      expect((await buidlerT1T210000C.getExerciseData(v1))[1]).to.equal(e2);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a1))[1]).to.equal(a1); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v1))[1]).to.equal(e2);  
       await buidlerEthT1003P.connect(addr3).approve(await owner.getAddress(), a1);
       await buidlerT1T210000C.connect(addr3).approve(await owner.getAddress(), v1);
 
       let b11 = await addr1.getBalance();
       let b21 = await addr2.getBalance();
       let b31 = await addr3.getBalance();
-      await buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1, [await addr2.getAddress(), await addr1.getAddress()], {value: a1});
+      await buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1, [await addr2.getAddress(), await addr1.getAddress()], {value: a1.add(2)});
       let fee2 = v1.mul(fee).div(100000);
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v3.add(1).add(1));  
@@ -2396,14 +2411,14 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).sub(fee1).add(v1).add(v1).add(v1).sub(fee2));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(3));
       expect(await addr1.getBalance()).to.equal(b11);
-      expect(await addr2.getBalance()).to.equal(b21.add(a1));
+      expect(await addr2.getBalance()).to.equal(b21.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b31);
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e2);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e2.add(3));
       await buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), v1, [await addr3.getAddress(), await addr2.getAddress(), await addr1.getAddress()]);
     
       expect(await buidlerT1T210000C.totalCollateral()).to.equal(v3);  
@@ -2425,11 +2440,11 @@ describe("ACOToken", function() {
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(start1Balance.mul(3)).add(v1).add(v1).sub(fee1).sub(fee1).add(v1).add(v1).add(v1).sub(fee2).add(v1).sub(fee2));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e2));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(e2).add(1).add(1));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(start2Balance.mul(3)).sub(e1).sub(e2).sub(3).sub(3));
       expect(await addr1.getBalance()).to.equal(b11);
-      expect(await addr2.getBalance()).to.equal(b21.add(a1));
+      expect(await addr2.getBalance()).to.equal(b21.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b31);
     });
     it("Check fail to exercise accounts from", async function () {
@@ -2448,10 +2463,10 @@ describe("ACOToken", function() {
       let a1 = v1.mul(precision2).div(price1);
       let a2 = v2.mul(precision2).div(price1);
 
-      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
       let buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
       let buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await token1.connect(addr1).approve(buidlerEthT1003P.address, v1);
@@ -2480,15 +2495,15 @@ describe("ACOToken", function() {
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid token amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).sub(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(2).sub(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(2).add(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Invalid ether amount");
 
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.sub(1));
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2).sub(1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), v1.add(v1), [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("ACOToken::_transferFromERC20");
@@ -2497,11 +2512,11 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr3).approve(await owner.getAddress(), v1.add(v1).add(1));
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1).add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1).add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(2).add(1)})
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr3.getAddress()], {value: a1.add(a1)})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr3.getAddress()], {value: a1.add(a1).add(2)})
       ).to.be.revertedWith("ACOToken::_exerciseAccounts: Invalid remaining amount");
 
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(e1));
@@ -2509,7 +2524,7 @@ describe("ACOToken", function() {
         buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), v1.add(v1).add(1), [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), v1.add(v1), [await addr1.getAddress(), await addr2.getAddress()], {value: 1})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: No ether expected");
@@ -2522,10 +2537,10 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr3).approve(await owner.getAddress(), v1.add(v1).sub(1));
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1)})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), a1.add(a1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(a1).add(2)})
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr3.getAddress(), v1.add(v1), [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("SafeMath: subtraction overflow");
@@ -2534,10 +2549,10 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr2).approve(await owner.getAddress(), v1.add(v1));
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), 1, [await addr1.getAddress(), await addr2.getAddress()], {value: 1})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), 1, [await addr1.getAddress(), await addr2.getAddress()], {value: 2 + 1})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
 
-      await token2.connect(owner).approve(buidlerT1T210000C.address, e1);
+      await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), 1, [await addr1.getAddress(), await addr2.getAddress()])
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
@@ -2546,7 +2561,7 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr3).transfer(await addr2.getAddress(), v1.add(v1));
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), a1.add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), a1.add(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(2).add(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
 
       await expect(
@@ -2556,7 +2571,7 @@ describe("ACOToken", function() {
       await network.provider.send("evm_increaseTime", [86400]);
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), a1.sub(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.sub(1)})
+        buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), a1.sub(1), [await addr1.getAddress(), await addr2.getAddress()], {value: a1.add(2).sub(1)})
       ).to.be.revertedWith("ACOToken::Expired");
 
       await expect(

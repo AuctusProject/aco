@@ -113,15 +113,17 @@ contract ACOFactory {
      * @param isCall Whether the ACO token is the Call type.
      * @param strikePrice The strike price with the strike asset precision.
      * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
      */
     function createAcoToken(
         address underlying, 
         address strikeAsset, 
         bool isCall,
         uint256 strikePrice, 
-        uint256 expiryTime
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
     ) onlyFactoryAdmin external virtual {
-        address acoToken = _deployAcoToken(_getAcoTokenInitData(underlying, strikeAsset, isCall, strikePrice, expiryTime));
+        address acoToken = _deployAcoToken(_getAcoTokenInitData(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts));
         emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);   
     }
     
@@ -207,6 +209,7 @@ contract ACOFactory {
      * @param isCall True if the type is CALL, false for PUT.
      * @param strikePrice The strike price with the strike asset precision.
      * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
      * @return ABI encoded with signature for initializing ACO token.
      */
     function _getAcoTokenInitData(
@@ -214,16 +217,18 @@ contract ACOFactory {
         address strikeAsset, 
         bool isCall,
         uint256 strikePrice, 
-        uint256 expiryTime
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
     ) internal view virtual returns(bytes memory) {
-        return abi.encodeWithSignature("init(address,address,bool,uint256,uint256,uint256,address)",
+        return abi.encodeWithSignature("init(address,address,bool,uint256,uint256,uint256,address,uint256)",
             underlying,
             strikeAsset,
             isCall,
             strikePrice,
             expiryTime,
             acoFee,
-            acoFeeDestination
+            acoFeeDestination,
+            maxExercisedAccounts
         );
     }
     
