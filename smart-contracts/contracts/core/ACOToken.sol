@@ -170,7 +170,7 @@ contract ACOToken is ERC20 {
     /**
      * @dev Function to initialize the contract.
      * It should be called when creating the token.
-     * It must be called only once. The `assert` is to guarantee that behavior.
+     * It must be called only once. The first `require` is to guarantee that behavior.
      * @param _underlying Address of the underlying asset (0x0 for Ethereum).
      * @param _strikeAsset Address of the strike asset (0x0 for Ethereum).
      * @param _isCall True if the type is CALL, false for PUT.
@@ -599,7 +599,7 @@ contract ACOToken is ERC20 {
      * When there is a fee, the calculated fee is also transferred to the destination fee address.
      * The collateral destination is always the transaction sender address.
      * @param account Address of the account.
-     * @param collateralAmount Amount of collateral to be redeemed.
+     * @param collateralAmount Amount of collateral to be transferred.
      * @param fee Amount of fee charged.
      */
     function _transferCollateral(address account, uint256 collateralAmount, uint256 fee) internal {
