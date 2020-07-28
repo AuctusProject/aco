@@ -638,8 +638,8 @@ contract ACOToken is ERC20 {
             }
             uint256 remainingAmount = _exerciseAccount(_collateralOwners[i-1], tokenAmount, exerciseAccount);
             if (remainingAmount < tokenAmount) {
-				accountsExercised++;
-				require(accountsExercised <= maxExercisedAccounts, "ACOToken::_exerciseOwners: Too many accounts to exercise");
+                accountsExercised++;
+                require(accountsExercised <= maxExercisedAccounts, "ACOToken::_exerciseOwners: Too many accounts to exercise");
             }
             tokenAmount = remainingAmount;
         }
