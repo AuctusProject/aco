@@ -550,28 +550,6 @@ contract ACOToken is ERC20 {
     }
     
     /**
-     * @dev Internal function to transfer tokens. 
-     * The token transfer only works when the token is NOT expired. 
-     * @param sender Source of the tokens.
-     * @param recipient Destination address for the tokens.
-     * @param amount Amount of tokens.
-     */
-    function _transfer(address sender, address recipient, uint256 amount) internal override {
-        super._transferAction(sender, recipient, amount);
-    }
-    
-    /**
-     * @dev Internal function to set the token permission from an account to another address. 
-     * The token approval only works when the token is NOT expired. 
-     * @param owner Address of the token owner.
-     * @param spender Address of the spender authorized.
-     * @param amount Amount of tokens authorized.
-     */
-    function _approve(address owner, address spender, uint256 amount) internal override {
-        super._approveAction(owner, spender, amount);
-    }
-    
-    /**
      * @dev Internal function to transfer collateral. 
      * When there is a fee, the calculated fee is also transferred to the destination fee address.
      * The collateral destination is always the transaction sender address.
