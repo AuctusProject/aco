@@ -4,7 +4,7 @@ import "../interfaces/IWETH.sol";
 import "../interfaces/IUniswapV2Pair.sol";
 import "../interfaces/IUniswapV2Callee.sol";
 import "../interfaces/IUniswapV2Factory.sol";
-import "../libs/UniswapV2Library.sol";
+import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IACOToken.sol";
 
 /**
@@ -17,6 +17,11 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @dev The Uniswap factory address.
      */
     address immutable public uniswapFactory;
+    
+    /**
+     * @dev The Uniswap Router address.
+     */
+    address immutable public uniswapRouter;
 
     /**
      * @dev The WETH address used on Uniswap.
@@ -33,9 +38,10 @@ contract ACOFlashExercise is IUniswapV2Callee {
      */
     bytes4 immutable internal _transferSelector;
     
-    constructor(address _uniswapFactory, address _weth) public {
-        uniswapFactory = _uniswapFactory;
-        weth = _weth;
+    constructor(address _uniswapRouter) public {
+        uniswapRouter = _uniswapRouter;
+        uniswapFactory = IUniswapV2Router02(_uniswapRouter).factory();
+        weth = IUniswapV2Router02(_uniswapRouter).WETH();
         
         _approveSelector = bytes4(keccak256(bytes("approve(address,uint256)")));
         _transferSelector = bytes4(keccak256(bytes("transfer(address,uint256)")));
@@ -87,7 +93,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
                 }
                 
                 if (reserveIn > 0 && reserveOut > 0) {
-                    uint256 amountRequired = UniswapV2Library.getAmountIn(expectedAmount, reserveIn, reserveOut);
+                    uint256 amountRequired = IUniswapV2Router02(uniswapRouter).getAmountIn(expectedAmount, reserveIn, reserveOut);
                     return (amountRequired, expectedAmount);
                 }
             }
@@ -170,7 +176,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
         (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(msg.sender).getReserves();
         uint256 reserveIn = amount0Out == 0 ? reserve0 : reserve1; 
         uint256 reserveOut = amount0Out == 0 ? reserve1 : reserve0; 
-        amountRequired = UniswapV2Library.getAmountIn((amount0Out + amount1Out), reserveIn, reserveOut);
+        amountRequired = IUniswapV2Router02(uniswapRouter).getAmountIn((amount0Out + amount1Out), reserveIn, reserveOut);
         }
         
         address acoToken;
