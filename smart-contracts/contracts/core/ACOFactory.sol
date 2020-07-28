@@ -14,28 +14,28 @@ contract ACOFactory {
      * @param previousFactoryAdmin Address of the previous factory admin.
      * @param newFactoryAdmin Address of the new factory admin.
      */
-    event SetFactoryAdmin(address previousFactoryAdmin, address newFactoryAdmin);
+    event SetFactoryAdmin(address indexed previousFactoryAdmin, address indexed newFactoryAdmin);
     
     /**
      * @dev Emitted when the ACO token implementation has been changed.
      * @param previousAcoTokenImplementation Address of the previous ACO token implementation.
      * @param newAcoTokenImplementation Address of the new ACO token implementation.
      */
-    event SetAcoTokenImplementation(address previousAcoTokenImplementation, address newAcoTokenImplementation);
+    event SetAcoTokenImplementation(address indexed previousAcoTokenImplementation, address indexed newAcoTokenImplementation);
     
     /**
      * @dev Emitted when the ACO fee has been changed.
      * @param previousAcoFee Value of the previous ACO fee.
      * @param newAcoFee Value of the new ACO fee.
      */
-    event SetAcoFee(uint256 previousAcoFee, uint256 newAcoFee);
+    event SetAcoFee(uint256 indexed previousAcoFee, uint256 indexed newAcoFee);
     
     /**
      * @dev Emitted when the ACO fee destination address has been changed.
      * @param previousAcoFeeDestination Address of the previous ACO fee destination.
      * @param newAcoFeeDestination Address of the new ACO fee destination.
      */
-    event SetAcoFeeDestination(address previousAcoFeeDestination, address newAcoFeeDestination);
+    event SetAcoFeeDestination(address indexed previousAcoFeeDestination, address indexed newAcoFeeDestination);
     
     /**
      * @dev Emitted when a new ACO token has been created.
