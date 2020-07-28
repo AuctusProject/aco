@@ -28,6 +28,7 @@ describe("ACOFlashExercise", function() {
   let flashExercise;
   let uniswapFactory;
   let weth;
+  let uniswapRouter;
   let pairToken1Token2;
   let pairToken1weth;
   let maxExercisedAccounts = 120;
@@ -81,7 +82,10 @@ describe("ACOFlashExercise", function() {
     weth = await (await ethers.getContractFactory("WETH9")).deploy();
     await weth.deployed(); 
 
-    flashExercise = await (await ethers.getContractFactory("ACOFlashExercise")).deploy(uniswapFactory.address, weth.address);
+    uniswapRouter = await (await ethers.getContractFactory("UniswapV2Router02")).deploy(uniswapFactory.address, weth.address);
+    await uniswapRouter.deployed();
+
+    flashExercise = await (await ethers.getContractFactory("ACOFlashExercise")).deploy(uniswapRouter.address);
     await flashExercise.deployed();
 
     await uniswapFactory.createPair(token1.address, token2.address);
