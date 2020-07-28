@@ -478,7 +478,7 @@ contract ACOToken is ERC20 {
      * @param account Address of the account.
      */
     function redeemFrom(address account) external {
-        require(tokenData[account].amount <= allowance(account, msg.sender), "ACOToken::redeemFrom: No allowance");
+        require(tokenData[account].amount <= allowance(account, msg.sender), "ACOToken::redeemFrom: Allowance too low");
         _redeem(account);
     }
     
