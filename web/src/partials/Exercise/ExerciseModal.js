@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount, getExerciseAddress } from '../../util/acoTokenMethods'
+import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/acoTokenMethods'
 import { zero, formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
@@ -16,26 +16,22 @@ import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import Loading from '../Util/Loading'
 import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/acoFlashExerciseMethods'
-import { hasFlashExercise } from '../../util/acoFactoryMethods'
 
 class ExerciseModal extends Component {
   constructor(props) {
     super(props)
-    this.state = { flashAvailable: null, selectedTab: null, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
+    this.state = { maxExercisedAccounts: null, flashAvailable: null, selectedTab: null, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
   }
 
   componentDidMount = () => {
+    getMaxExercisedAccounts(this.props.position.option).then(result => this.setState({ maxExercisedAccounts: result }))
+
     getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result => {
       this.setState({ payAssetBalance: result, selectedTab: ((result === "0") ? 2 : 1) })
     })
-    if (hasFlashExercise(this.props.position.option)) {
-      hasUniswapPair(this.props.position.option.acoToken).then(result => {
-        this.setState({ flashAvailable: result })
-      })
-    }
-    else {
-      this.setState({ flashAvailable: false })
-    }
+    hasUniswapPair(this.props.position.option.acoToken).then(result => {
+      this.setState({ flashAvailable: result })
+    })
   }
 
   componentDidUpdate = (prevProps) => {
@@ -178,7 +174,7 @@ class ExerciseModal extends Component {
     else if (stepNumber === 3) {
       subtitle = "Confirm on Metamask to send " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol 
       if (this.state.selectedTab === 1) {
-        subtitle += " and " + this.state.payValue + " " + this.getPaySymbol() + ", you'll receive " + this.state.collateralValue + " " + this.getReceiveSymbol() + " by exercising."
+        subtitle += " and " + this.formattedPayValue() + " " + this.getPaySymbol() + ", you'll receive " + this.state.collateralValue + " " + this.getReceiveSymbol() + " by exercising."
       }
       else {
         subtitle += " and you'll receive a minimum of " + this.state.minimumReceivedAmount + " " + this.getReceiveSymbol() + " by exercising."
@@ -240,7 +236,7 @@ class ExerciseModal extends Component {
   }
 
   getPayDifference = () => {
-    return fromDecimals(toDecimals(this.state.payValue, this.getPayDecimals()).sub(new Web3Utils.BN(this.state.payAssetBalance)), this.getPayDecimals())
+    return fromDecimals(toDecimals(this.state.payValue, this.getPayDecimals()).sub(new Web3Utils.BN(this.state.payAssetBalance)), this.getPayDecimals(), this.getPayDecimals())
   }
 
   isInsufficientFundsToPay = () => {
@@ -271,7 +267,7 @@ class ExerciseModal extends Component {
   }
 
   setPriceFromExerciseData = (exerciseData) => {
-    if (exerciseData) {
+    if (exerciseData && exerciseData["0"] != 0 && exerciseData["1"] != 0) {
       var amountRequired = new Web3Utils.BN(exerciseData["0"])
       var expectedAmount = new Web3Utils.BN(exerciseData["1"])
       var precision = new Web3Utils.BN(10).pow(new Web3Utils.BN(this.props.position.option.underlyingInfo.decimals))
@@ -283,6 +279,9 @@ class ExerciseModal extends Component {
         price = amountRequired.mul(precision).div(expectedAmount)
       }
       this.setState({ estimatedPrice: price })
+    }
+    else {
+      this.setState({ estimatedPrice: null })
     }
   }  
 
@@ -301,7 +300,7 @@ class ExerciseModal extends Component {
   }
 
   getPayValue = (optionsAmount) => {
-    return this.props.position.option.isCall ? getTokenStrikePriceRelation(this.props.position.option, optionsAmount) : optionsAmount
+    return getExerciseValue(this.props.position.option, optionsAmount, this.state.maxExercisedAccounts)
   }
 
   getPaySymbol = () => {
@@ -365,6 +364,10 @@ class ExerciseModal extends Component {
     return !this.state.estimatedPrice ? "" : (this.props.position.option.strikeAssetInfo.symbol + "/"+ this.props.position.option.underlyingInfo.symbol)
   }
 
+  formattedPayValue = () => {
+    return fromDecimals(toDecimals(this.state.payValue, this.getPayDecimals()), this.getPayDecimals())
+  }
+
   render() {
     return (<Modal className="aco-modal no-header exercise-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
       <Modal.Header closeButton></Modal.Header>
@@ -417,7 +420,7 @@ class ExerciseModal extends Component {
                       {this.state.selectedTab === 1 && <>
                         <tr className={this.isInsufficientFundsToPay() ? "insufficient-funds-error" : ""}>
                           <td>You'll {(this.props.position.option.isCall ? "pay" : "send")}</td>
-                          <td>{this.state.payValue} {this.getPaySymbol()}</td>
+                          <td>{this.formattedPayValue()} {this.getPaySymbol()}</td>
                         </tr>
                         <tr>
                           <td>You'll receive</td>

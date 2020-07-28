@@ -126,6 +126,16 @@ export function getExerciseInfo(option) {
     return option.isCall ? option.strikeAssetInfo : option.underlyingInfo
 }
 
+export function getExerciseValue(option, amount, maxExercisedAccounts) {
+    var exerciseInfo = getExerciseInfo(option)
+    return fromDecimals(toDecimals(option.isCall ? getTokenStrikePriceRelation(option, amount) : amount, exerciseInfo.decimals).add(new Web3Utils.BN(maxExercisedAccounts)), exerciseInfo.decimals, exerciseInfo.decimals)
+}
+
+export function getMaxExercisedAccounts(optionInfo) {
+    const acoTokenContract = getAcoTokenContract(optionInfo.acoToken)
+    return acoTokenContract.methods.maxExercisedAccounts().call()
+}
+
 export function getTokenAmount(optionInfo, collateralAmount) {
     if (optionInfo.isCall) {
         return collateralAmount;

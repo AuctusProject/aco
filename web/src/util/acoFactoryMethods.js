@@ -1,5 +1,5 @@
 import { getWeb3 } from './web3Methods'
-import { acoFactoryAddress, ONE_SECOND, sortBy, sortByFn, acoImplementationVersionMap } from './constants';
+import { acoFactoryAddress, ONE_SECOND, sortBy, sortByFn } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
@@ -234,8 +234,4 @@ function getPositionForOption(option, userAccount) {
             resolve(position)
         })
     })
-}
-
-export function hasFlashExercise(option) {
-    return acoImplementationVersionMap[option.acoTokenImplementation] !== 1
 }
