@@ -735,7 +735,6 @@ contract ACOToken is ERC20 {
         
         // Whether an account has deposited collateral it only can exercise the extra amount of unassignable tokens.
         if (_accountHasCollateral(account)) {
-            require(balanceOf(account) > tokenData[account].amount, "ACOToken::_validateAndBurn: Tokens compromised");
             require(tokenAmount <= balanceOf(account).sub(tokenData[account].amount), "ACOToken::_validateAndBurn: Token amount not available"); 
         }
         
