@@ -8,7 +8,7 @@ import "../libs/Strings.sol";
 /**
  * @title ACOToken
  * @dev The implementation of the ACO token.
- * The token is ERC20 compliance.
+ * The token is ERC20 compliant.
  */
 contract ACOToken is ERC20 {
     using Address for address;
@@ -158,7 +158,7 @@ contract ACOToken is ERC20 {
     }
     
     /**
-     * @dev Modifier to prevents a contract from calling itself during the function execution.
+     * @dev Modifier to prevent a contract from calling itself during the function execution.
      */
     modifier nonReentrant() {
         require(_notEntered, "ACOToken::Reentry");
@@ -900,12 +900,12 @@ contract ACOToken is ERC20 {
     function _getFormattedExpiryTime() internal view returns(string memory) {
         (uint256 year, uint256 month, uint256 day, uint256 hour, uint256 minute,) = BokkyPooBahsDateTimeLibrary.timestampToDateTime(expiryTime); 
         return string(abi.encodePacked(
-            _getNumberWithTwoCaracters(day),
+            _getNumberWithTwoCharacters(day),
             _getMonthFormatted(month),
             _getYearFormatted(year),
             "-",
-            _getNumberWithTwoCaracters(hour),
-            _getNumberWithTwoCaracters(minute),
+            _getNumberWithTwoCharacters(hour),
+            _getNumberWithTwoCharacters(minute),
             "UTC"
             )); 
     }
@@ -962,7 +962,7 @@ contract ACOToken is ERC20 {
      * @dev Internal function to get the number with 2 characters.
      * @return The 2 characters for the number.
      */
-    function _getNumberWithTwoCaracters(uint256 number) internal pure returns(string memory) {
+    function _getNumberWithTwoCharacters(uint256 number) internal pure returns(string memory) {
         string memory _string = Strings.toString(number);
         if (number < 10) {
             return string(abi.encodePacked("0", _string));
