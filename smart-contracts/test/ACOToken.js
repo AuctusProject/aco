@@ -1410,16 +1410,32 @@ describe("ACOToken", function() {
       await token1.connect(addr3).approve(buidlerEthT1003C.address, e2.add(await buidlerEthT1003C.maxExercisedAccounts()));
       await expect(
         buidlerEthT1003C.connect(addr3).exercise(val3)
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
 
       await token1.connect(addr3).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()));
       await expect(
         buidlerT1T210000P.connect(addr3).exercise(amount3)
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
       ;
       await expect(
         buidlerEthT1003P.connect(addr3).exercise(a3, {value: a3.add(await buidlerEthT1003P.maxExercisedAccounts())})
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");  
+      ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available"); 
+      
+      await buidlerEthT1003C.connect(addr3).transfer(await owner.getAddress(), four);
+      await buidlerT1T210000P.connect(addr3).transfer(await owner.getAddress(), four);
+      await buidlerEthT1003P.connect(addr3).transfer(await owner.getAddress(), four);
+
+      await expect(
+        buidlerEthT1003C.connect(addr3).exercise(1)
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+
+      await expect(
+        buidlerT1T210000P.connect(addr3).exercise(1)
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      ;
+      await expect(
+        buidlerEthT1003P.connect(addr3).exercise(1, {value: one.add(await buidlerEthT1003P.maxExercisedAccounts())})
+      ).to.be.revertedWith("SafeMath: subtraction overflow");  
       
       await token1.connect(owner).approve(buidlerEthT1003C.address, e1.add(await buidlerEthT1003C.maxExercisedAccounts()));
       await token1.connect(owner).approve(buidlerT1T210000P.address, amount3.add(await buidlerT1T210000P.maxExercisedAccounts()));
@@ -1824,12 +1840,12 @@ describe("ACOToken", function() {
 
       await expect(
         buidlerEthT1003P.connect(owner).exerciseFrom(await addr2.getAddress(), a1.add(1), {value: a1.add(maxExercisedAccounts).add(1)})
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(e1));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseFrom(await addr2.getAddress(), v1.add(1))
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await buidlerEthT1003P.connect(addr3).transfer(await addr1.getAddress(), a1.add(a1));
       await buidlerT1T210000C.connect(addr3).transfer(await addr1.getAddress(), v1.add(v1));
@@ -1838,7 +1854,7 @@ describe("ACOToken", function() {
       await buidlerT1T210000C.connect(addr1).approve(await owner.getAddress(), v1.add(v1));
 
       await expect(
-        buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a1.add(1), {value: a1.add(maxExercisedAccounts)})
+        buidlerEthT1003P.connect(owner).exerciseFrom(await addr1.getAddress(), a1.add(1), {value: a1.add(maxExercisedAccounts).add(1)})
       ).to.be.revertedWith("ACOToken::_validateAndBurn: Token amount not available");
 
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(e1));
@@ -2168,12 +2184,12 @@ describe("ACOToken", function() {
 
       await expect(
         buidlerEthT1003P.connect(addr2).exerciseAccounts(1, [await addr1.getAddress(), await addr2.getAddress()], {value: 2 + 1})
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await token2.connect(addr2).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(addr2).exerciseAccounts(1, [await addr1.getAddress(), await addr2.getAddress()])
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await buidlerEthT1003P.connect(owner).transfer(await addr2.getAddress(), a1.add(a1));
       await buidlerT1T210000C.connect(owner).transfer(await addr2.getAddress(), v1.add(v1));
@@ -2518,12 +2534,12 @@ describe("ACOToken", function() {
 
       await expect(
         buidlerEthT1003P.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), 1, [await addr1.getAddress(), await addr2.getAddress()], {value: 2 + 1})
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await token2.connect(owner).approve(buidlerT1T210000C.address, e1.add(2));
       await expect(
         buidlerT1T210000C.connect(owner).exerciseAccountsFrom(await addr2.getAddress(), 1, [await addr1.getAddress(), await addr2.getAddress()])
-      ).to.be.revertedWith("ACOToken::_validateAndBurn: Tokens compromised");
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await buidlerEthT1003P.connect(addr3).transfer(await addr2.getAddress(), a1.add(a1));
       await buidlerT1T210000C.connect(addr3).transfer(await addr2.getAddress(), v1.add(v1));
