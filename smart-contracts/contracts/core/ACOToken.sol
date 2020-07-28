@@ -972,6 +972,18 @@ contract ACOToken is ERC20 {
         }
     }
     
+	 /**
+     * @dev Internal function to get the strike price formatted.
+	 * The function returns a string for the strike price with a point (character '.') in the proper position considering the strike asset decimals.
+	 * Beyond that, the string returned presents only representative digits.
+	 * For example, an asset with 18 decimals:
+	 *  - For 100000000000000000000 the return is "100"
+	 *  - For 100100000000000000000 the return is "100.1"
+	 *  - For 100000000000000000 the return is "0.1"
+	 *  - For 100000000000000 the return is "0.0001"
+	 *  - For 100000000000000000001 the return is "100.000000000000000001"
+     * @return The strike price formatted.
+     */
     function _getFormattedStrikePrice() internal view returns(string memory) {
         uint256 digits;
         uint256 count;
