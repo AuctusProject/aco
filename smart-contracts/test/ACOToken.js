@@ -2739,19 +2739,19 @@ describe("ACOToken", function() {
 
       await expect(
         buidlerEthT1003C.connect(addr2).redeemFrom(await addr1.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await expect(
         buidlerT1T210000P.connect(addr2).redeemFrom(await addr1.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await expect(
         buidlerEthT1003C.connect(addr2).redeemFrom(await owner.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await expect(
         buidlerT1T210000P.connect(addr2).redeemFrom(await owner.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await network.provider.send("evm_increaseTime", [-86400]);
 
@@ -2764,19 +2764,19 @@ describe("ACOToken", function() {
 
       await expect(
         buidlerEthT1003C.connect(addr3).redeemFrom(await addr1.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await expect(
         buidlerT1T210000P.connect(addr3).redeemFrom(await addr1.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await expect(
         buidlerEthT1003C.connect(addr3).redeemFrom(await owner.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await expect(
         buidlerT1T210000P.connect(addr3).redeemFrom(await owner.getAddress())
-      ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
+      ).to.be.revertedWith("ACOToken::redeemFrom: Allowance too low");
 
       await network.provider.send("evm_increaseTime", [-86400]);
     });
