@@ -972,23 +972,19 @@ contract ACOToken is ERC20 {
         }
     }
     
-    /**
-     * @dev Internal function to get the strike price formatted.
-     * @return The strike price formatted.
-     */
     function _getFormattedStrikePrice() internal view returns(string memory) {
         uint256 digits;
         uint256 count;
-        int256 representativeAt = -1;
+        bool foundRepresentativeDigit = false;
         uint256 addPointAt = 0;
         uint256 temp = strikePrice;
         uint256 number = strikePrice;
         while (temp != 0) {
-            if (representativeAt == -1 && (temp % 10 != 0 || count == uint256(strikeAssetDecimals))) {
-                representativeAt = int256(digits);
+            if (!foundRepresentativeDigit && (temp % 10 != 0 || count == uint256(strikeAssetDecimals))) {
+                foundRepresentativeDigit = true;
                 number = temp;
             }
-            if (representativeAt >= 0) {
+            if (foundRepresentativeDigit) {
                 if (count == uint256(strikeAssetDecimals)) {
                     addPointAt = digits;
                 }
@@ -1012,9 +1008,7 @@ contract ACOToken is ERC20 {
             } else if (number == 0) {
                 buffer[index--] = byte("0");
             } else {
-                if (representativeAt <= int256(i)) {
-                    buffer[index--] = byte(uint8(48 + number % 10));
-                }
+                buffer[index--] = byte(uint8(48 + number % 10));
                 number /= 10;
             }
         }
