@@ -146,7 +146,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
     }
     
      /**
-     * @dev External function to called by the Uniswap pair on flash swap transaction.
+     * @dev External function to be called by the Uniswap pair on flash swap transaction.
      * @param sender Address of the sender of the Uniswap swap. It must be the ACOFlashExercise contract.
      * @param amount0Out Amount of token0 on Uniswap pair to be received on the flash swap.
      * @param amount1Out Amount of token1 on Uniswap pair to be received on the flash swap.
