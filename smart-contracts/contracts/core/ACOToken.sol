@@ -309,8 +309,7 @@ contract ACOToken is ERC20 {
     function assignableTokens(address account) public view returns(uint256) {
         if (_notExpired()) {
             return _getAssignableAmount(account);
-        }
-        else {
+        } else {
             return 0;
         }
     }
@@ -809,7 +808,7 @@ contract ACOToken is ERC20 {
      * @return Whether the token is NOT expired.
      */
     function _notExpired() internal view returns(bool) {
-        return now <= expiryTime;
+        return now < expiryTime;
     }
     
     /**
