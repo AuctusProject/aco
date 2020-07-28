@@ -536,18 +536,13 @@ describe("ACOToken", function() {
 
       await network.provider.send("evm_increaseTime", [86400]);
 
-      await expect(
-        buidlerEthT1003C.connect(addr1).transfer(await addr2.getAddress(), amount1)
-      ).to.be.revertedWith("ACOToken::Expired");
+      await buidlerEthT1003C.connect(addr1).transfer(await addr2.getAddress(), amount1);
 
-      await expect(
-        buidlerT1T210000P.connect(addr1).transfer(await addr2.getAddress(), amount2)
-      ).to.be.revertedWith("ACOToken::Expired");
-      
-      await network.provider.send("evm_increaseTime", [-86400]);
-
-      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(amount1);
+      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(amount1);
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount2);
+
+      await network.provider.send("evm_increaseTime", [-86400]);
     });
     it("Check approve/transferFrom", async function () {
       await token2.transfer(await addr1.getAddress(), ethers.utils.bigNumberify("10000000000000000000000"));
@@ -688,50 +683,23 @@ describe("ACOToken", function() {
       await expect(
         buidlerT1T210000P.connect(owner).transferFrom(await addr1.getAddress(), await addr2.getAddress(), amount2)
       ).to.be.revertedWith("SafeMath: subtraction overflow");
-
-      await buidlerEthT1003C.connect(addr1).approve(await owner.getAddress(),  amount1);
-      await buidlerT1T210000P.connect(addr1).approve(await owner.getAddress(), amount2);
-
+      
       await network.provider.send("evm_increaseTime", [86400]);
 
-      await expect(
-        buidlerEthT1003C.connect(addr1).approve(await owner.getAddress(), amount1.add(ethers.utils.bigNumberify("1")))
-      ).to.be.revertedWith("ACOToken::Expired");
-
-      await expect(
-        buidlerT1T210000P.connect(addr1).approve(await owner.getAddress(), amount2.add(ethers.utils.bigNumberify("1")))
-      ).to.be.revertedWith("ACOToken::Expired");
-
-      await expect(
-        buidlerEthT1003C.connect(addr1).increaseAllowance(await owner.getAddress(), ethers.utils.bigNumberify("1"))
-      ).to.be.revertedWith("ACOToken::Expired");
-
-      await expect(
-        buidlerT1T210000P.connect(addr1).increaseAllowance(await owner.getAddress(), ethers.utils.bigNumberify("1"))
-      ).to.be.revertedWith("ACOToken::Expired");
-
-      await expect(
-        buidlerEthT1003C.connect(addr1).decreaseAllowance(await owner.getAddress(), ethers.utils.bigNumberify("1"))
-      ).to.be.revertedWith("ACOToken::Expired");
-
-      await expect(
-        buidlerT1T210000P.connect(addr1).decreaseAllowance(await owner.getAddress(), ethers.utils.bigNumberify("1"))
-      ).to.be.revertedWith("ACOToken::Expired");
-
-      await expect(
-        buidlerEthT1003C.connect(owner).transferFrom(await addr1.getAddress(), await addr2.getAddress(), amount1)
-      ).to.be.revertedWith("ACOToken::Expired");
-
-      await expect(
-        buidlerT1T210000P.connect(owner).transferFrom(await addr1.getAddress(), await addr2.getAddress(), amount2)
-      ).to.be.revertedWith("ACOToken::Expired");
-      
-      await network.provider.send("evm_increaseTime", [-86400]);
-
-      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(amount1);
-      expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount2);
+      await buidlerEthT1003C.connect(addr1).approve(await owner.getAddress(), amount1);
       expect(await buidlerEthT1003C.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(amount1);
-      expect(await buidlerT1T210000P.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(amount2);
+      
+      await buidlerEthT1003C.connect(addr1).increaseAllowance(await owner.getAddress(), ethers.utils.bigNumberify("1"));
+      expect(await buidlerEthT1003C.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(amount1.add(ethers.utils.bigNumberify("1")));
+      
+      await buidlerEthT1003C.connect(addr1).decreaseAllowance(await owner.getAddress(), ethers.utils.bigNumberify("1"));
+      expect(await buidlerEthT1003C.allowance(await addr1.getAddress(), await owner.getAddress())).to.equal(amount1);
+      
+      await buidlerEthT1003C.connect(owner).transferFrom(await addr1.getAddress(), await addr2.getAddress(), amount1);
+      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(amount1);
+
+      await network.provider.send("evm_increaseTime", [-86400]);
     });
   });
 
@@ -2793,143 +2761,6 @@ describe("ACOToken", function() {
       await expect(
         buidlerT1T210000P.connect(addr3).redeemFrom(await owner.getAddress())
       ).to.be.revertedWith("ACOToken::redeemFrom: No allowance");
-
-      await network.provider.send("evm_increaseTime", [-86400]);
-    });
-  });
-
-  describe("Clear transactions", function() {
-    it("Check clear", async function () {
-      await token2.transfer(await addr1.getAddress(), ethers.utils.bigNumberify("10000000000000000000000"));
-      let val1 = ethers.utils.bigNumberify("75000000000000000");
-      let val2 = val1.div(ethers.utils.bigNumberify("2"));
-      let precision = ethers.utils.bigNumberify("100000000");
-      let value1 = ethers.utils.bigNumberify("5000000000000000000000");
-      let amount1 = value1.mul(precision).div(price2);
-      let amount2 = amount1.div(ethers.utils.bigNumberify("2"));
-
-      await buidlerEthT1003C.connect(owner).mintPayable({value: val1}); 
-      await buidlerEthT1003C.connect(owner).transfer(await addr1.getAddress(), val2);
-      await buidlerEthT1003C.connect(owner).transfer(await addr2.getAddress(), val2);
-      await buidlerEthT1003C.connect(addr2).approve(await owner.getAddress(), val2);
-      await token2.connect(owner).approve(buidlerT1T210000P.address, value1);
-      await buidlerT1T210000P.connect(owner).mint(value1); 
-      await buidlerT1T210000P.connect(owner).transfer(await addr1.getAddress(), amount2);
-      await buidlerT1T210000P.connect(owner).transfer(await addr2.getAddress(), amount2);
-      await buidlerT1T210000P.connect(addr2).approve(await owner.getAddress(), amount2);
-
-      await network.provider.send("evm_increaseTime", [86400]);
-
-      await buidlerEthT1003C.connect(addr1).clear();
-      expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
-      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(0);
-
-      await buidlerT1T210000P.connect(addr1).clear();
-      expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
-      expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
-
-      await buidlerEthT1003C.connect(addr3).clear();
-      expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
-      expect(await buidlerEthT1003C.balanceOf(await addr3.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.currentCollateral(await addr3.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.unassignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(0);
-
-      await buidlerT1T210000P.connect(addr3).clear();
-      expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
-      expect(await buidlerT1T210000P.balanceOf(await addr3.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.currentCollateral(await addr3.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.unassignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(0);
-
-      await buidlerEthT1003C.connect(owner).clearFrom(await addr2.getAddress());
-      expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
-      expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.currentCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.unassignableCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await buidlerEthT1003C.assignableCollateral(await addr2.getAddress())).to.equal(0);
-
-      await buidlerT1T210000P.connect(owner).clearFrom(await addr2.getAddress());
-      expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
-      expect(await buidlerT1T210000P.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.currentCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.unassignableCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await buidlerT1T210000P.assignableCollateral(await addr2.getAddress())).to.equal(0);
-
-      await network.provider.send("evm_increaseTime", [-86400]);
-    });
-    it("Check fail to clear", async function () {
-      await token2.transfer(await addr1.getAddress(), ethers.utils.bigNumberify("10000000000000000000000"));
-      let val1 = ethers.utils.bigNumberify("75000000000000000");
-      let val2 = val1.div(ethers.utils.bigNumberify("4"));
-      let precision = ethers.utils.bigNumberify("100000000");
-      let value1 = ethers.utils.bigNumberify("5000000000000000000000");
-      let amount1 = value1.mul(precision).div(price2);
-      let amount2 = amount1.div(ethers.utils.bigNumberify("4"));
-
-      await buidlerEthT1003C.connect(owner).mintPayable({value: val1}); 
-      await buidlerEthT1003C.connect(owner).transfer(await addr1.getAddress(), val2);
-      await buidlerEthT1003C.connect(owner).transfer(await addr2.getAddress(), val2);
-      await buidlerEthT1003C.connect(owner).transfer(await addr3.getAddress(), val2);
-      await buidlerEthT1003C.connect(addr2).approve(await owner.getAddress(), val2);
-      await buidlerEthT1003C.connect(addr3).approve(await owner.getAddress(), val2.sub(ethers.utils.bigNumberify("1")));
-      await buidlerEthT1003C.connect(owner).approve(await addr1.getAddress(), val2);
-      await token2.connect(owner).approve(buidlerT1T210000P.address, value1);
-      await buidlerT1T210000P.connect(owner).mint(value1); 
-      await buidlerT1T210000P.connect(owner).transfer(await addr1.getAddress(), amount2);
-      await buidlerT1T210000P.connect(owner).transfer(await addr2.getAddress(), amount2);
-      await buidlerT1T210000P.connect(owner).transfer(await addr3.getAddress(), amount2);
-      await buidlerT1T210000P.connect(addr2).approve(await owner.getAddress(), amount2);
-      await buidlerT1T210000P.connect(addr3).approve(await owner.getAddress(), amount2.sub(ethers.utils.bigNumberify("1")));
-      await buidlerT1T210000P.connect(owner).approve(await addr1.getAddress(), amount2);
-
-      await expect(
-        buidlerEthT1003C.connect(addr1).clear()
-      ).to.be.revertedWith("ACOToken::_clear: Token not expired yet");
-
-      await expect(
-        buidlerT1T210000P.connect(addr1).clear()
-      ).to.be.revertedWith("ACOToken::_clear: Token not expired yet");
-
-      await expect(
-        buidlerEthT1003C.connect(owner).clearFrom(await addr2.getAddress())
-      ).to.be.revertedWith("ACOToken::_clear: Token not expired yet");
-
-      await expect(
-        buidlerT1T210000P.connect(owner).clearFrom(await addr2.getAddress())
-      ).to.be.revertedWith("ACOToken::_clear: Token not expired yet");
-
-      await network.provider.send("evm_increaseTime", [86400]);
-
-      await expect(
-        buidlerEthT1003C.connect(owner).clear()
-      ).to.be.revertedWith("ACOToken::_clear: Must call the redeem method");
-
-      await expect(
-        buidlerT1T210000P.connect(owner).clear()
-      ).to.be.revertedWith("ACOToken::_clear: Must call the redeem method");
-
-      await expect(
-        buidlerEthT1003C.connect(addr1).clearFrom(await owner.getAddress())
-      ).to.be.revertedWith("ACOToken::_clear: Must call the redeem method");
-
-      await expect(
-        buidlerT1T210000P.connect(addr1).clearFrom(await owner.getAddress())
-      ).to.be.revertedWith("ACOToken::_clear: Must call the redeem method");
-
-      await expect(
-        buidlerEthT1003C.connect(owner).clearFrom(await addr3.getAddress())
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
-
-      await expect(
-        buidlerT1T210000P.connect(owner).clearFrom(await addr3.getAddress())
-      ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await network.provider.send("evm_increaseTime", [-86400]);
     });

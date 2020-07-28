@@ -529,37 +529,6 @@ contract ACOToken is ERC20 {
     }
     
     /**
-     * @dev Function to burn the tokens after expiration.
-     * It is an optional function to `clear` the account wallet from an expired and not functional token.
-     * NOTE: The function only works when the token IS expired. 
-     */
-    function clear() external {
-        _clear(msg.sender);
-    }
-    
-    /**
-     * @dev Function to burn the tokens from an account after expiration.
-     * It is an optional function to `clear` the account wallet from an expired and not functional token.
-     * The token allowance must be respected.
-     * NOTE: The function only works when the token IS expired. 
-     * @param account Address of the account.
-     */
-    function clearFrom(address account) external {
-        _clear(account);
-    }
-    
-    /**
-     * @dev Internal function to burn the tokens from an account after expiration.
-     * @param account Address of the account.
-     */
-    function _clear(address account) internal {
-        require(!_notExpired(), "ACOToken::_clear: Token not expired yet");
-        require(!_accountHasCollateral(account), "ACOToken::_clear: Must call the redeem method");
-        
-        _callBurn(account, balanceOf(account));
-    }
-    
-    /**
      * @dev Internal function to redeem respective collateral from an account.
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
@@ -607,7 +576,7 @@ contract ACOToken is ERC20 {
      * @param recipient Destination address for the tokens.
      * @param amount Amount of tokens.
      */
-    function _transfer(address sender, address recipient, uint256 amount) notExpired internal override {
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
         super._transferAction(sender, recipient, amount);
     }
     
@@ -618,7 +587,7 @@ contract ACOToken is ERC20 {
      * @param spender Address of the spender authorized.
      * @param amount Amount of tokens authorized.
      */
-    function _approve(address owner, address spender, uint256 amount) notExpired internal override {
+    function _approve(address owner, address spender, uint256 amount) internal override {
         super._approveAction(owner, spender, amount);
     }
     
