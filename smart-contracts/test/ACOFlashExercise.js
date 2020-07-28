@@ -30,6 +30,7 @@ describe("ACOFlashExercise", function() {
   let weth;
   let pairToken1Token2;
   let pairToken1weth;
+  let maxExercisedAccounts = 120;
   let token1Liq = ethers.utils.bigNumberify("1000000000");
   let token2Liq = ethers.utils.bigNumberify("90000000000000000000000");
   let wethLiq = ethers.utils.bigNumberify("300000000000000000000");
@@ -61,17 +62,17 @@ describe("ACOFlashExercise", function() {
 
     time = Math.round(new Date().getTime() / 1000) + 86400;
     price1 = ethers.utils.bigNumberify("3000000");
-    let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, true, price1, time)).wait();
+    let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, true, price1, time, maxExercisedAccounts)).wait();
     buidlerEthT1003C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);  
 
-    tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time)).wait();
+    tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
     buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
     price2 = ethers.utils.bigNumberify("10000000000000000000000");
-    tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, false, price2, time)).wait();
+    tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, false, price2, time, maxExercisedAccounts)).wait();
     buidlerT1T210000P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);  
 
-    tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time)).wait();
+    tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
     buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
     uniswapFactory = await (await ethers.getContractFactory("UniswapV2Factory")).deploy(await owner.getAddress());
@@ -236,7 +237,7 @@ describe("ACOFlashExercise", function() {
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
 
       let e1 = val3.mul(price1).div(precision2);
-      expect((await buidlerEthT1003C.getExerciseData(val3))[1]).to.equal(e1);  
+      expect((await buidlerEthT1003C.getBaseExerciseData(val3))[1]).to.equal(e1);  
       await buidlerEthT1003C.connect(owner).approve(flashExercise.address, val3);
       let b1 = await addr2.getBalance();
       let exp1 = await flashExercise.getEstimatedReturn(buidlerEthT1003C.address, val3);
@@ -260,7 +261,7 @@ describe("ACOFlashExercise", function() {
       expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.assignableCollateral(await owner.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(token1Liq.mul(2)).sub(start1Balance.mul(3)));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
@@ -269,7 +270,7 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq).sub(start2Balance.mul(3)));
       expect(await addr2.getBalance()).to.equal(b1.add(val3.mul(fee).div(100000)));
 
-      expect((await buidlerT1T210000P.getExerciseData(amount3))[1]).to.equal(amount3);  
+      expect((await buidlerT1T210000P.getBaseExerciseData(amount3))[1]).to.equal(amount3);  
       await buidlerT1T210000P.connect(owner).approve(flashExercise.address, amount3);
       let exp2 = await flashExercise.getEstimatedReturn(buidlerT1T210000P.address, amount3);
       await flashExercise.connect(owner).flashExercise(buidlerT1T210000P.address, amount3, exp2);
@@ -293,7 +294,7 @@ describe("ACOFlashExercise", function() {
       expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerT1T210000P.assignableCollateral(await owner.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(1).add(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(token1Liq.mul(2)).sub(start1Balance.mul(3)));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
@@ -306,7 +307,7 @@ describe("ACOFlashExercise", function() {
       await weth.connect(owner).transfer(pairToken1weth.address, wethLiq.mul(2));
       await pairToken1weth.connect(owner).mint(await owner.getAddress());
 
-      expect((await buidlerEthT1003P.getExerciseData(a3))[1]).to.equal(a3);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a3))[1]).to.equal(a3);  
       await buidlerEthT1003P.connect(owner).approve(flashExercise.address, a3);
       let exp3 = await flashExercise.getEstimatedReturn(buidlerEthT1003P.address, a3);
       await flashExercise.connect(owner).flashExercise(buidlerEthT1003P.address, a3, exp3);
@@ -330,7 +331,7 @@ describe("ACOFlashExercise", function() {
       expect(await buidlerEthT1003P.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await buidlerEthT1003P.assignableCollateral(await owner.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(start1Balance.sub(v1));
-      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).add(e1).add(amount3).add(fee3).sub(one).add(1).add(1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(token1Liq.mul(3)).sub(start1Balance.mul(3)).add(exp3));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
@@ -420,8 +421,8 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
 
       let e1 = (v1.add(v1)).mul(price2).div(precision1);
-      expect((await buidlerEthT1003P.getExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
-      expect((await buidlerT1T210000C.getExerciseData(v1.add(v1)))[1]).to.equal(e1);  
+      expect((await buidlerEthT1003P.getBaseExerciseData(a1.add(a1)))[1]).to.equal(a1.add(a1)); 
+      expect((await buidlerT1T210000C.getBaseExerciseData(v1.add(v1)))[1]).to.equal(e1);  
 
       await token1.connect(owner).transfer(pairToken1weth.address, token1Liq);
       await weth.connect(owner).deposit({value: wethLiq.mul(2)});
@@ -463,8 +464,8 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq).sub(start2Balance.mul(3)));
-      expect(await addr1.getBalance()).to.equal(b1.add(a1));
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
+      expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
 
       await token1.connect(owner).transfer(pairToken1Token2.address, token1Liq);
@@ -497,12 +498,12 @@ describe("ACOFlashExercise", function() {
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(start1Balance.sub(v2).sub(v2).add(fee1).sub(1).add(fee1));
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(start1Balance.sub(v3).sub(v3));
       expect(await token1.balanceOf(await owner.getAddress())).to.equal(token1TotalSupply.sub(token1Liq.mul(4)).sub(start1Balance.mul(3)).add(exp1).add(exp2));
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(3)).sub(start2Balance.mul(3)));
-      expect(await addr1.getBalance()).to.equal(b1.add(a1));
-      expect(await addr2.getBalance()).to.equal(b2.add(a1));
+      expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
+      expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
     });
     it("Check fail to flash exercise", async function () {
@@ -567,7 +568,7 @@ describe("ACOFlashExercise", function() {
       await buidlerEthT1003P.connect(addr2).transfer(await addr3.getAddress(), a3);
       await buidlerEthT1003P.connect(addr2).transfer(await addr3.getAddress(), a3);
       
-      tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token2.address, true, price2, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token2.address, true, price2, time, maxExercisedAccounts)).wait();
       let buidlerEthT210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await expect(
@@ -581,7 +582,7 @@ describe("ACOFlashExercise", function() {
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        flashExercise.connect(owner).flashExerciseAccounts(buidlerEthT1003C.address, val3, exp1, [await addr2.getAddress(), await addr1.getAddress()])
+        flashExercise.connect(owner).flashExerciseAccounts(buidlerEthT1003C.address, val3, exp1, [await addr2.getAddress(), await addr1.getAddress(), await addr3.getAddress()])
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
@@ -596,10 +597,6 @@ describe("ACOFlashExercise", function() {
 
       await expect(
         flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1.add(1))
-      ).to.be.revertedWith("ACOFlashExercise::uniswapV2Call: Minimum amount not satisfied");
-
-      await expect(
-        flashExercise.connect(owner).flashExerciseAccounts(buidlerEthT1003C.address, val3, exp1.add(1), [await addr2.getAddress(), await addr1.getAddress()])
       ).to.be.revertedWith("ACOFlashExercise::uniswapV2Call: Minimum amount not satisfied");
 
       await expect(

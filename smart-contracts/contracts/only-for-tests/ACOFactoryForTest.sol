@@ -23,9 +23,10 @@ contract ACOFactoryForTest is ACOFactory {
         address strikeAsset, 
         bool isCall,
         uint256 strikePrice, 
-        uint256 expiryTime
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
     ) external override {
-        address acoToken = _deployAcoToken(_getAcoTokenInitData(underlying, strikeAsset, isCall, strikePrice, expiryTime));
+        address acoToken = _deployAcoToken(_getAcoTokenInitData(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts));
         emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);   
     }
     
