@@ -151,7 +151,7 @@ describe("ACOFactory", function() {
 
       let time = Math.round(new Date().getTime() / 1000) + 86400;
       let price = 3 * 10 ** token2Decimals;
-      let tx = await (await newBuidlerFactory.connect(addr2).createAcoToken(token1.address, token2.address, false, price, time)).wait();
+      let tx = await (await newBuidlerFactory.connect(addr2).createAcoToken(token1.address, token2.address, false, price, time, 100)).wait();
       let result = tx.events[tx.events.length - 1].args;
       expect(result.underlying).to.equal(token1.address);
       expect(result.strikeAsset).to.equal(token2.address);
@@ -277,9 +277,10 @@ describe("ACOFactory", function() {
       expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
     });
     it("Check ACO token creation", async function () {
+      const maxExercisedAccounts = 120;
       let time = Math.round(new Date().getTime() / 1000) + 86400;
       let price = 3 * 10 ** token2Decimals;
-      let tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, false, price, time)).wait();
+      let tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)).wait();
       let result = tx.events[tx.events.length - 1].args;
       expect(result.underlying).to.equal(token1.address);
       expect(result.strikeAsset).to.equal(token2.address);
@@ -301,9 +302,10 @@ describe("ACOFactory", function() {
       expect(await buidlerToken.underlyingDecimals()).to.equal(token1Decimals);
       expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
       expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
 
       price = 2 * 10 ** token2Decimals;
-      tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token2.address, true, price, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token2.address, true, price, time, maxExercisedAccounts)).wait();
       result = tx.events[tx.events.length - 1].args;
       expect(result.underlying).to.equal(ethers.constants.AddressZero);
       expect(result.strikeAsset).to.equal(token2.address);
@@ -325,11 +327,12 @@ describe("ACOFactory", function() {
       expect(await buidlerToken.underlyingDecimals()).to.equal(18);
       expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
       expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
 
       let newACOToken = await (await ethers.getContractFactory("ACOToken")).deploy();
       await newACOToken.deployed();
       await buidlerFactory.setAcoTokenImplementation(newACOToken.address);
-      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price, time)).wait();
+      tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price, time, maxExercisedAccounts)).wait();
       result = tx.events[tx.events.length - 1].args;
       expect(result.underlying).to.equal(token1.address);
       expect(result.strikeAsset).to.equal(token2.address);
@@ -351,43 +354,51 @@ describe("ACOFactory", function() {
       expect(await buidlerToken.underlyingDecimals()).to.equal(token1Decimals);
       expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
       expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
 
       await expect(
-        buidlerToken.init(token1.address, token2.address, false, price, time, fee, await addr2.getAddress())
+        buidlerToken.init(token1.address, token2.address, false, price, time, fee, await addr2.getAddress(), maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Already initialized");
     });
     it("Check fail to ACO token creation", async function () {
+      const maxExercisedAccounts = 120;
       let time = Math.round(new Date().getTime() / 1000) + 86400;
       let price = 3 * 10 ** token2Decimals;
       await expect(
-        buidlerFactory.connect(addr2).createAcoToken(token1.address, token2.address, false, price, time)
+        buidlerFactory.connect(addr2).createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
       await expect(
-        buidlerFactory.createAcoToken(token1.address, token2.address, false, price, 0)
+        buidlerFactory.createAcoToken(token1.address, token2.address, false, price, 0, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Invalid expiry");
       await expect(
-        buidlerFactory.createAcoToken(token1.address, token2.address, false, 0, time)
+        buidlerFactory.createAcoToken(token1.address, token2.address, false, 0, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Invalid strike price");
       await expect(
-        buidlerFactory.createAcoToken(token1.address, token1.address, false, price, time)
+        buidlerFactory.createAcoToken(token1.address, token1.address, false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Same assets");
       await expect(
-        buidlerFactory.createAcoToken(await owner.getAddress(), token2.address, false, price, time)
+        buidlerFactory.createAcoToken(await owner.getAddress(), token2.address, false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Invalid underlying");
       await expect(
-        buidlerFactory.createAcoToken(token2.address, await owner.getAddress(), false, price, time)
+        buidlerFactory.createAcoToken(token2.address, await owner.getAddress(), false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Invalid strike asset");
       await expect(
-        buidlerFactory.createAcoToken(ACOFactory.address, token1.address, false, price, time)
+        buidlerFactory.createAcoToken(token1.address, ACOFactory.address, false, price, time, 1)
+      ).to.be.revertedWith("ACOToken::init: Invalid number to max exercised accounts");
+      await expect(
+        buidlerFactory.createAcoToken(token1.address, ACOFactory.address, false, price, time, 200)
+      ).to.be.revertedWith("ACOToken::init: Invalid number to max exercised accounts");
+      await expect(
+        buidlerFactory.createAcoToken(ACOFactory.address, token1.address, false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::_getAssetDecimals: Invalid asset decimals");
       await expect(
-        buidlerFactory.createAcoToken(token1.address, ACOFactory.address, false, price, time)
+        buidlerFactory.createAcoToken(token1.address, ACOFactory.address, false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::_getAssetDecimals: Invalid asset decimals");
 
       await buidlerFactory.setAcoFee(501);
       expect(await buidlerFactory.acoFee()).to.equal(501);
       await expect(
-        buidlerFactory.createAcoToken(token1.address, token2.address, false, price, time)
+        buidlerFactory.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Invalid ACO fee");   
     });
   });

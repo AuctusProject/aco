@@ -61,9 +61,10 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @dev Function to get the required amount of collateral to be paid to Uniswap and the expected amount to exercise the ACO token.
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
+     * @param accounts The array of addresses to be exercised. Whether the array is empty the exercise will be executed using the standard method.
      * @return The required amount of collateral to be paid to Uniswap and the expected amount to exercise the ACO token.
      */
-    function getExerciseData(address acoToken, uint256 tokenAmount) public view returns(uint256, uint256) {
+    function getExerciseData(address acoToken, uint256 tokenAmount, address[] memory accounts) public view returns(uint256, uint256) {
         if (tokenAmount > 0) {
             address pair = getUniswapPair(acoToken);
             if (pair != address(0)) {
@@ -71,8 +72,9 @@ contract ACOFlashExercise is IUniswapV2Callee {
                 address token1 = IUniswapV2Pair(pair).token1();
                 (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(pair).getReserves();
                 
-                (address exerciseAddress, uint256 expectedAmount) = IACOToken(acoToken).getExerciseData(tokenAmount);
-                exerciseAddress = _getUniswapToken(exerciseAddress);
+                (address exerciseAddress, uint256 expectedAmount) = _getAcoExerciseData(acoToken, tokenAmount, accounts);
+                
+				exerciseAddress = _getUniswapToken(exerciseAddress);
                 
                 uint256 reserveIn = 0; 
                 uint256 reserveOut = 0;
@@ -97,10 +99,10 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @dev Function to get the estimated collateral to be received through a flash exercise.
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
-     * @return The estimated collateral to be received through a flash exercise.
+     * @return The estimated collateral to be received through a flash exercise using the standard exercise function.
      */
     function getEstimatedReturn(address acoToken, uint256 tokenAmount) public view returns(uint256) {
-        (uint256 amountRequired,) = getExerciseData(acoToken, tokenAmount);
+        (uint256 amountRequired,) = getExerciseData(acoToken, tokenAmount, new address[](0));
         if (amountRequired > 0) {
             (uint256 collateralAmount,) = IACOToken(acoToken).getCollateralOnExercise(tokenAmount);
             if (amountRequired < collateralAmount) {
@@ -180,7 +182,8 @@ contract ACOFlashExercise is IUniswapV2Callee {
         {
         uint256 minimumCollateral;
         (from, acoToken, tokenAmount, minimumCollateral, accounts) = abi.decode(data, (address, address, uint256, uint256, address[]));
-        (address exerciseAddress, uint256 expectedAmount) = IACOToken(acoToken).getExerciseData(tokenAmount);
+        
+		(address exerciseAddress, uint256 expectedAmount) = _getAcoExerciseData(acoToken, tokenAmount, accounts);
         
         require(expectedAmount == (amount1Out + amount0Out), "ACOFlashExercise::uniswapV2Call: Invalid expected amount");
         
@@ -217,7 +220,24 @@ contract ACOFlashExercise is IUniswapV2Callee {
         
         _callTransferERC20(uniswapPayment, msg.sender, amountRequired); 
     }
-    
+	
+	/**
+     * @dev Internal function to get the ACO tokens exercise data.
+     * @param acoToken Address of the ACO token.
+     * @param tokenAmount Amount of tokens to be exercised.
+     * @param accounts The array of addresses to be exercised. Whether the array is empty the exercise will be executed using the standard method.
+	 * @return The asset and the respective amount that should be sent to get the collateral.
+     */
+	function _getAcoExerciseData(address acoToken, uint256 tokenAmount, address[] memory accounts) internal view returns(address, uint256) {
+		(address exerciseAddress, uint256 expectedAmount) = IACOToken(acoToken).getBaseExerciseData(tokenAmount);
+		if (accounts.length == 0) {
+			expectedAmount = expectedAmount + IACOToken(acoToken).maxExercisedAccounts();
+		} else {
+			expectedAmount = expectedAmount + accounts.length;
+		}
+		return (exerciseAddress, expectedAmount);
+	}
+	
     /**
      * @dev Internal function to flash exercise ACO tokens.
      * @param acoToken Address of the ACO token.
@@ -234,8 +254,8 @@ contract ACOFlashExercise is IUniswapV2Callee {
         address pair = getUniswapPair(acoToken);
         require(pair != address(0), "ACOFlashExercise::_flashExercise: Invalid Uniswap pair");
         
-        (address exerciseAddress, uint256 expectedAmount) = IACOToken(acoToken).getExerciseData(tokenAmount);
-        
+        (address exerciseAddress, uint256 expectedAmount) = _getAcoExerciseData(acoToken, tokenAmount, accounts);
+
         uint256 amount0Out = 0;
         uint256 amount1Out = 0;
         if (_getUniswapToken(exerciseAddress) == IUniswapV2Pair(pair).token0()) {

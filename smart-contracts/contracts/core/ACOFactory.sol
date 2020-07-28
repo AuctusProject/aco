@@ -1,8 +1,7 @@
 pragma solidity ^0.6.6;
 
 import "../libs/Address.sol";
-import "../libs/BokkyPooBahsDateTimeLibrary.sol";
-import "../libs/Strings.sol";
+import "../interfaces/IACOToken.sol";
 
 /**
  * @title ACOFactory
@@ -15,28 +14,28 @@ contract ACOFactory {
      * @param previousFactoryAdmin Address of the previous factory admin.
      * @param newFactoryAdmin Address of the new factory admin.
      */
-    event SetFactoryAdmin(address previousFactoryAdmin, address newFactoryAdmin);
+    event SetFactoryAdmin(address indexed previousFactoryAdmin, address indexed newFactoryAdmin);
     
     /**
      * @dev Emitted when the ACO token implementation has been changed.
      * @param previousAcoTokenImplementation Address of the previous ACO token implementation.
      * @param newAcoTokenImplementation Address of the new ACO token implementation.
      */
-    event SetAcoTokenImplementation(address previousAcoTokenImplementation, address newAcoTokenImplementation);
+    event SetAcoTokenImplementation(address indexed previousAcoTokenImplementation, address indexed newAcoTokenImplementation);
     
     /**
      * @dev Emitted when the ACO fee has been changed.
      * @param previousAcoFee Value of the previous ACO fee.
      * @param newAcoFee Value of the new ACO fee.
      */
-    event SetAcoFee(uint256 previousAcoFee, uint256 newAcoFee);
+    event SetAcoFee(uint256 indexed previousAcoFee, uint256 indexed newAcoFee);
     
     /**
      * @dev Emitted when the ACO fee destination address has been changed.
      * @param previousAcoFeeDestination Address of the previous ACO fee destination.
      * @param newAcoFeeDestination Address of the new ACO fee destination.
      */
-    event SetAcoFeeDestination(address previousAcoFeeDestination, address newAcoFeeDestination);
+    event SetAcoFeeDestination(address indexed previousAcoFeeDestination, address indexed newAcoFeeDestination);
     
     /**
      * @dev Emitted when a new ACO token has been created.
@@ -113,15 +112,17 @@ contract ACOFactory {
      * @param isCall Whether the ACO token is the Call type.
      * @param strikePrice The strike price with the strike asset precision.
      * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
      */
     function createAcoToken(
         address underlying, 
         address strikeAsset, 
         bool isCall,
         uint256 strikePrice, 
-        uint256 expiryTime
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
     ) onlyFactoryAdmin external virtual {
-        address acoToken = _deployAcoToken(_getAcoTokenInitData(underlying, strikeAsset, isCall, strikePrice, expiryTime));
+        address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
         emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);   
     }
     
@@ -201,39 +202,23 @@ contract ACOFactory {
     }
     
     /**
-     * @dev Internal function to get the ACO token initialize data.
+     * @dev Internal function to deploy a minimal proxy using ACO token implementation.
      * @param underlying Address of the underlying asset (0x0 for Ethereum).
      * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
      * @param isCall True if the type is CALL, false for PUT.
      * @param strikePrice The strike price with the strike asset precision.
      * @param expiryTime The UNIX time for the ACO token expiration.
-     * @return ABI encoded with signature for initializing ACO token.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
+     * @return Address of the new minimal proxy deployed for the ACO token.
      */
-    function _getAcoTokenInitData(
+    function _deployAcoToken(
         address underlying, 
         address strikeAsset, 
         bool isCall,
         uint256 strikePrice, 
-        uint256 expiryTime
-    ) internal view virtual returns(bytes memory) {
-        return abi.encodeWithSignature("init(address,address,bool,uint256,uint256,uint256,address)",
-            underlying,
-            strikeAsset,
-            isCall,
-            strikePrice,
-            expiryTime,
-            acoFee,
-            acoFeeDestination
-        );
-    }
-    
-    /**
-     * @dev Internal function to deploy a minimal proxy using ACO token implementation.
-     * @param initData ABI encoded with signature for initializing the new ACO token.
-     * @return Address of the new minimal proxy deployed for the ACO token.
-     */
-    function _deployAcoToken(bytes memory initData) internal virtual returns(address) {
-        require(initData.length > 0, "ACOFactory::_deployToken: Invalid init data");
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
+    ) internal virtual returns(address) {
         bytes20 implentationBytes = bytes20(acoTokenImplementation);
         address proxy;
         assembly {
@@ -243,27 +228,7 @@ contract ACOFactory {
             mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
             proxy := create(0, clone, 0x37)
         }
-        (bool success, bytes memory returnData) = proxy.call(initData);
-        require(success, _acoTokenInititalizeError(returnData));
+        IACOToken(proxy).init(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoFee, payable(acoFeeDestination), maxExercisedAccounts);
         return proxy;
-    }
-    
-    /**
-     * @dev Internal function to handle the return data on initializing ACO token with an error.
-     * 4 bytes (function signature) + 32 bytes (offset) + 32 bytes (error string length) + X bytes (error string)
-     * @param data Returned data with an error.
-     * @return String with the error.
-     */
-    function _acoTokenInititalizeError(bytes memory data) internal pure virtual returns(string memory) {
-        if (data.length >= 100) {
-            bytes memory buffer = new bytes(data.length - 68);
-            uint256 index = 0;
-            for (uint256 i = 68; i < data.length; ++i) {
-                buffer[index++] = data[i];
-            }
-            return string(buffer);
-        } else {
-            return "ACOFactory::_acoTokenInititalizeError";
-        }  
     }
 }

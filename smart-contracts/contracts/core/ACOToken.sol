@@ -119,6 +119,11 @@ contract ACOToken is ERC20 {
     uint256 internal underlyingPrecision;
     
     /**
+     * @dev The maximum number of accounts that can be exercised by transaction.
+     */
+    uint256 public maxExercisedAccounts;
+    
+    /**
      * @dev Accounts that generated tokens with a collateral deposit.
      */
     mapping(address => TokenCollateralized) internal tokenData;
@@ -173,6 +178,7 @@ contract ACOToken is ERC20 {
      * @param _expiryTime The UNIX time for the token expiration.
      * @param _acoFee Value of the ACO fee. It is a percentage value (100000 is 100%).
      * @param _feeDestination Address of the fee destination charged on the exercise.
+     * @param _maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
      */
     function init(
         address _underlying,
@@ -181,7 +187,8 @@ contract ACOToken is ERC20 {
         uint256 _strikePrice,
         uint256 _expiryTime,
         uint256 _acoFee,
-        address payable _feeDestination
+        address payable _feeDestination,
+        uint256 _maxExercisedAccounts
     ) public {
         require(underlying == address(0) && strikeAsset == address(0) && strikePrice == 0, "ACOToken::init: Already initialized");
         
@@ -191,6 +198,7 @@ contract ACOToken is ERC20 {
         require(_acoFee <= 500, "ACOToken::init: Invalid ACO fee"); // Maximum is 0.5%
         require(_isEther(_underlying) || _underlying.isContract(), "ACOToken::init: Invalid underlying");
         require(_isEther(_strikeAsset) || _strikeAsset.isContract(), "ACOToken::init: Invalid strike asset");
+        require(_maxExercisedAccounts >= 25 && _maxExercisedAccounts <= 150, "ACOToken::init: Invalid number to max exercised accounts");
         
         underlying = _underlying;
         strikeAsset = _strikeAsset;
@@ -199,7 +207,9 @@ contract ACOToken is ERC20 {
         expiryTime = _expiryTime;
         acoFee = _acoFee;
         feeDestination = _feeDestination;
+        maxExercisedAccounts = _maxExercisedAccounts;
         underlyingDecimals = _getAssetDecimals(_underlying);
+        require(underlyingDecimals < 78, "ACOToken::init: Invalid underlying decimals");
         strikeAssetDecimals = _getAssetDecimals(_strikeAsset);
         underlyingSymbol = _getAssetSymbol(_underlying);
         strikeAssetSymbol = _getAssetSymbol(_strikeAsset);
@@ -249,7 +259,6 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get the current amount of unassignable collateral for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the unassignable collateral is equal to the account's collateral balance.
      * @param account Address of the account.
      * @return The respective amount of unassignable collateral.
@@ -260,7 +269,6 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get  the current amount of assignable collateral for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the assignable collateral is zero.
      * @param account Address of the account.
      * @return The respective amount of assignable collateral.
@@ -280,13 +288,12 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get the current amount of unassignable tokens for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the unassignable tokens is equal to the account's collateralized tokens.
      * @param account Address of the account.
      * @return The respective amount of unassignable tokens.
      */
     function unassignableTokens(address account) public view returns(uint256) {
-        if (balanceOf(account) > tokenData[account].amount) {
+        if (balanceOf(account) > tokenData[account].amount || !_notExpired()) {
             return tokenData[account].amount;
         } else {
             return balanceOf(account);
@@ -295,13 +302,17 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get  the current amount of assignable tokens for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the assignable tokens is zero.
      * @param account Address of the account.
      * @return The respective amount of assignable tokens.
      */
     function assignableTokens(address account) public view returns(uint256) {
-        return _getAssignableAmount(account);
+        if (_notExpired()) {
+            return _getAssignableAmount(account);
+        }
+        else {
+            return 0;
+        }
     }
     
     /**
@@ -333,13 +344,24 @@ contract ACOToken is ERC20 {
             return 0;
         }
     }
+
+    /**
+     * @dev Function to get the number of addresses that have collateral deposited.
+     * @return The number of addresses.
+     */
+    function numberOfAccountsWithCollateral() public view returns(uint256) {
+        return _collateralOwners.length;
+    }
     
     /**
-     * @dev Function to get the data for exercise of an amount of token.
+     * @dev Function to get the base data for exercise of an amount of token.
+     * To call the exercise the value returned must be added by the number of accounts that could be exercised:
+     * - using the ´exercise´ or ´exerciseFrom´ functions it will be equal to `maxExercisedAccounts`.
+     * - using the ´exerciseAccounts´ or `exerciseAccountsFrom` functions it will be equal to the number of accounts sent as function argument.
      * @param tokenAmount Amount of tokens.
-     * @return The asset and the respective amount that should be sent to get the collateral.
+     * @return The asset and the respective base amount that should be sent to get the collateral.
      */
-    function getExerciseData(uint256 tokenAmount) public view returns(address, uint256) {
+    function getBaseExerciseData(uint256 tokenAmount) public view returns(address, uint256) {
         if (isCall) {
             return (strikeAsset, _getTokenStrikePriceRelation(tokenAmount)); 
         } else {
@@ -509,37 +531,6 @@ contract ACOToken is ERC20 {
     }
     
     /**
-     * @dev Function to burn the tokens after expiration.
-     * It is an optional function to `clear` the account wallet from an expired and not functional token.
-     * NOTE: The function only works when the token IS expired. 
-     */
-    function clear() external {
-        _clear(msg.sender);
-    }
-    
-    /**
-     * @dev Function to burn the tokens from an account after expiration.
-     * It is an optional function to `clear` the account wallet from an expired and not functional token.
-     * The token allowance must be respected.
-     * NOTE: The function only works when the token IS expired. 
-     * @param account Address of the account.
-     */
-    function clearFrom(address account) external {
-        _clear(account);
-    }
-    
-    /**
-     * @dev Internal function to burn the tokens from an account after expiration.
-     * @param account Address of the account.
-     */
-    function _clear(address account) internal {
-        require(!_notExpired(), "ACOToken::_clear: Token not expired yet");
-        require(!_accountHasCollateral(account), "ACOToken::_clear: Must call the redeem method");
-        
-        _callBurn(account, balanceOf(account));
-    }
-    
-    /**
      * @dev Internal function to redeem respective collateral from an account.
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
@@ -571,6 +562,7 @@ contract ACOToken is ERC20 {
         }
         
         uint256 tokenAmount = getTokenAmount(collateralAmount);
+        require(tokenAmount != 0, "ACOToken::_mintToken: Invalid token amount");
         tokenData[account].amount = tokenData[account].amount.add(tokenAmount);
         
         totalCollateral = totalCollateral.add(collateralAmount);
@@ -587,7 +579,7 @@ contract ACOToken is ERC20 {
      * @param recipient Destination address for the tokens.
      * @param amount Amount of tokens.
      */
-    function _transfer(address sender, address recipient, uint256 amount) notExpired internal override {
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
         super._transferAction(sender, recipient, amount);
     }
     
@@ -598,7 +590,7 @@ contract ACOToken is ERC20 {
      * @param spender Address of the spender authorized.
      * @param amount Amount of tokens authorized.
      */
-    function _approve(address owner, address spender, uint256 amount) notExpired internal override {
+    function _approve(address owner, address spender, uint256 amount) internal override {
         super._approveAction(owner, spender, amount);
     }
     
@@ -636,8 +628,8 @@ contract ACOToken is ERC20 {
      * @param tokenAmount Amount of tokens.
      */
     function _exercise(address account, uint256 tokenAmount) nonReentrant internal {
-        _validateAndBurn(account, tokenAmount);
-        _exerciseOwners(account, tokenAmount);
+        _validateAndBurn(account, tokenAmount, maxExercisedAccounts);
+         _exerciseOwners(account, tokenAmount);
         (uint256 collateralAmount, uint256 fee) = getCollateralOnExercise(tokenAmount);
         _transferCollateral(account, collateralAmount, fee);
     }
@@ -649,7 +641,7 @@ contract ACOToken is ERC20 {
      * @param accounts The array of addresses to get the collateral from.
      */
     function _exerciseFromAccounts(address account, uint256 tokenAmount, address[] memory accounts) nonReentrant internal {
-        _validateAndBurn(account, tokenAmount);
+        _validateAndBurn(account, tokenAmount, accounts.length);
         _exerciseAccounts(account, tokenAmount, accounts);
         (uint256 collateralAmount, uint256 fee) = getCollateralOnExercise(tokenAmount);
         _transferCollateral(account, collateralAmount, fee);
@@ -661,12 +653,18 @@ contract ACOToken is ERC20 {
      * @param tokenAmount Amount of tokens.
      */
     function _exerciseOwners(address exerciseAccount, uint256 tokenAmount) internal {
-        uint256 start = _collateralOwners.length - 1;
-        for (uint256 i = start; i >= 0; --i) {
+        uint256 accountsExercised = 0;
+        uint256 start = _collateralOwners.length;
+        for (uint256 i = start; i > 0; --i) {
             if (tokenAmount == 0) {
                 break;
             }
-            tokenAmount = _exerciseAccount(_collateralOwners[i], tokenAmount, exerciseAccount);
+            uint256 remainingAmount = _exerciseAccount(_collateralOwners[i-1], tokenAmount, exerciseAccount);
+            if (remainingAmount < tokenAmount) {
+                accountsExercised++;
+				        require(accountsExercised <= maxExercisedAccounts, "ACOToken::_exerciseOwners: Too many accounts to exercise");
+            }
+            tokenAmount = remainingAmount;
         }
         require(tokenAmount == 0, "ACOToken::_exerciseOwners: Invalid remaining amount");
     }
@@ -708,8 +706,10 @@ contract ACOToken is ERC20 {
                 tokenAmount = 0;
             }
             
-            (address exerciseAsset, uint256 amount) = getExerciseData(valueToTransfer);
-
+            (address exerciseAsset, uint256 amount) = getBaseExerciseData(valueToTransfer);
+            // To guarantee that the minter will be paid at least by 1 minimum collateral value.
+            amount = amount.add(1);
+            
             data.amount = data.amount.sub(valueToTransfer); 
             
             _removeCollateralDataIfNecessary(account);
@@ -721,7 +721,6 @@ contract ACOToken is ERC20 {
             }
             emit Assigned(account, exerciseAccount, amount, valueToTransfer);
         }
-        
         return tokenAmount;
     }
     
@@ -729,8 +728,9 @@ contract ACOToken is ERC20 {
      * @dev Internal function to validate the exercise operation and burn the respective tokens.
      * @param account Address of the account that is exercising.
      * @param tokenAmount Amount of tokens.
+     * @param maximumNumberOfAccounts The maximum number of accounts that can be exercised.
      */
-    function _validateAndBurn(address account, uint256 tokenAmount) notExpired internal {
+    function _validateAndBurn(address account, uint256 tokenAmount, uint256 maximumNumberOfAccounts) notExpired internal {
         require(tokenAmount > 0, "ACOToken::_validateAndBurn: Invalid token amount");
         
         // Whether an account has deposited collateral it only can exercise the extra amount of unassignable tokens.
@@ -741,7 +741,8 @@ contract ACOToken is ERC20 {
         
         _callBurn(account, tokenAmount);
         
-        (address exerciseAsset, uint256 expectedAmount) = getExerciseData(tokenAmount);
+        (address exerciseAsset, uint256 expectedAmount) = getBaseExerciseData(tokenAmount);
+        expectedAmount = expectedAmount.add(maximumNumberOfAccounts);
 
         if (_isEther(exerciseAsset)) {
             require(msg.value == expectedAmount, "ACOToken::_validateAndBurn: Invalid ether amount");
