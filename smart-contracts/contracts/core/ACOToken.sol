@@ -258,7 +258,6 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get the current amount of unassignable collateral for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the unassignable collateral is equal to the account's collateral balance.
      * @param account Address of the account.
      * @return The respective amount of unassignable collateral.
@@ -269,7 +268,6 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get  the current amount of assignable collateral for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the assignable collateral is zero.
      * @param account Address of the account.
      * @return The respective amount of assignable collateral.
@@ -289,13 +287,12 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get the current amount of unassignable tokens for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the unassignable tokens is equal to the account's collateralized tokens.
      * @param account Address of the account.
      * @return The respective amount of unassignable tokens.
      */
     function unassignableTokens(address account) public view returns(uint256) {
-        if (balanceOf(account) > tokenData[account].amount) {
+        if (balanceOf(account) > tokenData[account].amount || !_notExpired()) {
             return tokenData[account].amount;
         } else {
             return balanceOf(account);
@@ -304,13 +301,17 @@ contract ACOToken is ERC20 {
     
     /**
      * @dev Function to get  the current amount of assignable tokens for an account.
-     * NOTE: The function is valid when the token is NOT expired yet. 
      * After expiration, the assignable tokens is zero.
      * @param account Address of the account.
      * @return The respective amount of assignable tokens.
      */
     function assignableTokens(address account) public view returns(uint256) {
-        return _getAssignableAmount(account);
+        if (_notExpired()) {
+            return _getAssignableAmount(account);
+        }
+        else {
+            return 0;
+        }
     }
     
     /**
