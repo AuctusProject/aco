@@ -22,7 +22,7 @@ export function hasUniswapPair(acoToken) {
 
 export function flashExercise(from, acoToken, tokenAmount, minimumCollateral, nonce) {
     const contract = getAcoFlashExerciseTokenContract()
-    var data = contract.methods.flashExercise(acoToken, tokenAmount, minimumCollateral).encodeABI()
+    var data = contract.methods.flashExercise(acoToken, tokenAmount, minimumCollateral, new Date().getTime()).encodeABI()
     return sendTransactionWithNonce(null, null, from, acoFlashExerciseAddress, null, data, null, nonce)
 }
 

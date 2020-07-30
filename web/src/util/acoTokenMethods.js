@@ -55,7 +55,7 @@ export function redeem(userAddress, optionInfo) {
 
 export function exercise(userAddress, optionInfo, tokenAmount, value, nonce) {
     const acoTokenContract = getAcoTokenContract(optionInfo.acoToken)
-    var data = acoTokenContract.methods.exercise(tokenAmount).encodeABI()
+    var data = acoTokenContract.methods.exercise(tokenAmount, new Date().getTime()).encodeABI()
     return sendTransactionWithNonce(null, null, userAddress, optionInfo.acoToken, (isEther(getExerciseAddress(optionInfo)) ? value : null), data, null, nonce)
 }
 
