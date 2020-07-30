@@ -114,14 +114,14 @@ contract ACOToken is ERC20 {
     uint8 public strikeAssetDecimals;
     
     /**
-     * @dev Underlying precision. (10 ^ underlyingDecimals)
-     */
-    uint256 internal underlyingPrecision;
-    
-    /**
      * @dev The maximum number of accounts that can be exercised by transaction.
      */
     uint256 public maxExercisedAccounts;
+    
+    /**
+     * @dev Underlying precision. (10 ^ underlyingDecimals)
+     */
+    uint256 internal underlyingPrecision;
     
     /**
      * @dev Accounts that generated tokens with a collateral deposit.
@@ -486,9 +486,10 @@ contract ACOToken is ERC20 {
      * The paid amount is sent to the collateral owners that were assigned.
      * NOTE: The function only works when the token is NOT expired. 
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function exercise(uint256 tokenAmount) external payable {
-        _exercise(msg.sender, tokenAmount);
+    function exercise(uint256 tokenAmount, uint256 salt) external payable {
+        _exercise(msg.sender, tokenAmount, salt);
     }
     
     /**
@@ -499,9 +500,10 @@ contract ACOToken is ERC20 {
      * NOTE: The function only works when the token is NOT expired. 
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function exerciseFrom(address account, uint256 tokenAmount) external payable {
-        _exercise(account, tokenAmount);
+    function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable {
+        _exercise(account, tokenAmount, salt);
     }
     
     /**
@@ -603,10 +605,11 @@ contract ACOToken is ERC20 {
      * @dev Internal function to exercise the tokens from an account. 
      * @param account Address of the account that is exercising.
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function _exercise(address account, uint256 tokenAmount) nonReentrant internal {
+    function _exercise(address account, uint256 tokenAmount, uint256 salt) nonReentrant internal {
         _validateAndBurn(account, tokenAmount, maxExercisedAccounts);
-         _exerciseOwners(account, tokenAmount);
+         _exerciseOwners(account, tokenAmount, salt);
         (uint256 collateralAmount, uint256 fee) = getCollateralOnExercise(tokenAmount);
         _transferCollateral(account, collateralAmount, fee);
     }
@@ -628,22 +631,48 @@ contract ACOToken is ERC20 {
      * @dev Internal function to exercise the assignable tokens from the stored list of collateral owners. 
      * @param exerciseAccount Address of the account that is exercising.
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function _exerciseOwners(address exerciseAccount, uint256 tokenAmount) internal {
+    function _exerciseOwners(address exerciseAccount, uint256 tokenAmount, uint256 salt) internal {
         uint256 accountsExercised = 0;
-        uint256 start = _collateralOwners.length;
-        for (uint256 i = start; i > 0; --i) {
-            if (tokenAmount == 0) {
-                break;
-            }
-            uint256 remainingAmount = _exerciseAccount(_collateralOwners[i-1], tokenAmount, exerciseAccount);
+        uint256 start = salt % _collateralOwners.length; // _collateralOwners.length never will be zero.
+        uint256 index = start;
+        uint256 count = 0;
+        while (tokenAmount > 0 && count < _collateralOwners.length) {
+            
+            uint256 remainingAmount = _exerciseAccount(_collateralOwners[index], tokenAmount, exerciseAccount);
             if (remainingAmount < tokenAmount) {
                 accountsExercised++;
-                require(accountsExercised <= maxExercisedAccounts, "ACOToken::_exerciseOwners: Too many accounts to exercise");
+                require(accountsExercised < maxExercisedAccounts || remainingAmount == 0, "ACOToken::_exerciseOwners: Too many accounts to exercise");
             }
             tokenAmount = remainingAmount;
+            
+            ++index;
+            if (index == _collateralOwners.length) {
+                index = 0;
+            }
+            ++count;
         }
         require(tokenAmount == 0, "ACOToken::_exerciseOwners: Invalid remaining amount");
+        
+        uint256 indexOnModifyIteration;
+        bool shouldModifyIteration = false;
+        if (index == 0) {
+            index = _collateralOwners.length;
+        } else if (index <= start) {
+            indexOnModifyIteration = index - 1;
+            shouldModifyIteration = true;
+            index = _collateralOwners.length;
+        }
+            
+        for (uint256 i = 0; i < count; ++i) {
+            --index;
+            if (shouldModifyIteration && index < start) {
+                index = indexOnModifyIteration;
+                shouldModifyIteration = false;
+            }
+            _removeCollateralDataIfNecessary(_collateralOwners[index]);
+        }
     }
     
     /**
@@ -658,6 +687,7 @@ contract ACOToken is ERC20 {
                 break;
             }
             tokenAmount = _exerciseAccount(accounts[i], tokenAmount, exerciseAccount);
+            _removeCollateralDataIfNecessary(accounts[i]);
         }
         require(tokenAmount == 0, "ACOToken::_exerciseAccounts: Invalid remaining amount");
     }
@@ -684,12 +714,10 @@ contract ACOToken is ERC20 {
             }
             
             (address exerciseAsset, uint256 amount) = getBaseExerciseData(valueToTransfer);
-            // To guarantee that the minter will be paid at least by 1 minimum collateral value.
+            // To guarantee that the minter will be paid.
             amount = amount.add(1);
             
             data.amount = data.amount.sub(valueToTransfer); 
-            
-            _removeCollateralDataIfNecessary(account);
             
             if (_isEther(exerciseAsset)) {
                 payable(account).transfer(amount);

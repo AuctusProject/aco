@@ -126,9 +126,10 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
      * @param minimumCollateral The minimum amount of collateral accepted to be received on the flash exercise.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function flashExercise(address acoToken, uint256 tokenAmount, uint256 minimumCollateral) public {
-        _flashExercise(acoToken, tokenAmount, minimumCollateral, new address[](0));
+    function flashExercise(address acoToken, uint256 tokenAmount, uint256 minimumCollateral, uint256 salt) public {
+        _flashExercise(acoToken, tokenAmount, minimumCollateral, salt, new address[](0));
     }
     
     /**
@@ -148,7 +149,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
         address[] memory accounts
     ) public {
         require(accounts.length > 0, "ACOFlashExercise::flashExerciseAccounts: Accounts are required");
-        _flashExercise(acoToken, tokenAmount, minimumCollateral, accounts);
+        _flashExercise(acoToken, tokenAmount, minimumCollateral, 0, accounts);
     }
     
      /**
@@ -183,11 +184,12 @@ contract ACOFlashExercise is IUniswapV2Callee {
         uint256 tokenAmount; 
         uint256 ethValue = 0;
         uint256 remainingAmount;
+        uint256 salt;
         address from;
         address[] memory accounts;
         {
         uint256 minimumCollateral;
-        (from, acoToken, tokenAmount, minimumCollateral, accounts) = abi.decode(data, (address, address, uint256, uint256, address[]));
+        (from, acoToken, tokenAmount, minimumCollateral, salt, accounts) = abi.decode(data, (address, address, uint256, uint256, uint256, address[]));
         
 		(address exerciseAddress, uint256 expectedAmount) = _getAcoExerciseData(acoToken, tokenAmount, accounts);
         
@@ -208,7 +210,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
         }
         
         if (accounts.length == 0) {
-            IACOToken(acoToken).exerciseFrom{value: ethValue}(from, tokenAmount);
+            IACOToken(acoToken).exerciseFrom{value: ethValue}(from, tokenAmount, salt);
         } else {
             IACOToken(acoToken).exerciseAccountsFrom{value: ethValue}(from, tokenAmount, accounts);
         }
@@ -249,12 +251,14 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
      * @param minimumCollateral The minimum amount of collateral accepted to be received on the flash exercise.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised when using standard method.
      * @param accounts The array of addresses to get the deposited collateral. Whether the array is empty the exercise will be executed using the standard method.
      */
     function _flashExercise(
         address acoToken, 
         uint256 tokenAmount, 
         uint256 minimumCollateral, 
+        uint256 salt,
         address[] memory accounts
     ) internal {
         address pair = getUniswapPair(acoToken);
@@ -270,7 +274,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
             amount1Out = expectedAmount;  
         }
         
-        IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), abi.encode(msg.sender, acoToken, tokenAmount, minimumCollateral, accounts));
+        IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), abi.encode(msg.sender, acoToken, tokenAmount, minimumCollateral, salt, accounts));
     }
     
     /**
