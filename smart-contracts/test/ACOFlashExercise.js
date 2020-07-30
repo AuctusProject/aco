@@ -245,7 +245,7 @@ describe("ACOFlashExercise", function() {
       await buidlerEthT1003C.connect(owner).approve(flashExercise.address, val3);
       let b1 = await addr2.getBalance();
       let exp1 = await flashExercise.getEstimatedReturn(buidlerEthT1003C.address, val3);
-      await flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1);
+      await flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1, 1);
 
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1.add(val2));  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(0); 
@@ -277,7 +277,7 @@ describe("ACOFlashExercise", function() {
       expect((await buidlerT1T210000P.getBaseExerciseData(amount3))[1]).to.equal(amount3);  
       await buidlerT1T210000P.connect(owner).approve(flashExercise.address, amount3);
       let exp2 = await flashExercise.getEstimatedReturn(buidlerT1T210000P.address, amount3);
-      await flashExercise.connect(owner).flashExercise(buidlerT1T210000P.address, amount3, exp2);
+      await flashExercise.connect(owner).flashExercise(buidlerT1T210000P.address, amount3, exp2, 1);
       let fee2 = value3.mul(fee).div(100000);
 
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1.add(value2));  
@@ -314,7 +314,7 @@ describe("ACOFlashExercise", function() {
       expect((await buidlerEthT1003P.getBaseExerciseData(a3))[1]).to.equal(a3);  
       await buidlerEthT1003P.connect(owner).approve(flashExercise.address, a3);
       let exp3 = await flashExercise.getEstimatedReturn(buidlerEthT1003P.address, a3);
-      await flashExercise.connect(owner).flashExercise(buidlerEthT1003P.address, a3, exp3);
+      await flashExercise.connect(owner).flashExercise(buidlerEthT1003P.address, a3, exp3, 1);
       let fee3 = v3.mul(fee).div(100000);
  
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v1.add(v2).add(one));  
@@ -576,13 +576,13 @@ describe("ACOFlashExercise", function() {
       let buidlerEthT210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
       await expect(
-        flashExercise.connect(owner).flashExercise(buidlerEthT210000C.address, val3, 0)
+        flashExercise.connect(owner).flashExercise(buidlerEthT210000C.address, val3, 0, 0)
       ).to.be.revertedWith("ACOFlashExercise::_flashExercise: Invalid Uniswap pair");
 
       let exp1 = await flashExercise.getEstimatedReturn(buidlerEthT1003C.address, val3);
       
       await expect(
-        flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1)
+        flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1, 0)
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
@@ -590,7 +590,7 @@ describe("ACOFlashExercise", function() {
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        flashExercise.connect(owner).flashExercise(buidlerEthT1003P.address, a1.add(a1), 0)
+        flashExercise.connect(owner).flashExercise(buidlerEthT1003P.address, a1.add(a1), 0, 0)
       ).to.be.revertedWith("ACOFlashExercise::uniswapV2Call: Insufficient collateral amount");
 
       await expect(
@@ -600,7 +600,7 @@ describe("ACOFlashExercise", function() {
       await buidlerEthT1003C.connect(owner).approve(flashExercise.address, val3);
 
       await expect(
-        flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1.add(1))
+        flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1.add(1), 0)
       ).to.be.revertedWith("ACOFlashExercise::uniswapV2Call: Minimum amount not satisfied");
 
       await expect(
@@ -610,7 +610,7 @@ describe("ACOFlashExercise", function() {
       await network.provider.send("evm_increaseTime", [86400]);
 
       await expect(
-        flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1)
+        flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1, 0)
       ).to.be.revertedWith("ACOToken::Expired");
 
       await expect(
