@@ -635,7 +635,7 @@ contract ACOToken is ERC20 {
      */
     function _exerciseOwners(address exerciseAccount, uint256 tokenAmount, uint256 salt) internal {
         uint256 accountsExercised = 0;
-        uint256 start = salt % _collateralOwners.length; // _collateralOwners.length never will be zero.
+        uint256 start = salt.mod(_collateralOwners.length);
         uint256 index = start;
         uint256 count = 0;
         while (tokenAmount > 0 && count < _collateralOwners.length) {
