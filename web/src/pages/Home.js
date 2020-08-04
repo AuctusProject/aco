@@ -259,6 +259,27 @@ class Home extends Component {
           </div>
         </div>
       </section>
+      <section id="audit">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-4 mb-lg-0 mb-4">
+              <h1>Security Audit</h1>
+              <p>To ensure top-notch security, ACO protocol smart contracts were audited by Open Zeppelin and have undergone rigorous internal testing.</p>
+              <p>We also have an ongoing bug bounty program where community members can report any bugs or vulnerabilities.</p>
+              <a href="[TODO]" target="_blank">View Report</a>
+            </div>
+            <div className="offset-lg-0 offset-md-2 col-md-4 text-center my-auto py-3 open-zeppelin-col">
+              <img className="logo-openzeppelin" src="/images/logo_openzeppelin.svg"></img>
+              <span className="arrow-link">Protocol Security<FontAwesomeIcon icon={faArrowRight} /></span>
+            </div>
+            <div className="col-md-4 text-center my-auto py-3 bug-bounty-col">
+              <div className="bug-bounty-value"><span>$</span>15,000<span>.00</span></div>
+              <span className="arrow-link">Bug Bounty<FontAwesomeIcon icon={faArrowRight} /></span>
+            </div>
+          </div>
+        </div>
+        <img className="audit-background" src="/images/audit_bg.png"></img>
+      </section>
       <section id="available-options">
         <div className="container">
           <h2 className="home-title">Available Options</h2>

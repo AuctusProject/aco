@@ -610,3 +610,90 @@
 .expiration-option.active {
     cursor: default;
 }
+
+#audit {
+    background-color: #2a2646;
+    color: #ffffff;
+    padding-top: 52px;
+    padding-bottom: 52px;
+    position: relative;
+}
+
+#audit .container {
+    z-index: 1;
+    position: relative;
+}
+
+#audit .bug-bounty-value {
+    font-size: 36px;
+    align-items: start;
+    display: flex;
+    justify-content: center;
+    line-height: 1;
+}
+
+#audit .bug-bounty-value span {
+    font-size: 16px;
+    padding-top: 3px;
+}
+
+#audit h1 {
+    font-size: 23px;
+    font-weight: 500;
+    letter-spacing: 0.58px;
+}
+
+#audit p {
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.7px;    
+}
+
+#audit a {
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 0.75px;
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+#audit .audit-background {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    max-height: 100%;
+}
+
+#audit .arrow-link {
+    font-size: 16px;
+    font-weight: 500;
+    color: #a8c708;
+    text-decoration: none;
+    cursor: pointer;
+    display: block;
+    margin-top: 16px;
+}
+
+#audit .arrow-link svg {
+    margin-left: 10px;
+    line-height: 1;
+}
+
+#audit .open-zeppelin-col {
+    border-right: 1px solid #7d7d7d80;
+}
+
+.logo-openzeppelin {
+    margin-top: 4px;
+    margin-bottom: 5px;
+}
+
+@media (max-width: 767px) {    
+    #audit .open-zeppelin-col {
+        border-right: none;
+        border-bottom: 1px solid #7d7d7d80;
+        width: auto;
+        margin: auto;
+    }
+
+}
