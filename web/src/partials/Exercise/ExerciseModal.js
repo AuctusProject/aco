@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getTokenStrikePriceRelation, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/acoTokenMethods'
+import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/acoTokenMethods'
 import { zero, formatDate, fromDecimals, toDecimals, isEther, acoFeePrecision, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
@@ -20,12 +20,10 @@ import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData
 class ExerciseModal extends Component {
   constructor(props) {
     super(props)
-    this.state = { maxExercisedAccounts: null, flashAvailable: null, selectedTab: null, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
+    this.state = { maxExercisedAccounts: 0, flashAvailable: null, selectedTab: null, minimumReceivedAmount: "", optionsAmount: "", collateralValue: "", exerciseFee: "", payValue: "", payAssetBalance: "" }
   }
 
   componentDidMount = () => {
-    getMaxExercisedAccounts(this.props.position.option).then(result => this.setState({ maxExercisedAccounts: result }))
-
     getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result => {
       this.setState({ payAssetBalance: result, selectedTab: ((result === "0") ? 2 : 1) })
     })
@@ -267,7 +265,7 @@ class ExerciseModal extends Component {
   }
 
   setPriceFromExerciseData = (exerciseData) => {
-    if (exerciseData && exerciseData["0"] != 0 && exerciseData["1"] != 0) {
+    if (exerciseData && exerciseData["0"] !== 0 && exerciseData["1"] !== 0) {
       var amountRequired = new Web3Utils.BN(exerciseData["0"])
       var expectedAmount = new Web3Utils.BN(exerciseData["1"])
       var precision = new Web3Utils.BN(10).pow(new Web3Utils.BN(this.props.position.option.underlyingInfo.decimals))
