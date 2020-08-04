@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, getBinanceSymbolForPair } from '../../util/constants'
 import { getOptionFormattedPrice, getBalanceOfAsset } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
@@ -22,13 +22,32 @@ import StepsModal from '../StepsModal/StepsModal'
 class SimpleBuyTab extends Component {
   constructor(props) {
     super(props)
-    this.state = { selectedType: 1, selectedOption: null, opynPrice: null, deribitPrice: null, qtyValue: "1.00", strikeAssetBalance: null }
+    this.state = { 
+      selectedType: 1, 
+      selectedOption: null, 
+      opynPrice: null, 
+      deribitPrice: null, 
+      qtyValue: "1.00", 
+      strikeAssetBalance: null,
+      currentPairPrice: null 
+    }
   }
 
   componentDidMount = () => {
     if (this.props.selectedPair) {
       this.selectType(this.state.selectedType)
       this.refreshAccountBalance()
+      this.setPairCurrentPrice()
+    }
+  }
+
+  setPairCurrentPrice = () => {
+    if (this.props.selectedPair) {
+      var pairSymbol = getBinanceSymbolForPair(this.props.selectedPair)
+      var price = this.context.ticker && this.context.ticker.data[pairSymbol] && this.context.ticker.data[pairSymbol].currentClosePrice
+      if (price) {
+        this.setState({currentPairPrice: price})
+      }
     }
   }
 
@@ -43,6 +62,9 @@ class SimpleBuyTab extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
+    if (this.props.selectedPair !== prevProps.selectedPair || !this.state.currentPairPrice) {
+      this.setPairCurrentPrice()
+    }
     if (this.props.selectedPair !== prevProps.selectedPair ||
       this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
       this.selectType(this.state.selectedType)
@@ -433,7 +455,7 @@ class SimpleBuyTab extends Component {
       </div>
       <div className="chart-and-prices">
         <div className="option-chart-wrapper">
-          <OptionChart isCall={this.state.selectedType === 1} isBuy={true} strikePrice={priceFromDecimals} optionPrice={optionPrice} quantity={(!!this.state.qtyValue ? parseFloat(this.state.qtyValue) : null)}/>
+          <OptionChart isCall={this.state.selectedType === 1} currentPrice={(!!this.state.currentPairPrice ? parseFloat(this.state.currentPairPrice) : null)} isBuy={true} strikePrice={priceFromDecimals} optionPrice={optionPrice} quantity={(!!this.state.qtyValue ? parseFloat(this.state.qtyValue) : null)}/>
         </div>
         <div className="prices-wrapper">
           <div className="input-column">
@@ -470,6 +492,7 @@ class SimpleBuyTab extends Component {
 }
 
 SimpleBuyTab.contextTypes = {
-  web3: PropTypes.object
+  web3: PropTypes.object,
+  ticker: PropTypes.object
 }
 export default withRouter(SimpleBuyTab)
