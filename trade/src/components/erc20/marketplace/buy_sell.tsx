@@ -4,12 +4,13 @@ import { connect } from 'react-redux';
 import styled from 'styled-components';
 
 import { ZERO, ONE } from '../../../common/constants';
+import { WalletIcon } from '../../common/icons/wallet_icon';
 import { initWallet, startBuySellLimitSteps, startBuySellMarketSteps } from '../../../store/actions';
 import { fetchTakerAndMakerFee } from '../../../store/relayer/actions';
-import { getCurrencyPair, getOrderPriceSelected, getWeb3State, getBaseToken } from '../../../store/selectors';
+import { getCurrencyPair, getOrderPriceSelected, getWeb3State, getBaseToken, getQuoteTokenBalance, getBaseTokenBalance } from '../../../store/selectors';
 import { themeDimensions } from '../../../themes/commons';
 import { getKnownTokens } from '../../../util/known_tokens';
-import { tokenSymbolToDisplayString } from '../../../util/tokens';
+import { tokenSymbolToDisplayString, tokenAmountInUnits } from '../../../util/tokens';
 import {
     ButtonIcons,
     ButtonVariant,
@@ -20,6 +21,7 @@ import {
     StoreState,
     Web3State,
     Token,
+    TokenBalance,
 } from '../../../util/types';
 import { BigNumberInput } from '../../common/big_number_input';
 import { Button } from '../../common/button';
@@ -35,6 +37,8 @@ interface StateProps {
     currencyPair: CurrencyPair;
     orderPriceSelected: BigNumber | null;
     baseToken: Token | null;
+    baseTokenBalance: TokenBalance | null;
+    quoteTokenBalance: TokenBalance | null;
 }
 
 interface DispatchProps {
@@ -198,6 +202,30 @@ const Separator = styled.div`
     padding-top: 12px;
 `;
 
+const BalanceContainer = styled.div`
+    display: flex;
+    letter-spacing: 0.6px;
+    text-align: left;
+    color: #e6e6e6;
+    font-size: 12px;
+    margin-bottom: 12px;    
+    align-items: center;
+
+    svg {
+        height: 14px;
+        color: #e6e6e6;
+        margin-right: 6px;
+    }
+
+    span {
+        margin-left: 6px;
+        color: white;
+        a {
+            color: white;
+        }
+    }
+`;
+
 const BigInputNumberTokenLabel = (props: { tokenSymbol: string }) => (
     <TokenContainer>
         <TokenText>{tokenSymbolToDisplayString(props.tokenSymbol)}</TokenText>
@@ -230,7 +258,7 @@ class BuySell extends React.Component<Props, State> {
     };
 
     public render = () => {
-        const { currencyPair, web3State, baseToken } = this.props;
+        const { currencyPair, web3State, baseToken, quoteTokenBalance, baseTokenBalance } = this.props;
         const { makerAmount, price, expiration, tab, orderType, error } = this.state;
 
         const buySellInnerTabs = [
@@ -264,7 +292,22 @@ class BuySell extends React.Component<Props, State> {
         if (maxExpiration < ONE) {
             maxExpiration = ONE;
         }
-        
+
+        let balance = ""
+        let mintLink = null
+        if (tab === OrderSide.Buy && quoteTokenBalance) {
+            balance += tokenAmountInUnits(quoteTokenBalance.balance, quoteTokenBalance.token.decimals, quoteTokenBalance.token.displayDecimals)
+            balance += " " + tokenSymbolToDisplayString(quoteTokenBalance.token.symbol)
+        }
+        else if (baseTokenBalance){
+            balance += tokenAmountInUnits(baseTokenBalance.balance, baseTokenBalance.token.decimals, baseTokenBalance.token.displayDecimals)
+            balance += " ACO";
+            mintLink = <span>(<a href={"/advanced/mint/"+baseTokenBalance.token.address}>Mint</a>)</span>
+        }
+        else {
+            balance = "-"
+        }
+
         return (
             <>
                 <BuySellWrapper>
@@ -286,6 +329,7 @@ class BuySell extends React.Component<Props, State> {
                     </TabsContainer>
                     <InnerTabs tabs={buySellInnerTabs} />
                     <Content>
+                        <BalanceContainer><WalletIcon/>{balance}{mintLink}</BalanceContainer>
                         <LabelFieldContainer>
                             <LabelContainer>
                                 <Label>Amount</Label>    
@@ -456,7 +500,9 @@ const mapStateToProps = (state: StoreState): StateProps => {
         web3State: getWeb3State(state),
         currencyPair: getCurrencyPair(state),
         orderPriceSelected: getOrderPriceSelected(state),
-        baseToken: getBaseToken(state)
+        baseToken: getBaseToken(state),
+        quoteTokenBalance: getQuoteTokenBalance(state),
+        baseTokenBalance: getBaseTokenBalance(state)
     };
 };
 
