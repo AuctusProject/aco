@@ -626,7 +626,7 @@
 
 #audit .bug-bounty-value {
     font-size: 36px;
-    align-items: start;
+    align-items: flex-start;
     display: flex;
     justify-content: center;
     line-height: 1;
@@ -683,6 +683,11 @@
     border-right: 1px solid #7d7d7d80;
 }
 
+#audit .open-zeppelin-col a,
+#audit .bug-bounty-col a {
+    text-decoration: none;
+}
+
 .logo-openzeppelin {
     margin-top: 4px;
     margin-bottom: 5px;
@@ -695,5 +700,4 @@
         width: auto;
         margin: auto;
     }
-
 }
