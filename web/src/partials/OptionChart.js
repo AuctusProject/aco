@@ -26,6 +26,7 @@ const axesProprerties = JSON.stringify({
 class OptionChart extends Component {
   constructor() {
     super()
+    this.chartReference = React.createRef()
     this.state = {
       chart: this.getBaseChart(),
       xAxes: {},
@@ -35,7 +36,6 @@ class OptionChart extends Component {
   static defaultProps = {
     quantity: 1,
     volatility: 20,
-    points: 8,
     isBuy: true,
     isCall: true       
   }
@@ -49,8 +49,9 @@ class OptionChart extends Component {
         lineTension: 0.01,
         showLine: true,
         pointRadius: 0,
-        hitRadius: 0,
-        hoverRadius: 0,
+        hitRadius: 4,
+        pointHitRadius: 4,
+        hoverRadius: 3,
         hoverBorderWidth: 0,
         data: [],
         backgroundColor: '#a8c708'
@@ -75,23 +76,22 @@ class OptionChart extends Component {
         min = Math.max(Math.min(this.props.strikePrice, this.props.currentPrice) - offset, 0)
         max = Math.max(this.props.strikePrice, this.props.currentPrice)
       }
-      var step = Math.round(precision * (max - min) / this.props.points) / precision
-      var extraPoints = Math.ceil(this.props.points / 3);
+      var step = Math.round(precision * (max - min) / 8) / precision
       if (this.props.isCall && this.props.isBuy) {
-        min = min - extraPoints * step
+        min = min - 2.6 * step
       } else {
-        max = max + extraPoints * step
+        max = max + 2.6 * step
       }
       var x = min
       var inflectionPoint = false
       while (x <= max) {
         chart.datasets[0].data.push({x: x, y: this.getProfit(x)})
-        if (!inflectionPoint && x + step > this.props.strikePrice) {
+        if (!inflectionPoint && x + 1 > this.props.strikePrice) {
           chart.datasets[0].data.push({x: this.props.strikePrice, y: this.getProfit(this.props.strikePrice)})
           inflectionPoint = true
         }
-        x += step
-        if (x < max && x + step > max) x = max
+        x += 1
+        if (x < max && x + 1 > max) x = max
       }
       const xAxes = JSON.parse(axesProprerties)
       xAxes.scaleLabel.labelString = "Price"
@@ -152,6 +152,7 @@ class OptionChart extends Component {
     return (
     <div className="chart-wrapper">
       <Scatter
+        ref={this.chartReference}
         data={this.state.chart}
         legend={{display: false}}
         options={{
@@ -162,7 +163,52 @@ class OptionChart extends Component {
             yAxes: [this.state.yAxes]
           },
           tooltips: {
-            enabled: false
+            enabled: false,
+						mode: 'index',
+						position: 'nearest',
+            custom: (tooltip) => {
+			        let tooltipEl = document.getElementById('option-chartjs-tooltip');
+              if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.id = 'option-chartjs-tooltip';
+                this.chartReference.current.chartInstance.canvas.parentNode.appendChild(tooltipEl);
+              }
+
+              if (tooltip.opacity === 0) {
+                tooltipEl.style.opacity = 0;
+                return;
+              }
+
+              tooltipEl.classList.remove('above', 'below', 'no-transform');
+              if (tooltip.yAlign) {
+                tooltipEl.classList.add(tooltip.yAlign);
+              } else {
+                tooltipEl.classList.add('no-transform');
+              }
+
+              const tableWidth = 82;
+              if (tooltip.body) {
+                let data = tooltip.body[0].lines[0].split(',');
+                const x = Math.round(parseFloat(data[0].substring(1)) * 100) / 100;
+                const y = Math.round(parseFloat(data[1].substring(0, data[1].length - 1)) * 100) / 100;
+                tooltipEl.innerHTML = "<table style='width:" + tableWidth + "px;'><tr style='line-height:1.2;'><td style='float:right;'>P/L:</td><td style='padding-left: 5px;'>" + y + "</td></tr><tr style='line-height:1.2;'><td style='float:right;'>Price:</td><td style='padding-left: 5px;'>" + x + "</td></tr></table>";
+              }
+
+              const maxWidth = this.chartReference.current.chartInstance.canvas.parentNode.clientWidth;
+              let left = this.chartReference.current.chartInstance.canvas.offsetLeft + tooltip.caretX;
+              if (left + tableWidth + 4 > maxWidth) {
+                left = left - tableWidth - 2;
+              }
+              tooltipEl.style.opacity = 1;
+              tooltipEl.style.position = 'absolute';
+              tooltipEl.style.left = left + 'px';
+              tooltipEl.style.top = this.chartReference.current.chartInstance.canvas.offsetTop + tooltip.caretY + 'px';
+              tooltipEl.style.fontFamily = 'Roboto';
+              tooltipEl.style.fontSize = '11px';
+              tooltipEl.style.padding ='2px 2px';
+              tooltipEl.style.backgroundColor = 'black';
+              tooltipEl.style.borderRadius = '4px';
+            }
           }
         }} />
     </div>)
