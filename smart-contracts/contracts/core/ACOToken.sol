@@ -8,7 +8,7 @@ import "../libs/Strings.sol";
 /**
  * @title ACOToken
  * @dev The implementation of the ACO token.
- * The token is ERC20 compliance.
+ * The token is ERC20 compliant.
  */
 contract ACOToken is ERC20 {
     using Address for address;
@@ -114,14 +114,14 @@ contract ACOToken is ERC20 {
     uint8 public strikeAssetDecimals;
     
     /**
-     * @dev Underlying precision. (10 ^ underlyingDecimals)
-     */
-    uint256 internal underlyingPrecision;
-    
-    /**
      * @dev The maximum number of accounts that can be exercised by transaction.
      */
     uint256 public maxExercisedAccounts;
+    
+    /**
+     * @dev Underlying precision. (10 ^ underlyingDecimals)
+     */
+    uint256 internal underlyingPrecision;
     
     /**
      * @dev Accounts that generated tokens with a collateral deposit.
@@ -158,7 +158,7 @@ contract ACOToken is ERC20 {
     }
     
     /**
-     * @dev Modifier to prevents a contract from calling itself during the function execution.
+     * @dev Modifier to prevent a contract from calling itself during the function execution.
      */
     modifier nonReentrant() {
         require(_notEntered, "ACOToken::Reentry");
@@ -170,7 +170,7 @@ contract ACOToken is ERC20 {
     /**
      * @dev Function to initialize the contract.
      * It should be called when creating the token.
-     * It must be called only once. The `assert` is to guarantee that behavior.
+     * It must be called only once. The first `require` is to guarantee that behavior.
      * @param _underlying Address of the underlying asset (0x0 for Ethereum).
      * @param _strikeAsset Address of the strike asset (0x0 for Ethereum).
      * @param _isCall True if the type is CALL, false for PUT.
@@ -309,8 +309,7 @@ contract ACOToken is ERC20 {
     function assignableTokens(address account) public view returns(uint256) {
         if (_notExpired()) {
             return _getAssignableAmount(account);
-        }
-        else {
+        } else {
             return 0;
         }
     }
@@ -478,7 +477,7 @@ contract ACOToken is ERC20 {
      * @param account Address of the account.
      */
     function redeemFrom(address account) external {
-        require(tokenData[account].amount <= allowance(account, msg.sender), "ACOToken::redeemFrom: No allowance");
+        require(tokenData[account].amount <= allowance(account, msg.sender), "ACOToken::redeemFrom: Allowance too low");
         _redeem(account);
     }
     
@@ -487,9 +486,10 @@ contract ACOToken is ERC20 {
      * The paid amount is sent to the collateral owners that were assigned.
      * NOTE: The function only works when the token is NOT expired. 
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function exercise(uint256 tokenAmount) external payable {
-        _exercise(msg.sender, tokenAmount);
+    function exercise(uint256 tokenAmount, uint256 salt) external payable {
+        _exercise(msg.sender, tokenAmount, salt);
     }
     
     /**
@@ -500,9 +500,10 @@ contract ACOToken is ERC20 {
      * NOTE: The function only works when the token is NOT expired. 
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function exerciseFrom(address account, uint256 tokenAmount) external payable {
-        _exercise(account, tokenAmount);
+    function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable {
+        _exercise(account, tokenAmount, salt);
     }
     
     /**
@@ -573,33 +574,11 @@ contract ACOToken is ERC20 {
     }
     
     /**
-     * @dev Internal function to transfer tokens. 
-     * The token transfer only works when the token is NOT expired. 
-     * @param sender Source of the tokens.
-     * @param recipient Destination address for the tokens.
-     * @param amount Amount of tokens.
-     */
-    function _transfer(address sender, address recipient, uint256 amount) internal override {
-        super._transferAction(sender, recipient, amount);
-    }
-    
-    /**
-     * @dev Internal function to set the token permission from an account to another address. 
-     * The token approval only works when the token is NOT expired. 
-     * @param owner Address of the token owner.
-     * @param spender Address of the spender authorized.
-     * @param amount Amount of tokens authorized.
-     */
-    function _approve(address owner, address spender, uint256 amount) internal override {
-        super._approveAction(owner, spender, amount);
-    }
-    
-    /**
      * @dev Internal function to transfer collateral. 
      * When there is a fee, the calculated fee is also transferred to the destination fee address.
      * The collateral destination is always the transaction sender address.
      * @param account Address of the account.
-     * @param collateralAmount Amount of collateral to be redeemed.
+     * @param collateralAmount Amount of collateral to be transferred.
      * @param fee Amount of fee charged.
      */
     function _transferCollateral(address account, uint256 collateralAmount, uint256 fee) internal {
@@ -626,10 +605,11 @@ contract ACOToken is ERC20 {
      * @dev Internal function to exercise the tokens from an account. 
      * @param account Address of the account that is exercising.
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function _exercise(address account, uint256 tokenAmount) nonReentrant internal {
+    function _exercise(address account, uint256 tokenAmount, uint256 salt) nonReentrant internal {
         _validateAndBurn(account, tokenAmount, maxExercisedAccounts);
-         _exerciseOwners(account, tokenAmount);
+         _exerciseOwners(account, tokenAmount, salt);
         (uint256 collateralAmount, uint256 fee) = getCollateralOnExercise(tokenAmount);
         _transferCollateral(account, collateralAmount, fee);
     }
@@ -651,22 +631,48 @@ contract ACOToken is ERC20 {
      * @dev Internal function to exercise the assignable tokens from the stored list of collateral owners. 
      * @param exerciseAccount Address of the account that is exercising.
      * @param tokenAmount Amount of tokens.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function _exerciseOwners(address exerciseAccount, uint256 tokenAmount) internal {
+    function _exerciseOwners(address exerciseAccount, uint256 tokenAmount, uint256 salt) internal {
         uint256 accountsExercised = 0;
-        uint256 start = _collateralOwners.length;
-        for (uint256 i = start; i > 0; --i) {
-            if (tokenAmount == 0) {
-                break;
-            }
-            uint256 remainingAmount = _exerciseAccount(_collateralOwners[i-1], tokenAmount, exerciseAccount);
+        uint256 start = salt.mod(_collateralOwners.length);
+        uint256 index = start;
+        uint256 count = 0;
+        while (tokenAmount > 0 && count < _collateralOwners.length) {
+            
+            uint256 remainingAmount = _exerciseAccount(_collateralOwners[index], tokenAmount, exerciseAccount);
             if (remainingAmount < tokenAmount) {
                 accountsExercised++;
-				        require(accountsExercised <= maxExercisedAccounts, "ACOToken::_exerciseOwners: Too many accounts to exercise");
+                require(accountsExercised < maxExercisedAccounts || remainingAmount == 0, "ACOToken::_exerciseOwners: Too many accounts to exercise");
             }
             tokenAmount = remainingAmount;
+            
+            ++index;
+            if (index == _collateralOwners.length) {
+                index = 0;
+            }
+            ++count;
         }
         require(tokenAmount == 0, "ACOToken::_exerciseOwners: Invalid remaining amount");
+        
+        uint256 indexOnModifyIteration;
+        bool shouldModifyIteration = false;
+        if (index == 0) {
+            index = _collateralOwners.length;
+        } else if (index <= start) {
+            indexOnModifyIteration = index - 1;
+            shouldModifyIteration = true;
+            index = _collateralOwners.length;
+        }
+            
+        for (uint256 i = 0; i < count; ++i) {
+            --index;
+            if (shouldModifyIteration && index < start) {
+                index = indexOnModifyIteration;
+                shouldModifyIteration = false;
+            }
+            _removeCollateralDataIfNecessary(_collateralOwners[index]);
+        }
     }
     
     /**
@@ -681,6 +687,7 @@ contract ACOToken is ERC20 {
                 break;
             }
             tokenAmount = _exerciseAccount(accounts[i], tokenAmount, exerciseAccount);
+            _removeCollateralDataIfNecessary(accounts[i]);
         }
         require(tokenAmount == 0, "ACOToken::_exerciseAccounts: Invalid remaining amount");
     }
@@ -707,12 +714,10 @@ contract ACOToken is ERC20 {
             }
             
             (address exerciseAsset, uint256 amount) = getBaseExerciseData(valueToTransfer);
-            // To guarantee that the minter will be paid at least by 1 minimum collateral value.
+            // To guarantee that the minter will be paid.
             amount = amount.add(1);
             
             data.amount = data.amount.sub(valueToTransfer); 
-            
-            _removeCollateralDataIfNecessary(account);
             
             if (_isEther(exerciseAsset)) {
                 payable(account).transfer(amount);
@@ -735,7 +740,6 @@ contract ACOToken is ERC20 {
         
         // Whether an account has deposited collateral it only can exercise the extra amount of unassignable tokens.
         if (_accountHasCollateral(account)) {
-            require(balanceOf(account) > tokenData[account].amount, "ACOToken::_validateAndBurn: Tokens compromised");
             require(tokenAmount <= balanceOf(account).sub(tokenData[account].amount), "ACOToken::_validateAndBurn: Token amount not available"); 
         }
         
@@ -832,7 +836,7 @@ contract ACOToken is ERC20 {
      * @return Whether the token is NOT expired.
      */
     function _notExpired() internal view returns(bool) {
-        return now <= expiryTime;
+        return now < expiryTime;
     }
     
     /**
@@ -901,12 +905,12 @@ contract ACOToken is ERC20 {
     function _getFormattedExpiryTime() internal view returns(string memory) {
         (uint256 year, uint256 month, uint256 day, uint256 hour, uint256 minute,) = BokkyPooBahsDateTimeLibrary.timestampToDateTime(expiryTime); 
         return string(abi.encodePacked(
-            _getNumberWithTwoCaracters(day),
+            _getNumberWithTwoCharacters(day),
             _getMonthFormatted(month),
             _getYearFormatted(year),
             "-",
-            _getNumberWithTwoCaracters(hour),
-            _getNumberWithTwoCaracters(minute),
+            _getNumberWithTwoCharacters(hour),
+            _getNumberWithTwoCharacters(minute),
             "UTC"
             )); 
     }
@@ -963,7 +967,7 @@ contract ACOToken is ERC20 {
      * @dev Internal function to get the number with 2 characters.
      * @return The 2 characters for the number.
      */
-    function _getNumberWithTwoCaracters(uint256 number) internal pure returns(string memory) {
+    function _getNumberWithTwoCharacters(uint256 number) internal pure returns(string memory) {
         string memory _string = Strings.toString(number);
         if (number < 10) {
             return string(abi.encodePacked("0", _string));
@@ -972,23 +976,31 @@ contract ACOToken is ERC20 {
         }
     }
     
-    /**
+	 /**
      * @dev Internal function to get the strike price formatted.
+	 * The function returns a string for the strike price with a point (character '.') in the proper position considering the strike asset decimals.
+	 * Beyond that, the string returned presents only representative digits.
+	 * For example, an asset with 18 decimals:
+	 *  - For 100000000000000000000 the return is "100"
+	 *  - For 100100000000000000000 the return is "100.1"
+	 *  - For 100000000000000000 the return is "0.1"
+	 *  - For 100000000000000 the return is "0.0001"
+	 *  - For 100000000000000000001 the return is "100.000000000000000001"
      * @return The strike price formatted.
      */
     function _getFormattedStrikePrice() internal view returns(string memory) {
         uint256 digits;
         uint256 count;
-        int256 representativeAt = -1;
+        bool foundRepresentativeDigit = false;
         uint256 addPointAt = 0;
         uint256 temp = strikePrice;
         uint256 number = strikePrice;
         while (temp != 0) {
-            if (representativeAt == -1 && (temp % 10 != 0 || count == uint256(strikeAssetDecimals))) {
-                representativeAt = int256(digits);
+            if (!foundRepresentativeDigit && (temp % 10 != 0 || count == uint256(strikeAssetDecimals))) {
+                foundRepresentativeDigit = true;
                 number = temp;
             }
-            if (representativeAt >= 0) {
+            if (foundRepresentativeDigit) {
                 if (count == uint256(strikeAssetDecimals)) {
                     addPointAt = digits;
                 }
@@ -1012,9 +1024,7 @@ contract ACOToken is ERC20 {
             } else if (number == 0) {
                 buffer[index--] = byte("0");
             } else {
-                if (representativeAt <= int256(i)) {
-                    buffer[index--] = byte(uint8(48 + number % 10));
-                }
+                buffer[index--] = byte(uint8(48 + number % 10));
                 number /= 10;
             }
         }

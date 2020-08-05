@@ -40,10 +40,8 @@ interface IACOToken is IERC20 {
     function burnFrom(address account, uint256 tokenAmount) external;
     function redeem() external;
     function redeemFrom(address account) external;
-    function exercise(uint256 tokenAmount) external payable;
-    function exerciseFrom(address account, uint256 tokenAmount) external payable;
+    function exercise(uint256 tokenAmount, uint256 salt) external payable;
+    function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable;
     function exerciseAccounts(uint256 tokenAmount, address[] calldata accounts) external payable;
     function exerciseAccountsFrom(address account, uint256 tokenAmount, address[] calldata accounts) external payable;
-    function clear() external;
-    function clearFrom(address account) external;
 }
