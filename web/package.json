@@ -58,7 +58,7 @@
     "react-app-polyfill": "^1.0.1",
     "react-autosize-textarea": "^7.0.0",
     "react-bootstrap": "^1.0.0-beta.9",
-    "react-chartjs-2": "^2.9.0",
+    "react-chartjs-2": "^2.10.0",
     "react-color": "^2.17.3",
     "react-compound-slider": "^2.3.0",
     "react-dev-utils": "^9.0.1",

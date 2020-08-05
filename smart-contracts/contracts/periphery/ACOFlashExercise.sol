@@ -4,7 +4,7 @@ import "../interfaces/IWETH.sol";
 import "../interfaces/IUniswapV2Pair.sol";
 import "../interfaces/IUniswapV2Callee.sol";
 import "../interfaces/IUniswapV2Factory.sol";
-import "../libs/UniswapV2Library.sol";
+import "../interfaces/IUniswapV2Router02.sol";
 import "../interfaces/IACOToken.sol";
 
 /**
@@ -17,6 +17,11 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @dev The Uniswap factory address.
      */
     address immutable public uniswapFactory;
+    
+    /**
+     * @dev The Uniswap Router address.
+     */
+    address immutable public uniswapRouter;
 
     /**
      * @dev The WETH address used on Uniswap.
@@ -33,9 +38,10 @@ contract ACOFlashExercise is IUniswapV2Callee {
      */
     bytes4 immutable internal _transferSelector;
     
-    constructor(address _uniswapFactory, address _weth) public {
-        uniswapFactory = _uniswapFactory;
-        weth = _weth;
+    constructor(address _uniswapRouter) public {
+        uniswapRouter = _uniswapRouter;
+        uniswapFactory = IUniswapV2Router02(_uniswapRouter).factory();
+        weth = IUniswapV2Router02(_uniswapRouter).WETH();
         
         _approveSelector = bytes4(keccak256(bytes("approve(address,uint256)")));
         _transferSelector = bytes4(keccak256(bytes("transfer(address,uint256)")));
@@ -87,7 +93,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
                 }
                 
                 if (reserveIn > 0 && reserveOut > 0) {
-                    uint256 amountRequired = UniswapV2Library.getAmountIn(expectedAmount, reserveIn, reserveOut);
+                    uint256 amountRequired = IUniswapV2Router02(uniswapRouter).getAmountIn(expectedAmount, reserveIn, reserveOut);
                     return (amountRequired, expectedAmount);
                 }
             }
@@ -120,9 +126,10 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
      * @param minimumCollateral The minimum amount of collateral accepted to be received on the flash exercise.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised.
      */
-    function flashExercise(address acoToken, uint256 tokenAmount, uint256 minimumCollateral) public {
-        _flashExercise(acoToken, tokenAmount, minimumCollateral, new address[](0));
+    function flashExercise(address acoToken, uint256 tokenAmount, uint256 minimumCollateral, uint256 salt) public {
+        _flashExercise(acoToken, tokenAmount, minimumCollateral, salt, new address[](0));
     }
     
     /**
@@ -142,11 +149,11 @@ contract ACOFlashExercise is IUniswapV2Callee {
         address[] memory accounts
     ) public {
         require(accounts.length > 0, "ACOFlashExercise::flashExerciseAccounts: Accounts are required");
-        _flashExercise(acoToken, tokenAmount, minimumCollateral, accounts);
+        _flashExercise(acoToken, tokenAmount, minimumCollateral, 0, accounts);
     }
     
      /**
-     * @dev External function to called by the Uniswap pair on flash swap transaction.
+     * @dev External function to be called by the Uniswap pair on flash swap transaction.
      * @param sender Address of the sender of the Uniswap swap. It must be the ACOFlashExercise contract.
      * @param amount0Out Amount of token0 on Uniswap pair to be received on the flash swap.
      * @param amount1Out Amount of token1 on Uniswap pair to be received on the flash swap.
@@ -170,18 +177,19 @@ contract ACOFlashExercise is IUniswapV2Callee {
         (uint256 reserve0, uint256 reserve1,) = IUniswapV2Pair(msg.sender).getReserves();
         uint256 reserveIn = amount0Out == 0 ? reserve0 : reserve1; 
         uint256 reserveOut = amount0Out == 0 ? reserve1 : reserve0; 
-        amountRequired = UniswapV2Library.getAmountIn((amount0Out + amount1Out), reserveIn, reserveOut);
+        amountRequired = IUniswapV2Router02(uniswapRouter).getAmountIn((amount0Out + amount1Out), reserveIn, reserveOut);
         }
         
         address acoToken;
         uint256 tokenAmount; 
         uint256 ethValue = 0;
         uint256 remainingAmount;
+        uint256 salt;
         address from;
         address[] memory accounts;
         {
         uint256 minimumCollateral;
-        (from, acoToken, tokenAmount, minimumCollateral, accounts) = abi.decode(data, (address, address, uint256, uint256, address[]));
+        (from, acoToken, tokenAmount, minimumCollateral, salt, accounts) = abi.decode(data, (address, address, uint256, uint256, uint256, address[]));
         
 		(address exerciseAddress, uint256 expectedAmount) = _getAcoExerciseData(acoToken, tokenAmount, accounts);
         
@@ -202,7 +210,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
         }
         
         if (accounts.length == 0) {
-            IACOToken(acoToken).exerciseFrom{value: ethValue}(from, tokenAmount);
+            IACOToken(acoToken).exerciseFrom{value: ethValue}(from, tokenAmount, salt);
         } else {
             IACOToken(acoToken).exerciseAccountsFrom{value: ethValue}(from, tokenAmount, accounts);
         }
@@ -243,12 +251,14 @@ contract ACOFlashExercise is IUniswapV2Callee {
      * @param acoToken Address of the ACO token.
      * @param tokenAmount Amount of tokens to be exercised.
      * @param minimumCollateral The minimum amount of collateral accepted to be received on the flash exercise.
+     * @param salt Random number to calculate the start index of the array of accounts to be exercised when using standard method.
      * @param accounts The array of addresses to get the deposited collateral. Whether the array is empty the exercise will be executed using the standard method.
      */
     function _flashExercise(
         address acoToken, 
         uint256 tokenAmount, 
         uint256 minimumCollateral, 
+        uint256 salt,
         address[] memory accounts
     ) internal {
         address pair = getUniswapPair(acoToken);
@@ -264,7 +274,7 @@ contract ACOFlashExercise is IUniswapV2Callee {
             amount1Out = expectedAmount;  
         }
         
-        IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), abi.encode(msg.sender, acoToken, tokenAmount, minimumCollateral, accounts));
+        IUniswapV2Pair(pair).swap(amount0Out, amount1Out, address(this), abi.encode(msg.sender, acoToken, tokenAmount, minimumCollateral, salt, accounts));
     }
     
     /**

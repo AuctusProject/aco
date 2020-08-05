@@ -8,7 +8,6 @@ import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import StepsModal from '../StepsModal/StepsModal'
-import OptionChart from '../OptionChart'
 import { getNextNonce, checkTransactionIsMined } from '../../util/web3Methods'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
@@ -380,6 +379,10 @@ class SimpleWriteStep2 extends Component {
     return "-"
   }
 
+  getSummaryDescription = () => {
+    return <>Receive {this.getOptionPremium()} in return for assuming the obligation to {this.props.option.isCall ? "sell" : "buy"} {this.getFormattedOptionsAmount()} {this.props.option.underlyingInfo.symbol} for {getOptionFormattedPrice(this.props.option)} each.</>
+  }
+
   render() {
     return <div className="simple-write-step2">
       <div className="collateral-input">
@@ -391,11 +394,12 @@ class SimpleWriteStep2 extends Component {
         </div>
       </div>
       <div className="chart-and-summary">
-        <div className="write-chart-wrapper">
-          <OptionChart isCall={this.props.option.isCall} currentPrice={this.props.currentPairPrice} isBuy={false} strikePrice={parseFloat(fromDecimals(this.props.option.strikePrice, this.props.option.strikeAssetInfo.decimals))} optionPrice={this.getAcoOptionPrice()} quantity={(!!this.getOptionsAmount() && !isNaN(this.getOptionsAmount()) ? parseFloat(this.getOptionsAmount()) : null)}/>
-        </div>
         <div className="summary-wrapper">
-          <div className="summary-title">SUMMARY</div>
+          <div className="summary-title-wrapper">
+            <div className="summary-title">SUMMARY</div>
+            {this.canWrite() && <><div className="summary-separator"></div>
+            <div className="summary-description">{this.getSummaryDescription()}</div></>}
+          </div>
           <div className="summary-content">
             <div className="summary-items">
               <div className="summary-item summary-highlight">
