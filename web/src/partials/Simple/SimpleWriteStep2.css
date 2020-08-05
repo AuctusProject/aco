@@ -15,6 +15,8 @@
     border: solid 1px #4c4c4c;
     margin: 20px auto;    
     padding: 10px 0;
+    width: 380px;
+    max-width: calc(100% - 40px);
 }
 
 .collateral-label {
@@ -63,6 +65,9 @@
     display: flex;
     flex-direction: row;
     align-items: flex-start;
+    margin: auto;    
+    width: 380px;
+    max-width: calc(100% - 40px);
 }
 
 .chart-and-summary .write-chart-wrapper {
@@ -75,7 +80,7 @@
 
 
 .chart-and-summary .summary-wrapper {
-    width: 350px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     border: solid 1px #404040;
@@ -89,14 +94,52 @@
 .summary-items {
     display: flex;
     flex-direction: column;
-    width: 200px;
+    width: calc(100% - 150px);
+    border-right: solid 1px #404040;
 }
 
-.summary-wrapper .summary-title {   
+.summary-wrapper .summary-title-wrapper {
     padding: 8px;
     background-color: #363636;
     margin-bottom: 0;
     text-align: left;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-height: 58px;
+}
+
+.summary-wrapper .summary-title {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: 0.7px;
+    text-align: center;
+    color: #e6e6e6;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 73px;
+    min-width: 73px;
+}
+
+.summary-wrapper .summary-separator {
+    width: 1px;
+    height: 42px;
+    background-color: #80808080;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.summary-wrapper .summary-description {
+    font-size: 10px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+    text-align: left;
+    color: #a8c708;
 }
 
 .summary-wrapper .summary-highlight {   
@@ -169,17 +212,12 @@
 }
 
 
-@media (max-width: 768px) {
-    .simple-write-step2 .chart-and-summary {
+@media (max-width: 400px) {
+    .summary-item {
         flex-direction: column;
-    }
-
-    .chart-and-summary .write-chart-wrapper {
-        width: calc(100% - 20px);
-    }
-
-    .chart-and-summary .summary-wrapper {
-        width: calc(100% - 20px);
-        margin: 10px auto;
+    }   
+    
+    .summary-item .summary-item-label {
+        text-align: center;
     }
 }
