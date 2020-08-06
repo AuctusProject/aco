@@ -269,11 +269,11 @@ class Home extends Component {
             </div>
             <div className="offset-lg-0 offset-md-2 col-md-4 text-center my-auto py-3 open-zeppelin-col">
               <img alt="" className="logo-openzeppelin" src="/images/logo_openzeppelin.svg"></img>
-              <a href="[TODO]" target="_blank"><span className="arrow-link">Protocol Security<FontAwesomeIcon icon={faArrowRight} /></span></a>
+              <a href="[TODO]" target="_blank" rel="noopener noreferrer"><span className="arrow-link">Protocol Security<FontAwesomeIcon icon={faArrowRight} /></span></a>
             </div>
             <div className="col-md-4 text-center my-auto py-3 bug-bounty-col">
               <div className="bug-bounty-value"><span>$</span>15,000<span>.00</span></div>
-              <a href="https://docs.aco.finance/security#bug-bounty" target="_blank"><span className="arrow-link">Bug Bounty<FontAwesomeIcon icon={faArrowRight} /></span></a>
+              <a href="https://docs.aco.finance/security#bug-bounty" target="_blank" rel="noopener noreferrer"><span className="arrow-link">Bug Bounty<FontAwesomeIcon icon={faArrowRight} /></span></a>
             </div>
           </div>
         </div>

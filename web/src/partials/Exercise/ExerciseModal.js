@@ -267,7 +267,7 @@ class ExerciseModal extends Component {
   }
 
   setPriceFromExerciseData = (exerciseData) => {
-    if (exerciseData && exerciseData["0"] !== 0 && exerciseData["1"] !== 0) {
+    if (exerciseData && exerciseData["0"] !== "0" && exerciseData["1"] !== "0") {
       var amountRequired = new Web3Utils.BN(exerciseData["0"])
       var expectedAmount = new Web3Utils.BN(exerciseData["1"])
       var precision = new Web3Utils.BN(10).pow(new Web3Utils.BN(this.props.position.option.underlyingInfo.decimals))
@@ -365,7 +365,7 @@ class ExerciseModal extends Component {
   }
 
   formattedPayValue = () => {
-    return fromDecimals(toDecimals(this.state.payValue, this.getPayDecimals()), this.getPayDecimals())
+    return fromDecimals(toDecimals(this.state.payValue, this.getPayDecimals()), this.getPayDecimals(), 6)
   }
 
   render() {
