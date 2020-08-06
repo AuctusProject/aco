@@ -69,7 +69,6 @@ class Writer extends Component {
   render() {
     return <div className="py-4">
       {this.canLoad() && <>
-        <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
         <div className="page-title">MINT OPTIONS</div>
         <StepIndicator totalSteps={3} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>
         {!this.props.selectedPair && <Loading/>}

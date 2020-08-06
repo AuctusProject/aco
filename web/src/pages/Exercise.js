@@ -37,7 +37,6 @@ class Exercise extends Component {
   render() {
     return <div className="py-4">
       {this.canLoad() && <>
-        <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
         {this.props.selectedPair && <div className="page-title">EXERCISE</div>}
         {this.props.selectedPair && <div className="page-subtitle">Select which option series you would like to exercise</div>}
         {!this.props.selectedPair && <Loading/>}

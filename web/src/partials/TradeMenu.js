@@ -30,7 +30,6 @@ class TradeMenu extends Component {
       <div className="trade-menu">
         <div className="trade-menu-content">
           <div className="trade-menu-pair-balance-info">
-            <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
             <div className="trade-menu-balance-title">BALANCE</div>
             <div className="pair-balance-item">
               <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
