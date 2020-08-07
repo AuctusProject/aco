@@ -9,8 +9,6 @@ import WriteStep3 from '../partials/Write/WriteStep3'
 import WrittenOptionsPositions from '../partials/Write/WrittenOptionsPositions'
 import BurnModal from '../partials/Write/BurnModal'
 import Loading from '../partials/Util/Loading'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { getOption } from '../util/acoFactoryMethods'
 import { PositionsLayoutMode } from '../util/constants'
 

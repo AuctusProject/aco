@@ -8,8 +8,6 @@ import PairDropdown from '../partials/PairDropdown'
 import SimpleBuyTab from '../partials/Simple/SimpleBuyTab'
 import SimpleWriteTab from '../partials/Simple/SimpleWriteTab'
 import SimpleManageTab from '../partials/Simple/SimpleManageTab'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 
 class Simple extends Component {
   constructor() {

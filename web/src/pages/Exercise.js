@@ -5,8 +5,6 @@ import PropTypes from 'prop-types'
 import ExercisePositions from '../partials/Exercise/ExercisePositions'
 import ExerciseModal from '../partials/Exercise/ExerciseModal'
 import Loading from '../partials/Util/Loading'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { PositionsLayoutMode } from '../util/constants'
 
 class Exercise extends Component {
