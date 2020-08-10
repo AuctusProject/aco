@@ -1,0 +1,223 @@
+.simple-write-step2 {
+    display: flex;
+    flex-direction: column;
+}
+
+.collateral-input {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border: solid 1px #4c4c4c;
+    margin: 20px auto;    
+    padding: 10px 0;
+    width: 380px;
+    max-width: calc(100% - 40px);
+}
+
+.collateral-label {
+    font-size: 14px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: 0.7px;
+    text-align: center;
+    color: #e6e6e6;
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+.collateral-input input {
+    border: none;
+    width: 60px;
+    text-align: center;
+    background-color: transparent;
+    color: #e6e6e6;
+}
+
+.max-and-balance {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+.max-and-balance .max-btn {
+    position: relative;
+}
+
+.max-and-balance .balance {
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    text-align: center;
+    color: #e6e6e6;
+}
+
+.chart-and-summary {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    margin: auto;    
+    width: 380px;
+    max-width: calc(100% - 40px);
+}
+
+.chart-and-summary .write-chart-wrapper {
+    width: calc(100% - 370px);
+    margin: 0 10px;
+    align-self: stretch;
+    background-color: #363636;
+    padding: 8px;
+}
+
+
+.chart-and-summary .summary-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border: solid 1px #404040;
+}
+
+.summary-content {
+    display: flex;
+    flex-direction: row;
+}
+
+.summary-items {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 150px);
+    border-right: solid 1px #404040;
+}
+
+.summary-wrapper .summary-title-wrapper {
+    padding: 8px;
+    background-color: #363636;
+    margin-bottom: 0;
+    text-align: left;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-height: 58px;
+}
+
+.summary-wrapper .summary-title {
+    font-size: 14px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: 0.7px;
+    text-align: center;
+    color: #e6e6e6;
+    margin-top: auto;
+    margin-bottom: auto;
+    width: 73px;
+    min-width: 73px;
+}
+
+.summary-wrapper .summary-separator {
+    width: 1px;
+    height: 42px;
+    background-color: #80808080;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.summary-wrapper .summary-description {
+    font-size: 10px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.4;
+    letter-spacing: 0.5px;
+    text-align: left;
+    color: #a8c708;
+}
+
+.summary-wrapper .summary-highlight {   
+    background-color: #2d2d2d;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    position: relative;
+}
+
+.summary-item.summary-highlight .summary-item-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #e6e6e6;
+}
+
+.summary-item .summary-item-label {
+    font-size: 10px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.5px;
+    text-align: left;
+    color: #a6a6a6;
+}
+
+.summary-item .summary-item-value {
+    font-size: 12px;
+    font-weight: 500;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.6px;
+    text-align: left;
+    color: #e6e6e6;
+    white-space: nowrap;
+    padding-left: 5px;
+}
+
+.similar-prices {
+    width: 150px;
+    margin: 0 auto;
+}
+
+.ref-label {
+    font-size: 15px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.38px;
+    text-align: center;
+    color: #e6e6e6;
+    margin-top: 20px;
+}
+
+.similar-label {
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+    text-align: center;
+    color: #7d7d7d;
+    margin-top: 6px;
+    margin-bottom: 20px;
+}
+
+
+@media (max-width: 400px) {
+    .summary-item {
+        flex-direction: column;
+    }   
+    
+    .summary-item .summary-item-label {
+        text-align: center;
+    }
+}

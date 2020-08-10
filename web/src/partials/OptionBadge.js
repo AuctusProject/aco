@@ -6,7 +6,7 @@ class OptionBadge extends Component {
   render() {
     var optionName = getOptionName(this.props.isCall)
     return (
-      <div className={"option-badge " + (optionName.toLowerCase()+"-badge")}>
+      <div onClick={this.props.onClick} className={"option-badge " + (optionName.toLowerCase()+"-badge ") + (this.props.className ?? "")}>
         {optionName}
       </div>)
   }

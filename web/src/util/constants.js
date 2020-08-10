@@ -5,19 +5,27 @@ const negative1 = new Web3Utils.BN(-1);
 
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
 export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
+export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
+export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
+export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
+export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
+export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
+export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
+export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
 export const symbolsMappedToBaseAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_BASE_ASSET)
-export const acoImplementationVersionMap = JSON.parse(process.env.REACT_APP_ACO_IMPLEMENTATION_VERSION)
-
+export const swapQuoteBuySize = "1000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const ethTransactionTolerance = 0.01;
+export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
+export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
 
 export const OPTION_TYPES = {
     1: {
@@ -29,6 +37,11 @@ export const OPTION_TYPES = {
         name: "PUT"
     }
 }
+
+export const PositionsLayoutMode = {
+    Basic: 0,
+    Advanced: 1
+}  
 
 export function getOptionName(isCall) {
     return isCall ? OPTION_TYPES[1].name : OPTION_TYPES[2].name
@@ -51,9 +64,15 @@ export const ellipsisCenterOfUsername = (username) => {
     return username
 }
 
-export const formatDate = (expiryTime) => {
-    var options = { year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' };
-    return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + " UTC"
+export const formatDate = (expiryTime, shortDate= false) => {
+    var options = {}
+    if (shortDate) {
+        options = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }
+    }
+    else {
+        options = { year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' }
+    }
+    return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + (shortDate ? "" : " UTC")
 }
 
 export const isEther = (assetAddress) => {
@@ -134,7 +153,9 @@ export function toDecimals(input, decimals) {
   
     if (!whole) { whole = '0'; }
     if (!fraction) { fraction = '0'; }
-    if (fraction.length > baseLength) { throw new Error(`[ethjs-unit] while converting number ${input} to wei, too many decimal places`); }
+    if (fraction.length > baseLength) { 
+        fraction = fraction.substring(0, baseLength-1)
+     }
   
     while (fraction.length < baseLength) {
       fraction += '0';
@@ -184,6 +205,10 @@ export function getNumberWithSignal(number) {
     }
 }
 
+export function formatPercentage(percentage, decimals = 2) {
+    return (percentage * 100).toFixed(decimals) + "%"
+}
+
 export function groupBy(xs, key) {
     return xs.reduce(function(rv, x) {
       (rv[x[key]] = rv[x[key]] || []).push(x);
@@ -204,7 +229,7 @@ export function sortByFn(array, propertyFn) {
 }
 
 export const getTimeToExpiry = (expiryTimeInSeconds) => {
-    let timeInSeconds = expiryTimeInSeconds - (new Date().getTime()/ONE_SECOND)
+    let timeInSeconds = getSecondsToExpiry(expiryTimeInSeconds)
     let seconds = timeInSeconds;
     const days = Math.floor(seconds / (3600 * 24));
     seconds -= days * 3600 * 24;
@@ -216,6 +241,10 @@ export const getTimeToExpiry = (expiryTimeInSeconds) => {
         hours,
         minutes
     };
+}
+
+export const getSecondsToExpiry = (expiryTimeInSeconds) => {
+    return expiryTimeInSeconds - (new Date().getTime()/ONE_SECOND)
 }
 
 

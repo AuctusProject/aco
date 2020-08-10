@@ -15,6 +15,10 @@ import Writer from './pages/Writer'
 import Exercise from './pages/Exercise'
 import ApiTickerProvider from './util/ApiTickerProvider'
 import Trade from './pages/Trade'
+import Simple from './pages/Simple'
+import { getNetworkName, CHAIN_ID, getMarketDetails } from './util/constants'
+import { error } from './util/sweetalert'
+import { getGasPrice } from './util/gasStationApi'
 
 class App extends Component {
   constructor() {
@@ -23,16 +27,27 @@ class App extends Component {
       showSignIn: false,
       loading: true,
       selectedPair: null,
-      accountToggle: false
+      accountToggle: false,
+      toggleAdvancedTooltip: false,
+      orderBooks:{}
     }
+  }
+
+  componentDidMount = () => {
+    getGasPrice()
+    window.TradeApp.setNetwork(parseInt(CHAIN_ID))
   }
 
   signOut() {
     window.localStorage.setItem('METAMASK_ACCOUNTS_AVAILABLE', '0')
   }
 
-  showSignInModal = (redirectUrl) => {
-    this.setState({showSignIn: true, redirectUrl: redirectUrl})
+  showSignInModal = (redirectUrl, context) => {
+    if (context && context.web3 && context.web3.hasMetamask && !context.web3.validNetwork) {
+      error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
+    } else {
+      this.setState({showSignIn: true, redirectUrl: redirectUrl})
+    }    
   }
 
   onCloseSignIn = (navigate) => {
@@ -45,19 +60,13 @@ class App extends Component {
     }
     else {
       if (!previousAccount) {
-        this.props.history.push(this.state.redirectUrl)
-        this.setState({redirectUrl: null})
+        if (this.state.redirectUrl) {
+          this.props.history.push(this.state.redirectUrl) 
+          this.setState({redirectUrl: null})
+        }
       }
       this.setState({accountToggle:!this.state.accountToggle})
     }
-  }
-  
-  needNavigate = () => {
-    return window.location.pathname.indexOf("privacy") < 0 && 
-      window.location.pathname.indexOf("terms") < 0 &&
-      window.location.pathname.indexOf("exercise") < 0 &&
-      window.location.pathname.indexOf("trade") < 0 &&
-      window.location.pathname !== "/"
   }
 
   onLoaded = () => {
@@ -70,6 +79,32 @@ class App extends Component {
 
   onPairsLoaded = (pairs) => {
     this.setState({pairs: pairs})
+  }
+
+  loadOrderbookFromOptions = (options, includeWeb3) => {
+    for (let i = 0; i < options.length; i++) {
+      let option = options[i]
+      this.loadOrderbookFromOption(option, includeWeb3)
+    }
+  }
+
+  loadOrderbookFromOption = (option, includeWeb3) => {
+    if (option) {
+      var marketDetails = getMarketDetails(option)
+      var baseToken = marketDetails.baseToken
+      var quoteToken = marketDetails.quoteToken
+      baseToken.address = baseToken.addresses[CHAIN_ID]
+      quoteToken.address = quoteToken.addresses[CHAIN_ID]
+
+      var orderbookFunction = includeWeb3 ? window.TradeApp.getAllOrdersAsUIOrders : 
+      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo;
+
+      orderbookFunction(baseToken, quoteToken).then(orderBook => {
+        var orderBooks = this.state.orderBooks
+        orderBooks[option.acoToken] = orderBook
+        this.setState({ orderBooks: orderBooks })
+      })
+    }
   }
 
   render() {
@@ -87,7 +122,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
+            {showNavbar && <NavBar toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -99,7 +134,7 @@ class App extends Component {
                   render={ routeProps => <Terms {...routeProps} /> }
                 />
                 <Route 
-                  path={`/mint/:tokenAddress?`}
+                  path={`/advanced/mint/:tokenAddress?`}
                   render={ routeProps => <Writer 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -107,7 +142,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/exercise`}
+                  path={`/advanced/exercise`}
                   render={ routeProps => <Exercise 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -115,11 +150,27 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/trade/:tokenAddress?`}
+                  path={`/advanced/trade/:tokenAddress?`}
                   render={ routeProps => <Trade 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    orderBooks={this.state.orderBooks}
+                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
+                  /> }
+                />                
+                <Route 
+                  path={[`/buy/:tokenAddress?`, `/write/:tokenAddress?`, `/manage/:tokenAddress?`]}
+                  render={ routeProps => <Simple 
+                    {...routeProps}
+                    signIn={this.showSignInModal}
+                    onPairSelected={this.onPairSelected} 
+                    onPairsLoaded={this.onPairsLoaded}
+                    selectedPair={this.state.selectedPair}
+                    accountToggle={this.state.accountToggle}
+                    orderBooks={this.state.orderBooks}
+                    toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
+                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                   /> }
                 />
                 <Route 
@@ -129,6 +180,8 @@ class App extends Component {
                     {...routeProps}
                     onPairSelected={this.onPairSelected} 
                     selectedPair={this.state.selectedPair}
+                    orderBooks={this.state.orderBooks}
+                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                     signIn={this.showSignInModal}
                   /> }
                 />

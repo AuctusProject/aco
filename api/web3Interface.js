@@ -25,8 +25,16 @@ const callEthereum = (method, methodData, secondParam = "latest") => {
           resolve(null);
         }
       })
-      .catch((err) => reject(method + " " + methodData + " " + err.stack));
+      .catch((err) => reject("web3 " + method + " " + methodData + " " + err.stack));
   });
+};
+
+const addressToData = (address) => {
+  return address.substring(2).padStart(64, '0');
+};
+
+const numberToData = (num) => {
+  return num.toString(16).padStart(64, '0');
 };
 
 const isEther = (token) => {
@@ -114,6 +122,25 @@ const listAcoTokens = () => {
       }
       resolve(response);
     }).catch((err) => reject(err));
+  });
+};
+
+module.exports.opynQuote = (queryArguments) => { 
+  return new Promise((resolve, reject) => {
+    if (!queryArguments || !queryArguments.exchange || !queryArguments.token || !queryArguments.swappedToken || 
+      !queryArguments.amount || (queryArguments.isBuy !== true && queryArguments.isBuy !== false && 
+        queryArguments.isBuy !== "true" && queryArguments.isBuy !== "false") ) {
+      resolve(null);
+    } else {
+      let data = ((queryArguments.isBuy === true || queryArguments.isBuy === "true") ? "0xbec165e7" : "0x3ed9c978") + addressToData(queryArguments.token) + addressToData(queryArguments.swappedToken) + numberToData(BigInt(queryArguments.amount));
+      callEthereum("eth_call", {"to": queryArguments.exchange, "data": data}).then((result) => {
+        if (result && result !== "0x") {
+          resolve(BigInt(result).toString(10));
+        } else {
+          resolve(null);
+        }
+      }).catch((err) => reject(err));
+    }
   });
 };
 

@@ -45,7 +45,7 @@ footer a > svg {
 }
 
 .footer-links > a:not(:last-child) {
-  margin-right: 21px;
+  margin-right: 18px;
 }
 
 .footer-social > a:not(:last-child) {
@@ -53,14 +53,34 @@ footer a > svg {
 }
 
 .footer-copyright {
-  margin-right: 42px;
+  margin-right: 38px;
 }
 
-@media (max-width: 575.98px) {
-  .footer-social {
+.defipulse-link {
+  padding-left: 18px;
+  border-left: 1px solid #696969;
+  margin-left: 18px;
+}
+
+.defipulse-link img{
+  height: 16px;
+}
+
+@media (max-width: 520px) {
+  .defipulse-link {
+    margin-top: 6px;
+    margin-right: 18px;
+    padding-right: 18px;
+    border-left: none;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .footer-social,
+  .footer-links {
     justify-content: center;
   }
-  .footer-links > a:not(:last-child) {
+  .footer-link > a:not(:last-child) {
     margin-right: 19px; 
   }
   .footer-copyright {

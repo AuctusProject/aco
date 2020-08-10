@@ -7,16 +7,15 @@ import WriteStep1 from '../partials/Write/WriteStep1'
 import WriteStep2 from '../partials/Write/WriteStep2'
 import WriteStep3 from '../partials/Write/WriteStep3'
 import WrittenOptionsPositions from '../partials/Write/WrittenOptionsPositions'
-import Burn from '../partials/Write/Burn'
+import BurnModal from '../partials/Write/BurnModal'
 import Loading from '../partials/Util/Loading'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { getOption } from '../util/acoFactoryMethods'
+import { PositionsLayoutMode } from '../util/constants'
 
 class Writer extends Component {
   constructor() {
     super()
-    this.state = { currentStep: 0}
+    this.state = {currentStep: 0, refresh: false}
   }
 
   componentDidMount = () => {
@@ -57,8 +56,8 @@ class Writer extends Component {
     this.setState({currentStep: step})
   }
 
-  onCancelClick = () => {
-    this.setCurrentStep(1)
+  onCancelClick = (shouldRefresh) => {
+    this.setState({currentStep: 1, refresh: !!shouldRefresh})
   }
 
   onBurnPositionSelect = (position) => {
@@ -68,16 +67,15 @@ class Writer extends Component {
   render() {
     return <div className="py-4">
       {this.canLoad() && <>
-        <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
-        {this.state.currentStep !== 4 && <div className="page-title">MINT OPTIONS</div>}
-        {this.state.currentStep !== 4 && <StepIndicator totalSteps={3} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>}
+        <div className="page-title">MINT OPTIONS</div>
+        <StepIndicator totalSteps={3} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>
         {!this.props.selectedPair && <Loading/>}
         {this.props.selectedPair &&  <>
-          {this.state.currentStep === 1 && <WriteStep1 {...this.props} setOptionType={this.setOptionType}></WriteStep1>}
+          {(this.state.currentStep === 1 || this.state.currentStep === 4) && <WriteStep1 {...this.props} setOptionType={this.setOptionType}></WriteStep1>}
           {this.state.currentStep === 2 && <WriteStep2 {...this.props} optionType={this.state.optionType} setOption={this.setOption}></WriteStep2>}
           {this.state.currentStep === 3 && <WriteStep3 {...this.props} option={this.state.option} onCancelClick={this.onCancelClick}></WriteStep3>}
-          {this.state.currentStep === 1 && <WrittenOptionsPositions {...this.props} onBurnPositionSelect={this.onBurnPositionSelect}></WrittenOptionsPositions>}
-          {this.state.currentStep === 4 && <Burn {...this.props} position={this.state.position} onCancelClick={this.onCancelClick}></Burn>}
+          {this.state.currentStep === 4 && <BurnModal {...this.props} position={this.state.position} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></BurnModal>}
+          <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Advanced} onBurnPositionSelect={this.onBurnPositionSelect} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></WrittenOptionsPositions>
         </>}
       </>}
       </div>

@@ -15,18 +15,19 @@ class Footer extends Component {
   render() {
     return (
       <footer>
-        <div className="container">
+        <div className="container-lg">
           <div className="row footer-text">
-            <div className="col-sm-8 my-2">
+            <div className="col-md-8 my-2">
               <div className="footer-links">
                 <div className="footer-copyright">© 2020 ACO</div>
                 <NavLink className="footer-link" to="/terms">Terms</NavLink>
                 <NavLink className=" footer-link" to="/privacy">Privacy Policy</NavLink>
                 <a className="footer-link" target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
-                <a className="footer-link" target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
+                <a className="footer-link mr-0" target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
+                <a className="defipulse-link" target="_blank" rel="noopener noreferrer" href="https://defipulse.com/"><img src="/images/logo_defipulse.svg" alt=""></img></a>
               </div>
             </div>
-            <div className="col-sm-4 my-2">
+            <div className="col-md-4 my-2">
               <div className="footer-social">
                 <a rel="noopener noreferrer" href="mailto:contact@aco.finance"><FontAwesomeIcon icon={faEnvelope} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://twitter.com/AcoFinance"><FontAwesomeIcon icon={faTwitter} /></a>

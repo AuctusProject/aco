@@ -3,8 +3,8 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { getOptionsPositions } from '../../util/acoFactoryMethods'
-import { getOptionCollateralFormatedValue, getOptionTokenAmountFormatedValue, redeem, getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
-import { ONE_SECOND, getNumberWithSignal } from '../../util/constants'
+import { getOptionCollateralFormatedValue, getOptionTokenAmountFormatedValue, redeem, getFormattedOpenPositionAmount, getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { ONE_SECOND, getNumberWithSignal, formatDate, PositionsLayoutMode } from '../../util/constants'
 import { checkTransactionIsMined } from '../../util/web3Methods'
 import StepsModal from '../StepsModal/StepsModal'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
@@ -22,22 +22,40 @@ class WrittenOptionsPositions extends Component {
 
   componentDidUpdate = (prevProps) => {
     if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.accountToggle !== prevProps.accountToggle) {
+        this.props.accountToggle !== prevProps.accountToggle ||
+        (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
+      if (this.props.loadedPositions) {
+        this.props.loadedPositions(null)
+      }
       this.setState({ positions: null })
       this.componentDidMount()
     }
   }
 
   componentDidMount = () => {
-    getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => this.setState({ positions: positions }))
+      if (this.props.selectedPair && this.context.web3.selectedAccount) {
+          this.props.updated()
+          getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+            if (this.props.loadedPositions) {
+              this.props.loadedPositions(positions)
+            }
+            this.setState({ positions: positions })
+          })
+    }
   }
 
   onBurnClick = (position) => () => {
-    this.props.onBurnPositionSelect(position)
+    if (this.isBurnable(position)) {
+      this.props.onBurnPositionSelect(position)
+    }
   }
 
   isExpired = (position) => {
     return (position.option.expiryTime * ONE_SECOND) < new Date().getTime()
+  }
+
+  isBurnable = (position) => {
+    return position.unassignableCollateral > 0
   }
 
   onRedeemClick = (position) => () => {
@@ -114,41 +132,46 @@ class WrittenOptionsPositions extends Component {
   }
 
   render() {
-    return (!this.state.positions ? <Loading/> :
+    return (!this.state.positions ? (this.props.mode === PositionsLayoutMode.Advanced ? <Loading/> : null) :
       (this.state.positions.length === 0  ? <></> :
        <div className="written-options-positions">
       <div className="page-title">MANAGE YOUR WRITTEN OPTIONS POSITIONS</div>
-      <table className="aco-table mx-auto">
+      <table className="aco-table mx-auto table-responsive-md">
         <thead>
           <tr>
             <th>TYPE</th>
-            <th>SYMBOL</th>
+            <th>EXPIRATION</th>
+            <th>STRIKE PRICE</th>
             <th>TOTAL MINTED</th>
-            <th>WALLET BALANCE</th>
-            <th>OPEN POSITION</th>
-            <th>TOTAL COLLATERAL<br />(assignable/unassignable)</th>
+            {this.props.mode === PositionsLayoutMode.Advanced && <th>WALLET BALANCE</th>}
+            {this.props.mode === PositionsLayoutMode.Advanced && <th>OPEN POSITION</th>}
+            <th>TOTAL COLLATERAL{this.props.mode === PositionsLayoutMode.Advanced && <><br />(assignable/unassignable)</>}</th>
             <th></th>
           </tr>
         </thead>
-        <tbody>
+        <tbody>          
+          {(!this.state.positions || this.state.positions.length === 0) && 
+              <tr>
+                {!this.state.positions && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>Loading...</td>}
+                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
+              </tr>
+          }
           {this.state.positions.map(position =>
             <tr key={position.option.acoToken}>
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>
-              <td>{position.option.acoTokenInfo.symbol}</td>
+              <td>{formatDate(position.option.expiryTime, true)}</td>
+              <td>{getOptionFormattedPrice(position.option)}</td>
               <td>{getOptionTokenAmountFormatedValue(position.currentCollateralizedTokens, position.option)}</td>
-              <td>{getOptionTokenAmountFormatedValue(position.balance, position.option)}</td>
-              <td>{getNumberWithSignal(getFormattedOpenPositionAmount(position))}</td>
-              <td>{getOptionCollateralFormatedValue(position.currentCollateral, position.option)}<br />
-              ({getOptionCollateralFormatedValue(position.assignableCollateral, position.option)}/{getOptionCollateralFormatedValue(position.unassignableCollateral, position.option)})
+              {this.props.mode === PositionsLayoutMode.Advanced && <td>{getOptionTokenAmountFormatedValue(position.balance, position.option)}</td>}
+              {this.props.mode === PositionsLayoutMode.Advanced && <td>{getNumberWithSignal(getFormattedOpenPositionAmount(position))}</td>}
+              <td>{getOptionCollateralFormatedValue(position.currentCollateral, position.option)}
+              {this.props.mode === PositionsLayoutMode.Advanced && <><br />({getOptionCollateralFormatedValue(position.assignableCollateral, position.option)}/{getOptionCollateralFormatedValue(position.unassignableCollateral, position.option)})</>}
               </td>
               <td>
-                {!this.isExpired(position) && <div className="position-actions">
-                  <div title="Available only after expiry">Redeem collateral</div>
-                  <div className="clickable" onClick={this.onBurnClick(position)}>Burn to redeem collateral</div>
-                </div>}
-                {this.isExpired(position) && <div className="position-actions">
-                  <div className="clickable" onClick={this.onRedeemClick(position)}>Redeem collateral</div>
-                </div>}
+                {!this.isExpired(position) && 
+                <div className={"grid-btn action-btn" + (this.isBurnable(position) ? "" : " disabled")} title={(this.isBurnable(position) ? "" : "You don't have any options to burn")} onClick={this.onBurnClick(position)}>Reduce Position</div>}
+                {this.isExpired(position) && 
+                <div className="grid-btn action-btn" onClick={this.onRedeemClick(position)}>Redeem Collateral</div>}
               </td>
             </tr>)}
         </tbody>

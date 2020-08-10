@@ -2,13 +2,12 @@ import './Home.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { groupBy, getNetworkName, CHAIN_ID, getMarketDetails, formatDate } from '../util/constants'
+import { groupBy, formatDate } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { error } from '../util/sweetalert'
 import TradeIcon from '../partials/Util/TradeIcon'
 import { getTokensList } from '../util/acoApi'
-import { getPairsFromOptions } from '../util/acoFactoryMethods'
+import { getPairsFromOptions, getOptionsFromPair } from '../util/acoFactoryMethods'
 import PairDropdown from '../partials/PairDropdown'
 import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeOptionsList'
 import { ALL_OPTIONS_KEY } from './Trade'
@@ -21,7 +20,6 @@ class Home extends Component {
     this.state = {
       pairs: null,
       options: null,
-      orderBooks: {},
       selectedExpiryTime: ALL_OPTIONS_KEY,
       whyAnimation: (this.isMobile ? "" : " unshown "),
       whyShowAnimation: (this.isMobile ? "" : " unshown "),
@@ -48,7 +46,6 @@ class Home extends Component {
       document.addEventListener("scroll", () => this.setAnimations(), false)
       setTimeout(() => this.setAnimations(), 10)
     }
-    window.TradeApp.setNetwork(parseInt(CHAIN_ID))
     this.loadAvailableOptions()
   }
 
@@ -116,26 +113,18 @@ class Home extends Component {
   }
 
   onGetStart(type) {
-    if (this.context && this.context.web3 && this.context.web3.hasMetamask && !this.context.web3.validNetwork) {
-      error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
-    } else {
-      this.props.signIn(this.getUrlFromType(type))
-    }
+    this.props.signIn(this.getUrlFromType(type), this.context)
   }
 
   onAction(type) {
-    if (!this.context || !this.context.web3 || !this.context.web3.hasMetamask || !this.context.web3.validNetwork || !this.context.web3.selectedAccount) {
-      this.onGetStart(type)
-    } else {
-      this.props.history.push(this.getUrlFromType(type))
-    }
+    this.props.history.push(this.getUrlFromType(type))
   }
 
   getUrlFromType = (type) => {
     if (type === "trade") {
-      return "/trade"
+      return "/buy"
     } else if (type === "earn") {
-      return "/mint"
+      return "/write"
     }
   }
 
@@ -152,33 +141,27 @@ class Home extends Component {
   }
 
   loadOrderBook = () => {
-    for (let i = 0; i < this.state.options.length; i++) {
-      let option = this.state.options[i]
-      var marketDetails = getMarketDetails(option)
-      var baseToken = marketDetails.baseToken
-      var quoteToken = marketDetails.quoteToken
-      baseToken.address = baseToken.addresses[CHAIN_ID]
-      quoteToken.address = quoteToken.addresses[CHAIN_ID]
-      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo(baseToken, quoteToken).then(orderBook => {
-        var orderBooks = this.state.orderBooks
-        orderBooks[option.acoToken] = orderBook
-        this.setState({orderBooks: orderBooks})
-      })
-    }
+    this.props.loadOrderbookFromOptions(this.state.options, (this.context && this.context.web3 && this.context.web3.hasMetamask && this.context.web3.validNetwork && this.context.web3.selectedAccount))
   }
 
   onSelectOption = (option) => {
-    this.props.history.push('/trade/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/trade/'+option.acoToken)
   }
 
   onSelectMintOption = (option) => {
-    this.props.history.push('/mint/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/mint/'+option.acoToken)
+  }
+
+  redirectToAdvancedAction(url) {
+    if (!this.context || !this.context.web3 || !this.context.web3.hasMetamask || !this.context.web3.validNetwork || !this.context.web3.selectedAccount) {
+      this.props.signIn(url, this.context)
+    } else {
+      this.props.history.push(url)
+    }
   }
   
   getOptionsFromPair = () => {
-    return this.state.options && this.props.selectedPair ? this.state.options.filter(o => 
-      o.underlyingInfo.symbol === this.props.selectedPair.underlyingSymbol && 
-      o.strikeAssetInfo.symbol === this.props.selectedPair.strikeAssetSymbol) : []
+    return getOptionsFromPair(this.state.options, this.props.selectedPair)
   }
 
   getExpirations = () => {
@@ -210,11 +193,11 @@ class Home extends Component {
               </ul>
               <ul className="navbar-nav nav-btns mt-2 mt-sm-0">
                 <div className="home-btn small white" onClick={() => this.onAction("trade")}>
-                  <div><TradeIcon />TRADE OPTIONS</div>
+                  <div><TradeIcon />BUY OPTIONS</div>
                 </div>
                 <div className="home-btn small white" onClick={() => this.onAction("earn")}>
                   <div>EARN INCOME</div>
-                  <span>(Mint &amp; Sell options)</span>
+                  <span>(Write options)</span>
                 </div>
               </ul>
             </div>
@@ -226,11 +209,11 @@ class Home extends Component {
             <h2>No sign up required. Start trading non-custodial options immediately.</h2>
             <div>
               <div className="home-btn solid-green mr-0 mr-sm-4" onClick={() => this.onAction("trade")}>
-                <div><TradeIcon />TRADE OPTIONS</div>
+                <div><TradeIcon />BUY OPTIONS</div>
               </div>
               <div className="home-btn green mt-3 mt-sm-0" onClick={() => this.onAction("earn")}>
                 <div>EARN INCOME</div>
-                <span>(Mint &amp; Sell options)</span>
+                <span>(Write options)</span>
               </div>
             </div>
           </div>
@@ -276,6 +259,26 @@ class Home extends Component {
           </div>
         </div>
       </section>
+      <section id="audit">
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-4 mb-lg-0 mb-4">
+              <h1>Security Audit</h1>
+              <p>To ensure top-notch security, ACO protocol smart contracts were audited by Open Zeppelin and have undergone rigorous internal testing.</p>
+              <p>We also have an ongoing bug bounty program where community members can report any bugs or vulnerabilities.</p>
+            </div>
+            <div className="offset-lg-0 offset-md-2 col-md-4 text-center my-auto py-3 open-zeppelin-col">
+              <img alt="" className="logo-openzeppelin" src="/images/logo_openzeppelin.svg"></img>
+              <a href="https://blog.openzeppelin.com/aco-protocol-audit/" target="_blank" rel="noopener noreferrer"><span className="arrow-link">Protocol Security<FontAwesomeIcon icon={faArrowRight} /></span></a>
+            </div>
+            <div className="col-md-4 text-center my-auto py-3 bug-bounty-col">
+              <div className="bug-bounty-value"><span>$</span>15,000<span>.00</span></div>
+              <a href="https://docs.aco.finance/security#bug-bounty" target="_blank" rel="noopener noreferrer"><span className="arrow-link">Bug Bounty<FontAwesomeIcon icon={faArrowRight} /></span></a>
+            </div>
+          </div>
+        </div>
+        <img alt="" className="audit-background" src="/images/audit_bg.png"></img>
+      </section>
       <section id="available-options">
         <div className="container">
           <h2 className="home-title">Available Options</h2>
@@ -292,7 +295,7 @@ class Home extends Component {
             onSelectOption={this.onSelectOption} 
             onSelectMintOption={this.onSelectMintOption} 
             options={filteredOptions}
-            orderBooks={this.state.orderBooks}/>}
+            orderBooks={this.props.orderBooks}/>}
         </div>
       </section>
       <section id="use-cases">
@@ -352,11 +355,11 @@ class Home extends Component {
             <h5>Start trading decentralized options on our 0x-based decentralized exchange (DEX)</h5>
             <div>
               <div className="home-btn solid-white mr-0 mr-sm-4" onClick={() => this.onAction("trade")}>
-                <div><TradeIcon />TRADE OPTIONS</div>
+                <div><TradeIcon />BUY OPTIONS</div>
               </div>
               <div className="home-btn black mt-3 mt-sm-0" onClick={() => this.onAction("earn")}>
                 <div>EARN INCOME</div>
-                <span>(Mint &amp; Sell options)</span>
+                <span>(Write options)</span>
               </div>
             </div>
             <span>Powered by<a target="_blank"  rel="noopener noreferrer" href="https://0x.org/"><img src="/images/0x.png" alt="0x" /></a></span>

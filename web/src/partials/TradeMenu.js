@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { fromDecimals, groupBy, formatDate } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faEnvelope, faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { faSpinner, faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { faTwitter, faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons'
 import { NavLink } from 'react-router-dom'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
@@ -30,7 +30,6 @@ class TradeMenu extends Component {
       <div className="trade-menu">
         <div className="trade-menu-content">
           <div className="trade-menu-pair-balance-info">
-            <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>This project is in beta. Use at your own risk.</div>
             <div className="trade-menu-balance-title">BALANCE</div>
             <div className="pair-balance-item">
               <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
@@ -67,6 +66,7 @@ class TradeMenu extends Component {
               <NavLink to="/privacy">Privacy Policy</NavLink>
               <a target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
               <a target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
+              <a target="_blank" rel="noopener noreferrer" href="https://defipulse.com">DeFi Pulse</a>
             </div>
             <div className="trade-menu-footer-media">
               <div>© 2020 ACO</div>

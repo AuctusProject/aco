@@ -6,8 +6,7 @@ import OptionBadge from '../OptionBadge'
 import { getOptionFormattedPrice, getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
 import { listPositionsForExercise } from '../../util/acoFactoryMethods'
 import { confirm } from '../../util/sweetalert'
-import { getBinanceSymbolForPair, fromDecimals, formatDate } from '../../util/constants'
-
+import { getBinanceSymbolForPair, fromDecimals, formatDate, PositionsLayoutMode } from '../../util/constants'
 
 class ExercisePositions extends Component {
   constructor() {
@@ -17,15 +16,26 @@ class ExercisePositions extends Component {
   
   componentDidUpdate = (prevProps) => {
     if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.accountToggle !== prevProps.accountToggle) {
+      this.props.accountToggle !== prevProps.accountToggle ||
+      (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
+      if (this.props.loadedPositions) {
+        this.props.loadedPositions(null)
+      }
+      this.setState({positions: null})
       this.componentDidMount()
     }
   }
 
   componentDidMount = () => {
-    listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
-      this.setState({positions: positions})
-    })
+    if (this.props.selectedPair && this.context.web3.selectedAccount) {
+      this.props.updated()
+      listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+        if (this.props.loadedPositions) {
+          this.props.loadedPositions(positions)
+        }
+        this.setState({positions: positions})
+      })
+    }
   }
 
   setPosition = (position) => {
@@ -71,13 +81,19 @@ class ExercisePositions extends Component {
     this.props.setPosition(position)
   }
 
+  onSellClick = (position) => () => {
+    this.props.setSellPosition(position)
+  }
+
   render() {
     return <div>
-        <table className="aco-table mx-auto">
+        {!this.state.positions ? null :
+        (this.props.mode === PositionsLayoutMode.Basic && this.state.positions.length === 0  ? null :
+        <table className="aco-table mx-auto table-responsive-md">
           <thead>
             <tr>
               <th>TYPE</th>
-              <th>SYMBOL</th>
+              {this.props.mode === PositionsLayoutMode.Advanced && <th>SYMBOL</th>}
               <th>STRIKE</th>
               <th>EXPIRATION</th>
               <th>AVAILABLE TO EXERCISE</th>
@@ -87,23 +103,24 @@ class ExercisePositions extends Component {
           <tbody>
             {(!this.state.positions || this.state.positions.length === 0) && 
               <tr>
-                {!this.state.positions && <td colSpan="6">Loading...</td>}
-                {this.state.positions && this.state.positions.length === 0 && <td colSpan="6">No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
+                {!this.state.positions && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>Loading...</td>}
+                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
               </tr>
             }
             {this.state.positions && this.state.positions.map(position => 
             <tr key={position.option.acoToken}>
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>
-              <td>{position.option.acoTokenInfo.symbol}</td>
+              {this.props.mode === PositionsLayoutMode.Advanced && <td>{position.option.acoTokenInfo.symbol}</td>}
               <td>{getOptionFormattedPrice(position.option)}</td>
               <td>{formatDate(position.option.expiryTime)}</td>
               <td>{getFormattedOpenPositionAmount(position)}</td>
-              <td>
-              <div className="action-btn" onClick={this.onExerciseClick(position)}>EXERCISE</div>
+              <td className="exercise-actions-cell">
+                {this.props.mode === PositionsLayoutMode.Basic && <div className="action-btn mr-2" onClick={this.onSellClick(position)}>SELL EARLY</div>}
+                <div className="action-btn" onClick={this.onExerciseClick(position)}>EXERCISE</div>
               </td>
             </tr>)}
           </tbody>
-        </table>      
+        </table>)}
       </div>
   }
 }

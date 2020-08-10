@@ -57,11 +57,10 @@ export function sendTransaction(gasPrice, gasLimit, from, to, value, data, chain
 }
 
 export function sendTransactionWithNonce(gasPrice, gasLimit, from, to, value, data, chainId, nonce) {
-    const gasPriceWei = gasPrice ? Web3Utils.toWei(gasPrice.toString(), 'gwei') : null
     return new Promise(function (resolve, reject) {        
         var transactionObj = {
             nonce: Web3Utils.toHex(nonce),
-            gasPrice: Web3Utils.toHex(gasPriceWei),
+            gasPrice: Web3Utils.toHex(gasPrice),
             gasLimit: Web3Utils.toHex(gasLimit),
             from: from,
             to: to,

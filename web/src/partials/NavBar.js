@@ -13,17 +13,59 @@ class NavBar extends Component {
   constructor(props){
     super(props)
 		this.state = {
-      pairs: null
+      pairs: null,
+      showAdvancedTootlip: false
     }
   }
 
   componentDidMount = () => {
-    listPairs().then(pairs => {
-      this.setState({pairs:pairs})
-      this.props.onPairsLoaded(pairs)
-    })
+    if (this.context && this.context.web3 && this.context.web3.validNetwork) {
+      listPairs().then(pairs => {
+        this.setState({pairs:pairs})
+        this.props.onPairsLoaded(pairs)
+      })
+    }
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
+      this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
+    }
+  }
+
+  isAdvanced = () => {
+    return window.location.pathname.indexOf("advanced") > 0
+  }
+
+  onDismissAdvancedTooltip = () => {
+    this.setState({showAdvancedTootlip: false})
+    window.localStorage.setItem('DISMISS_ADVANCED_TOOLTIP', '1')
+  }
+
+  changeMode = () => {
+    var url = ""
+    if (window.location.pathname.indexOf("buy") > 0) {
+      url = "/advanced/trade"
+    } else if (window.location.pathname.indexOf("write") > 0) {
+      url = "/advanced/mint"
+    } else if (window.location.pathname.indexOf("manage") > 0) {
+      url = "/advanced/exercise"
+    } else if (window.location.pathname.indexOf("trade") > 0) {
+      url = "/buy"
+    } else if (window.location.pathname.indexOf("mint") > 0) {
+      url = "/write"
+    } else if (window.location.pathname.indexOf("exercise") > 0) {
+      url = "/manage"
+    }
+    
+    if (this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork) {
+      this.props.history.push(url)
+    }
+    else {
+      this.props.signIn(url, this.context)
+    }
+  }
+ 
   render() {
     var username = this.context && this.context.web3 && this.context.web3.selectedAccount
     var validNetwork = this.context && this.context.web3 && this.context.web3.validNetwork
@@ -39,13 +81,24 @@ class NavBar extends Component {
               <span className="navbar-toggler-icon"></span>
             </button>
             <div className="collapse navbar-collapse" id="navbarResponsive">
-              <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items">
-                <NavLink className="nav-item link-nav" to="/trade">Trade</NavLink>
-                <NavLink className="nav-item link-nav" to="/mint">Mint</NavLink>
-                <NavLink className="nav-item link-nav" to="/exercise">Exercise</NavLink>
-              </ul>
+              {this.isAdvanced() && 
               <ul className="navbar-nav">
                 <PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown>
+              </ul>}
+              {this.isAdvanced() && 
+              <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items">
+                <NavLink className="nav-item link-nav" to="/advanced/trade">Trade</NavLink>
+                <NavLink className="nav-item link-nav" to="/advanced/mint">Mint</NavLink>
+                <NavLink className="nav-item link-nav" to="/advanced/exercise">Exercise</NavLink>
+              </ul>}
+              <ul className="navbar-nav nav-modes ml-auto">
+                <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>
+                <div className="app-mode" onClick={() => this.changeMode()}>{this.isAdvanced() ? "Basic" : "Advanced"}<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
+                {this.state.showAdvancedTootlip && window.innerWidth >= 992 && !this.isAdvanced() &&
+                <div className="advanced-tooltip">
+                  Go to advanced mode to trade options with limit orders.
+                  <div className="action-btn" onClick={() => this.onDismissAdvancedTooltip()}>Dismiss</div>
+                </div>}
               </ul>
               <ul className="navbar-nav">
                 {username &&
@@ -71,7 +124,7 @@ class NavBar extends Component {
                 }
                 {!username && 
                   <li className="nav-item mx-lg-2">
-                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn("/mint")}>SIGN IN</div>
+                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn((this.isAdvanced() ? "/advanced/mint" : "/write"), this.context)}>CONNECT WALLET</div>
                   </li>
                 }
               </ul>

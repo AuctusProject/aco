@@ -55,7 +55,7 @@ export function redeem(userAddress, optionInfo) {
 
 export function exercise(userAddress, optionInfo, tokenAmount, value, nonce) {
     const acoTokenContract = getAcoTokenContract(optionInfo.acoToken)
-    var data = acoTokenContract.methods.exercise(tokenAmount).encodeABI()
+    var data = acoTokenContract.methods.exercise(tokenAmount, new Date().getTime()).encodeABI()
     return sendTransactionWithNonce(null, null, userAddress, optionInfo.acoToken, (isEther(getExerciseAddress(optionInfo)) ? value : null), data, null, nonce)
 }
 
@@ -126,6 +126,16 @@ export function getExerciseInfo(option) {
     return option.isCall ? option.strikeAssetInfo : option.underlyingInfo
 }
 
+export function getExerciseValue(option, amount, maxExercisedAccounts) {
+    var exerciseInfo = getExerciseInfo(option)
+    return fromDecimals(toDecimals(option.isCall ? getTokenStrikePriceRelation(option, amount) : amount, exerciseInfo.decimals).add(new Web3Utils.BN(maxExercisedAccounts)), exerciseInfo.decimals, exerciseInfo.decimals)
+}
+
+export function getMaxExercisedAccounts(optionInfo) {
+    const acoTokenContract = getAcoTokenContract(optionInfo.acoToken)
+    return acoTokenContract.methods.maxExercisedAccounts().call()
+}
+
 export function getTokenAmount(optionInfo, collateralAmount) {
     if (optionInfo.isCall) {
         return collateralAmount;
@@ -164,7 +174,7 @@ export function getFormattedOpenPositionAmount(position) {
 }
 
 export function getOptionFormattedPrice(option) {
-    return fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals) + " " + option.strikeAssetInfo.symbol
+    return fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals, 4, 1) + " " + option.strikeAssetInfo.symbol
 }
 
 export function getOptionCollateralFormatedValue(value, option) {

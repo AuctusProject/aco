@@ -282,26 +282,6 @@ export const acoTokenABI =
 	},
 	{
 		"inputs": [],
-		"name": "clear",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "account",
-				"type": "address"
-			}
-		],
-		"name": "clearFrom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
 		"name": "collateral",
 		"outputs": [
 			{
@@ -394,6 +374,11 @@ export const acoTokenABI =
 				"internalType": "uint256",
 				"name": "tokenAmount",
 				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "salt",
+				"type": "uint256"
 			}
 		],
 		"name": "exercise",
@@ -453,6 +438,11 @@ export const acoTokenABI =
 				"internalType": "uint256",
 				"name": "tokenAmount",
 				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "salt",
+				"type": "uint256"
 			}
 		],
 		"name": "exerciseFrom",
@@ -494,6 +484,30 @@ export const acoTokenABI =
 				"type": "uint256"
 			}
 		],
+		"name": "getBaseExerciseData",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenAmount",
+				"type": "uint256"
+			}
+		],
 		"name": "getCollateralAmount",
 		"outputs": [
 			{
@@ -519,30 +533,6 @@ export const acoTokenABI =
 				"internalType": "uint256",
 				"name": "",
 				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "tokenAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "getExerciseData",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
 			},
 			{
 				"internalType": "uint256",
@@ -632,6 +622,11 @@ export const acoTokenABI =
 				"internalType": "address payable",
 				"name": "_feeDestination",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_maxExercisedAccounts",
+				"type": "uint256"
 			}
 		],
 		"name": "init",
@@ -647,6 +642,19 @@ export const acoTokenABI =
 				"internalType": "bool",
 				"name": "",
 				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "maxExercisedAccounts",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -711,6 +719,19 @@ export const acoTokenABI =
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "numberOfAccountsWithCollateral",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",

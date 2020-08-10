@@ -80,6 +80,12 @@
     margin-right: 6px;
 }
 
+.home-btn.medium svg {
+    height: 16px;
+    width: auto;
+    margin-right: 8px;
+}
+
 .home-btn span {
     font-size: 10px;
     font-weight: 300;
@@ -101,7 +107,21 @@
     letter-spacing: 0.25px;
 }
 
-.home-btn.white, .home-btn.green:hover, .home-btn.black:hover {
+.home-btn.medium span {
+    font-size: 12px;
+    letter-spacing: 0.4px;
+    margin-top: 0px;
+}
+
+.home-btn.medium {
+    min-width: 120px;
+    height: 40px;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.25px;
+}
+
+.home-btn.white, .home-btn.green:not(.disabled):hover, .home-btn.black:hover {
     color: #ffffff;
     border-color: #ffffff;
 }
@@ -122,7 +142,7 @@
     background-color: #a8c708;
 }
 
-.home-btn.solid-white, .home-btn.solid-green:hover {
+.home-btn.solid-white, .home-btn.solid-green:not(.disabled):hover {
     color: #404040;
     border-color: #ffffff;
     background-color: #ffffff;
@@ -589,4 +609,95 @@
 
 .expiration-option.active {
     cursor: default;
+}
+
+#audit {
+    background-color: #2a2646;
+    color: #ffffff;
+    padding-top: 52px;
+    padding-bottom: 52px;
+    position: relative;
+}
+
+#audit .container {
+    z-index: 1;
+    position: relative;
+}
+
+#audit .bug-bounty-value {
+    font-size: 36px;
+    align-items: flex-start;
+    display: flex;
+    justify-content: center;
+    line-height: 1;
+}
+
+#audit .bug-bounty-value span {
+    font-size: 16px;
+    padding-top: 3px;
+}
+
+#audit h1 {
+    font-size: 23px;
+    font-weight: 500;
+    letter-spacing: 0.58px;
+}
+
+#audit p {
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.7px;    
+}
+
+#audit a {
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 0.75px;
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+#audit .audit-background {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    max-height: 100%;
+}
+
+#audit .arrow-link {
+    font-size: 16px;
+    font-weight: 500;
+    color: #a8c708;
+    text-decoration: none;
+    cursor: pointer;
+    display: block;
+    margin-top: 16px;
+}
+
+#audit .arrow-link svg {
+    margin-left: 10px;
+    line-height: 1;
+}
+
+#audit .open-zeppelin-col {
+    border-right: 1px solid #7d7d7d80;
+}
+
+#audit .open-zeppelin-col a,
+#audit .bug-bounty-col a {
+    text-decoration: none;
+}
+
+.logo-openzeppelin {
+    margin-top: 4px;
+    margin-bottom: 5px;
+}
+
+@media (max-width: 767px) {    
+    #audit .open-zeppelin-col {
+        border-right: none;
+        border-bottom: 1px solid #7d7d7d80;
+        width: auto;
+        margin: auto;
+    }
 }

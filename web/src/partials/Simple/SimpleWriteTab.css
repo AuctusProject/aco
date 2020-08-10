@@ -1,0 +1,29 @@
+.simple-write-tab {
+    padding: 0px 10px 20px;
+}
+
+.write-option-group {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+.earn-title {
+    font-size: 14px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.7px;
+    text-align: left;
+    color: #e6e6e6;
+    margin-bottom: 20px;
+}
+
+.simple-write-tab .aco-table {
+    width: 100%;
+}
+
+
+.simple-write-tab .asset-icon {
+    width: 30px;
+    margin-right: 4px;
+}

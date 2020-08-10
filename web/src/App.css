@@ -475,7 +475,8 @@ main {
   letter-spacing: 0.6px;
   text-align: center;
   color: #e6e6e6;
-  padding: 0 20px;
+  padding: 0 20px;  
+  word-break: normal;
 }
 
 .aco-table tbody td {
@@ -488,7 +489,8 @@ main {
   font-style: normal;
   letter-spacing: 0.55px;
   text-align: center;
-  color: #e6e6e6;
+  color: #e6e6e6;  
+  word-break: normal;
 }
 
 .aco-table tbody tr.clickable:hover td {
@@ -504,30 +506,60 @@ label {
   margin-bottom: unset;
 }
 
+* {
+  outline: none !important;
+}
 
-.beta-alert {
-  border: solid 0.5px white;
-  padding: 16px 8px;
-  margin: 0 auto 20px;
-  font-size: 14px;
-  font-weight: normal;
-  font-stretch: normal;
-  font-style: normal;
-  letter-spacing: normal;
-  text-align: center;
-  color: white;
-  max-width: 350px;
+.aco-modal .modal-content {
+  background-color: #202020;
+}
+
+.aco-modal .modal-header {
+  padding: 10px 20px;
+  border-bottom: 0;
+  min-height: 24px;
+  position: relative;
+  background-color: #343434;
   display: flex;
   justify-content: center;
   align-items: center;
+  line-height: 1;
+  font-size: 18px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: 0.45px;
+  text-align: center;
+  color: #ffffff;
 }
 
-.beta-alert svg {
-  color: #a8c708;
-  margin-right: 10px;
+.aco-modal.no-header .modal-header {
+  background-color: transparent;
+  padding: 0;
+}
+
+.aco-modal .modal-header .close {
+  right: 5px;
+  top: -2px;
+  padding: 0;
+  margin: 0;
   font-size: 24px;
+  color: rgb(196,196,196);
+  text-shadow: none;
+  font-weight: 300;
+  position: absolute;
 }
 
-* {
-  outline: none !important;
+.aco-modal .modal-body {
+  padding: 0;
+}
+
+.aco-modal .modal-dialog {
+  width: 322px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.modal-backdrop.show {
+  opacity: 0.7;
 }
