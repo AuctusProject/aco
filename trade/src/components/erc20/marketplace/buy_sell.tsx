@@ -302,7 +302,12 @@ class BuySell extends React.Component<Props, State> {
         else if (baseTokenBalance){
             balance += tokenAmountInUnits(baseTokenBalance.balance, baseTokenBalance.token.decimals, baseTokenBalance.token.displayDecimals)
             balance += " ACO";
-            mintLink = <span>(<a href={"/advanced/mint/"+baseTokenBalance.token.address}>Mint</a>)</span>
+            if (quoteTokenBalance) {
+                var symbolStart = baseTokenBalance.token.symbol.split("-")[0];
+                symbolStart = symbolStart.length >= 4 ? symbolStart.substring(4) : "";
+                let pair = symbolStart + "_" + quoteTokenBalance.token.symbol + "/";
+                mintLink = <span>(<a href={"/advanced/mint/"+pair + baseTokenBalance.token.address}>Mint</a>)</span>
+            }
         }
         else {
             balance = "-"

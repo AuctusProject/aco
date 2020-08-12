@@ -268,7 +268,7 @@ class SimpleWriteStep2 extends Component {
     if (selectedOption) {
       getDeribiData(selectedOption).then((r) => {
         if (r) {
-          this.setState({deribitPrice: r.best_ask_price * r.underlying_price})
+          this.setState({deribitPrice: r.best_bid_price * r.underlying_price})
         } else {
           this.setState({deribitPrice: null})
         }

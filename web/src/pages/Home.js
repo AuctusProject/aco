@@ -122,9 +122,9 @@ class Home extends Component {
 
   getUrlFromType = (type) => {
     if (type === "trade") {
-      return "/buy"
+      return "/buy/" + (this.props.selectedPair ? this.props.selectedPair.id : "")
     } else if (type === "earn") {
-      return "/write"
+      return "/write/" + (this.props.selectedPair ? this.props.selectedPair.id : "")
     }
   }
 
@@ -145,11 +145,11 @@ class Home extends Component {
   }
 
   onSelectOption = (option) => {
-    this.redirectToAdvancedAction('/advanced/trade/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/trade/' + this.props.selectedPair.id + "/" + option.acoToken)
   }
 
   onSelectMintOption = (option) => {
-    this.redirectToAdvancedAction('/advanced/mint/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/mint/' + this.props.selectedPair.id + "/" + option.acoToken)
   }
 
   redirectToAdvancedAction(url) {

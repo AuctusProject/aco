@@ -16,7 +16,7 @@ import Exercise from './pages/Exercise'
 import ApiTickerProvider from './util/ApiTickerProvider'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getNetworkName, CHAIN_ID, getMarketDetails } from './util/constants'
+import { getNetworkName, CHAIN_ID, getMarketDetails, getCurrentRoute, getPairIdFromRoute } from './util/constants'
 import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
 
@@ -75,6 +75,13 @@ class App extends Component {
 
   onPairSelected = (pair) => {
     this.setState({selectedPair: pair})
+    var route = getCurrentRoute(this.props.location)
+    if (route) {
+      var currentPairId = getPairIdFromRoute(this.props.location)
+      if (pair && currentPairId !== pair.id) {
+        this.props.history.push(route + pair.id)
+      }      
+    }    
   }
 
   onPairsLoaded = (pairs) => {
@@ -134,7 +141,7 @@ class App extends Component {
                   render={ routeProps => <Terms {...routeProps} /> }
                 />
                 <Route 
-                  path={`/advanced/mint/:tokenAddress?`}
+                  path={`/advanced/mint/:pair?/:tokenAddress?`}
                   render={ routeProps => <Writer 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -142,7 +149,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/advanced/exercise`}
+                  path={`/advanced/exercise/:pair?/`}
                   render={ routeProps => <Exercise 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -150,7 +157,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/advanced/trade/:tokenAddress?`}
+                  path={`/advanced/trade/:pair?/:tokenAddress?`}
                   render={ routeProps => <Trade 
                     {...routeProps}
                     selectedPair={this.state.selectedPair}
@@ -160,7 +167,7 @@ class App extends Component {
                   /> }
                 />                
                 <Route 
-                  path={[`/buy/:tokenAddress?`, `/write/:tokenAddress?`, `/manage/:tokenAddress?`]}
+                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
                   render={ routeProps => <Simple 
                     {...routeProps}
                     signIn={this.showSignInModal}
@@ -174,7 +181,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/`}
+                  path={`/:pair?`}
                   exact={true}
                   render={ routeProps => <Home
                     {...routeProps}

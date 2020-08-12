@@ -8,6 +8,7 @@ import PairDropdown from '../partials/PairDropdown'
 import SimpleBuyTab from '../partials/Simple/SimpleBuyTab'
 import SimpleWriteTab from '../partials/Simple/SimpleWriteTab'
 import SimpleManageTab from '../partials/Simple/SimpleManageTab'
+import { getPairIdFromRoute } from '../util/constants'
 
 class Simple extends Component {
   constructor() {
@@ -44,6 +45,14 @@ class Simple extends Component {
     return getOptionsFromPair(this.state.options, this.props.selectedPair)
   }
 
+  getUrlWithPairId = (baseUrl) => {
+    var pairId = getPairIdFromRoute(this.props.location)
+    if (pairId) {
+      return baseUrl + "/" + pairId
+    }
+    return baseUrl
+  }
+
   render() {
     var filteredOptions = this.getOptionsFromPair()
     return <div className="py-4">
@@ -51,13 +60,13 @@ class Simple extends Component {
         <div className="simple-box">
           <ul className="nav nav-tabs justify-content-center" id="simpleTabs" role="tablist">
             <li className="nav-item">
-              <NavLink className="nav-link" to={`/buy`}>Buy</NavLink>
+              <NavLink className="nav-link" to={this.getUrlWithPairId(`/buy`)}>Buy</NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to={`/write`}>Write<div className="earn-badge">Earn</div></NavLink>
+              <NavLink className="nav-link" to={this.getUrlWithPairId(`/write`)}>Write<div className="earn-badge">Earn</div></NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to={`/manage`}>Manage</NavLink>
+              <NavLink className="nav-link" to={this.getUrlWithPairId(`/manage`)}>Manage</NavLink>
             </li>
           </ul>
           <div className="tab-content" id="simpleTabsContent">

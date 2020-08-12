@@ -5,7 +5,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
-import { etherscanUrl, ellipsisCenterOfUsername } from '../util/constants'
+import { etherscanUrl, ellipsisCenterOfUsername, getPairIdFromRoute } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listPairs } from '../util/acoFactoryMethods'
 
@@ -31,6 +31,10 @@ class NavBar extends Component {
     if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
       this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
     }
+
+    // if (this.props.location.pathname !== prevProps.location.pathname) {
+    //   this.forceUpdate()
+    // }
   }
 
   isAdvanced = () => {
@@ -57,6 +61,8 @@ class NavBar extends Component {
     } else if (window.location.pathname.indexOf("exercise") > 0) {
       url = "/manage"
     }
+
+    url = this.getUrlWithPairId(url)
     
     if (this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork) {
       this.props.history.push(url)
@@ -64,6 +70,14 @@ class NavBar extends Component {
     else {
       this.props.signIn(url, this.context)
     }
+  }
+
+  getUrlWithPairId = (baseUrl) => {
+    var pairId = getPairIdFromRoute(this.props.location)
+    if (pairId) {
+      return baseUrl + "/" + pairId
+    }
+    return baseUrl
   }
  
   render() {
@@ -87,9 +101,9 @@ class NavBar extends Component {
               </ul>}
               {this.isAdvanced() && 
               <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items">
-                <NavLink className="nav-item link-nav" to="/advanced/trade">Trade</NavLink>
-                <NavLink className="nav-item link-nav" to="/advanced/mint">Mint</NavLink>
-                <NavLink className="nav-item link-nav" to="/advanced/exercise">Exercise</NavLink>
+                <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/trade")}>Trade</NavLink>
+                <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/mint")}>Mint</NavLink>
+                <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise</NavLink>
               </ul>}
               <ul className="navbar-nav nav-modes ml-auto">
                 <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>
