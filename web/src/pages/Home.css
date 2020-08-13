@@ -701,3 +701,89 @@
         margin: auto;
     }
 }
+
+
+.top-banner {
+    padding: 6px 30px;
+    background-color: black;
+    color: white;
+    display: flex;
+    flex-direction: row;
+    font-stretch: normal;
+    font-style: normal;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+    flex-wrap: wrap;
+    opacity: 0.95;
+}
+
+@media (max-width: 720px) {
+    .top-banner {
+        flex-direction: column;
+    }
+}
+
+.top-banner .banner-title {
+    font-size: 17px;
+    font-weight: bold;
+    letter-spacing: 0.43px;
+}
+
+.top-banner .banner-subtitle {
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.33px;
+    margin-left: 15px;
+    margin-right: 15px;
+    text-align: center;
+}
+
+.top-banner .banner-button {
+    font-size: 14px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.65px;
+    text-align: center;
+    color: #ffffff;
+    padding: 5px 26px;
+    line-height: 1;
+    border-radius: 14px;
+    border: 2px solid white;
+}
+
+@media (max-width: 720px) {
+    .top-banner .banner-button {
+        margin: 5px 0;
+    }
+}
+
+.top-banner a,
+.top-banner a:hover {
+    text-decoration: none;
+}
+
+.top-banner .banner-button:hover {
+    background-color: #ffffff;
+    color: black;
+    text-decoration: none;
+}
+
+.top-banner .banner-dismiss {
+    position: absolute;
+    right: 20px;
+    cursor: pointer;
+}
+
+.banner-visible {
+    padding-top: 30px;
+}
+
+@media(max-width: 720px) {
+    .banner-visible {
+        padding-top: 80px;
+    }
+}
