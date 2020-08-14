@@ -218,7 +218,7 @@ class SimpleWriteStep2 extends Component {
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isCollateralEth()) {
-        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), this.props.option.acoToken).then(result => {
+        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriteAddress).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())))
         })
