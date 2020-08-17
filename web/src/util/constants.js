@@ -16,8 +16,7 @@ export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE)
 export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
-export const symbolsMappedToQuoteAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_QUOTE_ASSET)
-export const symbolsMappedToBaseAsset = JSON.parse(process.env.REACT_APP_SYMBOLS_MAPPED_TO_BASE_ASSET)
+export const pairMappedToBinanceSymbols = JSON.parse(process.env.REACT_APP_PAIR_TO_BINANCE_SYMBOLS)
 export const swapQuoteBuySize = "1000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
@@ -186,14 +185,10 @@ export function formatWithPrecision(number, significantDigits = 4) {
 }
 
 export function getBinanceSymbolForPair(pair) {
-    var underlyingSymbol = pair.underlyingSymbol.toLowerCase()
-    if (symbolsMappedToBaseAsset[underlyingSymbol.toUpperCase()]){
-        underlyingSymbol = symbolsMappedToBaseAsset[underlyingSymbol.toUpperCase()]
+    if (pairMappedToBinanceSymbols[pair.id.toUpperCase()]){
+        return pairMappedToBinanceSymbols[pair.id.toUpperCase()].toLowerCase()
     }
-    if (symbolsMappedToQuoteAsset[pair.strikeAssetSymbol.toUpperCase()]){
-        return (underlyingSymbol + symbolsMappedToQuoteAsset[pair.strikeAssetSymbol.toUpperCase()]).toLowerCase()
-    }
-    return (underlyingSymbol + pair.strikeAssetSymbol).toLowerCase()
+    return pair.id.replace("_","").toLowerCase()
 }
 
 
@@ -269,4 +264,34 @@ export const getMarketDetails = (selectedOption) => {
             "addresses": { [CHAIN_ID]: selectedOption.strikeAsset },
         }
     }
+}
+
+export const getPairIdFromRoute = (location) => {
+    if (location.pathname) {
+        var route = getCurrentRoute(location)
+        var paths = location.pathname.split(route)
+        if (paths.length >= 2) {
+            var params = paths[1].split("/")
+            return params[0]
+        }
+    }
+    return null
+}
+
+export const getCurrentRoute = (location) => {
+    var routes = [
+      "/advanced/exercise",
+      "/advanced/mint",
+      "/advanced/trade",
+      "/buy",
+      "/write",
+      "/manage",      
+    ]
+    for (let i = 0; i < routes.length; i++) {
+      const route = routes[i];
+      if (location.pathname.indexOf(route) !== -1) {
+        return route  + "/"
+      }
+    }
+    return null;
 }

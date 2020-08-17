@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { groupBy, formatDate } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { faArrowRight, faTimes } from '@fortawesome/free-solid-svg-icons'
 import TradeIcon from '../partials/Util/TradeIcon'
 import { getTokensList } from '../util/acoApi'
 import { getPairsFromOptions, getOptionsFromPair } from '../util/acoFactoryMethods'
@@ -30,7 +30,8 @@ class Home extends Component {
       case3class: "",
       case4class: "",
       joinAnimation: (this.isMobile ? "" : " unshown "),
-      startTradingAnimation: (this.isMobile ? "" : " unshown ")
+      startTradingAnimation: (this.isMobile ? "" : " unshown "),
+      showBanner: true
     }
   }
 
@@ -122,9 +123,9 @@ class Home extends Component {
 
   getUrlFromType = (type) => {
     if (type === "trade") {
-      return "/buy"
+      return "/buy/" + (this.props.selectedPair ? this.props.selectedPair.id : "")
     } else if (type === "earn") {
-      return "/write"
+      return "/write/" + (this.props.selectedPair ? this.props.selectedPair.id : "")
     }
   }
 
@@ -145,11 +146,11 @@ class Home extends Component {
   }
 
   onSelectOption = (option) => {
-    this.redirectToAdvancedAction('/advanced/trade/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/trade/' + this.props.selectedPair.id + "/" + option.acoToken)
   }
 
   onSelectMintOption = (option) => {
-    this.redirectToAdvancedAction('/advanced/mint/'+option.acoToken)
+    this.redirectToAdvancedAction('/advanced/mint/' + this.props.selectedPair.id + "/" + option.acoToken)
   }
 
   redirectToAdvancedAction(url) {
@@ -178,7 +179,15 @@ class Home extends Component {
     var filteredOptions = this.getOptionsFromPair()
     return (
     <div className="home">
-      <section id="head">
+      {this.state.showBanner && 
+        <div class="top-banner">
+            <div class="banner-title">YFI options now available!</div>
+            <div class="banner-subtitle">Start trading trustless YFI options immediately</div>
+            <a href="/buy/YFI_USDC/"><div class="banner-button">TRADE</div></a>
+            <div class="banner-dismiss" onClick={() => {this.setState({showBanner:false})}}><FontAwesomeIcon icon={faTimes}/></div>
+        </div>
+      }
+      <section id="head" className={this.state.showBanner ? "banner-visible" : ""}>
         <nav className="navbar navbar-expand-lg navbar-dark navbar-home">
           <div className="container">
             <div className="home-logo"><img src="/logo.svg" alt="Auctus Crypto Options" /></div>

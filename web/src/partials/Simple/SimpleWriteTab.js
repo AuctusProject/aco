@@ -16,7 +16,7 @@ import ReactTooltip from 'react-tooltip'
 class SimpleWriteTab extends Component {
   constructor(props) {
     super(props)
-    this.state = {currentStep: 1, swapQuotes: null, currentPairPrice: null}
+    this.state = {currentStep: 1, swapQuotes: null, currentPairPrice: null, filteredOptions: []}
   }
 
   componentDidMount = () => {
@@ -35,22 +35,29 @@ class SimpleWriteTab extends Component {
 
   loadOptionsSwapQuotes = () => {
     this.setState({swapQuotes: null}, () => {
-      var swapQuotesPromises = []
+      let swapQuotesPromises = []
       var swapQuotes = {}
       for (let index = 0; index < this.props.options.length; index++) {
         const option = this.props.options[index];
-        var swapQuotePromise = getSwapQuote(option.strikeAsset, option.acoToken, swapQuoteBuySize, true)
-        swapQuotesPromises.push(swapQuotePromise)
-        swapQuotePromise.then(swapQuote => {
-          swapQuote.price = 1/swapQuote.price
-          this.setSwapQuoteReturns(option, swapQuote)
-          swapQuotes[option.acoToken] = swapQuote
-        }).catch((err) => {
-          swapQuotes[option.acoToken] = false
-        })
+        let swapQuotePromise = getSwapQuote(option.strikeAsset, option.acoToken, swapQuoteBuySize, true)
+        swapQuotesPromises.push(new Promise((resolve) => {
+          swapQuotePromise.then(swapQuote => {
+            swapQuote.price = 1/swapQuote.price
+            swapQuotes[option.acoToken] = swapQuote
+            resolve()
+          }).catch((err) => {
+            swapQuotes[option.acoToken] = false
+            resolve()
+          })
+        }))
       }
       Promise.allSettled(swapQuotesPromises).then(() => {
-        this.setState({swapQuotes: swapQuotes})
+        var loadingPrice = this.state.currentPairPrice == null
+        this.setState({swapQuotes: swapQuotes, loadingOptions: loadingPrice}, () => {
+          if (!loadingPrice) {
+            this.setOptionsReturnIfFlatAndAnnualizedReturn()
+          }
+        })
       })
     })
   }
@@ -63,7 +70,7 @@ class SimpleWriteTab extends Component {
         var swapQuote = swapQuotes[option.acoToken]
         this.setSwapQuoteReturns(option, swapQuote)
       }    
-      this.setState({swapQuotes: swapQuotes})
+      this.setState({swapQuotes: swapQuotes, loadingOptions: this.state.currentPairPrice == null}, () => this.setFilteredOptions())
     }
   }
 
@@ -72,6 +79,11 @@ class SimpleWriteTab extends Component {
       swapQuote.returnIfFlat = this.getReturnIfFlat(option, swapQuote.price)
       swapQuote.annualizedReturn = this.getAnnualizedReturn(option, swapQuote.returnIfFlat)
     }
+  }
+
+  setFilteredOptions = () => {
+    var filteredOptions = (!this.state.loadingOptions && this.props.options && this.state.swapQuotes) ? this.props.options.filter(o => !!this.state.swapQuotes[o.acoToken] && !!this.state.swapQuotes[o.acoToken].returnIfFlat && this.state.swapQuotes[o.acoToken].returnIfFlat > 0) : []
+    this.setState({filteredOptions: filteredOptions})
   }
 
   setCurrentStep = (step) => {
@@ -171,11 +183,11 @@ class SimpleWriteTab extends Component {
   }
 
   render() {
-    var filteredOptions = (this.props.options && this.state.swapQuotes) ? this.props.options.filter(o => !!this.state.swapQuotes[o.acoToken] && !!this.state.swapQuotes[o.acoToken].returnIfFlat && this.state.swapQuotes[o.acoToken].returnIfFlat > 0) : []
+    var filteredOptions = this.state.filteredOptions
     var grouppedOptions = groupBy(filteredOptions, "isCall")
-    
+
     return <div className="simple-write-tab">
-      {(this.state.currentPairPrice && this.state.swapQuotes) ? <>
+      {(!this.state.loadingOptions && this.state.currentPairPrice && this.state.swapQuotes) ? <>
         {this.state.currentStep !== 3 && <StepIndicator totalSteps={2} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>}
         {this.props.selectedPair && filteredOptions.length === 0 && <div className="text-center">No options available for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>}
         {this.state.currentStep === 1 && Object.keys(grouppedOptions).map(isCall => (
@@ -196,7 +208,7 @@ class SimpleWriteTab extends Component {
               <tbody>
                 {(!grouppedOptions[isCall] || grouppedOptions[isCall].length === 0) && 
                   <tr>
-                    {grouppedOptions[isCall].length === 0 && <td colSpan="6">No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
+                    {grouppedOptions[isCall].length === 0 && <td colSpan="6">No options for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
                   </tr>
                 }
                 {grouppedOptions[isCall].map(option => 

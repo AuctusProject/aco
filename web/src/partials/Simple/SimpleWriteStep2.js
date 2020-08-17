@@ -218,7 +218,7 @@ class SimpleWriteStep2 extends Component {
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isCollateralEth()) {
-        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), this.props.option.acoToken).then(result => {
+        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriteAddress).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())))
         })
@@ -268,7 +268,7 @@ class SimpleWriteStep2 extends Component {
     if (selectedOption) {
       getDeribiData(selectedOption).then((r) => {
         if (r) {
-          this.setState({deribitPrice: r.best_ask_price * r.underlying_price})
+          this.setState({deribitPrice: r.best_bid_price * r.underlying_price})
         } else {
           this.setState({deribitPrice: null})
         }

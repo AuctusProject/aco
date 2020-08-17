@@ -1,10 +1,10 @@
 import './PairDropdown.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { getOptionPairIdFromAddress } from '../util/acoFactoryMethods'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import PairInfo from './PairInfo'
+import { getPairIdFromRoute } from '../util/constants'
 
 class PairDropdown extends Component {  
   componentDidMount = () => {
@@ -19,31 +19,17 @@ class PairDropdown extends Component {
     }
   }
 
-  getTokenAddressFromPath = () => {
-    if (this.props.location.pathname) {
-      var paths = this.props.location.pathname.split("/trade/")
-      if (paths.length >= 2) {
-        return paths[1]
-      }
-    }
-    return null
-  }
-
   selectInitialPair = () => {
     var pairs = this.props.pairs
-    var tokenAddress = this.getTokenAddressFromPath()
-    if (tokenAddress) {
-      getOptionPairIdFromAddress(tokenAddress).then(pairId => {
-        if (pairId) {
-          for (let i = 0; i < pairs.length; i++) {
-            if (pairs[i].id === pairId) {
-              this.selectPair(pairs[i])
-              return;
-            }
-          }
+    var pairId = getPairIdFromRoute(this.props.location)
+    if (pairId) {
+      for (let i = 0; i < pairs.length; i++) {
+        if (pairs[i].id === pairId) {
+          this.selectPair(pairs[i])
+          return;
         }
-        this.selectPair(pairs[0])
-      })
+      }
+      this.selectPair(pairs[0])
     }
     else {
       this.selectPair(pairs[0])
