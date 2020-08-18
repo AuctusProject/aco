@@ -23,7 +23,7 @@ class StepsModal extends Component {
   }
 
   render() {
-    var { title, subtitle, img, steps, isDone, onDoneButtonClick, doneLabel } = this.props
+    var { title, subtitle, subtitle2, img, steps, isDone, onDoneButtonClick, doneLabel } = this.props
     return <Modal className="steps-modal" backdrop="static" keyboard={false} centered={true} size="sm" show={true} onHide={this.onHide}>
       <Modal.Header closeButton>
       </Modal.Header>
@@ -34,6 +34,7 @@ class StepsModal extends Component {
               <div className="steps-modal-icon">{img}</div>
               <div className="steps-modal-title">{title}</div>
               <div className="steps-modal-subtitle">{subtitle}</div>
+              {subtitle2 && <div className="steps-modal-subtitle">{subtitle2}</div>}
               {isDone && <div className="done-button-wrapper">
                 <div className="aco-button action-btn" onClick={onDoneButtonClick}>{doneLabel ? doneLabel: "OK"}</div>
                 </div>}

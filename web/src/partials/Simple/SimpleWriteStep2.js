@@ -16,6 +16,7 @@ import { allowDeposit, allowance } from '../../util/erc20Methods'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { write } from '../../util/acoWriteMethods'
 import { getDeribiData, getOpynQuote } from '../../util/acoApi'
+import VerifyModal from '../VerifyModal'
 
 class SimpleWriteStep2 extends Component {
   constructor(props) {
@@ -26,6 +27,27 @@ class SimpleWriteStep2 extends Component {
   componentDidMount = () => {
     this.refreshAccountBalance()
     this.setState({collaterizeValue: getCollateralAmount(this.props.option, 1)}, this.refresh)
+    this.startQuoteRefresh()
+  }
+
+  
+  componentWillUnmount = () => {
+    this.stopQuoteRefresh()  
+  }
+
+  stopQuoteRefresh = () => {
+    clearTimeout(this.quoteTimeout)
+  }
+
+  quoteTimeout = null
+  startQuoteRefresh = () => {
+    if (!this.quoteTimeout) {
+      this.quoteTimeout = setTimeout(() => {
+        if (this.quoteTimeout) {
+          this.internalRefreshSwapQuote(this.startQuoteRefresh)
+        }
+      }, 15000)
+    }
   }
 
   refreshAccountBalance = () => {
@@ -91,7 +113,7 @@ class SimpleWriteStep2 extends Component {
                   this.setStepsModalInfo(++stepNumber, needApproval)
                   checkTransactionIsMined(result).then(result => {
                     if (result) {
-                      this.sendWriteTransaction(stepNumber, ++nonce, needApproval)
+                      this.checkQuote(stepNumber, ++nonce, needApproval)
                     }
                     else {
                       this.setStepsModalInfo(-1, needApproval)
@@ -111,7 +133,7 @@ class SimpleWriteStep2 extends Component {
           }
           else {
             stepNumber = 2
-            this.sendWriteTransaction(stepNumber, nonce, needApproval)
+            this.checkQuote(stepNumber, nonce, needApproval)
           }
         })
       })
@@ -125,11 +147,45 @@ class SimpleWriteStep2 extends Component {
     return this.state.swapQuote.value
   }
 
+  checkQuote = (stepNumber, nonce, needApproval) => {
+    this.stopQuoteRefresh()
+    this.setStepsModalInfo(++stepNumber, needApproval)
+    var previousQuote = this.state.swapQuote
+    this.showVerifyQuote(() => {
+        this.refreshSwapQuote(() => {
+          if (previousQuote && this.state.swapQuote && previousQuote.price === this.state.swapQuote.price) {
+            this.setState({verifyModalInfo: null})            
+            this.sendWriteTransaction(stepNumber, nonce, needApproval)
+          }
+          else {
+            var verifyModalInfo = this.state.verifyModalInfo
+            verifyModalInfo.timedOut = true
+            this.setState({verifyModalInfo: verifyModalInfo})
+          }
+        })
+    })
+  }
+
+  showVerifyQuote = (callback) => {
+    var verifyModalInfo = {}
+    var onCancel = () => this.setState({verifyModalInfo: null}, this.onHideStepsModal)
+    verifyModalInfo.onConfirm = callback
+    verifyModalInfo.onCancel = onCancel
+    verifyModalInfo.onRefresh = () => {
+      this.refreshSwapQuote()
+      onCancel()
+    }    
+    verifyModalInfo.swapQuote = this.state.swapQuote
+    verifyModalInfo.timedOut = false
+    verifyModalInfo.option = this.props.option
+    verifyModalInfo.description = this.getSummaryDescription()
+    this.setState({verifyModalInfo: verifyModalInfo})
+  }
+
   sendWriteTransaction = (stepNumber, nonce, needApproval) => {
     var collateral = toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())
     var writeValue = this.getWriteValue(collateral)
-
-    this.setStepsModalInfo(++stepNumber, needApproval)
+    this.setStepsModalInfo(++stepNumber, needApproval)    
     write(this.context.web3.selectedAccount, this.props.option.acoToken, collateral.toString(), this.state.swapQuote.to, this.state.swapQuote.data, writeValue, this.state.swapQuote.gasPrice, nonce)
     .then(result => {
       if (result) {
@@ -157,27 +213,31 @@ class SimpleWriteStep2 extends Component {
   }
 
   setStepsModalInfo = (stepNumber, needApprove) => {
-    var title = (needApprove && stepNumber <= 2)  ? "Unlock token" : "Write"
+    var title = (stepNumber <= 2)  ? "Unlock token" : (stepNumber < 3 ? "Verify" : "Write")
     var subtitle = ""
     var img = null
     var optionsAmount = this.getOptionsAmount()
-    if (needApprove && stepNumber === 1) {
+    if (stepNumber === 1) {
       subtitle =  "Confirm on Metamask to unlock "+this.getCollaterizeAssetSymbol()+" for writing on ACO" 
       img = <MetamaskLargeIcon/>
     }
-    else if (needApprove && stepNumber === 2) {
+    else if (stepNumber === 2) {
       subtitle =  "Unlocking "+this.getCollaterizeAssetSymbol()+"..."
       img = <SpinnerLargeIcon/>
     }
     else if (stepNumber === 3) {
+      subtitle =  "Verifying..."
+      img = <SpinnerLargeIcon/>
+    }
+    else if (stepNumber === 4) {
       subtitle =  "Confirm on Metamask to write "+optionsAmount+" "+this.props.option.acoTokenInfo.symbol
       img = <MetamaskLargeIcon/>
     }
-    else if (stepNumber === 4) {
+    else if (stepNumber === 5) {
       subtitle =  "Writing "+optionsAmount+" "+this.props.option.acoTokenInfo.symbol+"..."
       img = <SpinnerLargeIcon/>
     }
-    else if (stepNumber === 5) {
+    else if (stepNumber === 6) {
       subtitle = "You have successfully written "+optionsAmount+" "+this.props.option.acoTokenInfo.symbol+"."
       img = <DoneLargeIcon/>
     }
@@ -190,21 +250,22 @@ class SimpleWriteStep2 extends Component {
     if (needApprove) {
       steps.push({title: "Unlock", progress: stepNumber > 2 ? 100 : 0, active: true})
     }
-    steps.push({title: "Write", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false})
+    steps.push({title: "Verify", progress: stepNumber > 3 ? 100 : 0, active: stepNumber >= 3 ? true : false})
+    steps.push({title: "Write", progress: stepNumber > 5 ? 100 : 0, active: stepNumber >= 4 ? true : false})
     this.setState({
       stepsModalInfo: {
         title: title, 
         subtitle: subtitle, 
         steps: steps, 
         img: img, 
-        isDone: (stepNumber === 5 || stepNumber === -1), 
+        isDone: (stepNumber === 6 || stepNumber === -1), 
         doneLabel:"OK", 
         onDoneButtonClick: (this.onHideStepsModal)}
     })
   } 
 
   onHideStepsModal = () => {
-    this.setState({ stepsModalInfo: null })
+    this.setState({ stepsModalInfo: null }, this.startQuoteRefresh)
   }
 
   isInsufficientFunds = () => {
@@ -298,27 +359,31 @@ class SimpleWriteStep2 extends Component {
     }
   }
   
-  refreshSwapQuote = () => {
+  refreshSwapQuote = (callback) => {
     this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
-      var optionsAmount = this.getOptionsAmount()
-      var selectedOption = this.props.option
-      if (selectedOption && optionsAmount && optionsAmount > 0) {
-        getSwapQuote(selectedOption.strikeAsset, selectedOption.acoToken, toDecimals(optionsAmount, selectedOption.acoTokenInfo.decimals).toString(), false).then(swapQuote => {
-          this.props.setSwapQuoteReturns(selectedOption, swapQuote)
-          this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false})
-        }).catch((err) => {
-          if (isInsufficientLiquidity(err)) {
-            this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false})
-          }
-          else {
-            this.setState({swapQuote: null, errorMessage: "Exchange unavailable", loadingSwap: false})
-          }
-        })
-      }
-      else {
-        this.setState({swapQuote: null, errorMessage: null, loadingSwap: false})
-      }
+      this.internalRefreshSwapQuote(callback)
     })
+  }
+
+  internalRefreshSwapQuote = (callback) => {
+    var optionsAmount = this.getOptionsAmount()
+    var selectedOption = this.props.option
+    if (selectedOption && optionsAmount && optionsAmount > 0) {
+      getSwapQuote(selectedOption.strikeAsset, selectedOption.acoToken, toDecimals(optionsAmount, selectedOption.acoTokenInfo.decimals).toString(), false).then(swapQuote => {
+        this.props.setSwapQuoteReturns(selectedOption, swapQuote)
+        this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false}, callback)
+      }).catch((err) => {
+        if (isInsufficientLiquidity(err)) {
+          this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false}, callback)
+        }
+        else {
+          this.setState({swapQuote: null, errorMessage: "Exchange unavailable", loadingSwap: false}, callback)
+        }
+      })
+    }
+    else {
+      this.setState({swapQuote: null, errorMessage: null, loadingSwap: false}, callback)
+    }
   }
 
 
@@ -380,7 +445,7 @@ class SimpleWriteStep2 extends Component {
   }
 
   getSummaryDescription = () => {
-    return <>Receive {this.getOptionPremium()} in return for assuming the obligation to {this.props.option.isCall ? "sell" : "buy"} {this.getFormattedOptionsAmount()} {this.props.option.underlyingInfo.symbol} for {getOptionFormattedPrice(this.props.option)} each.</>
+    return <>Receive {this.getOptionPremium()} in return for assuming the obligation to {this.props.option.isCall ? "sell" : "buy"} {this.getFormattedOptionsAmount()} {this.props.option.underlyingInfo.symbol} for {getOptionFormattedPrice(this.props.option)} each until {formatDate(this.props.option.expiryTime)}.</>
   }
 
   render() {
@@ -451,6 +516,7 @@ class SimpleWriteStep2 extends Component {
           </div>}
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
+      {this.state.verifyModalInfo && <VerifyModal {...this.state.verifyModalInfo} />}
     </div>
   }
 }
