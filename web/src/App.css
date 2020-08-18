@@ -566,7 +566,7 @@ label {
 
 .beta-alert {
   border: solid 0.5px white;
-  padding: 16px 8px;
+  padding: 8px;
   margin: 0 auto 20px;
   font-size: 14px;
   font-weight: normal;
@@ -575,7 +575,7 @@ label {
   letter-spacing: normal;
   text-align: center;
   color: white;
-  max-width: 350px;
+  max-width: 390px;
   display: flex;
   justify-content: center;
   align-items: center;

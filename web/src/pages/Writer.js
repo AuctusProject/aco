@@ -69,7 +69,7 @@ class Writer extends Component {
   render() {
     return <div className="py-4">
       {this.canLoad() && <>
-        <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}/>Reminder: Exercise is not automatic, please remember manually exercising in-the-money options before expiration.</div>
+        <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}/>Exercise is not automatic, please remember manually exercising in-the-money options before expiration.</div>
         <div className="page-title">MINT OPTIONS</div>
         <StepIndicator totalSteps={3} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>
         {!this.props.selectedPair && <Loading/>}
