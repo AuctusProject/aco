@@ -43,9 +43,25 @@
     margin-right: 12px;
 }
 
-.home-logo > img {
+.home-logo {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-logo .aco-logo {
     height: 61px;
     width: auto;
+}
+
+.home-logo .by-auctus-logo {
+    margin-top: 8px;
+    height: 16px;
+    width: auto;
+}
+
+.home-logo a {
+    padding: 0;
+    text-align: center;
 }
 
 .home-btn {

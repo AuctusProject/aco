@@ -88,9 +88,14 @@ class NavBar extends Component {
       <div>
         <nav className="navbar navbar-expand-lg navbar-dark navbar-aco">
           <div className="container-fluid">
-            <Link className="logo-link" to={`/`}>
-              <img src="/logo.png" alt="Auctus Crypto Options" />
-            </Link>
+            <div className="nav-logo logo-link">
+              <Link to={`/`}>
+                <img src="/logo.svg" className="aco-logo" alt="" />
+              </Link>
+              <a className="by-auctus-link" target="_blank" rel="noopener noreferrer" href="https://auctus.org">
+                <img src="/logo_by_auctus.svg" className="by-auctus-logo" alt="" />
+              </a>
+            </div>
             <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"></span>
             </button>
