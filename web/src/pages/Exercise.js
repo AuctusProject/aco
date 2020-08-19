@@ -6,6 +6,8 @@ import ExercisePositions from '../partials/Exercise/ExercisePositions'
 import ExerciseModal from '../partials/Exercise/ExerciseModal'
 import Loading from '../partials/Util/Loading'
 import { PositionsLayoutMode } from '../util/constants'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 
 class Exercise extends Component {
   constructor() {
@@ -35,6 +37,7 @@ class Exercise extends Component {
   render() {
     return <div className="py-4">
       {this.canLoad() && <>
+        <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}/>Exercise is not automatic, please remember manually exercising in-the-money options before expiration.</div>
         {this.props.selectedPair && <div className="page-title">EXERCISE</div>}
         {this.props.selectedPair && <div className="page-subtitle">Select which option series you would like to exercise</div>}
         {!this.props.selectedPair && <Loading/>}

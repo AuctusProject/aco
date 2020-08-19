@@ -1,0 +1,21 @@
+.gas-disclaimer {
+    color: white;
+    font-size: 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid white;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+.gas-disclaimer div {
+    margin-right: 8px;
+    font-size: 18px;
+}
+
+.verify-modal .done-button-wrapper{
+    margin-top: 26px;
+    font-size: 14px;
+}

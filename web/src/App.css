@@ -563,3 +563,26 @@ label {
 .modal-backdrop.show {
   opacity: 0.7;
 }
+
+.beta-alert {
+  border: solid 0.5px white;
+  padding: 8px;
+  margin: 0 auto 20px;
+  font-size: 14px;
+  font-weight: normal;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: normal;
+  text-align: center;
+  color: white;
+  max-width: 390px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.beta-alert svg {
+  color: #a8c708;
+  margin-right: 10px;
+  font-size: 24px;
+}

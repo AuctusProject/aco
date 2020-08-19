@@ -6,20 +6,38 @@
   padding: 0
 }
 
+.nav-logo {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.nav-logo .aco-logo{
+  height: 32px;
+  width: auto;
+}
+
+.nav-logo .by-auctus-link {
+  margin-top: 4px;
+  font-size: 0;
+}
+
+.nav-logo .by-auctus-logo {
+  margin-top: 0px;
+  height: 9px;
+  width: auto;
+}
+
 .logo-link {
   cursor: pointer;
-  margin-right: 180px;
+  margin-right: 200px;
 }
 
 @media (max-width: 1200px) {
   .logo-link {
     margin-right: 20px;
   }
-}
-
-.logo-link img {
-  height: 40px;
-  width: auto;
 }
 
 .nav-separator {

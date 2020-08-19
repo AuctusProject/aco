@@ -16,7 +16,7 @@ import ReactTooltip from 'react-tooltip'
 class SimpleWriteTab extends Component {
   constructor(props) {
     super(props)
-    this.state = {currentStep: 1, swapQuotes: null, currentPairPrice: null, filteredOptions: []}
+    this.state = {currentStep: 1, swapQuotes: null, currentPairPrice: null, filteredOptions: [], loadingOptions: true}
   }
 
   componentDidMount = () => {
@@ -34,17 +34,16 @@ class SimpleWriteTab extends Component {
   }
 
   loadOptionsSwapQuotes = () => {
-    this.setState({swapQuotes: null}, () => {
+    this.setState({swapQuotes: null, loadingOptions: true, currentStep: 1,}, () => {
       let swapQuotesPromises = []
-      var swapQuotes = {}
-      for (let index = 0; index < this.props.options.length; index++) {
-        const option = this.props.options[index];
-        let swapQuotePromise = getSwapQuote(option.strikeAsset, option.acoToken, swapQuoteBuySize, true)
+      let swapQuotes = this.props.options.length > 0 ? {} : null
+      for (let index = 0; index < this.props.options.length; index++) {        
+        let option = this.props.options[index];
         swapQuotesPromises.push(new Promise((resolve) => {
-          swapQuotePromise.then(swapQuote => {
-            swapQuote.price = 1/swapQuote.price
-            swapQuotes[option.acoToken] = swapQuote
-            resolve()
+            getSwapQuote(option.strikeAsset, option.acoToken, swapQuoteBuySize, true).then(swapQuote => {              
+              swapQuote.price = 1/swapQuote.price
+              swapQuotes[option.acoToken] = swapQuote
+              resolve()
           }).catch((err) => {
             swapQuotes[option.acoToken] = false
             resolve()
@@ -52,8 +51,8 @@ class SimpleWriteTab extends Component {
         }))
       }
       Promise.allSettled(swapQuotesPromises).then(() => {
-        var loadingPrice = this.state.currentPairPrice == null
-        this.setState({swapQuotes: swapQuotes, loadingOptions: loadingPrice}, () => {
+        let loadingPrice = this.state.currentPairPrice == null
+        this.setState({swapQuotes: swapQuotes}, () => {
           if (!loadingPrice) {
             this.setOptionsReturnIfFlatAndAnnualizedReturn()
           }

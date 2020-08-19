@@ -18,6 +18,7 @@ import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { allowDeposit, allowance } from '../../util/erc20Methods'
 import { getDeribiData, getOpynQuote } from '../../util/acoApi'
 import StepsModal from '../StepsModal/StepsModal'
+import VerifyModal from '../VerifyModal'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -39,6 +40,7 @@ class SimpleBuyTab extends Component {
       this.refreshAccountBalance()
       this.setPairCurrentPrice()
     }
+    this.startQuoteRefresh()
   }
 
   setPairCurrentPrice = () => {
@@ -72,6 +74,25 @@ class SimpleBuyTab extends Component {
     if (this.props.selectedPair !== prevProps.selectedPair ||
       this.props.accountToggle !== prevProps.accountToggle) {
       this.refreshAccountBalance()
+    }
+  }
+  
+  componentWillUnmount = () => {
+    this.stopQuoteRefresh()  
+  }
+
+  stopQuoteRefresh = () => {
+    clearTimeout(this.quoteTimeout)
+  }
+
+  quoteTimeout = null
+  startQuoteRefresh = () => {
+    if (!this.quoteTimeout) {
+      this.quoteTimeout = setTimeout(() => {
+        if (this.quoteTimeout) {
+          this.internalRefreshSwapQuote(this.state.selectedOption, this.startQuoteRefresh)
+        }
+      }, 15000)
     }
   }
 
@@ -195,7 +216,7 @@ class SimpleBuyTab extends Component {
                   this.setStepsModalInfo(++stepNumber, needApproval)
                   checkTransactionIsMined(result).then(result => {
                     if (result) {
-                      this.sendBuyTransaction(stepNumber, ++nonce, needApproval)
+                      this.checkQuote(stepNumber, ++nonce, needApproval)
                     }
                     else {
                       this.setStepsModalInfo(-1, needApproval)
@@ -215,11 +236,50 @@ class SimpleBuyTab extends Component {
           }
           else {
             stepNumber = 2
-            this.sendBuyTransaction(stepNumber, nonce, needApproval)
+            this.checkQuote(stepNumber, nonce, needApproval)
           }
         })
       })
     }
+  }
+
+  checkQuote = (stepNumber, nonce, needApproval) => {
+    this.stopQuoteRefresh()
+    this.setStepsModalInfo(++stepNumber, needApproval)
+    var previousQuote = this.state.swapQuote
+    this.showVerifyQuote(() => {
+        this.refreshSwapQuote(this.state.selectedOption, () => {
+          if (previousQuote && this.state.swapQuote && previousQuote.price === this.state.swapQuote.price) {
+            this.setState({verifyModalInfo: null})
+            this.sendBuyTransaction(stepNumber, nonce, needApproval)
+          }
+          else {
+            var verifyModalInfo = this.state.verifyModalInfo
+            verifyModalInfo.timedOut = true
+            this.setState({verifyModalInfo: verifyModalInfo})
+          }
+        })
+    })
+  }
+
+  showVerifyQuote = (callback) => {
+    var verifyModalInfo = {}
+    var onCancel = () => this.setState({verifyModalInfo: null}, this.onHideStepsModal)
+    verifyModalInfo.onConfirm = callback
+    verifyModalInfo.onCancel = onCancel
+    verifyModalInfo.onRefresh = () => {
+      this.refreshSwapQuote(this.state.selectedOption)
+      onCancel()
+    }    
+    verifyModalInfo.swapQuote = this.state.swapQuote
+    verifyModalInfo.timedOut = false
+    verifyModalInfo.option = this.props.option
+    verifyModalInfo.description = this.getSummaryDescription()
+    this.setState({verifyModalInfo: verifyModalInfo})
+  }
+
+  getSummaryDescription = () => {
+    return <>Pay {this.getTotalToBePaidFormatted()} in return for the right to {this.state.selectedOption.isCall ? "sell" : "buy"} {this.state.qtyValue} {this.state.selectedOption.underlyingInfo.symbol} for {getOptionFormattedPrice(this.state.selectedOption)} each until {formatDate(this.state.selectedOption.expiryTime)}.</>
   }
 
   sendBuyTransaction = (stepNumber, nonce, needApproval) => {
@@ -251,8 +311,9 @@ class SimpleBuyTab extends Component {
   }
 
   setStepsModalInfo = (stepNumber, needApproval) => {
-    var title = (needApproval && stepNumber <= 2) ? "Unlock token" : "Buy"
+    var title = (stepNumber <= 2)  ? "Unlock token" : (stepNumber < 3 ? "Verify" : "Buy")
     var subtitle = ""
+    var subtitle2 = ""
     var img = null
     var option = this.state.selectedOption
     var unlockSymbol =  (option.strikeAssetInfo.symbol)
@@ -265,15 +326,20 @@ class SimpleBuyTab extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
+      subtitle =  "Verifying..."
+      img = <SpinnerLargeIcon/>
+    }
+    else if (stepNumber === 4) {
       subtitle = "Confirm on Metamask to buy " + this.state.qtyValue + " " + option.acoTokenInfo.symbol  + "."
       img = <MetamaskLargeIcon />
     }
-    else if (stepNumber === 4) {
+    else if (stepNumber === 5) {
       subtitle = "Buying " + this.state.qtyValue + " " + option.acoTokenInfo.symbol + "..."
       img = <SpinnerLargeIcon />
     }
-    else if (stepNumber === 5) {
+    else if (stepNumber === 6) {
       subtitle = "You have successfully purchased the options."
+      subtitle2 = "Reminder: Exercise is not automatic, please remember manually exercising in-the-money options before expiration."
       img = <DoneLargeIcon />
     }
     else if (stepNumber === -1) {
@@ -285,21 +351,19 @@ class SimpleBuyTab extends Component {
     if (needApproval) {
       steps.push({ title: "Unlock", progress: stepNumber > 2 ? 100 : 0, active: true })
     }
-    steps.push({ title: "Buy", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false })
+    steps.push({title: "Verify", progress: stepNumber > 3 ? 100 : 0, active: stepNumber >= 3 ? true : false})
+    steps.push({ title: "Buy", progress: stepNumber > 5 ? 100 : 0, active: stepNumber >= 4 ? true : false })
     this.setState({
       stepsModalInfo: {
         title: title,
         subtitle: subtitle,
+        subtitle2: subtitle2,
         steps: steps,
         img: img,
-        isDone: (stepNumber === 5 || stepNumber === -1),
-        onDoneButtonClick: (stepNumber === 5 ? this.onDoneButtonClick : this.onHideStepsModal)
+        isDone: (stepNumber === 6 || stepNumber === -1),
+        onDoneButtonClick: this.onHideStepsModal
       }
     })
-  }  
-
-  onDoneButtonClick = () => {
-    this.setState({ stepsModalInfo: null })    
   }
 
   onHideStepsModal = () => {
@@ -364,24 +428,28 @@ class SimpleBuyTab extends Component {
     this.refreshSwapQuote(selectedOption)
   }
 
-  refreshSwapQuote = (selectedOption) => {
+  refreshSwapQuote = (selectedOption, callback) => {
     this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
-      if (selectedOption && this.state.qtyValue && this.state.qtyValue > 0) {
-        getSwapQuote(selectedOption.acoToken, selectedOption.strikeAsset, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString(), true).then(swapQuote => {
-          this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false})
-        }).catch((err) => {
-          if (isInsufficientLiquidity(err)) {
-            this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false})
-          }
-          else {
-            this.setState({swapQuote: null, errorMessage: "Exchange unavailable", loadingSwap: false})
-          }
-        })
-      }
-      else {
-        this.setState({swapQuote: null, errorMessage: null, loadingSwap: false})
-      }
+      this.internalRefreshSwapQuote(selectedOption, callback)
     })
+  }
+
+  internalRefreshSwapQuote = (selectedOption, callback) => {
+    if (selectedOption && this.state.qtyValue && this.state.qtyValue > 0) {
+      getSwapQuote(selectedOption.acoToken, selectedOption.strikeAsset, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString(), true).then(swapQuote => {
+        this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false}, callback)
+      }).catch((err) => {
+        if (isInsufficientLiquidity(err)) {
+          this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false}, callback)
+        }
+        else {
+          this.setState({swapQuote: null, errorMessage: "Exchange unavailable", loadingSwap: false}, callback)
+        }
+      })
+    }
+    else {
+      this.setState({swapQuote: null, errorMessage: null, loadingSwap: false}, callback)
+    }
   }
 
   getTotalToBePaid = () => {
@@ -487,6 +555,7 @@ class SimpleBuyTab extends Component {
           </div>}
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
+      {this.state.verifyModalInfo && <VerifyModal {...this.state.verifyModalInfo} />}
     </div>
   }
 }
