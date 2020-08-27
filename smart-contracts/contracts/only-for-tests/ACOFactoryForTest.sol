@@ -25,9 +25,10 @@ contract ACOFactoryForTest is ACOFactory {
         uint256 strikePrice, 
         uint256 expiryTime,
         uint256 maxExercisedAccounts
-    ) external override {
+    ) external override returns(address) {
         address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
-        emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);   
+        emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);  
+		return acoToken;
     }
     
     function setExtraData(uint256 newValue) onlyFactoryAdmin external virtual {
