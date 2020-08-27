@@ -32,16 +32,16 @@ interface IACOToken is IERC20 {
     function numberOfAccountsWithCollateral() external view returns(uint256);
     function getCollateralOnExercise(uint256 tokenAmount) external view returns(uint256, uint256);
     function collateral() external view returns(address);
-    function mintPayable() external payable;
-    function mintToPayable(address account) external payable;
-    function mint(uint256 collateralAmount) external;
-    function mintTo(address account, uint256 collateralAmount) external;
-    function burn(uint256 tokenAmount) external;
-    function burnFrom(address account, uint256 tokenAmount) external;
-    function redeem() external;
-    function redeemFrom(address account) external;
-    function exercise(uint256 tokenAmount, uint256 salt) external payable;
-    function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable;
-    function exerciseAccounts(uint256 tokenAmount, address[] calldata accounts) external payable;
-    function exerciseAccountsFrom(address account, uint256 tokenAmount, address[] calldata accounts) external payable;
+    function mintPayable() external payable returns(uint256);
+    function mintToPayable(address account) external payable returns(uint256);
+    function mint(uint256 collateralAmount) external returns(uint256);
+    function mintTo(address account, uint256 collateralAmount) external returns(uint256);
+    function burn(uint256 tokenAmount) external returns(uint256);
+    function burnFrom(address account, uint256 tokenAmount) external returns(uint256);
+    function redeem() external returns(uint256);
+    function redeemFrom(address account) external returns(uint256);
+    function exercise(uint256 tokenAmount, uint256 salt) external payable returns(uint256);
+    function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable returns(uint256);
+    function exerciseAccounts(uint256 tokenAmount, address[] calldata accounts) external payable returns(uint256);
+    function exerciseAccountsFrom(address account, uint256 tokenAmount, address[] calldata accounts) external payable returns(uint256);
 }

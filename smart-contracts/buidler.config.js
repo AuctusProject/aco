@@ -13,6 +13,6 @@ module.exports = {
     gasReporter: {
         enabled: false,
         currency: 'USD',
-        gasPrice: 15
+        gasPrice: 100
     }
 };

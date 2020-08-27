@@ -2,8 +2,7 @@ pragma solidity ^0.6.6;
 
 import "./ERC20.sol";
 import "../libs/Address.sol";
-import "../libs/BokkyPooBahsDateTimeLibrary.sol";
-import "../libs/Strings.sol";
+import "../libs/ACONameFormatter.sol";
 
 /**
  * @title ACOToken
@@ -395,10 +394,11 @@ contract ACOToken is ERC20 {
     /**
      * @dev Function to mint tokens with Ether deposited as collateral.
      * NOTE: The function only works when the token is NOT expired yet. 
+     * @return The amount of tokens minted.
      */
-    function mintPayable() external payable {
+    function mintPayable() external payable returns(uint256) {
         require(_isEther(collateral()), "ACOToken::mintPayable: Invalid call");
-       _mintToken(msg.sender, msg.value);
+        return _mintToken(msg.sender, msg.value);
     }
     
     /**
@@ -406,23 +406,25 @@ contract ACOToken is ERC20 {
      * However, the minted tokens are assigned to the transaction sender.
      * NOTE: The function only works when the token is NOT expired yet. 
      * @param account Address of the account that will be the collateral owner.
+     * @return The amount of tokens minted.
      */
-    function mintToPayable(address account) external payable {
+    function mintToPayable(address account) external payable returns(uint256) {
         require(_isEther(collateral()), "ACOToken::mintToPayable: Invalid call");
-       _mintToken(account, msg.value);
+       return _mintToken(account, msg.value);
     }
     
     /**
      * @dev Function to mint tokens with ERC20 deposited as collateral.
      * NOTE: The function only works when the token is NOT expired yet. 
      * @param collateralAmount Amount of collateral deposited.
+     * @return The amount of tokens minted.
      */
-    function mint(uint256 collateralAmount) external {
+    function mint(uint256 collateralAmount) external returns(uint256) {
         address _collateral = collateral();
         require(!_isEther(_collateral), "ACOToken::mint: Invalid call");
         
         _transferFromERC20(_collateral, msg.sender, address(this), collateralAmount);
-        _mintToken(msg.sender, collateralAmount);
+        return _mintToken(msg.sender, collateralAmount);
     }
     
     /**
@@ -431,22 +433,24 @@ contract ACOToken is ERC20 {
      * NOTE: The function only works when the token is NOT expired yet. 
      * @param account Address of the account that will be the collateral owner.
      * @param collateralAmount Amount of collateral deposited.
+     * @return The amount of tokens minted.
      */
-    function mintTo(address account, uint256 collateralAmount) external {
+    function mintTo(address account, uint256 collateralAmount) external returns(uint256) {
         address _collateral = collateral();
         require(!_isEther(_collateral), "ACOToken::mintTo: Invalid call");
         
         _transferFromERC20(_collateral, msg.sender, address(this), collateralAmount);
-        _mintToken(account, collateralAmount);
+        return _mintToken(account, collateralAmount);
     }
     
     /**
      * @dev Function to burn tokens and get the collateral, not assigned, back.
      * NOTE: The function only works when the token is NOT expired yet. 
      * @param tokenAmount Amount of tokens to be burned.
+     * @return The amount of collateral transferred.
      */
-    function burn(uint256 tokenAmount) external {
-        _burn(msg.sender, tokenAmount);
+    function burn(uint256 tokenAmount) external returns(uint256) {
+        return _burn(msg.sender, tokenAmount);
     }
     
     /**
@@ -456,17 +460,19 @@ contract ACOToken is ERC20 {
      * NOTE: The function only works when the token is NOT expired yet. 
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens to be burned.
+     * @return The amount of collateral transferred.
      */
-    function burnFrom(address account, uint256 tokenAmount) external {
-        _burn(account, tokenAmount);
+    function burnFrom(address account, uint256 tokenAmount) external returns(uint256) {
+        return _burn(account, tokenAmount);
     }
     
     /**
      * @dev Function to get the collateral, not assigned, back.
      * NOTE: The function only works when the token IS expired. 
+     * @return The amount of collateral transferred.
      */
-    function redeem() external {
-        _redeem(msg.sender);
+    function redeem() external returns(uint256) {
+        return _redeem(msg.sender);
     }
     
     /**
@@ -475,10 +481,11 @@ contract ACOToken is ERC20 {
      * The collateral is sent to the transaction sender.
      * NOTE: The function only works when the token IS expired. 
      * @param account Address of the account.
+     * @return The amount of collateral transferred.
      */
-    function redeemFrom(address account) external {
+    function redeemFrom(address account) external returns(uint256) {
         require(tokenData[account].amount <= allowance(account, msg.sender), "ACOToken::redeemFrom: Allowance too low");
-        _redeem(account);
+        return _redeem(account);
     }
     
     /**
@@ -487,9 +494,10 @@ contract ACOToken is ERC20 {
      * NOTE: The function only works when the token is NOT expired. 
      * @param tokenAmount Amount of tokens.
      * @param salt Random number to calculate the start index of the array of accounts to be exercised.
+     * @return The amount of collateral transferred.
      */
-    function exercise(uint256 tokenAmount, uint256 salt) external payable {
-        _exercise(msg.sender, tokenAmount, salt);
+    function exercise(uint256 tokenAmount, uint256 salt) external payable returns(uint256) {
+        return _exercise(msg.sender, tokenAmount, salt);
     }
     
     /**
@@ -501,9 +509,10 @@ contract ACOToken is ERC20 {
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
      * @param salt Random number to calculate the start index of the array of accounts to be exercised.
+     * @return The amount of collateral transferred.
      */
-    function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable {
-        _exercise(account, tokenAmount, salt);
+    function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable returns(uint256) {
+        return _exercise(account, tokenAmount, salt);
     }
     
     /**
@@ -512,9 +521,10 @@ contract ACOToken is ERC20 {
      * NOTE: The function only works when the token is NOT expired. 
      * @param tokenAmount Amount of tokens.
      * @param accounts The array of addresses to get collateral from.
+     * @return The amount of collateral transferred.
      */
-    function exerciseAccounts(uint256 tokenAmount, address[] calldata accounts) external payable {
-        _exerciseFromAccounts(msg.sender, tokenAmount, accounts);
+    function exerciseAccounts(uint256 tokenAmount, address[] calldata accounts) external payable returns(uint256) {
+        return _exerciseFromAccounts(msg.sender, tokenAmount, accounts);
     }
     
     /**
@@ -526,17 +536,19 @@ contract ACOToken is ERC20 {
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
      * @param accounts The array of addresses to get the deposited collateral.
+     * @return The amount of collateral transferred.
      */
-    function exerciseAccountsFrom(address account, uint256 tokenAmount, address[] calldata accounts) external payable {
-        _exerciseFromAccounts(account, tokenAmount, accounts);
+    function exerciseAccountsFrom(address account, uint256 tokenAmount, address[] calldata accounts) external payable returns(uint256) {
+        return _exerciseFromAccounts(account, tokenAmount, accounts);
     }
     
     /**
      * @dev Internal function to redeem respective collateral from an account.
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens.
+     * @return The amount of collateral transferred.
      */
-    function _redeemCollateral(address account, uint256 tokenAmount) internal {
+    function _redeemCollateral(address account, uint256 tokenAmount) internal returns(uint256) {
         require(_accountHasCollateral(account), "ACOToken::_redeemCollateral: No collateral available");
         require(tokenAmount > 0, "ACOToken::_redeemCollateral: Invalid token amount");
         
@@ -545,7 +557,7 @@ contract ACOToken is ERC20 {
         
         _removeCollateralDataIfNecessary(account);
         
-        _transferCollateral(account, getCollateralAmount(tokenAmount), 0);
+        return _transferCollateral(account, getCollateralAmount(tokenAmount), 0);
     }
     
     /**
@@ -553,8 +565,9 @@ contract ACOToken is ERC20 {
      * The tokens are minted for the transaction sender.
      * @param account Address of the account.
      * @param collateralAmount Amount of collateral deposited.
+     * @return The amount of tokens minted.
      */
-    function _mintToken(address account, uint256 collateralAmount) nonReentrant notExpired internal {
+    function _mintToken(address account, uint256 collateralAmount) nonReentrant notExpired internal returns(uint256) {
         require(collateralAmount > 0, "ACOToken::_mintToken: Invalid collateral amount");
         
         if (!_accountHasCollateral(account)) {
@@ -571,6 +584,7 @@ contract ACOToken is ERC20 {
         emit CollateralDeposit(account, collateralAmount);
         
         super._mintAction(msg.sender, tokenAmount);
+        return tokenAmount;
     }
     
     /**
@@ -580,8 +594,9 @@ contract ACOToken is ERC20 {
      * @param account Address of the account.
      * @param collateralAmount Amount of collateral to be transferred.
      * @param fee Amount of fee charged.
+     * @return The amount of collateral transferred.
      */
-    function _transferCollateral(address account, uint256 collateralAmount, uint256 fee) internal {
+    function _transferCollateral(address account, uint256 collateralAmount, uint256 fee) internal returns(uint256) {
         
         totalCollateral = totalCollateral.sub(collateralAmount.add(fee));
         
@@ -599,6 +614,7 @@ contract ACOToken is ERC20 {
         }
         
         emit CollateralWithdraw(account, msg.sender, collateralAmount, fee);
+        return collateralAmount;
     }
     
     /**
@@ -606,12 +622,13 @@ contract ACOToken is ERC20 {
      * @param account Address of the account that is exercising.
      * @param tokenAmount Amount of tokens.
      * @param salt Random number to calculate the start index of the array of accounts to be exercised.
+     * @return The amount of collateral transferred.
      */
-    function _exercise(address account, uint256 tokenAmount, uint256 salt) nonReentrant internal {
+    function _exercise(address account, uint256 tokenAmount, uint256 salt) nonReentrant internal returns(uint256) {
         _validateAndBurn(account, tokenAmount, maxExercisedAccounts);
          _exerciseOwners(account, tokenAmount, salt);
         (uint256 collateralAmount, uint256 fee) = getCollateralOnExercise(tokenAmount);
-        _transferCollateral(account, collateralAmount, fee);
+        return _transferCollateral(account, collateralAmount, fee);
     }
     
     /**
@@ -619,12 +636,13 @@ contract ACOToken is ERC20 {
      * @param account Address of the account that is exercising.
      * @param tokenAmount Amount of tokens.
      * @param accounts The array of addresses to get the collateral from.
+     * @return The amount of collateral transferred.
      */
-    function _exerciseFromAccounts(address account, uint256 tokenAmount, address[] memory accounts) nonReentrant internal {
+    function _exerciseFromAccounts(address account, uint256 tokenAmount, address[] memory accounts) nonReentrant internal returns(uint256) {
         _validateAndBurn(account, tokenAmount, accounts.length);
         _exerciseAccounts(account, tokenAmount, accounts);
         (uint256 collateralAmount, uint256 fee) = getCollateralOnExercise(tokenAmount);
-        _transferCollateral(account, collateralAmount, fee);
+        return _transferCollateral(account, collateralAmount, fee);
     }
     
     /**
@@ -769,22 +787,26 @@ contract ACOToken is ERC20 {
      * @dev Internal function to get the collateral sent back from an account.
      * Function to be called when the token IS expired.
      * @param account Address of the account.
+     * @return The amount of collateral transferred.
      */
-    function _redeem(address account) nonReentrant internal {
+    function _redeem(address account) nonReentrant internal returns(uint256) {
         require(!_notExpired(), "ACOToken::_redeem: Token not expired yet");
         
-        _redeemCollateral(account, tokenData[account].amount);
+        uint256 collateralAmount = _redeemCollateral(account, tokenData[account].amount);
         super._burnAction(account, balanceOf(account));
+        return collateralAmount;
     }
     
     /**
      * @dev Internal function to burn tokens from an account and get the collateral, not assigned, back.
      * @param account Address of the account.
      * @param tokenAmount Amount of tokens to be burned.
+     * @return The amount of collateral transferred.
      */
-    function _burn(address account, uint256 tokenAmount) nonReentrant notExpired internal {
-        _redeemCollateral(account, tokenAmount);
+    function _burn(address account, uint256 tokenAmount) nonReentrant notExpired internal returns(uint256) {
+        uint256 collateralAmount = _redeemCollateral(account, tokenAmount);
         _callBurn(account, tokenAmount);
+        return collateralAmount;
     }
     
     /**
@@ -869,7 +891,7 @@ contract ACOToken is ERC20 {
     /**
      * @dev Internal function to get the token name.
      * The token name is assembled  with the token data:
-     * ACO UNDERLYING_SYMBOL-EXPIRYTIME-STRIKE_PRICE_STRIKE_ASSET_SYMBOL-TYPE
+     * ACO UNDERLYING_SYMBOL-STRIKE_PRICE_STRIKE_ASSET_SYMBOL-TYPE-EXPIRYTIME
      * @return The token name.
      */
     function _name() internal view returns(string memory) {
@@ -877,158 +899,13 @@ contract ACOToken is ERC20 {
             "ACO ",
             underlyingSymbol,
             "-",
-            _getFormattedStrikePrice(),
+            ACONameFormatter.formatNumber(strikePrice, strikeAssetDecimals),
             strikeAssetSymbol,
             "-",
-            _getType(),
+            ACONameFormatter.formatType(isCall),
             "-",
-            _getFormattedExpiryTime()
+            ACONameFormatter.formatTime(expiryTime)
         ));
-    }
-    
-    /**
-     * @dev Internal function to get the token type description.
-     * @return The token type description.
-     */
-    function _getType() internal view returns(string memory) {
-        if (isCall) {
-            return "C";
-        } else {
-            return "P";
-        }
-    }
-    
-    /**
-     * @dev Internal function to get the expiry time formatted.
-     * @return The expiry time formatted.
-     */
-    function _getFormattedExpiryTime() internal view returns(string memory) {
-        (uint256 year, uint256 month, uint256 day, uint256 hour, uint256 minute,) = BokkyPooBahsDateTimeLibrary.timestampToDateTime(expiryTime); 
-        return string(abi.encodePacked(
-            _getNumberWithTwoCharacters(day),
-            _getMonthFormatted(month),
-            _getYearFormatted(year),
-            "-",
-            _getNumberWithTwoCharacters(hour),
-            _getNumberWithTwoCharacters(minute),
-            "UTC"
-            )); 
-    }
-    
-    /**
-     * @dev Internal function to get the year formatted with 2 characters.
-     * @return The year formatted.
-     */
-    function _getYearFormatted(uint256 year) internal pure returns(string memory) {
-        bytes memory yearBytes = bytes(Strings.toString(year));
-        bytes memory result = new bytes(2);
-        uint256 startIndex = yearBytes.length - 2;
-        for (uint256 i = startIndex; i < yearBytes.length; i++) {
-            result[i - startIndex] = yearBytes[i];
-        }
-        return string(result);
-    }
-    
-    /**
-     * @dev Internal function to get the month abbreviation.
-     * @return The month abbreviation.
-     */
-    function _getMonthFormatted(uint256 month) internal pure returns(string memory) {
-        if (month == 1) {
-            return "JAN";
-        } else if (month == 2) {
-            return "FEB";
-        } else if (month == 3) {
-            return "MAR";
-        } else if (month == 4) {
-            return "APR";
-        } else if (month == 5) {
-            return "MAY";
-        } else if (month == 6) {
-            return "JUN";
-        } else if (month == 7) {
-            return "JUL";
-        } else if (month == 8) {
-            return "AUG";
-        } else if (month == 9) {
-            return "SEP";
-        } else if (month == 10) {
-            return "OCT";
-        } else if (month == 11) {
-            return "NOV";
-        } else if (month == 12) {
-            return "DEC";
-        } else {
-            return "INVALID";
-        }
-    }
-    
-    /**
-     * @dev Internal function to get the number with 2 characters.
-     * @return The 2 characters for the number.
-     */
-    function _getNumberWithTwoCharacters(uint256 number) internal pure returns(string memory) {
-        string memory _string = Strings.toString(number);
-        if (number < 10) {
-            return string(abi.encodePacked("0", _string));
-        } else {
-            return _string;
-        }
-    }
-    
-	 /**
-     * @dev Internal function to get the strike price formatted.
-	 * The function returns a string for the strike price with a point (character '.') in the proper position considering the strike asset decimals.
-	 * Beyond that, the string returned presents only representative digits.
-	 * For example, an asset with 18 decimals:
-	 *  - For 100000000000000000000 the return is "100"
-	 *  - For 100100000000000000000 the return is "100.1"
-	 *  - For 100000000000000000 the return is "0.1"
-	 *  - For 100000000000000 the return is "0.0001"
-	 *  - For 100000000000000000001 the return is "100.000000000000000001"
-     * @return The strike price formatted.
-     */
-    function _getFormattedStrikePrice() internal view returns(string memory) {
-        uint256 digits;
-        uint256 count;
-        bool foundRepresentativeDigit = false;
-        uint256 addPointAt = 0;
-        uint256 temp = strikePrice;
-        uint256 number = strikePrice;
-        while (temp != 0) {
-            if (!foundRepresentativeDigit && (temp % 10 != 0 || count == uint256(strikeAssetDecimals))) {
-                foundRepresentativeDigit = true;
-                number = temp;
-            }
-            if (foundRepresentativeDigit) {
-                if (count == uint256(strikeAssetDecimals)) {
-                    addPointAt = digits;
-                }
-                digits++;
-            }
-            temp /= 10;
-            count++;
-        }
-        if (count <= uint256(strikeAssetDecimals)) {
-            digits = digits + 2 + uint256(strikeAssetDecimals) - count;
-            addPointAt = digits - 2;
-        } else if (addPointAt > 0) {
-            digits++;
-        }
-        bytes memory buffer = new bytes(digits);
-        uint256 index = digits - 1;
-        temp = number;
-        for (uint256 i = 0; i < digits; ++i) {
-            if (i > 0 && i == addPointAt) {
-                buffer[index--] = byte(".");
-            } else if (number == 0) {
-                buffer[index--] = byte("0");
-            } else {
-                buffer[index--] = byte(uint8(48 + number % 10));
-                number /= 10;
-            }
-        }
-        return string(buffer);
     }
     
     /**
