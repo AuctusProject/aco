@@ -1,7 +1,7 @@
 import './TradeOptionsList.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry } from '../util/constants'
+import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry, sortBy } from '../util/constants'
 import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'
@@ -22,7 +22,7 @@ class TradeOptionsList extends Component {
     var grouppedOptions = this.props.options ? groupBy(this.props.options, "expiryTime") : {}
     var expirations = Object.keys(grouppedOptions)
     for (let index = 0; index < expirations.length; index++) {
-      let optionsFromExpiration = grouppedOptions[expirations[index]]
+      let optionsFromExpiration = sortBy(grouppedOptions[expirations[index]], "strikePrice")
       grouppedOptions[expirations[index]] = groupBy(optionsFromExpiration, "strikePrice")
     }
     return grouppedOptions

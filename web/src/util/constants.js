@@ -211,9 +211,16 @@ export function groupBy(xs, key) {
     }, {});
 }
 
-export function sortBy(array, property) {
+export function sortByDesc(array, property) {
     return array.sort((a,b) => {
         return (a[property] === b[property])? 0 : ((a[property] > b[property]) ? -1 : 1);
+    })
+}
+
+
+export function sortBy(array, property) {
+    return array.sort((a,b) => {
+        return (a[property] === b[property])? 0 : ((a[property] < b[property]) ? -1 : 1);
     })
 }
 

@@ -1,5 +1,5 @@
 import { getWeb3 } from './web3Methods'
-import { acoFactoryAddress, ONE_SECOND, sortBy, sortByFn } from './constants';
+import { acoFactoryAddress, ONE_SECOND, sortByDesc, sortByFn } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
@@ -127,7 +127,7 @@ export const listOptions = (pair, optionType = null, removeExpired = false) => {
                     options.push(option)
                 }
             }
-            var sortedOptions = sortBy(options, "isCall")
+            var sortedOptions = sortByDesc(options, "isCall")
             resolve(sortedOptions)
         })
     })
