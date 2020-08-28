@@ -121,9 +121,10 @@ contract ACOFactory {
         uint256 strikePrice, 
         uint256 expiryTime,
         uint256 maxExercisedAccounts
-    ) onlyFactoryAdmin external virtual {
+    ) onlyFactoryAdmin external virtual returns(address) {
         address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
-        emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);   
+        emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);
+        return acoToken;
     }
     
     /**
@@ -230,5 +231,68 @@ contract ACOFactory {
         }
         IACOToken(proxy).init(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoFee, payable(acoFeeDestination), maxExercisedAccounts);
         return proxy;
+    }
+}
+
+contract ACOFactoryV2 is ACOFactory {
+	
+	/**
+     * @dev Struct to store the ACO Token basic data.
+     */
+    struct ACOTokenData {
+        /**
+         * @dev Address of the underlying asset (0x0 for Ethereum).
+         */
+        address underlying;
+        
+        /**
+         * @dev Address of the strike asset (0x0 for Ethereum).
+         */
+        address strikeAsset;
+        
+        /**
+         * @dev True if the type is CALL, false for PUT.
+         */
+        bool isCall;
+        
+        /**
+         * @dev The strike price with the strike asset precision.
+         */
+        uint256 strikePrice;
+        
+        /**
+         * @dev The UNIX time for the ACO token expiration.
+         */
+        uint256 expiryTime;
+    }
+	
+    /**
+     * @dev The ACO token basic data.
+     */
+    mapping(address => ACOTokenData) public acoTokenData;
+	
+	/**
+     * @dev Function to create a new ACO token.
+     * It deploys a minimal proxy for the ACO token implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
+     * @return The created ACO token address.
+     */
+    function createAcoToken(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 strikePrice, 
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
+    ) onlyFactoryAdmin external override returns(address) {
+        address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
+        acoTokenData[acoToken] = ACOTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime);
+        emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);
+        return acoToken;
     }
 }
