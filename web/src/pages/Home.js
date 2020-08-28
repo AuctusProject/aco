@@ -180,11 +180,11 @@ class Home extends Component {
     return (
     <div className="home">
       {this.state.showBanner && 
-        <div class="top-banner">
-            <div class="banner-title">YFI options now available!</div>
-            <div class="banner-subtitle">Start trading trustless YFI options immediately</div>
-            <a href="/buy/YFI_USDC/"><div class="banner-button">TRADE</div></a>
-            <div class="banner-dismiss" onClick={() => {this.setState({showBanner:false})}}><FontAwesomeIcon icon={faTimes}/></div>
+        <div className="top-banner">
+            <div className="banner-title">YFI options now available!</div>
+            <div className="banner-subtitle">Start trading trustless YFI options immediately</div>
+            <a href="/buy/YFI_USDC/"><div className="banner-button">TRADE</div></a>
+            <div className="banner-dismiss" onClick={() => {this.setState({showBanner:false})}}><FontAwesomeIcon icon={faTimes}/></div>
         </div>
       }
       <section id="head" className={this.state.showBanner ? "banner-visible" : ""}>

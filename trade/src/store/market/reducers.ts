@@ -17,9 +17,9 @@ const getMakerAddresses = () => {
 
 const initialMarketState: MarketState = {
     currencyPair: {
-        base: (queryString.parse(queryString.extract(window.location.hash)).base as string) || availableMarkets[0].base,
+        base: (queryString.parse(queryString.extract(window.location.hash)).base as string) || availableMarkets.length > 0 ? availableMarkets[0].base : "",
         quote:
-            (queryString.parse(queryString.extract(window.location.hash)).quote as string) || availableMarkets[0].quote,
+            (queryString.parse(queryString.extract(window.location.hash)).quote as string) || availableMarkets.length > 0 ? availableMarkets[0].quote : "",
     },
     baseToken: null,
     quoteToken: null,
