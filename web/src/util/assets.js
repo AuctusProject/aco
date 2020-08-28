@@ -18,5 +18,9 @@ export const ASSETS_INFO = {
     "YFI": {
         symbol: "YFI",
         icon: "/images/yfi_icon.svg"
+    },
+    "SNX": {
+        symbol: "SNX",
+        icon: "/images/snx_icon.png"
     }
 }

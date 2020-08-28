@@ -26,4 +26,5 @@
 .simple-write-tab .asset-icon {
     width: 30px;
     margin-right: 4px;
+    border-radius: 50%;
 }

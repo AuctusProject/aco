@@ -181,9 +181,9 @@ class Home extends Component {
     <div className="home">
       {this.state.showBanner && 
         <div className="top-banner">
-            <div className="banner-title">YFI options now available!</div>
-            <div className="banner-subtitle">Start trading trustless YFI options immediately</div>
-            <a href="/buy/YFI_USDC/"><div className="banner-button">TRADE</div></a>
+            <div className="banner-title">SNX options now available!</div>
+            <div className="banner-subtitle">Start trading trustless SNX options immediately</div>
+            <a href="/buy/SNX_USDC/"><div className="banner-button">TRADE</div></a>
             <div className="banner-dismiss" onClick={() => {this.setState({showBanner:false})}}><FontAwesomeIcon icon={faTimes}/></div>
         </div>
       }
