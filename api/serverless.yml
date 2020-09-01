@@ -8,7 +8,7 @@ provider:
   stage: prod
   region: us-east-1
   environment: ${ssm:/aws/reference/secretsmanager/aco/lambda/${opt:stage, self:provider.stage}.env.json~true}
-  
+
 functions:
   tokens:
     handler: handler.tokens
@@ -32,5 +32,13 @@ functions:
     events:
       - http:
           path: /opyn/quote
+          method: get
+          cors: true
+  assets:
+    handler: handler.assets
+    timeout: 30
+    events:
+      - http:
+          path: /assets
           method: get
           cors: true
