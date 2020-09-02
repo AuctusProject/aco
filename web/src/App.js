@@ -13,12 +13,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import Writer from './pages/Writer'
 import Exercise from './pages/Exercise'
-import ApiTickerProvider from './util/ApiTickerProvider'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
 import { getNetworkName, CHAIN_ID, getMarketDetails, getCurrentRoute, getPairIdFromRoute } from './util/constants'
 import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
+import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 
 class App extends Component {
   constructor() {
@@ -119,7 +119,7 @@ class App extends Component {
     var showFooter = window.location.pathname.indexOf("trade") < 0
     return (
       <Web3Provider onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
-        <ApiTickerProvider pairs={this.state.pairs}>
+        <ApiCoingeckoDataProvider>
           {this.state.loading ? 
           <div className="initial-loading">
             <img src="/logo.png" alt="Auctus Crypto Options" />
@@ -198,7 +198,7 @@ class App extends Component {
             </div>
             {this.state.showSignIn && <MetamaskModal onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
           </main>}
-        </ApiTickerProvider>
+        </ApiCoingeckoDataProvider>
       </Web3Provider>
     );
   }
