@@ -103,6 +103,7 @@ contract ACOStrategy1 is Ownable, IACOStrategy {
         uint256 underlyingPrice = _getAggregatorPrice(quoteData.underlying, quoteData.strikeAsset);
         uint256 volatility = _getVolatility(quoteData);
         uint256 price = _getOptionPrice(underlyingPrice, volatility, quoteData);
+        require(price > 0, "ACOPool:: Invalid price");
         return (price, underlyingPrice, volatility);
     }
     
@@ -149,7 +150,7 @@ contract ACOStrategy1 is Ownable, IACOStrategy {
 		uint256 basePrice = quoteData.isCallOption ? underlyingPrice : quoteData.strikePrice;
 		uint256 minPrice = basePrice.mul(minOptionPricePercentage).div(PERCENTAGE_PRECISION);
 		if (minPrice > price) {
-			return (minPrice == 0 ? 1 : minPrice);
+			return minPrice;
 		}
 		return price;
     }
