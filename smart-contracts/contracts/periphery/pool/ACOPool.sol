@@ -310,18 +310,18 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         emit RestoreCollateral(balanceOut, collateralIn);
     }
     
-    function _internalQuote(bool isBuying, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256, uint256, uint256) {
-        require(!isBuying || canBuy, "ACOPool:: The pool only sell");
+    function _internalQuote(bool isPoolSelling, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256, uint256, uint256) {
+        require(isPoolSelling || canBuy, "ACOPool:: The pool only sell");
         require(tokenAmount > 0, "ACOPool:: Invalid token amount");
         (uint256 strikePrice, uint256 expiryTime) = _getValidACOTokenStrikePriceAndExpiration(acoToken);
-        require(expiryTime < block.timestamp, "ACOPool:: ACO token expired");
+        require(expiryTime > block.timestamp, "ACOPool:: ACO token expired");
         
-        (uint256 collateralAmount, uint256 collateralAvailable) = _getWeightData(acoToken, tokenAmount);
-        (uint256 price, uint256 underlyingPrice, uint256 volatility) = _strategyQuote(acoToken, isBuying, strikePrice, expiryTime, collateralAmount, collateralAvailable);
+        (uint256 collateralAmount, uint256 collateralAvailable) = _getWeightData(isPoolSelling, acoToken, tokenAmount);
+        (uint256 price, uint256 underlyingPrice, uint256 volatility) = _strategyQuote(acoToken, isPoolSelling, strikePrice, expiryTime, collateralAmount, collateralAvailable);
         return (price, underlyingPrice, volatility, collateralAmount);
     }
     
-    function _getWeightData(address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256) {
+    function _getWeightData(bool isPoolSelling, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256) {
         uint256 collateralAmount;
         uint256 collateralAvailable;
         if (isCall) {
@@ -332,14 +332,14 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
             collateralAmount = IACOToken(acoToken).getCollateralAmount(tokenAmount);
             require(collateralAmount > 0, "ACOPool:: Token amount is too small");
         }
-        require(collateralAmount <= collateralAvailable, "ACOPool:: Insufficient liquidity");
+        require(!isPoolSelling || collateralAmount <= collateralAvailable, "ACOPool:: Insufficient collateral");
         
         return (collateralAmount, collateralAvailable);
     }
     
     function _strategyQuote(
         address acoToken,
-        bool isBuying,
+        bool isPoolSelling,
         uint256 strikePrice,
         uint256 expiryTime,
         uint256 collateralAmount,
@@ -347,7 +347,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     ) internal view returns(uint256, uint256, uint256) {
         ACOTokenData storage data = acoTokensData[acoToken];
         return strategy.quote(IACOStrategy.OptionQuote(
-            isBuying, 
+            isPoolSelling, 
             underlying, 
             strikeAsset, 
             isCall, 
