@@ -3,7 +3,6 @@ pragma solidity ^0.6.6;
 import './ACOERC20Helper.sol';
 
 contract ACOHelper is ACOERC20Helper {
-    uint256 internal constant PERCENTAGE_PRECISION = 100000;
     
     function _transferAsset(address asset, address to, uint256 amount) internal {
         if (_isEther(asset)) {

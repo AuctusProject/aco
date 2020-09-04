@@ -1,4 +1,5 @@
 pragma solidity ^0.6.6;
+pragma experimental ABIEncoderV2;
 
 import "../../libs/Address.sol";
 import "../../interfaces/IACOPool.sol";
@@ -102,35 +103,7 @@ contract ACOPoolFactory {
      * @param newPermission The new strategy permission.
      */
     event SetStrategyPermission(address indexed strategy, bool indexed previousPermission, bool newPermission);
-    
-    /**
-     * @dev Emitted when the pool strategy has been changed.
-     * @param previousPoolStrategy Address of the previous pool strategy.
-     * @param newPoolStrategy Address of the new pool strategy.
-     */
-    event SetPoolStrategy(address indexed previousPoolStrategy, address indexed newPoolStrategy);
-    
-    /**
-     * @dev Emitted when the pool tolerance to the oracle price has been changed.
-     * @param previousPoolTolerancePercentageToOraclePrice The previous pool tolerance to the oracle price.
-     * @param newPoolTolerancePercentageToOraclePrice The new pool tolerance to the oracle price.
-     */
-    event SetPoolTolerancePercentageToOraclePrice(uint256 indexed previousPoolTolerancePercentageToOraclePrice, uint256 indexed newPoolTolerancePercentageToOraclePrice);
-    
-    /**
-     * @dev Emitted when the pool minimum time in minutes to exercise ACO tokens with any profit has been changed.
-     * @param previousPoolMinimumTimeInMinutesToExerciseAnyProfit The previous pool minimum time in minutes to exercise ACO tokens with any profit.
-     * @param newPoolMinimumTimeInMinutesToExerciseAnyProfit The new pool minimum time in minutes to exercise ACO tokens with any profit.
-     */
-    event SetPoolMinimumTimeInMinutesToExerciseAnyProfit(uint256 indexed previousPoolMinimumTimeInMinutesToExerciseAnyProfit, uint256 indexed newPoolMinimumTimeInMinutesToExerciseAnyProfit);
-    
-    /**
-     * @dev Emitted when the pool minimum profit to exercise ACO tokens any time has been changed.
-     * @param previousPoolMinimumProfitToExerciseAnyTime The previous pool minimum profit to exercise ACO tokens any time.
-     * @param newPoolMinimumProfitToExerciseAnyTime The new pool minimum profit to exercise ACO tokens any time.
-     */
-    event SetPoolMinimumProfitToExerciseAnyTime(uint256 indexed previousPoolMinimumProfitToExerciseAnyTime, uint256 indexed newPoolMinimumProfitToExerciseAnyTime);
-    
+
     /**
      * @dev Emitted when a new ACO pool has been created.
      * @param underlying Address of the underlying asset (0x0 for Ethereum).
@@ -166,28 +139,6 @@ contract ACOPoolFactory {
      * @dev The ACO flash exercise address.
      */
     address public acoFlashExercise;
-    
-    /**
-     * @dev The base pool strategy address.
-     */
-    address public poolStrategy;
-    
-    /**
-     * @dev The pool tolerance to the oracle price.
-     * It is a percentage value (100000 is 100%).
-     */
-    uint256 public poolTolerancePercentageToOraclePrice;
-    
-    /**
-     * @dev The pool minimum time in minutes to exercise ACO tokens with any profit.
-     */
-    uint256 public poolMinimumTimeInMinutesToExerciseAnyProfit;
-    
-    /**
-     * @dev The pool minimum profit to exercise ACO tokens any time.
-     * It is a percentage value (100000 is 100%).
-     */
-    uint256 public poolMinimumProfitToExerciseAnyTime;
     
     /**
      * @dev The ACO pool admin permissions.
@@ -228,20 +179,14 @@ contract ACOPoolFactory {
      * It must be called only once. The first `require` is to guarantee that behavior.
      * @param _factoryAdmin Address of the factory admin.
      * @param _acoPoolImplementation Address of the ACO pool implementation.
-     * @param _poolStrategy Address of the base pool strategy.
-     * @param _poolTolerancePercentageToOraclePrice The pool tolerance to the oracle price. It is a percentage value (100000 is 100%).
-     * @param _poolMinimumTimeInMinutesToExerciseAnyProfit The pool minimum time in minutes to exercise ACO tokens with any profit.
-     * @param _poolMinimumProfitToExerciseAnyTime The pool minimum profit to exercise ACO tokens any time. It is a percentage value (100000 is 100%).
+     * @param _acoFactory Address of the ACO token factory.
+     * @param _acoFlashExercise Address of the ACO flash exercise.
      */
     function init(
         address _factoryAdmin, 
         address _acoPoolImplementation, 
         address _acoFactory, 
-        address _acoFlashExercise,
-        address _poolStrategy,
-        uint256 _poolTolerancePercentageToOraclePrice,
-        uint256 _poolMinimumTimeInMinutesToExerciseAnyProfit,
-        uint256 _poolMinimumProfitToExerciseAnyTime
+        address _acoFlashExercise
     ) public {
         require(factoryAdmin == address(0) && acoPoolImplementation == address(0), "ACOPoolFactory::init: Contract already initialized.");
         
@@ -250,11 +195,6 @@ contract ACOPoolFactory {
         _setAcoFactory(_acoFactory);
         _setAcoFlashExercise(_acoFlashExercise);
         _setAcoPoolPermission(_factoryAdmin, true);
-        _setAcoPoolStrategyPermission(_poolStrategy, true);
-        _setPoolStrategy(_poolStrategy);
-        _setPoolTolerancePercentageToOraclePrice(_poolTolerancePercentageToOraclePrice);
-        _setPoolMinimumTimeInMinutesToExerciseAnyProfit(_poolMinimumTimeInMinutesToExerciseAnyProfit);
-        _setPoolMinimumProfitToExerciseAnyTime(_poolMinimumProfitToExerciseAnyTime);
     }
 
     /**
@@ -262,44 +202,6 @@ contract ACOPoolFactory {
      */
     receive() external payable virtual {
         revert();
-    }
-    
-    /**
-     * @dev Internal function to put on array all uint256 argumenst to create an ACO pool.
-     * This is to handle with stack too deep error throw due the number of variables.
-     * @param poolStart The UNIX time that the ACO pool can start negotiated ACO tokens.
-     * @param minStrikePrice The minimum strike price for ACO tokens with the strike asset precision.
-     * @param maxStrikePrice The maximum strike price for ACO tokens with the strike asset precision.
-     * @param minExpiration The minimum expiration time for ACO tokens.
-     * @param maxExpiration The maximum expiration time for ACO tokens.
-     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
-     * @param tolerancePercentageToOraclePrice The pool tolerance to the oracle price. It is a percentage value (100000 is 100%).
-     * @param minimumTimeInMinutesToExerciseAnyProfit The pool minimum time in minutes to exercise ACO tokens with any profit.
-     * @param minimumProfitToExerciseAnyTime The pool minimum profit to exercise ACO tokens any time. It is a percentage value (100000 is 100%).
-     * @return All arguments on a uint256 array.
-     */
-    function getUintArgumentsToCreateAcoPool(
-        uint256 poolStart,
-        uint256 minStrikePrice,
-        uint256 maxStrikePrice,
-        uint256 minExpiration,
-        uint256 maxExpiration,
-        uint256 baseVolatility,
-        uint256 tolerancePercentageToOraclePrice,
-        uint256 minimumTimeInMinutesToExerciseAnyProfit,
-        uint256 minimumProfitToExerciseAnyTime
-    ) pure public virtual returns(uint256[] memory) {
-        uint256[] memory uintArguments = new uint256[](9);
-        uintArguments[0] = poolStart;
-        uintArguments[1] = minStrikePrice;
-        uintArguments[2] = maxStrikePrice;
-        uintArguments[3] = minExpiration;
-        uintArguments[4] = maxExpiration;
-        uintArguments[5] = baseVolatility;
-        uintArguments[6] = tolerancePercentageToOraclePrice;
-        uintArguments[7] = minimumTimeInMinutesToExerciseAnyProfit;
-        uintArguments[8] = minimumProfitToExerciseAnyTime;
-        return uintArguments;
     }
     
     /**
@@ -314,6 +216,7 @@ contract ACOPoolFactory {
      * @param minExpiration The minimum expiration time for ACO tokens.
      * @param maxExpiration The maximum expiration time for ACO tokens.
      * @param canBuy Whether the pool buys ACO tokens otherwise, it only sells.
+     * @param strategy Address of the pool strategy to be used.
      * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
      * @return The created ACO pool address.
      */
@@ -327,58 +230,27 @@ contract ACOPoolFactory {
         uint256 minExpiration,
         uint256 maxExpiration,
         bool canBuy,
+        address strategy,
         uint256 baseVolatility
     ) onlyFactoryAdmin external virtual returns(address) {
-        return _createAcoPool(
-            underlying, 
-            strikeAsset, 
-            isCall,
-            canBuy,
-            poolStrategy,
-            getUintArgumentsToCreateAcoPool(
-                poolStart,
-                minStrikePrice,
-                maxStrikePrice,
-                minExpiration,
-                maxExpiration,
-                baseVolatility,
-                poolTolerancePercentageToOraclePrice,
-                poolMinimumTimeInMinutesToExerciseAnyProfit,
-                poolMinimumProfitToExerciseAnyTime
-            )
-        );
-    }
-    
-    /**
-     * @dev Function to create a new ACO pool overriding base pool parameters on the factory.
-     * It deploys a minimal proxy for the ACO pool implementation address. 
-     * @param underlying Address of the underlying asset (0x0 for Ethereum).
-     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
-     * @param isCall True if the type is CALL, false for PUT.
-     * @param canBuy Whether the pool buys ACO tokens otherwise, it only sells.
-     * @param strategy Address of the pool strategy to be overriden.
-     * @param uintArguments All uint256 arguments required to create ACO pool. (handle with stack too deep error)
-     * @return The created ACO pool address.
-     */
-    function createAcoPoolOverriding(
-        address underlying, 
-        address strikeAsset, 
-        bool isCall,
-        bool canBuy,
-        address strategy,
-        uint256[] calldata uintArguments
-    ) onlyFactoryAdmin external virtual returns(address) {
         _validateStrategy(strategy);
-        return _createAcoPool(
+        return _createAcoPool(IACOPool.InitData(
+            poolStart,
+            acoFlashExercise,
+            acoFactory,
             underlying, 
-            strikeAsset, 
+            strikeAsset,
+            minStrikePrice,
+            maxStrikePrice,
+            minExpiration,
+            maxExpiration,
             isCall,
             canBuy,
             strategy,
-            uintArguments
-        );
+            baseVolatility
+        ));
     }
-    
+
     /**
      * @dev Function to set the factory admin address.
      * Only can be called by the factory admin.
@@ -400,7 +272,7 @@ contract ACOPoolFactory {
     /**
      * @dev Function to set the ACO factory address.
      * Only can be called by the factory admin.
-     * @param newAcoFactory Address of the new ACO pool implementation.
+     * @param newAcoFactory Address of the ACO token factory.
      */
     function setAcoFactory(address newAcoFactory) onlyFactoryAdmin external virtual {
         _setAcoFactory(newAcoFactory);
@@ -433,42 +305,6 @@ contract ACOPoolFactory {
      */
     function setAcoPoolStrategyPermission(address strategy, bool newPermission) onlyFactoryAdmin external virtual {
         _setAcoPoolStrategyPermission(strategy, newPermission);
-    }
-    
-    /**
-     * @dev Function to set the base pool strategy.
-     * Only can be called by a pool admin.
-     * @param newPoolStrategy Address of the new base pool strategy.
-     */
-    function setPoolStrategy(address newPoolStrategy) onlyPoolAdmin external virtual {
-        _setPoolStrategy(newPoolStrategy);
-    }
-    
-    /**
-     * @dev Function to set the base pool tolerance to the oracle price.
-     * Only can be called by a pool admin.
-     * @param newPoolTolerancePercentageToOraclePrice Value of the new base pool tolerance to the oracle price. It is a percentage value (100000 is 100%).
-     */
-    function setPoolTolerancePercentageToOraclePrice(uint256 newPoolTolerancePercentageToOraclePrice) onlyPoolAdmin external virtual {
-        _setPoolTolerancePercentageToOraclePrice(newPoolTolerancePercentageToOraclePrice);
-    }
-    
-    /**
-     * @dev Function to set the base pool minimum time in minutes to exercise ACO tokens with any profit.
-     * Only can be called by a pool admin.
-     * @param newPoolMinimumTimeInMinutesToExerciseAnyProfit Value of the new base pool minimum time in minutes to exercise ACO tokens with any profit.
-     */
-    function setPoolMinimumTimeInMinutesToExerciseAnyProfit(uint256 newPoolMinimumTimeInMinutesToExerciseAnyProfit) onlyPoolAdmin external virtual {
-        _setPoolMinimumTimeInMinutesToExerciseAnyProfit(newPoolMinimumTimeInMinutesToExerciseAnyProfit);
-    }
-    
-    /**
-     * @dev Function to set the base pool minimum profit to exercise ACO tokens any time.
-     * Only can be called by a pool admin.
-     * @param newPoolMinimumProfitToExerciseAnyTime Value of the new base pool minimum profit to exercise ACO tokens any time. It is a percentage value (100000 is 100%).
-     */
-    function setPoolMinimumProfitToExerciseAnyTime(uint256 newPoolMinimumProfitToExerciseAnyTime) onlyPoolAdmin external virtual {
-        _setPoolMinimumProfitToExerciseAnyTime(newPoolMinimumProfitToExerciseAnyTime);
     }
     
     /**
@@ -513,7 +349,7 @@ contract ACOPoolFactory {
     
     /**
      * @dev Internal function to set the ACO factory address.
-     * @param newAcoFactory Address of the new ACO pool implementation.
+     * @param newAcoFactory Address of the new ACO token factory.
      */
     function _setAcoFactory(address newAcoFactory) internal virtual {
         require(Address.isContract(newAcoFactory), "ACOPoolFactory::_setAcoFactory: Invalid ACO factory");
@@ -553,43 +389,6 @@ contract ACOPoolFactory {
     }
     
     /**
-     * @dev Internal function to set the base pool strategy.
-     * @param newPoolStrategy Address of the new base pool strategy.
-     */
-    function _setPoolStrategy(address newPoolStrategy) internal virtual {
-        _validateStrategy(newPoolStrategy);
-        emit SetPoolStrategy(poolStrategy, newPoolStrategy);
-        poolStrategy = newPoolStrategy;
-    }
-    
-    /**
-     * @dev Internal function to set the base pool tolerance to the oracle price.
-     * @param newPoolTolerancePercentageToOraclePrice Value of the new base pool tolerance to the oracle price. It is a percentage value (100000 is 100%).
-     */
-    function _setPoolTolerancePercentageToOraclePrice(uint256 newPoolTolerancePercentageToOraclePrice) internal virtual {
-        emit SetPoolTolerancePercentageToOraclePrice(poolTolerancePercentageToOraclePrice, newPoolTolerancePercentageToOraclePrice);
-        poolTolerancePercentageToOraclePrice = newPoolTolerancePercentageToOraclePrice;
-    }
-    
-    /**
-     * @dev Internal function to set the base pool minimum time in minutes to exercise ACO tokens with any profit.
-     * @param newPoolMinimumTimeInMinutesToExerciseAnyProfit Value of the new base pool minimum time in minutes to exercise ACO tokens with any profit.
-     */
-    function _setPoolMinimumTimeInMinutesToExerciseAnyProfit(uint256 newPoolMinimumTimeInMinutesToExerciseAnyProfit) internal virtual {
-        emit SetPoolMinimumTimeInMinutesToExerciseAnyProfit(poolMinimumTimeInMinutesToExerciseAnyProfit, newPoolMinimumTimeInMinutesToExerciseAnyProfit);
-        poolMinimumTimeInMinutesToExerciseAnyProfit = newPoolMinimumTimeInMinutesToExerciseAnyProfit;
-    }
-    
-    /**
-     * @dev Internal unction to set the base pool minimum profit to exercise ACO tokens any time.
-     * @param newPoolMinimumProfitToExerciseAnyTime Value of the new base pool minimum profit to exercise ACO tokens any time. It is a percentage value (100000 is 100%).
-     */
-    function _setPoolMinimumProfitToExerciseAnyTime(uint256 newPoolMinimumProfitToExerciseAnyTime) internal virtual {
-        emit SetPoolMinimumProfitToExerciseAnyTime(poolMinimumProfitToExerciseAnyTime, newPoolMinimumProfitToExerciseAnyTime);
-        poolMinimumProfitToExerciseAnyTime = newPoolMinimumProfitToExerciseAnyTime;
-    }
-    
-    /**
      * @dev Internal function to validate strategy.
      * @param strategy Address of the strategy.
      */
@@ -623,46 +422,44 @@ contract ACOPoolFactory {
     
     /**
      * @dev Internal function to create a new ACO pool.
-     * @param underlying Address of the underlying asset (0x0 for Ethereum).
-     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
-     * @param isCall True if the type is CALL, false for PUT.
-     * @param canBuy Whether the pool buys ACO tokens otherwise, it only sells.
-     * @param strategy Address of the pool strategy.
-     * @param uintArguments All uint256 arguments required to create ACO pool. (handle with stack too deep error)
+     * @param initData Data to initialize o ACO Pool.
      * @return Address of the new minimal proxy deployed for the ACO pool.
      */
-    function _createAcoPool(
-        address underlying, 
-        address strikeAsset, 
-        bool isCall,
-        bool canBuy,
-        address strategy,
-        uint256[] memory uintArguments
-    ) internal virtual returns(address) {
-        address acoPool  = _deployAcoPool(underlying, strikeAsset, isCall, canBuy, strategy, uintArguments);
-        acoPoolData[acoPool] = ACOPoolData(uintArguments[0], underlying, strikeAsset, isCall, uintArguments[1], uintArguments[2], uintArguments[3], uintArguments[4], canBuy);
-        emit NewAcoPool(underlying, strikeAsset, isCall, uintArguments[0], uintArguments[1], uintArguments[2], uintArguments[3], uintArguments[4], canBuy, acoPool, acoPoolImplementation);
+    function _createAcoPool(IACOPool.InitData memory initData) internal virtual returns(address) {
+        address acoPool  = _deployAcoPool(initData);
+        acoPoolData[acoPool] = ACOPoolData(
+            initData.poolStart, 
+            initData.underlying, 
+            initData.strikeAsset, 
+            initData.isCall, 
+            initData.minStrikePrice, 
+            initData.maxStrikePrice, 
+            initData.minExpiration, 
+            initData.maxExpiration, 
+            initData.canBuy
+        );
+        emit NewAcoPool(
+            initData.underlying, 
+            initData.strikeAsset, 
+            initData.isCall, 
+            initData.poolStart, 
+            initData.minStrikePrice, 
+            initData.maxStrikePrice, 
+            initData.minExpiration, 
+            initData.maxExpiration, 
+            initData.canBuy, 
+            acoPool, 
+            acoPoolImplementation
+        );
         return acoPool;
     }
     
     /**
      * @dev Internal function to deploy a minimal proxy using ACO pool implementation.
-     * @param underlying Address of the underlying asset (0x0 for Ethereum).
-     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
-     * @param isCall True if the type is CALL, false for PUT.
-     * @param canBuy Whether the pool buys ACO tokens otherwise, it only sells.
-     * @param strategy Address of the pool strategy.
-     * @param uintArguments All uint256 arguments required to create ACO pool. (handle with stack too deep error)
+     * @param initData Data to initialize o ACO Pool.
      * @return Address of the new minimal proxy deployed for the ACO pool.
      */
-    function _deployAcoPool(
-        address underlying, 
-        address strikeAsset, 
-        bool isCall,
-        bool canBuy,
-        address strategy,
-        uint256[] memory uintArguments
-    ) internal virtual returns(address) {
+    function _deployAcoPool(IACOPool.InitData memory initData) internal virtual returns(address) {
         bytes20 implentationBytes = bytes20(acoPoolImplementation);
         address proxy;
         assembly {
@@ -672,31 +469,7 @@ contract ACOPoolFactory {
             mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
             proxy := create(0, clone, 0x37)
         }
-        _initPool(proxy, underlying, strikeAsset, isCall, canBuy, strategy, uintArguments);
+        IACOPool(proxy).init(initData);
         return proxy;
-    }
-    
-    /**
-     * @dev Internal function to initialize the ACO pool.
-     * @param proxy Address of the minimal proxy created for the ACO pool.
-     * @param underlying Address of the underlying asset (0x0 for Ethereum).
-     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
-     * @param isCall True if the type is CALL, false for PUT.
-     * @param canBuy Whether the pool buys ACO tokens otherwise, it only sells.
-     * @param strategy Address of the pool strategy.
-     * @param uintArguments All uint256 arguments required to create ACO pool. (handle with stack too deep error)
-     */
-    function _initPool(
-        address proxy,
-        address underlying, 
-        address strikeAsset, 
-        bool isCall,
-        bool canBuy,
-        address strategy,
-        uint256[] memory uintArguments
-    ) internal virtual {
-        IACOPool(proxy).init(uintArguments[0], acoFlashExercise, acoFactory, underlying, strikeAsset, uintArguments[1], uintArguments[2], uintArguments[3], uintArguments[4], isCall, canBuy, uintArguments[6], uintArguments[7], uintArguments[8]);
-        IACOPool(proxy).setStrategy(strategy);
-        IACOPool(proxy).setBaseVolatility(uintArguments[5]);
     }
 }

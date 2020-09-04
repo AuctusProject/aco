@@ -14,7 +14,7 @@ library BlackScholes {
         uint256 annualInterestRate, 
         uint256 annualDividendYield,
         uint256 percentageDataPrecision
-    ) public pure returns (uint256) {
+    ) internal pure returns (uint256) {
         return ABDKMath64x64.mulu(
             _blackScholesCalculation(
                 isCallOption, 

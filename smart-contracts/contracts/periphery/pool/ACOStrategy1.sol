@@ -1,34 +1,67 @@
 pragma solidity ^0.6.6;
+pragma experimental ABIEncoderV2;
 
 import '../../util/Ownable.sol';
 import '../../libs/Address.sol';
+import '../../libs/SafeMath.sol';
 import '../../libs/BlackScholes.sol';
 import '../../interfaces/IACOStrategy.sol';
 import '../../interfaces/AggregatorV3Interface.sol';
 
 contract ACOStrategy1 is Ownable, IACOStrategy {
     using Address for address;
+    using SafeMath for uint256;
 
-    event SetPurchaseLimitPercentage(uint256 indexed previousPurchaseLimitPercentage, uint256 indexed newPurchaseLimitPercentage);
+    event SetOrderSizeFactors(uint256 oldOrderSizePenaltyFactor, uint256 oldOrderSizeDampingFactor, uint256 newOrderSizePenaltyFactor, uint256 newOrderSizeDampingFactor);
+    event SetUnderlyingPriceAdjustPercentage(uint256 oldUnderlyinPriceAdjustPercentage, uint256 newUnderlyingPriceAdjustPercentage);
+	event SetMinOptionPricePercentage(uint256 oldMinOptionPricePercentage, uint256 newMinOptionPricePercentage);
+	event SetTolerancePercentageToOraclePrice(uint256 oldTolerancePercentageToOraclePrice, uint256 newTolerancePercentageToOraclePrice);
     event SetAggregator(address indexed underlying, address indexed strikeAsset, address previousAggregator, address newAggregator);
     
     uint256 internal constant PERCENTAGE_PRECISION = 100000;
     
     struct AggregatorData {
         address aggregator;
-        int256 precision;
+        uint256 precision;
     }
     
-    uint256 purchaseLimitPercentage;
+    uint256 public underlyingPriceAdjustPercentage;
+	uint256 public minOptionPricePercentage;
+    uint256 public orderSizePenaltyFactor;
+    uint256 public orderSizeDampingFactor;
+    uint256 public tolerancePercentageToOraclePrice;
     mapping(address => mapping(address => AggregatorData)) public aggregators; 
-    mapping(address => int256) public assetPrecision;
+    mapping(address => uint256) public assetPrecision;
     
-    constructor(uint256 _purchaseLimitPercentage) public {
-        _setPurchaseLimitPercentage(_purchaseLimitPercentage);
+    uint256 internal orderSizeDivFactor;
+    
+    constructor(
+        uint256 _underlyingPriceAdjustPercentage,
+		uint256 _minOptionPricePercentage,
+		uint256 _tolerancePercentageToOraclePrice,
+        uint256 _orderSizePenaltyFactor,
+        uint256 _orderSizeDampingFactor
+    ) public {
+        _setUnderlyingPriceAdjustPercentage(_underlyingPriceAdjustPercentage);
+		_setMinOptionPricePercentage(_minOptionPricePercentage);
+		_setTolerancePercentageToOraclePrice(_tolerancePercentageToOraclePrice);
+        _setOrderSizeFactors(_orderSizePenaltyFactor, _orderSizeDampingFactor);
     }
     
-    function setPurchaseLimitPercentage(uint256 _purchaseLimitPercentage) onlyOwner public {
-        _setPurchaseLimitPercentage(_purchaseLimitPercentage);
+    function setUnderlyingPriceAdjustPercentage(uint256 _underlyingPriceAdjustPercentage) onlyOwner public {
+        _setUnderlyingPriceAdjustPercentage(_underlyingPriceAdjustPercentage);
+    }
+	
+	function setMinOptionPricePercentage(uint256 _minOptionPricePercentage) onlyOwner public {
+        _setMinOptionPricePercentage(_minOptionPricePercentage);
+    }
+    
+    function setTolerancePercentageToOraclePrice(uint256 _tolerancePercentageToOraclePrice) onlyOwner public {
+        _setTolerancePercentageToOraclePrice(_tolerancePercentageToOraclePrice);
+    }
+    
+    function setOrderSizeFactors(uint256 _orderSizePenaltyFactor, uint256 _orderSizeDampingFactor) onlyOwner public {
+        _setOrderSizeFactors(_orderSizePenaltyFactor, _orderSizeDampingFactor);
     }
     
     function setAgreggator(address underlying, address strikeAsset, address aggregator) onlyOwner public {
@@ -42,147 +75,129 @@ contract ACOStrategy1 is Ownable, IACOStrategy {
         
         uint256 aggregatorDecimals = uint256(AggregatorV3Interface(aggregator).decimals());
         emit SetAggregator(underlying, strikeAsset, aggregators[underlying][strikeAsset].aggregator, aggregator);
-        aggregators[underlying][strikeAsset] = AggregatorData(aggregator, int256(10 ** aggregatorDecimals));
+        aggregators[underlying][strikeAsset] = AggregatorData(aggregator, (10 ** aggregatorDecimals));
     }
     
-    function getUnderlyingPrice(address underlying, address strikeAsset) public override view returns(uint256) {
-        (int256 price,,) = _getAggregatorPrice(underlying, strikeAsset);
-        return uint256(price);    
+    function getUnderlyingPrice(address underlying, address strikeAsset) external override view returns(uint256) {
+        return _getAggregatorPrice(underlying, strikeAsset);   
     }
     
-
-    function quote(
-        bool isSellingQuote,
-        address underlying,
-        address strikeAsset,
-        bool isCall, 
-        uint256 strikePrice, 
-        uint256 expiryTime, 
-        uint256 baseVolatility,
-        uint256 collateralAmount,
-        uint256 collateralAvailable,
-        uint256 totalCollateral,
-        uint256 amountPurchased,
-        uint256 amountSold
-    ) public override view returns(uint256, uint256) {
-        return _quote(
-            isSellingQuote, 
-            underlying, 
-            strikeAsset,
-            isCall,
-            _getUintArgumentsToQuote(
-                strikePrice, 
-                expiryTime, 
-                baseVolatility,
-                collateralAmount,
-                collateralAvailable,
-                totalCollateral,
-                amountPurchased,
-                amountSold
-            )
-        );
+    function getAcceptableUnderlyingPriceToBuyStrikeAsset(address underlying, address strikeAsset) external override view returns(uint256) {
+        uint256 underlyingPrice = _getAggregatorPrice(underlying, strikeAsset);
+        return underlyingPrice.mul(PERCENTAGE_PRECISION.sub(tolerancePercentageToOraclePrice)).div(PERCENTAGE_PRECISION);
     }
     
-    function _quote(
-        bool isSellingQuote,
-        address underlying,
-        address strikeAsset,
-        bool isCall, 
-        uint256[] memory uintArguments
-    ) internal view returns(uint256, uint256) {
-        require(uintArguments[1] > block.timestamp, "ACOStrategy1:: Expired");
-        (int256 underlyingPrice, uint80 lastRoundId, uint256 priceTime) = _getAggregatorPrice(underlying, strikeAsset);
-        uint256 currentVolatilityAdjust = _getCurrentVolatilityAdjust(isSellingQuote, underlyingPrice, lastRoundId, priceTime);
-        uint256 orderSizeAdjust = _getOrderSizeAdjust(isSellingQuote, uintArguments[3], uintArguments[4], uintArguments[5], uintArguments[6], uintArguments[7]);
-        uint256 volatility = uintArguments[2] * currentVolatilityAdjust * orderSizeAdjust / PERCENTAGE_PRECISION / PERCENTAGE_PRECISION;
-        return (_getOptionPrice(strikeAsset, isCall, uintArguments[0], volatility, uint256(underlyingPrice), uintArguments[1]), volatility);
+    function checkExercise(CheckExercise calldata) external override view returns(bool, uint256) {
+        require(false, "ACOStrategy1:: Strategy only for sell");
+        return (false, 0);
     }
     
-    function _getUintArgumentsToQuote(
-        uint256 strikePrice, 
-        uint256 expiryTime, 
-        uint256 baseVolatility,
-        uint256 collateralAmount,
-        uint256 collateralAvailable,
-        uint256 totalCollateral,
-        uint256 amountPurchased,
-        uint256 amountSold
-    ) internal pure returns(uint256[] memory) {
-        uint256[] memory uintArguments = new uint256[](8);
-        uintArguments[0] = strikePrice;
-        uintArguments[1] = expiryTime;
-        uintArguments[2] = baseVolatility;
-        uintArguments[3] = collateralAmount;
-        uintArguments[4] = collateralAvailable;
-        uintArguments[5] = totalCollateral;
-        uintArguments[6] = amountPurchased;
-        uintArguments[7] = amountSold;
-        return uintArguments;
+    function quote(OptionQuote calldata quoteData) external override view returns(uint256, uint256, uint256) {
+		require(!quoteData.isSellingQuote, "ACOStrategy1:: Strategy only for sell");
+        require(quoteData.expiryTime > block.timestamp, "ACOStrategy1:: Expired");
+        uint256 underlyingPrice = _getAggregatorPrice(quoteData.underlying, quoteData.strikeAsset);
+        uint256 volatility = _getVolatility(quoteData);
+        uint256 price = _getOptionPrice(underlyingPrice, volatility, quoteData);
+        return (price, underlyingPrice, volatility);
+    }
+    
+    function _getVolatility(OptionQuote memory quoteData) internal view returns(uint256) {
+        uint256 orderSizeAdjust = _getOrderSizeAdjust(quoteData);
+        return quoteData.baseVolatility.mul(orderSizeAdjust.add(PERCENTAGE_PRECISION)).div(PERCENTAGE_PRECISION);
     }
     
     function _getOptionPrice(
-        address strikeAsset,
-        bool isCall, 
-        uint256 strikePrice,
-        uint256 volatility,
         uint256 underlyingPrice,
-        uint256 expiryTime
+        uint256 volatility,
+        OptionQuote memory quoteData
     ) internal view returns(uint256) {
-        return BlackScholes.getOptionPrice(
-                isCall,
-                strikePrice, 
-                underlyingPrice,
-                uint256(assetPrecision[strikeAsset]),
-                expiryTime - block.timestamp, 
-                volatility,
-                0, 
-                0,
-                PERCENTAGE_PRECISION
-            );
+        uint256 underlyingPriceForQuote = _getUnderlyingPriceForQuote(underlyingPrice, quoteData);
+        uint256 price = BlackScholes.getOptionPrice(
+            quoteData.isCallOption,
+            quoteData.strikePrice, 
+            underlyingPriceForQuote,
+            assetPrecision[quoteData.strikeAsset],
+            quoteData.expiryTime - block.timestamp, 
+            volatility,
+            0, 
+            0,
+            PERCENTAGE_PRECISION
+        );
+        return _getValidPriceForQuote(price, underlyingPrice, quoteData);
     }
     
-    function _getCurrentVolatilityAdjust(
-        bool isSellingQuote, 
-        int256 underlyingPrice,
-        uint80 lastRoundId,
-        uint256 priceTime
-    ) internal view returns(uint256) {
-        //TODO
+    function _getOrderSizeAdjust(OptionQuote memory quoteData) internal view returns(uint256) {
+        uint256 orderSizePercentage = quoteData.collateralOrderAmount.mul(PERCENTAGE_PRECISION).div(quoteData.collateralAvailable);
+		require(orderSizePercentage <= PERCENTAGE_PRECISION, "ACOStrategy1:: No liquidity");
+        return (orderSizePercentage ** orderSizeDampingFactor).mul(orderSizePenaltyFactor).div(orderSizeDivFactor);
     }
     
-    function _getOrderSizeAdjust(
-        bool isSellingQuote, 
-        uint256 collateralAmount,
-        uint256 collateralAvailable,
-        uint256 totalCollateral,
-        uint256 amountPurchased,
-        uint256 amountSold
-    ) internal view returns(uint256) {
-        //TODO
+    function _getUnderlyingPriceForQuote(uint256 underlyingPrice, OptionQuote memory quoteData) internal view returns(uint256) {
+		if (quoteData.isCallOption) {
+			return underlyingPrice.mul(PERCENTAGE_PRECISION.add(underlyingPriceAdjustPercentage)).div(PERCENTAGE_PRECISION);
+		} else {
+			return underlyingPrice.mul(PERCENTAGE_PRECISION.sub(underlyingPriceAdjustPercentage)).div(PERCENTAGE_PRECISION);
+		}
     }
     
-    function _getAggregatorPrice(address underlying, address strikeAsset) internal view returns(int256, uint80, uint256) {
+    function _getValidPriceForQuote(uint256 price, uint256 underlyingPrice, OptionQuote memory quoteData) internal view returns(uint256) {
+		uint256 basePrice = quoteData.isCallOption ? underlyingPrice : quoteData.strikePrice;
+		uint256 minPrice = basePrice.mul(minOptionPricePercentage).div(PERCENTAGE_PRECISION);
+		if (minPrice > price) {
+			return (minPrice == 0 ? 1 : minPrice);
+		}
+		return price;
+    }
+    
+    function _getAggregatorPrice(address underlying, address strikeAsset) internal view returns(uint256) {
         AggregatorData storage data = aggregators[underlying][strikeAsset];
-        require(data.aggregator != address(0), "ACOStrategy1:: No aggregator");
-        (uint80 roundId, int256 answer, uint256 time,,) = AggregatorV3Interface(data.aggregator).latestRoundData();
-        if (data.precision > assetPrecision[strikeAsset]) {
-            return (answer / (data.precision / assetPrecision[strikeAsset]), roundId, time);
+        address _aggregator = data.aggregator;
+        require(_aggregator != address(0), "ACOStrategy1:: No aggregator");
+        
+        (,int256 answer,,,) = AggregatorV3Interface(_aggregator).latestRoundData();
+        
+        uint256 _aggregatorPrecision = data.precision;
+        uint256 _assetPrecision = assetPrecision[strikeAsset];
+        
+        if (_aggregatorPrecision > _assetPrecision) {
+            return uint256(answer).div(_aggregatorPrecision.div(_assetPrecision));
         } else {
-            return (answer * (assetPrecision[strikeAsset] / data.precision), roundId, time);
+            return uint256(answer).mul(_assetPrecision).div(_aggregatorPrecision);
         }
     }
     
     function _setAssetPrecision(address asset) internal {
         if (assetPrecision[asset] == 0) {
             uint256 decimals = _getAssetDecimals(asset);
-            assetPrecision[asset] = int256(10 ** decimals);
+            assetPrecision[asset] = (10 ** decimals);
         }
     }
     
-    function _setPurchaseLimitPercentage(uint256 _purchaseLimitPercentage) internal {
-        require(_purchaseLimitPercentage <= PERCENTAGE_PRECISION, "ACOStrategy1:: Invalid purchase limit");
-        emit SetPurchaseLimitPercentage(purchaseLimitPercentage, _purchaseLimitPercentage);
-        purchaseLimitPercentage = _purchaseLimitPercentage;
+    function _setUnderlyingPriceAdjustPercentage(uint256 _underlyingPriceAdjustPercentage) internal {
+        require(_underlyingPriceAdjustPercentage <= PERCENTAGE_PRECISION, "ACOStrategy1:: Invalid underlying price adjust");
+        emit SetUnderlyingPriceAdjustPercentage(underlyingPriceAdjustPercentage, _underlyingPriceAdjustPercentage);
+        underlyingPriceAdjustPercentage = _underlyingPriceAdjustPercentage;
+    }
+    
+	function _setMinOptionPricePercentage(uint256 _minOptionPricePercentage) internal {
+		require(_minOptionPricePercentage > 0 && _minOptionPricePercentage < PERCENTAGE_PRECISION, "ACOStrategy1:: Invalid min option price percentage");
+        emit SetMinOptionPricePercentage(minOptionPricePercentage, _minOptionPricePercentage);
+        minOptionPricePercentage = _minOptionPricePercentage;
+	}
+	
+	function _setTolerancePercentageToOraclePrice(uint256 _tolerancePercentageToOraclePrice) internal {
+		require(_tolerancePercentageToOraclePrice <= PERCENTAGE_PRECISION, "ACOStrategy1:: Invalid tolerance percentage");
+        emit SetTolerancePercentageToOraclePrice(tolerancePercentageToOraclePrice, _tolerancePercentageToOraclePrice);
+        tolerancePercentageToOraclePrice = _tolerancePercentageToOraclePrice;
+	}
+	
+    function _setOrderSizeFactors(uint256 _orderSizePenaltyFactor, uint256 _orderSizeDampingFactor) internal {
+        require(_orderSizePenaltyFactor <= 1000000, "ACOStrategy1:: Invalid penalty factor");
+        require(_orderSizeDampingFactor > 0 && _orderSizeDampingFactor <= 10, "ACOStrategy1:: Invalid damping factor");
+        emit SetOrderSizeFactors(orderSizePenaltyFactor, orderSizeDampingFactor, _orderSizePenaltyFactor, _orderSizeDampingFactor);
+        orderSizePenaltyFactor = _orderSizePenaltyFactor;
+        orderSizeDampingFactor = _orderSizeDampingFactor;
+        orderSizeDivFactor = (PERCENTAGE_PRECISION ** (_orderSizeDampingFactor - 1));
     }
     
     function _getAssetDecimals(address asset) internal view returns(uint256) {
