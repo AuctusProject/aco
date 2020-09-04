@@ -81,7 +81,7 @@ class App extends Component {
       if (pair && currentPairId !== pair.id) {
         this.props.history.push(route + pair.id)
       }      
-    }    
+    }
   }
 
   onPairsLoaded = (pairs) => {

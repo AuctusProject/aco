@@ -132,17 +132,19 @@ class Home extends Component {
   loadAvailableOptions = () => {
     getTokensList().then(result => {
       var pairs = getPairsFromOptions(result)
-      this.setState({options: result, pairs: pairs}, this.loadOrderBook)
+      this.setState({options: result, pairs: pairs}, () => this.loadOrderBook(this.props.selectedPair))
     })
   }
 
   onPairSelected = (selectedPair) => {
     this.props.onPairSelected(selectedPair)
     this.setState({selectedExpiryTime: ALL_OPTIONS_KEY})
+    this.loadOrderBook(selectedPair)
   }
 
-  loadOrderBook = () => {
-    this.props.loadOrderbookFromOptions(this.state.options, (this.context && this.context.web3 && this.context.web3.hasMetamask && this.context.web3.validNetwork && this.context.web3.selectedAccount))
+  loadOrderBook = (selectedPair) => {
+    var options = getOptionsFromPair(this.state.options, selectedPair)
+    this.props.loadOrderbookFromOptions(options, (this.context && this.context.web3 && this.context.web3.hasMetamask && this.context.web3.validNetwork && this.context.web3.selectedAccount))
   }
 
   onSelectOption = (option) => {

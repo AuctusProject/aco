@@ -14,4 +14,3 @@ import en from 'javascript-time-ago/locale/en'
 JavascriptTimeAgo.locale(en)
 
 ReactDOM.render(<BrowserRouter><App /></BrowserRouter>, document.getElementById('root'))
-registerServiceWorker()
