@@ -31,7 +31,7 @@ class Home extends Component {
       case4class: "",
       joinAnimation: (this.isMobile ? "" : " unshown "),
       startTradingAnimation: (this.isMobile ? "" : " unshown "),
-      showBanner: true
+      showBanner: false
     }
   }
 
