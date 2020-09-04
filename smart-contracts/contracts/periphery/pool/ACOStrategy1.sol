@@ -8,6 +8,7 @@ import '../../libs/BlackScholes.sol';
 import '../../interfaces/IACOStrategy.sol';
 import '../../interfaces/AggregatorV3Interface.sol';
 
+
 contract ACOStrategy1 is Ownable, IACOStrategy {
     using Address for address;
     using SafeMath for uint256;
@@ -82,9 +83,13 @@ contract ACOStrategy1 is Ownable, IACOStrategy {
         return _getAggregatorPrice(underlying, strikeAsset);   
     }
     
-    function getAcceptableUnderlyingPriceToBuyStrikeAsset(address underlying, address strikeAsset) external override view returns(uint256) {
+    function getAcceptableUnderlyingPriceToSwapAssets(address underlying, address strikeAsset, bool isBuying) external override view returns(uint256) {
         uint256 underlyingPrice = _getAggregatorPrice(underlying, strikeAsset);
-        return underlyingPrice.mul(PERCENTAGE_PRECISION.sub(tolerancePercentageToOraclePrice)).div(PERCENTAGE_PRECISION);
+        if (isBuying) {
+            return underlyingPrice.mul(PERCENTAGE_PRECISION.sub(tolerancePercentageToOraclePrice)).div(PERCENTAGE_PRECISION);
+        } else {
+            return underlyingPrice.mul(PERCENTAGE_PRECISION.add(tolerancePercentageToOraclePrice)).div(PERCENTAGE_PRECISION);    
+        }
     }
     
     function checkExercise(CheckExercise calldata) external override view returns(bool, uint256) {

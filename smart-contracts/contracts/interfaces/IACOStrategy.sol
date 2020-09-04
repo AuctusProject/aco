@@ -34,6 +34,6 @@ interface IACOStrategy {
     
     function quote(OptionQuote calldata quoteData) external view returns(uint256 optionPrice, uint256 underlyingPrice, uint256 volatility);
     function getUnderlyingPrice(address underlying, address strikeAsset) external view returns(uint256 underlyingPrice);
-    function getAcceptableUnderlyingPriceToBuyStrikeAsset(address underlying, address strikeAsset) external view returns(uint256 acceptablePrice);
+    function getAcceptableUnderlyingPriceToSwapAssets(address underlying, address strikeAsset, bool isBuying) external view returns(uint256 acceptablePrice);
     function checkExercise(CheckExercise calldata exerciseData) external view returns(bool canExercise, uint256 minIntrinsicValue);
 }

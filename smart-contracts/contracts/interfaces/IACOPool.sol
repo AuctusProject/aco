@@ -30,4 +30,7 @@ interface IACOPool is IERC20 {
     function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction) external returns(uint256);
     function exerciseACOToken(address acoToken) external;
     function redeemACOTokens() external;
+    function deposit(uint256 collateralAmount) external payable returns(uint256 acoPoolTokenAmount);
+    function redeem() external returns(uint256 underlyingReceived, uint256 strikeAssetReceived);
+    function restoreCollateral() external;
 }

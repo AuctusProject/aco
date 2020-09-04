@@ -20,6 +20,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     using SafeMath for uint256;
     
     uint256 internal constant POOL_PRECISION = 1000000000000000000;
+    uint256 internal constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
     
     struct ACOTokenData {
         uint256 amountSold;
@@ -31,6 +32,9 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     event SetBaseVolatility(uint256 indexed baseVolatility, uint256 indexed newBaseVolatility);
     event CollateralDeposited(address indexed account, uint256 amount);
     event Redeem(address indexed account, uint256 underlyingAmount, uint256 strikeAssetAmount);
+    event RestoreCollateral(uint256 amountOut, uint256 collateralIn);
+    event ACORedeem(address indexed acoToken, uint256 collateralIn);
+    event ACOExercise(address indexed acoToken, uint256 collateralIn);
     event Swap(
         bool indexed isPoolSelling, 
         address indexed account, 
@@ -44,6 +48,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     uint256 public poolStart;
     IACOFlashExercise public acoFlashExercise;
     IACOFactory public acoFactory;
+    IUniswapV2Router02 public uniswapRouter;
     address public underlying;
     address public strikeAsset;
     uint256 public minStrikePrice;
@@ -97,10 +102,15 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         isCall = initData.isCall;
         canBuy = initData.canBuy;
         
+        address _uniswapRouter = IACOFlashExercise(initData.acoFlashExercise).uniswapRouter();
+        uniswapRouter = IUniswapV2Router02(_uniswapRouter);
+        
         _setStrategy(initData.strategy);
         _setBaseVolatility(initData.baseVolatility);
         
         _setAssetsPrecision(initData.underlying, initData.strikeAsset);
+        
+        _approveAssetsOnRouter(initData.isCall, initData.canBuy, _uniswapRouter, initData.underlying, initData.strikeAsset);
     }
     
     function name() public view override returns(string memory) {
@@ -148,7 +158,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         _setBaseVolatility(newBaseVolatility);
     }
 
-    function deposit(uint256 collateralAmount) public payable {
+    function deposit(uint256 collateralAmount) public override payable returns(uint256) {
         require(!_isStarted(), "ACOPool:: Pool already started");
         require(collateralAmount > 0, "ACOPool:: Invalid collateral amount");
         
@@ -160,11 +170,13 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         _mintAction(msg.sender, normalizedAmount);
         
         emit CollateralDeposited(msg.sender, amount);
+        
+        return normalizedAmount;
     }
     
-    function redeem() public returns(uint256, uint256) {
+    function redeem() public override returns(uint256, uint256) {
         uint256 share = balanceOf(msg.sender);
-        require(share > 0, "ACOPool:: No data");
+        require(share > 0, "ACOPool:: User with no share");
         require(!_notFinished(), "ACOPool:: Pool is not finished");
         
         redeemACOTokens();
@@ -189,11 +201,13 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     
     function redeemACOTokens() public override {
         for (uint256 i = 0; i < acoTokens.length; ++i) {
-            if (!acoTokensData[acoTokens[i]].redeemed) {
-                uint256 expiryTime = IACOToken(acoTokens[i]).expiryTime();
+            address acoToken = acoTokens[i];
+            if (!acoTokensData[acoToken].redeemed) {
+                uint256 expiryTime = IACOToken(acoToken).expiryTime();
                 if (expiryTime <= block.timestamp) {
-                    IACOToken(acoTokens[i]).redeem();
-                    acoTokensData[acoTokens[i]].redeemed = true;
+                    uint256 collateralIn = IACOToken(acoToken).redeem();
+                    acoTokensData[acoToken].redeemed = true;
+                    emit ACORedeem(acoToken, collateralIn);
                 }
             }
         }
@@ -216,26 +230,84 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         uint256 exercisableAmount = _getExercisableAmount(acoToken);
         require(exercisableAmount > 0, "ACOPool:: Exercise is not available");
         
-        uint256 collateralAmount = isCall ? exercisableAmount : IACOToken(acoToken).getCollateralAmount(exercisableAmount);
+        address _strikeAsset = strikeAsset;
+        address _underlying = underlying;
+        bool _isCall = isCall;
+        
+        uint256 collateralAmount;
+        address _collateral;
+        if (_isCall) {
+            _collateral = _underlying;
+            collateralAmount = exercisableAmount;
+        } else {
+            _collateral = _strikeAsset;
+            collateralAmount = IACOToken(acoToken).getCollateralAmount(exercisableAmount);
+            
+        }
+        uint256 collateralAvailable = _getAssetBalanceOf(_collateral, address(this));
         
         ACOTokenData storage data = acoTokensData[acoToken];
         (bool canExercise, uint256 minIntrinsicValue) = strategy.checkExercise(IACOStrategy.CheckExercise(
-            underlying,
-            strikeAsset,
-            isCall,
+            _underlying,
+            _strikeAsset,
+            _isCall,
             strikePrice, 
             expiryTime,
             collateralAmount,
-            _getAssetBalanceOf(collateral(), address(this)),
+            collateralAvailable,
             data.amountPurchased,
             data.amountSold
         ));
         require(canExercise, "ACOPool:: Exercise is not authorized");
         
         if (IACOToken(acoToken).allowance(address(this), address(acoFlashExercise)) < exercisableAmount) {
-            _callApproveERC20(acoToken, address(acoFlashExercise), 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);    
+            _callApproveERC20(acoToken, address(acoFlashExercise), MAX_UINT);    
         }
         acoFlashExercise.flashExercise(acoToken, exercisableAmount, minIntrinsicValue, block.timestamp);
+        
+        uint256 collateralIn = _getAssetBalanceOf(_collateral, address(this)).sub(collateralAvailable);
+        emit ACOExercise(acoToken, collateralIn);
+    }
+    
+    function restoreCollateral() public override {
+        address _strikeAsset = strikeAsset;
+        address _underlying = underlying;
+        bool _isCall = isCall;
+        
+        uint256 underlyingBalance = _getAssetBalanceOf(_underlying, address(this));
+        uint256 strikeAssetBalance = _getAssetBalanceOf(_strikeAsset, address(this));
+        
+        uint256 balanceOut;
+        address assetIn;
+        address assetOut;
+        if (_isCall) {
+             balanceOut = strikeAssetBalance;
+             assetIn = _underlying;
+             assetOut = _strikeAsset;
+        } else {
+            balanceOut = underlyingBalance;
+             assetIn = _strikeAsset;
+             assetOut = _underlying;
+        }
+        require(balanceOut > 0, "ACOPool:: No balance");
+        
+        uint256 acceptablePrice = strategy.getAcceptableUnderlyingPriceToSwapAssets(_underlying, _strikeAsset, false);
+        
+        uint256 minToReceive;
+        if (_isCall) {
+            minToReceive = balanceOut.mul(underlyingPrecision).div(acceptablePrice);
+        } else {
+            minToReceive = balanceOut.mul(acceptablePrice).div(underlyingPrecision);
+        }
+        _swapAssetsExactAmountOut(assetOut, assetIn, minToReceive, balanceOut);
+        
+        uint256 collateralIn;
+        if (_isCall) {
+            collateralIn = _getAssetBalanceOf(_underlying, address(this)).sub(underlyingBalance);
+        } else {
+            collateralIn = _getAssetBalanceOf(_strikeAsset, address(this)).sub(strikeAssetBalance);
+        }
+        emit RestoreCollateral(balanceOut, collateralIn);
     }
     
     function _internalQuote(bool isBuying, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256, uint256, uint256) {
@@ -316,7 +388,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
                     tokenAmount = tokenAmount.add(IACOToken(acoToken).mintPayable{value: collateralAmount}());
                 } else {
                     if (acoTokenData.amountSold == 0) {
-                        _callApproveERC20(strikeAsset, acoToken, 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff);    
+                        _callApproveERC20(strikeAsset, acoToken, MAX_UINT);    
                     }
                     tokenAmount = tokenAmount.add(IACOToken(acoToken).mint(collateralAmount));
                 }
@@ -340,7 +412,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         require(price >= minToReceive, "ACOPool:: Swap restriction");
         
         if (isCall) {
-            _buyStrikeAsset(price);
+            _getStrikeAssetAmount(price);
         }
         
         _callTransferFromERC20(acoToken, msg.sender, address(this), tokenAmount);
@@ -370,22 +442,50 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         return (normalizedAmount, collateralAmount);
     }
     
-    function _getUniswapAsset(address asset) internal view returns(address) {
-        if (_isEther(asset)) {
-            return acoFlashExercise.weth();
-        } else {
-            return asset;
+    function _getStrikeAssetAmount(uint256 strikeAssetAmount) internal {
+        address _strikeAsset = strikeAsset;
+        uint256 balance = _getAssetBalanceOf(_strikeAsset, address(this));
+        if (balance < strikeAssetAmount) {
+            uint256 amountToPurchase = strikeAssetAmount.sub(balance);
+            address _underlying = underlying;
+            uint256 acceptablePrice = strategy.getAcceptableUnderlyingPriceToSwapAssets(_underlying, _strikeAsset, true);
+            uint256 maxPayment = amountToPurchase.mul(underlyingPrecision).div(acceptablePrice);
+            _swapAssetsExactAmountIn(_underlying, _strikeAsset, amountToPurchase, maxPayment);
         }
     }
     
-    function _buyStrikeAsset(uint256 strikeAssetAmount) internal {
-        uint256 acceptablePrice = strategy.getAcceptableUnderlyingPriceToBuyStrikeAsset(underlying, strikeAsset);
-        uint256 maxPayment = strikeAssetAmount.mul(underlyingPrecision).div(acceptablePrice);
-        IUniswapV2Router02 router = IUniswapV2Router02(acoFlashExercise.uniswapRouter());
+    function _swapAssetsExactAmountOut(address assetOut, address assetIn, uint256 minAmountIn, uint256 amountOut) internal {
         address[] memory path = new address[](2);
-        path[0] = _getUniswapAsset(underlying);
-        path[1] = _getUniswapAsset(strikeAsset);
-        router.swapTokensForExactTokens(strikeAssetAmount, maxPayment, path, address(this), block.timestamp);
+        if (_isEther(assetOut)) {
+            path[0] = acoFlashExercise.weth();
+            path[1] = assetIn;
+            uniswapRouter.swapExactETHForTokens{value: amountOut}(minAmountIn, path, address(this), block.timestamp);
+        } else if (_isEther(assetIn)) {
+            path[0] = assetOut;
+            path[1] = acoFlashExercise.weth();
+            uniswapRouter.swapExactTokensForETH(amountOut, minAmountIn, path, address(this), block.timestamp);
+        } else {
+            path[0] = assetOut;
+            path[1] = assetIn;
+            uniswapRouter.swapExactTokensForTokens(amountOut, minAmountIn, path, address(this), block.timestamp);
+        }
+    }
+    
+    function _swapAssetsExactAmountIn(address assetOut, address assetIn, uint256 amountIn, uint256 maxAmountOut) internal {
+        address[] memory path = new address[](2);
+        if (_isEther(assetOut)) {
+            path[0] = acoFlashExercise.weth();
+            path[1] = assetIn;
+            uniswapRouter.swapETHForExactTokens{value: maxAmountOut}(amountIn, path, address(this), block.timestamp);
+        } else if (_isEther(assetIn)) {
+            path[0] = assetOut;
+            path[1] = acoFlashExercise.weth();
+            uniswapRouter.swapTokensForExactETH(amountIn, maxAmountOut, path, address(this), block.timestamp);
+        } else {
+            path[0] = assetOut;
+            path[1] = assetIn;
+            uniswapRouter.swapTokensForExactTokens(amountIn, maxAmountOut, path, address(this), block.timestamp);
+        }
     }
     
     function _setStrategy(address newStrategy) internal {
@@ -403,6 +503,25 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     function _setAssetsPrecision(address _underlying, address _strikeAsset) internal {
         underlyingPrecision = 10 ** uint256(_getAssetDecimals(_underlying));
         strikeAssetPrecision = 10 ** uint256(_getAssetDecimals(_strikeAsset));
+    }
+    
+    function _approveAssetsOnRouter(
+        bool _isCall, 
+        bool _canBuy, 
+        address _uniswapRouter,
+        address _underlying,
+        address _strikeAsset
+    ) internal {
+        if (_isCall) {
+            if (!_isEther(_strikeAsset)) {
+                _callApproveERC20(_strikeAsset, _uniswapRouter, MAX_UINT);
+            }
+            if (_canBuy && !_isEther(_underlying)) {
+                _callApproveERC20(_underlying, _uniswapRouter, MAX_UINT);
+            }
+        } else if (!_isEther(_underlying)) {
+            _callApproveERC20(_underlying, _uniswapRouter, MAX_UINT);
+        }
     }
     
     function _getExercisableAmount(address acoToken) internal view returns(uint256) {
