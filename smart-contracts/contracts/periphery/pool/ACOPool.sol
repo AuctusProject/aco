@@ -90,6 +90,8 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         require(_isEther(initData.underlying) || initData.underlying.isContract(), "ACOPool:: Invalid underlying");
         require(_isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "ACOPool:: Invalid strike asset");
         
+        super.init();
+
         poolStart = initData.poolStart;
         acoFlashExercise = IACOFlashExercise(initData.acoFlashExercise);
         acoFactory = IACOFactory(initData.acoFactory);
