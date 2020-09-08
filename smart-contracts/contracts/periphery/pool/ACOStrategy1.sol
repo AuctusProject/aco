@@ -98,7 +98,7 @@ contract ACOStrategy1 is Ownable, IACOStrategy {
     }
     
     function quote(OptionQuote calldata quoteData) external override view returns(uint256, uint256, uint256) {
-		require(!quoteData.isSellingQuote, "ACOStrategy1:: Strategy only for sell");
+		require(quoteData.isSellingQuote, "ACOStrategy1:: Strategy only for sell");
         require(quoteData.expiryTime > block.timestamp, "ACOStrategy1:: Expired");
         uint256 underlyingPrice = _getAggregatorPrice(quoteData.underlying, quoteData.strikeAsset);
         uint256 volatility = _getVolatility(quoteData);
