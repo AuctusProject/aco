@@ -8,6 +8,7 @@ interface IACOPool is IERC20 {
         uint256 poolStart;
         address acoFlashExercise;
         address acoFactory;
+        address chiToken;
         address underlying;
         address strikeAsset;
         uint256 minStrikePrice; 

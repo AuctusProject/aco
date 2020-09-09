@@ -13,6 +13,7 @@ import '../../interfaces/IACOStrategy.sol';
 import '../../interfaces/IACOToken.sol';
 import '../../interfaces/IACOFlashExercise.sol';
 import '../../interfaces/IUniswapV2Router02.sol';
+import '../../interfaces/IChiToken.sol';
 
 
 contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
@@ -49,6 +50,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     IACOFlashExercise public acoFlashExercise;
     IACOFactory public acoFactory;
     IUniswapV2Router02 public uniswapRouter;
+    IChiToken public chiToken;
     address public underlying;
     address public strikeAsset;
     uint256 public minStrikePrice;
@@ -76,11 +78,19 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         _;
     }
     
+    modifier discountCHI {
+        uint256 gasStart = gasleft();
+        _;
+        uint256 gasSpent = 21000 + gasStart - gasleft() + 16 * msg.data.length;
+        chiToken.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41947);
+    }
+    
     function init(InitData calldata initData) external override {
         require(underlying == address(0) && strikeAsset == address(0) && minExpiration == 0, "ACOPool::init: Already initialized");
         
-        require(initData.acoFactory.isContract(), "ACOPool:: ACO Factory");
-        require(initData.acoFlashExercise.isContract(), "ACOPool:: ACO flash exercise");
+        require(initData.acoFactory.isContract(), "ACOPool:: Invalid ACO Factory");
+        require(initData.acoFlashExercise.isContract(), "ACOPool:: Invalid ACO flash exercise");
+        require(initData.chiToken.isContract(), "ACOPool:: Invalid Chi Token");
         require(initData.poolStart > block.timestamp, "ACOPool:: Invalid pool start");
         require(initData.minExpiration > block.timestamp, "ACOPool:: Invalid expiration");
         require(initData.minStrikePrice <= initData.maxStrikePrice, "ACOPool:: Invalid strike price range");
@@ -95,6 +105,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         poolStart = initData.poolStart;
         acoFlashExercise = IACOFlashExercise(initData.acoFlashExercise);
         acoFactory = IACOFactory(initData.acoFactory);
+        chiToken = IChiToken(initData.chiToken);
         underlying = initData.underlying;
         strikeAsset = initData.strikeAsset;
         minStrikePrice = initData.minStrikePrice;
@@ -207,7 +218,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         }
     }
     
-    function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) open public override returns(uint256) {
+    function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) open discountCHI public override returns(uint256) {
         require(block.timestamp <= deadline, "ACOPool:: Swap deadline");
         require(to != address(0) && to != acoToken && to != address(this), "ACOPool:: Invalid destination");
         (uint256 price, uint256 underlyingPrice, uint256 volatility, uint256 collateralAmount) = _internalQuote(isBuying, acoToken, tokenAmount);

@@ -82,6 +82,13 @@ contract ACOPoolFactory {
     event SetAcoFactory(address indexed previousAcoFactory, address indexed newAcoFactory);
     
     /**
+     * @dev Emitted when the Chi Token has been changed.
+     * @param previousChiToken Address of the previous Chi Token.
+     * @param newChiToken Address of the new Chi Token.
+     */
+    event SetChiToken(address indexed previousChiToken, address indexed newChiToken);
+    
+    /**
      * @dev Emitted when the ACO fee has been changed.
      * @param previousAcoFlashExercise Address of the previous ACO flash exercise.
      * @param newAcoFlashExercise Address of the new ACO flash exercise.
@@ -141,6 +148,11 @@ contract ACOPoolFactory {
     address public acoFlashExercise;
     
     /**
+     * @dev The Chi Token address.
+     */
+    address public chiToken;
+    
+    /**
      * @dev The ACO pool admin permissions.
      */
     mapping(address => bool) public poolAdminPermission;
@@ -186,7 +198,8 @@ contract ACOPoolFactory {
         address _factoryAdmin, 
         address _acoPoolImplementation, 
         address _acoFactory, 
-        address _acoFlashExercise
+        address _acoFlashExercise,
+        address _chiToken
     ) public {
         require(factoryAdmin == address(0) && acoPoolImplementation == address(0), "ACOPoolFactory::init: Contract already initialized.");
         
@@ -194,6 +207,7 @@ contract ACOPoolFactory {
         _setAcoPoolImplementation(_acoPoolImplementation);
         _setAcoFactory(_acoFactory);
         _setAcoFlashExercise(_acoFlashExercise);
+        _setChiToken(_chiToken);
         _setAcoPoolPermission(_factoryAdmin, true);
     }
 
@@ -238,6 +252,7 @@ contract ACOPoolFactory {
             poolStart,
             acoFlashExercise,
             acoFactory,
+            chiToken,
             underlying, 
             strikeAsset,
             minStrikePrice,
@@ -285,6 +300,15 @@ contract ACOPoolFactory {
      */
     function setAcoFlashExercise(address newAcoFlashExercise) onlyFactoryAdmin external virtual {
         _setAcoFlashExercise(newAcoFlashExercise);
+    }
+    
+    /**
+     * @dev Function to set the Chi Token address.
+     * Only can be called by the factory admin.
+     * @param newChiToken Address of the new Chi Token.
+     */
+    function setChiToken(address newChiToken) onlyFactoryAdmin external virtual {
+        _setChiToken(newChiToken);
     }
     
     /**
@@ -365,6 +389,16 @@ contract ACOPoolFactory {
         require(Address.isContract(newAcoFlashExercise), "ACOPoolFactory::_setAcoFlashExercise: Invalid ACO flash exercise");
         emit SetAcoFlashExercise(acoFlashExercise, newAcoFlashExercise);
         acoFlashExercise = newAcoFlashExercise;
+    }
+    
+    /**
+     * @dev Internal function to set the Chi Token address.
+     * @param newChiToken Address of the new Chi Token.
+     */
+    function _setChiToken(address newChiToken) internal virtual {
+        require(Address.isContract(newChiToken), "ACOPoolFactory::_setChiToken: Invalid Chi Token");
+        emit SetAcoFlashExercise(chiToken, newChiToken);
+        chiToken = newChiToken;
     }
     
     /**
