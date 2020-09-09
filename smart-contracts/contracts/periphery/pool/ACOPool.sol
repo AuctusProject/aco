@@ -72,7 +72,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     uint256 internal strikeAssetPrecision;
     
     modifier open() {
-        require(_isStarted() && _notFinished(), "ACOPool:: Pool is not open");
+        require(isStarted() && notFinished(), "ACOPool:: Pool is not open");
         _;
     }
     
@@ -91,7 +91,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         require(_isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "ACOPool:: Invalid strike asset");
         
         super.init();
-
+        
         poolStart = initData.poolStart;
         acoFlashExercise = IACOFlashExercise(initData.acoFlashExercise);
         acoFactory = IACOFactory(initData.acoFactory);
@@ -127,6 +127,14 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         return 18;
     }
     
+    function isStarted() public view returns(bool) {
+        return block.timestamp >= poolStart;
+    }
+    
+    function notFinished() public view returns(bool) {
+        return block.timestamp < maxExpiration;
+    }
+    
     function numberOfACOTokensNegotiated() public override view returns(uint256) {
         return acoTokens.length;
     }
@@ -160,16 +168,17 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         _setBaseVolatility(newBaseVolatility);
     }
 
-    function deposit(uint256 collateralAmount) public override payable returns(uint256) {
-        require(!_isStarted(), "ACOPool:: Pool already started");
+    function deposit(uint256 collateralAmount, address to) public override payable returns(uint256) {
+        require(!isStarted(), "ACOPool:: Pool already started");
         require(collateralAmount > 0, "ACOPool:: Invalid collateral amount");
+        require(to != address(0) && to != address(this), "ACOPool:: Invalid to");
         
         (uint256 normalizedAmount, uint256 amount) = _getNormalizedDepositAmount(collateralAmount);
         
         _receiveAsset(collateral(), amount);
         
         collateralDeposited = collateralDeposited.add(amount);
-        _mintAction(msg.sender, normalizedAmount);
+        _mintAction(to, normalizedAmount);
         
         emit CollateralDeposited(msg.sender, amount);
         
@@ -177,28 +186,11 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     }
     
     function redeem() public override returns(uint256, uint256) {
-        uint256 share = balanceOf(msg.sender);
-        require(share > 0, "ACOPool:: User with no share");
-        require(!_notFinished(), "ACOPool:: Pool is not finished");
-        
-        redeemACOTokens();
-        
-        uint256 _totalSupply = totalSupply();
-        uint256 underlyingBalance = _getAssetBalanceOf(underlying, address(this)).mul(share).div(_totalSupply);
-        uint256 strikeAssetBalance = _getAssetBalanceOf(strikeAsset, address(this)).mul(share).div(_totalSupply);
-        
-        _burnAction(msg.sender, share);
-        
-        if (underlyingBalance > 0) {
-            _transferAsset(underlying, msg.sender, underlyingBalance);
-        }
-        if (strikeAssetBalance > 0) {
-            _transferAsset(strikeAsset, msg.sender, strikeAssetBalance);
-        }
-        
-        emit Redeem(msg.sender, underlyingBalance, strikeAssetBalance);
-        
-        return (underlyingBalance, strikeAssetBalance);
+        return _redeem(msg.sender);
+    }
+    
+    function redeemFrom(address account) public override returns(uint256, uint256) {
+        return _redeem(account);
     }
     
     function redeemACOTokens() public override {
@@ -215,13 +207,15 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         }
     }
     
-    function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction) open public override returns(uint256) {
+    function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) open public override returns(uint256) {
+        require(block.timestamp <= deadline, "ACOPool:: Swap deadline");
+        require(to != address(0) && to != acoToken && to != address(this), "ACOPool:: Invalid destination");
         (uint256 price, uint256 underlyingPrice, uint256 volatility, uint256 collateralAmount) = _internalQuote(isBuying, acoToken, tokenAmount);
         uint256 amount;
         if (isBuying) {
-            amount = _internalSelling(acoToken, collateralAmount, tokenAmount, restriction, price);
+            amount = _internalSelling(to, acoToken, collateralAmount, tokenAmount, restriction, price);
         } else {
-            amount = _internalBuying(acoToken, tokenAmount, restriction, price);
+            amount = _internalBuying(to, acoToken, tokenAmount, restriction, price);
         }
         emit Swap(isBuying, msg.sender, acoToken, tokenAmount, price, underlyingPrice, volatility);
         return amount;
@@ -334,7 +328,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
             collateralAmount = IACOToken(acoToken).getCollateralAmount(tokenAmount);
             require(collateralAmount > 0, "ACOPool:: Token amount is too small");
         }
-        require(!isPoolSelling || collateralAmount <= collateralAvailable, "ACOPool:: Insufficient collateral");
+        require(!isPoolSelling || collateralAmount <= collateralAvailable, "ACOPool:: Insufficient liquidity");
         
         return (collateralAmount, collateralAvailable);
     }
@@ -367,6 +361,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     }
     
     function _internalSelling(
+        address to,
         address acoToken, 
         uint256 collateralAmount, 
         uint256 tokenAmount,
@@ -386,11 +381,12 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
                 collateralAmount = IACOToken(acoToken).getCollateralAmount(tokenAmount.sub(acoBalance));
             }
             if (collateralAmount > 0) {
-                if (isCall) {
+                address _collateral = collateral();
+                if (_isEther(_collateral)) {
                     tokenAmount = tokenAmount.add(IACOToken(acoToken).mintPayable{value: collateralAmount}());
                 } else {
                     if (acoTokenData.amountSold == 0) {
-                        _callApproveERC20(strikeAsset, acoToken, MAX_UINT);    
+                        _callApproveERC20(_collateral, acoToken, MAX_UINT);    
                     }
                     tokenAmount = tokenAmount.add(IACOToken(acoToken).mint(collateralAmount));
                 }
@@ -400,12 +396,13 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         acoTokenData.amountSold = tokenAmount.add(acoTokenData.amountSold);
         strikeAssetEarnedSelling = price.add(strikeAssetEarnedSelling); 
         
-        _callTransferERC20(acoToken, msg.sender, tokenAmount);
+        _callTransferERC20(acoToken, to, tokenAmount);
         
         return tokenAmount;
     }
     
     function _internalBuying(
+        address to,
         address acoToken, 
         uint256 tokenAmount, 
         uint256 minToReceive,
@@ -423,7 +420,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         acoTokenData.amountPurchased = tokenAmount.add(acoTokenData.amountPurchased);
         strikeAssetSpentBuying = price.add(strikeAssetSpentBuying);
         
-        _transferAsset(strikeAsset, msg.sender, price);
+        _transferAsset(strikeAsset, to, price);
         
         return price;
     }
@@ -453,6 +450,39 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
             uint256 acceptablePrice = strategy.getAcceptableUnderlyingPriceToSwapAssets(_underlying, _strikeAsset, true);
             uint256 maxPayment = amountToPurchase.mul(underlyingPrecision).div(acceptablePrice);
             _swapAssetsExactAmountIn(_underlying, _strikeAsset, amountToPurchase, maxPayment);
+        }
+    }
+    
+    function _redeem(address account) internal returns(uint256, uint256) {
+        uint256 share = balanceOf(account);
+        require(share > 0, "ACOPool:: Account with no share");
+        require(!notFinished(), "ACOPool:: Pool is not finished");
+        
+        redeemACOTokens();
+        
+        uint256 _totalSupply = totalSupply();
+        uint256 underlyingBalance = share.mul(_getAssetBalanceOf(underlying, address(this))).div(_totalSupply);
+        uint256 strikeAssetBalance = share.mul(_getAssetBalanceOf(strikeAsset, address(this))).div(_totalSupply);
+        
+        _callBurn(account, share);
+        
+        if (underlyingBalance > 0) {
+            _transferAsset(underlying, msg.sender, underlyingBalance);
+        }
+        if (strikeAssetBalance > 0) {
+            _transferAsset(strikeAsset, msg.sender, strikeAssetBalance);
+        }
+        
+        emit Redeem(msg.sender, underlyingBalance, strikeAssetBalance);
+        
+        return (underlyingBalance, strikeAssetBalance);
+    }
+    
+    function _callBurn(address account, uint256 tokenAmount) internal {
+        if (account == msg.sender) {
+            super._burnAction(account, tokenAmount);
+        } else {
+            super._burnFrom(account, tokenAmount);
         }
     }
     
@@ -535,14 +565,6 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
             }
         }
         return 0;
-    }
-    
-    function _isStarted() internal view returns(bool) {
-        return block.timestamp >= poolStart;
-    }
-    
-    function _notFinished() internal view returns(bool) {
-        return block.timestamp < maxExpiration;
     }
     
     function _getValidACOTokenStrikePriceAndExpiration(address acoToken) internal view returns(uint256, uint256) {
