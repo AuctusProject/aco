@@ -28,6 +28,7 @@ describe("ACOPoolFactory", function() {
   let weth;
   let uniswapRouter;
   let defaultStrategy;
+  let chiToken;
 
   beforeEach(async function () {
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
@@ -58,13 +59,15 @@ describe("ACOPoolFactory", function() {
     await uniswapRouter.deployed();
     flashExercise = await (await ethers.getContractFactory("ACOFlashExercise")).deploy(uniswapRouter.address);
     await flashExercise.deployed();
+    chiToken = await (await ethers.getContractFactory("ChiToken")).deploy();
+    await chiToken.deployed();
     
     ACOPoolFactory = await (await ethers.getContractFactory("ACOPoolFactory")).deploy();
     await ACOPoolFactory.deployed();
 
     poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
 
-    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address]);
+    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address]);
     buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOPoolFactory.address, poolFactoryInitData);
     await buidlerACOPoolFactoryProxy.deployed();
     buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactory", buidlerACOPoolFactoryProxy.address);
@@ -240,6 +243,29 @@ describe("ACOPoolFactory", function() {
         buidlerACOPoolFactory.connect(addr1).setAcoFlashExercise(flashExercise.address)
       ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
       expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(flashExercise.address);
+    });
+    it("Check set CHI Token", async function () {
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
+      
+      newChiToken = await (await ethers.getContractFactory("ChiToken")).deploy();
+      await newChiToken.deployed();
+      
+      await buidlerACOPoolFactory.setChiToken(newChiToken.address);
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(newChiToken.address);
+    });
+    it("Check fail to set CHI Token", async function () {
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setChiToken(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOPoolFactory::_setChiToken: Invalid Chi Token");
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
+
+      newChiToken = await (await ethers.getContractFactory("ChiToken")).deploy();
+      await newChiToken.deployed();
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setChiToken(newChiToken.address)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
     });
     it("Check set ACO pool permission", async function () {
       let ownerAddress = await owner.getAddress()
