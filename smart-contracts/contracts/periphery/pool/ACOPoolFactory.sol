@@ -96,6 +96,20 @@ contract ACOPoolFactory {
     event SetAcoFlashExercise(address indexed previousAcoFlashExercise, address indexed newAcoFlashExercise);
     
     /**
+     * @dev Emitted when the ACO Pool fee has been changed.
+     * @param previousAcoFee Value of the previous ACO Pool fee.
+     * @param newAcoFee Value of the new ACO Pool fee.
+     */
+    event SetAcoPoolFee(uint256 indexed previousAcoFee, uint256 indexed newAcoFee);
+    
+    /**
+     * @dev Emitted when the ACO Pool fee destination address has been changed.
+     * @param previousAcoPoolFeeDestination Address of the previous ACO Pool fee destination.
+     * @param newAcoPoolFeeDestination Address of the new ACO Pool fee destination.
+     */
+    event SetAcoPoolFeeDestination(address indexed previousAcoPoolFeeDestination, address indexed newAcoPoolFeeDestination);
+    
+    /**
      * @dev Emitted when permission for an ACO pool admin has been changed.
      * @param poolAdmin Address of the ACO pool admin.
      * @param previousPermission The previous permission situation.
@@ -153,6 +167,17 @@ contract ACOPoolFactory {
     address public chiToken;
     
     /**
+     * @dev The ACO Pool fee value. 
+     * It is a percentage value (100000 is 100%).
+     */
+    uint256 public acoPoolFee;
+    
+    /**
+     * @dev The ACO Pool fee destination address.
+     */
+    address public acoPoolFeeDestination;
+    
+    /**
      * @dev The ACO pool admin permissions.
      */
     mapping(address => bool) public poolAdminPermission;
@@ -199,7 +224,9 @@ contract ACOPoolFactory {
         address _acoPoolImplementation, 
         address _acoFactory, 
         address _acoFlashExercise,
-        address _chiToken
+        address _chiToken,
+        uint256 _acoPoolFee,
+        address _acoPoolFeeDestination
     ) public {
         require(factoryAdmin == address(0) && acoPoolImplementation == address(0), "ACOPoolFactory::init: Contract already initialized.");
         
@@ -208,6 +235,8 @@ contract ACOPoolFactory {
         _setAcoFactory(_acoFactory);
         _setAcoFlashExercise(_acoFlashExercise);
         _setChiToken(_chiToken);
+        _setAcoPoolFee(_acoPoolFee);
+        _setAcoPoolFeeDestination(_acoPoolFeeDestination);
         _setAcoPoolPermission(_factoryAdmin, true);
     }
 
@@ -253,6 +282,8 @@ contract ACOPoolFactory {
             acoFlashExercise,
             acoFactory,
             chiToken,
+            acoPoolFee,
+            acoPoolFeeDestination,
             underlying, 
             strikeAsset,
             minStrikePrice,
@@ -309,6 +340,24 @@ contract ACOPoolFactory {
      */
     function setChiToken(address newChiToken) onlyFactoryAdmin external virtual {
         _setChiToken(newChiToken);
+    }
+    
+    /**
+     * @dev Function to set the ACO Pool fee.
+     * Only can be called by the factory admin.
+     * @param newAcoPoolFee Value of the new ACO Pool fee. It is a percentage value (100000 is 100%).
+     */
+    function setAcoPoolFee(uint256 newAcoPoolFee) onlyFactoryAdmin external virtual {
+        _setAcoPoolFee(newAcoPoolFee);
+    }
+    
+    /**
+     * @dev Function to set the ACO Pool destination address.
+     * Only can be called by the factory admin.
+     * @param newAcoPoolFeeDestination Address of the new ACO Pool destination.
+     */
+    function setAcoPoolFeeDestination(address newAcoPoolFeeDestination) onlyFactoryAdmin external virtual {
+        _setAcoPoolFeeDestination(newAcoPoolFeeDestination);
     }
     
     /**
@@ -399,6 +448,25 @@ contract ACOPoolFactory {
         require(Address.isContract(newChiToken), "ACOPoolFactory::_setChiToken: Invalid Chi Token");
         emit SetAcoFlashExercise(chiToken, newChiToken);
         chiToken = newChiToken;
+    }
+    
+    /**
+     * @dev Internal function to set the ACO Pool fee.
+     * @param newAcoPoolFee Value of the new ACO Pool fee. It is a percentage value (100000 is 100%).
+     */
+    function _setAcoPoolFee(uint256 newAcoPoolFee) internal virtual {
+        emit SetAcoPoolFee(acoPoolFee, newAcoPoolFee);
+        acoPoolFee = newAcoPoolFee;
+    }
+    
+    /**
+     * @dev Internal function to set the ACO Pool destination address.
+     * @param newAcoPoolFeeDestination Address of the new ACO Pool destination.
+     */
+    function _setAcoPoolFeeDestination(address newAcoPoolFeeDestination) internal virtual {
+        require(newAcoPoolFeeDestination != address(0), "ACOFactory::_setAcoPoolFeeDestination: Invalid ACO Pool fee destination");
+        emit SetAcoPoolFeeDestination(acoPoolFeeDestination, newAcoPoolFeeDestination);
+        acoPoolFeeDestination = newAcoPoolFeeDestination;
     }
     
     /**

@@ -9,6 +9,8 @@ interface IACOPool is IERC20 {
         address acoFlashExercise;
         address acoFactory;
         address chiToken;
+        uint256 fee;
+        address feeDestination;
         address underlying;
         address strikeAsset;
         uint256 minStrikePrice; 
@@ -27,7 +29,7 @@ interface IACOPool is IERC20 {
     function setStrategy(address strategy) external;
     function setBaseVolatility(uint256 baeVolatility) external;
     function getEstimatedReturnOnExercise(address acoToken) external view returns(uint256);
-    function quote(bool isBuying, address acoToken, uint256 tokenAmount) external view returns(uint256 price, uint256 underlyingPrice, uint256 volatility);
+    function quote(bool isBuying, address acoToken, uint256 tokenAmount) external view returns(uint256 swapPrice, uint256 fee, uint256 underlyingPrice);
     function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) external returns(uint256);
     function exerciseACOToken(address acoToken) external;
     function redeemACOTokens() external;

@@ -42,15 +42,18 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         address indexed acoToken, 
         uint256 tokenAmount, 
         uint256 price, 
-        uint256 underlyingPrice,
-        uint256 volatility
+        uint256 protocolFee,
+        uint256 underlyingPrice
     );
     
     uint256 public poolStart;
+    uint256 public fee;
     IACOFlashExercise public acoFlashExercise;
     IACOFactory public acoFactory;
     IUniswapV2Router02 public uniswapRouter;
     IChiToken public chiToken;
+    address public feeDestination;
+    
     address public underlying;
     address public strikeAsset;
     uint256 public minStrikePrice;
@@ -79,10 +82,14 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     }
     
     modifier discountCHI {
-        uint256 gasStart = gasleft();
-        _;
-        uint256 gasSpent = 21000 + gasStart - gasleft() + 16 * msg.data.length;
-        chiToken.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41947);
+        if (chiToken.balanceOf(msg.sender) > 0) {
+            uint256 gasStart = gasleft();
+            _;
+            uint256 gasSpent = 21000 + gasStart - gasleft() + 16 * msg.data.length;
+            chiToken.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41947);
+        } else {
+            _;
+        }
     }
     
     function init(InitData calldata initData) external override {
@@ -91,6 +98,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         require(initData.acoFactory.isContract(), "ACOPool:: Invalid ACO Factory");
         require(initData.acoFlashExercise.isContract(), "ACOPool:: Invalid ACO flash exercise");
         require(initData.chiToken.isContract(), "ACOPool:: Invalid Chi Token");
+        require(initData.fee <= 500, "ACOPool:: The maximum fee allowed is 0.5%");
         require(initData.poolStart > block.timestamp, "ACOPool:: Invalid pool start");
         require(initData.minExpiration > block.timestamp, "ACOPool:: Invalid expiration");
         require(initData.minStrikePrice <= initData.maxStrikePrice, "ACOPool:: Invalid strike price range");
@@ -106,6 +114,8 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         acoFlashExercise = IACOFlashExercise(initData.acoFlashExercise);
         acoFactory = IACOFactory(initData.acoFactory);
         chiToken = IChiToken(initData.chiToken);
+        fee = initData.fee;
+        feeDestination = initData.feeDestination;
         underlying = initData.underlying;
         strikeAsset = initData.strikeAsset;
         minStrikePrice = initData.minStrikePrice;
@@ -159,8 +169,8 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     }
     
     function quote(bool isBuying, address acoToken, uint256 tokenAmount) open public override view returns(uint256, uint256, uint256) {
-        (uint256 price, uint256 underlyingPrice, uint256 volatility,) = _internalQuote(isBuying, acoToken, tokenAmount);
-        return (price, underlyingPrice, volatility);
+        (uint256 swapPrice, uint256 protocolFee, uint256 underlyingPrice,) = _internalQuote(isBuying, acoToken, tokenAmount);
+        return (swapPrice, protocolFee, underlyingPrice);
     }
     
     function getEstimatedReturnOnExercise(address acoToken) open public override view returns(uint256) {
@@ -221,14 +231,17 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
     function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) open discountCHI public override returns(uint256) {
         require(block.timestamp <= deadline, "ACOPool:: Swap deadline");
         require(to != address(0) && to != acoToken && to != address(this), "ACOPool:: Invalid destination");
-        (uint256 price, uint256 underlyingPrice, uint256 volatility, uint256 collateralAmount) = _internalQuote(isBuying, acoToken, tokenAmount);
+        (uint256 swapPrice, uint256 protocolFee, uint256 underlyingPrice, uint256 collateralAmount) = _internalQuote(isBuying, acoToken, tokenAmount);
         uint256 amount;
         if (isBuying) {
-            amount = _internalSelling(to, acoToken, collateralAmount, tokenAmount, restriction, price);
+            amount = _internalSelling(to, acoToken, collateralAmount, tokenAmount, restriction, swapPrice, protocolFee);
         } else {
-            amount = _internalBuying(to, acoToken, tokenAmount, restriction, price);
+            amount = _internalBuying(to, acoToken, tokenAmount, restriction, swapPrice);
         }
-        emit Swap(isBuying, msg.sender, acoToken, tokenAmount, price, underlyingPrice, volatility);
+        if (protocolFee > 0) {
+            _transferAsset(strikeAsset, feeDestination, protocolFee);
+        }
+        emit Swap(isBuying, msg.sender, acoToken, tokenAmount, swapPrice, protocolFee, underlyingPrice);
         return amount;
     }
     
@@ -324,8 +337,15 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         require(expiryTime > block.timestamp, "ACOPool:: ACO token expired");
         
         (uint256 collateralAmount, uint256 collateralAvailable) = _getWeightData(isPoolSelling, acoToken, tokenAmount);
-        (uint256 price, uint256 underlyingPrice, uint256 volatility) = _strategyQuote(acoToken, isPoolSelling, strikePrice, expiryTime, collateralAmount, collateralAvailable);
-        return (price, underlyingPrice, volatility, collateralAmount);
+        (uint256 price, uint256 underlyingPrice,) = _strategyQuote(acoToken, isPoolSelling, strikePrice, expiryTime, collateralAmount, collateralAvailable);
+        price = price.mul(tokenAmount).div(underlyingPrecision);
+        require(price > 0, "ACOPool:: Invalid quote");
+        uint256 protocolFee = 0;
+        if (isPoolSelling && fee > 0) {
+            protocolFee = price.mul(fee).div(100000);
+            price = price.add(protocolFee);
+        }
+        return (price, protocolFee, underlyingPrice, collateralAmount);
     }
     
     function _getWeightData(bool isPoolSelling, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256) {
@@ -377,11 +397,12 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         uint256 collateralAmount, 
         uint256 tokenAmount,
         uint256 maxPayment,
-        uint256 price
+        uint256 swapPrice,
+        uint256 protocolFee
     ) internal returns(uint256) {
-        require(price <= maxPayment, "ACOPool:: Swap restriction");
+        require(swapPrice <= maxPayment, "ACOPool:: Swap restriction");
         
-        _callTransferFromERC20(strikeAsset, msg.sender, address(this), price);
+        _callTransferFromERC20(strikeAsset, msg.sender, address(this), swapPrice);
         
         uint256 acoBalance = IACOToken(acoToken).balanceOf(address(this));
 
@@ -405,7 +426,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         }
         
         acoTokenData.amountSold = tokenAmount.add(acoTokenData.amountSold);
-        strikeAssetEarnedSelling = price.add(strikeAssetEarnedSelling); 
+        strikeAssetEarnedSelling = swapPrice.sub(protocolFee).add(strikeAssetEarnedSelling); 
         
         _callTransferERC20(acoToken, to, tokenAmount);
         
@@ -417,23 +438,23 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         address acoToken, 
         uint256 tokenAmount, 
         uint256 minToReceive,
-        uint256 price
+        uint256 swapPrice
     ) internal returns(uint256) {
-        require(price >= minToReceive, "ACOPool:: Swap restriction");
+        require(swapPrice >= minToReceive, "ACOPool:: Swap restriction");
         
         if (isCall) {
-            _getStrikeAssetAmount(price);
+            _getStrikeAssetAmount(swapPrice);
         }
         
         _callTransferFromERC20(acoToken, msg.sender, address(this), tokenAmount);
         
         ACOTokenData storage acoTokenData = acoTokensData[acoToken];
         acoTokenData.amountPurchased = tokenAmount.add(acoTokenData.amountPurchased);
-        strikeAssetSpentBuying = price.add(strikeAssetSpentBuying);
+        strikeAssetSpentBuying = swapPrice.add(strikeAssetSpentBuying);
         
-        _transferAsset(strikeAsset, to, price);
+        _transferAsset(strikeAsset, to, swapPrice);
         
-        return price;
+        return swapPrice;
     }
     
     function _getNormalizedDepositAmount(uint256 collateralAmount) internal view returns(uint256, uint256) {
