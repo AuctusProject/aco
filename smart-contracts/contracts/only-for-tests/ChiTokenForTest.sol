@@ -432,7 +432,7 @@ contract ChiToken is IERC20, ERC20WithoutTotalSupply {
 
     function computeAddress2(uint256 salt) public view returns (address) {
         bytes32 _data = keccak256(
-            abi.encodePacked(bytes1(0xff), address(this), salt, bytes32(0x8599bd4862f0307c76ab636d3fc533c59b14cadfd1a4fecfbccc2de4868ddf7b))
+            abi.encodePacked(bytes1(0xff), address(this), salt, bytes32(0x3c1644c68e5d6cb380c36d1bf847fdbc0c7ac28030025a2fc5e63cce23c16348))
         );
         return address(uint256(_data));
     }
