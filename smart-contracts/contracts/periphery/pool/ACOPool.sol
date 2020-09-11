@@ -359,7 +359,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         (uint256 strikePrice, uint256 expiryTime) = _getValidACOTokenStrikePriceAndExpiration(acoToken);
         require(expiryTime > block.timestamp, "ACOPool:: ACO token expired");
         
-        (uint256 collateralAmount, uint256 collateralAvailable) = _getWeightData(isPoolSelling, acoToken, tokenAmount);
+        (uint256 collateralAmount, uint256 collateralAvailable) = _getSizeData(isPoolSelling, acoToken, tokenAmount);
         (uint256 price, uint256 underlyingPrice,) = _strategyQuote(acoToken, isPoolSelling, strikePrice, expiryTime, collateralAmount, collateralAvailable);
         
         price = price.mul(tokenAmount).div(underlyingPrecision);
@@ -377,7 +377,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         return (price, protocolFee, underlyingPrice, collateralAmount);
     }
     
-    function _getWeightData(bool isPoolSelling, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256) {
+    function _getSizeData(bool isPoolSelling, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256) {
         uint256 collateralAmount;
         uint256 collateralAvailable;
         if (isCall) {
