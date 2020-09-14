@@ -1,5 +1,9 @@
 pragma solidity ^0.6.6;
 
+/**
+ * @title ACOERC20Helper
+ * @dev A helper contract to handle with Ether and ERC20 tokens.
+ */
 contract ACOERC20Helper {
     
     /**
@@ -101,7 +105,7 @@ contract ACOERC20Helper {
             return account.balance;
         } else {
             (bool success, bytes memory returndata) = asset.staticcall(abi.encodeWithSelector(0x70a08231, account));
-            require(success, "ACOERC20Helper::_getAssetName");
+            require(success, "ACOERC20Helper::_getAssetBalanceOf");
             return abi.decode(returndata, (uint256));
         }
     }
@@ -118,7 +122,7 @@ contract ACOERC20Helper {
             return 0;
         } else {
             (bool success, bytes memory returndata) = asset.staticcall(abi.encodeWithSelector(0xdd62ed3e, owner, spender));
-            require(success, "ACOERC20Helper::_getAssetName");
+            require(success, "ACOERC20Helper::_getAssetAllowance");
             return abi.decode(returndata, (uint256));
         }
     }

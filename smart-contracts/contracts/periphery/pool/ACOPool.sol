@@ -436,6 +436,10 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         uint256 acoBalance = IACOToken(acoToken).balanceOf(address(this));
 
         ACOTokenData storage acoTokenData = acoTokensData[acoToken];
+        uint256 _amountSold = acoTokenData.amountSold;
+        if (_amountSold == 0 && acoTokenData.amountPurchased == 0) {
+            acoTokens.push(acoToken);    
+        }
         if (tokenAmount > acoBalance) {
             tokenAmount = acoBalance;
             if (acoBalance > 0) {
@@ -446,7 +450,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
                 if (_isEther(_collateral)) {
                     tokenAmount = tokenAmount.add(IACOToken(acoToken).mintPayable{value: collateralAmount}());
                 } else {
-                    if (acoTokenData.amountSold == 0) {
+                    if (_amountSold == 0) {
                         _callApproveERC20(_collateral, acoToken, MAX_UINT);    
                     }
                     tokenAmount = tokenAmount.add(IACOToken(acoToken).mint(collateralAmount));
@@ -454,7 +458,7 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
             }
         }
         
-        acoTokenData.amountSold = tokenAmount.add(acoTokenData.amountSold);
+        acoTokenData.amountSold = tokenAmount.add(_amountSold);
         strikeAssetEarnedSelling = swapPrice.sub(protocolFee).add(strikeAssetEarnedSelling); 
         
         _callTransferERC20(acoToken, to, tokenAmount);
@@ -480,7 +484,11 @@ contract ACOPool is Ownable, ACOHelper, ERC20, IACOPool {
         _callTransferFromERC20(acoToken, msg.sender, address(this), tokenAmount);
         
         ACOTokenData storage acoTokenData = acoTokensData[acoToken];
-        acoTokenData.amountPurchased = tokenAmount.add(acoTokenData.amountPurchased);
+        uint256 _amountPurchased = acoTokenData.amountPurchased;
+        if (_amountPurchased == 0 && acoTokenData.amountSold == 0) {
+            acoTokens.push(acoToken);    
+        }
+        acoTokenData.amountPurchased = tokenAmount.add(_amountPurchased);
         strikeAssetSpentBuying = requiredStrikeAsset.add(strikeAssetSpentBuying);
         
         _transferAsset(strikeAsset, to, swapPrice);
