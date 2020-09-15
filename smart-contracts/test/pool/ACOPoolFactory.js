@@ -67,7 +67,7 @@ describe("ACOPoolFactory", function() {
 
     poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
 
-    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address]);
+    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, 0, ownerAddr]);
     buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOPoolFactory.address, poolFactoryInitData);
     await buidlerACOPoolFactoryProxy.deployed();
     buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactory", buidlerACOPoolFactoryProxy.address);
