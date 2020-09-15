@@ -105,7 +105,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param isPoolSelling True whether the pool is selling an ACO token, otherwise the pool is buying.
      * @param account Address of the account that is doing the swap.
      * @param acoToken Address of the ACO token.
-	 * @param tokenAmount Amount of tokens bought or sold.
+	 * @param tokenAmount Amount of ACO tokens swapped.
      * @param price Value of the premium paid in strike asset.
      * @param protocolFee Value of the protocol fee paid in strike asset.
      * @param underlyingPrice The underlying price in strike asset.
@@ -380,6 +380,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return (swapPrice, protocolFee, underlyingPrice);
     }
     
+    /**
+     * @dev Function to get the estimated collateral to be received through a flash exercise.
+     * @param acoToken Address of the ACO token.
+     * @return The estimated collateral to be received through a flash exercise using the standard exercise function.
+     */
     function getEstimatedReturnOnExercise(address acoToken) open public override view returns(uint256) {
         uint256 exercisableAmount = _getExercisableAmount(acoToken);
         if (exercisableAmount > 0) {
@@ -388,14 +393,31 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return 0;
     }
     
+    /**
+     * @dev Function to set the pool strategy address.
+     * Only can be called by the ACO pool factory contract.
+     * @param newStrategy Address of the new strategy.
+     */
     function setStrategy(address newStrategy) onlyOwner external override {
         _setStrategy(newStrategy);
     }
     
+    /**
+     * @dev Function to set the pool base volatility percentage. (100000 = 100%)
+     * Only can be called by the ACO pool factory contract.
+     * @param newBaseVolatility Value of the new base volatility.
+     */
     function setBaseVolatility(uint256 newBaseVolatility) onlyOwner external override {
         _setBaseVolatility(newBaseVolatility);
     }
-
+    
+    /**
+     * @dev Function to deposit on the pool.
+     * Only can be called when the pool is not started.
+     * @param collateralAmount Amount of collateral to be deposited.
+     * @param to Address of the destination of the pool token.
+     * @return The amount of pool tokens minted.
+     */
     function deposit(uint256 collateralAmount, address to) public override payable returns(uint256) {
         require(!isStarted(), "ACOPool:: Pool already started");
         require(collateralAmount > 0, "ACOPool:: Invalid collateral amount");
@@ -413,6 +435,17 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return normalizedAmount;
     }
     
+    /**
+     * @dev Function to swap an ACO token with the pool.
+     * Only can be called when the pool is opened.
+     * @param isBuying True whether it is quoting to buy an ACO token, otherwise it is quoting to sell an ACO token.
+     * @param acoToken Address of the ACO token.
+	 * @param tokenAmount Amount of ACO tokens to swap.
+     * @param restriction Value of the swap restriction. The minimum premium to receive on a selling or the maximum value to pay on a purchase.
+     * @param to Address of the destination. ACO tokens when is buying or strike asset on a selling.
+     * @param deadline UNIX deadline for the swap to be executed.
+     * @return The amount ACO tokens received when is buying or the amount of strike asset received on a selling.
+     */
     function swap(
         bool isBuying, 
         address acoToken, 
@@ -424,6 +457,17 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return _swap(isBuying, acoToken, tokenAmount, restriction, to, deadline);
     }
     
+    /**
+     * @dev Function to swap an ACO token with the pool and use Chi token to save gas.
+     * Only can be called when the pool is opened.
+     * @param isBuying True whether it is quoting to buy an ACO token, otherwise it is quoting to sell an ACO token.
+     * @param acoToken Address of the ACO token.
+	 * @param tokenAmount Amount of ACO tokens to swap.
+     * @param restriction Value of the swap restriction. The minimum premium to receive on a selling or the maximum value to pay on a purchase.
+     * @param to Address of the destination. ACO tokens when is buying or strike asset on a selling.
+     * @param deadline UNIX deadline for the swap to be executed.
+     * @return The amount ACO tokens received when is buying or the amount of strike asset received on a selling.
+     */
     function swapWithGasToken(
         bool isBuying, 
         address acoToken, 
@@ -435,14 +479,31 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return _swap(isBuying, acoToken, tokenAmount, restriction, to, deadline);
     }
     
+    /**
+     * @dev Function to redeem the collateral and the premium from the pool.
+     * Only can be called when the pool is finished.
+     * @return The amount of underlying asset received and the amount of strike asset received.
+     */
     function redeem() public override returns(uint256, uint256) {
         return _redeem(msg.sender);
     }
     
+    /**
+     * @dev Function to redeem the collateral and the premium from the pool from an account.
+     * Only can be called when the pool is finished.
+     * The allowance must be respected.
+     * The transaction sender will receive the redeemed assets.
+     * @param account Address of the account.
+     * @return The amount of underlying asset received and the amount of strike asset received.
+     */
     function redeemFrom(address account) public override returns(uint256, uint256) {
         return _redeem(account);
     }
     
+    /**
+     * @dev Function to redeem the collateral from the ACO tokens negotiated on the pool.
+     * It redeems the collateral only if the respective ACO token is expired.
+     */
     function redeemACOTokens() public override {
         for (uint256 i = 0; i < acoTokens.length; ++i) {
             address acoToken = acoTokens[i];
@@ -451,11 +512,21 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         }
     }
 	
+    /**
+     * @dev Function to redeem the collateral from an ACO token.
+     * It redeems the collateral only if the ACO token is expired.
+     * @param acoToken Address of the ACO token.
+     */
 	function redeemACOToken(address acoToken) public override {
         (,uint256 expiryTime) = _getValidACOTokenStrikePriceAndExpiration(acoToken);
 		_redeemACOToken(acoToken, expiryTime);
     }
     
+    /**
+     * @dev Function to exercise an ACO token negotiated on the pool.
+     * Only ITM ACO tokens are exercisable.
+     * @param acoToken Address of the ACO token.
+     */
     function exerciseACOToken(address acoToken) public override {
         (uint256 strikePrice, uint256 expiryTime) = _getValidACOTokenStrikePriceAndExpiration(acoToken);
         uint256 exercisableAmount = _getExercisableAmount(acoToken);
@@ -500,6 +571,9 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         emit ACOExercise(acoToken, exercisableAmount, collateralIn);
     }
     
+    /**
+     * @dev Function to restore the collateral on the pool by selling the other asset balance.
+     */
     function restoreCollateral() public override {
         address _strikeAsset = strikeAsset;
         address _underlying = underlying;
@@ -512,13 +586,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         address assetIn;
         address assetOut;
         if (_isCall) {
-             balanceOut = strikeAssetBalance;
-             assetIn = _underlying;
-             assetOut = _strikeAsset;
+            balanceOut = strikeAssetBalance;
+            assetIn = _underlying;
+            assetOut = _strikeAsset;
         } else {
             balanceOut = underlyingBalance;
-             assetIn = _strikeAsset;
-             assetOut = _underlying;
+            assetIn = _strikeAsset;
+            assetOut = _underlying;
         }
         require(balanceOut > 0, "ACOPool:: No balance");
         
@@ -541,7 +615,24 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         emit RestoreCollateral(balanceOut, collateralIn);
     }
     
-    function _swap(bool isPoolSelling, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) internal returns(uint256) {
+    /**
+     * @dev Internal function to swap an ACO token with the pool.
+     * @param isPoolSelling True whether the pool is selling an ACO token, otherwise the pool is buying.
+     * @param acoToken Address of the ACO token.
+	 * @param tokenAmount Amount of ACO tokens to swap.
+     * @param restriction Value of the swap restriction. The minimum premium to receive on a selling or the maximum value to pay on a purchase.
+     * @param to Address of the destination. ACO tokens when is buying or strike asset on a selling.
+     * @param deadline UNIX deadline for the swap to be executed.
+     * @return The amount ACO tokens received when is buying or the amount of strike asset received on a selling.
+     */
+    function _swap(
+        bool isPoolSelling, 
+        address acoToken, 
+        uint256 tokenAmount, 
+        uint256 restriction, 
+        address to, 
+        uint256 deadline
+    ) internal returns(uint256) {
         require(block.timestamp <= deadline, "ACOPool:: Swap deadline");
         require(to != address(0) && to != acoToken && to != address(this), "ACOPool:: Invalid destination");
         
@@ -563,6 +654,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return amount;
     }
     
+    /**
+     * @dev Internal function to quote an ACO token price.
+     * @param isPoolSelling True whether the pool is selling an ACO token, otherwise the pool is buying.
+     * @param acoToken Address of the ACO token.
+	 * @param tokenAmount Amount of ACO tokens to swap.
+     * @return The quote price, the protocol fee charged, the underlying price, and the collateral amount.
+     */
     function _internalQuote(bool isPoolSelling, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256, uint256, uint256) {
         require(isPoolSelling || canBuy, "ACOPool:: The pool only sell");
         require(tokenAmount > 0, "ACOPool:: Invalid token amount");
@@ -587,6 +685,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return (price, protocolFee, underlyingPrice, collateralAmount);
     }
     
+    /**
+     * @dev Internal function to the size data for a quote.
+     * @param isPoolSelling True whether the pool is selling an ACO token, otherwise the pool is buying.
+     * @param acoToken Address of the ACO token.
+	 * @param tokenAmount Amount of ACO tokens to swap.
+     * @return The collateral amount and the collateral available on the pool.
+     */
     function _getSizeData(bool isPoolSelling, address acoToken, uint256 tokenAmount) internal view returns(uint256, uint256) {
         uint256 collateralAmount;
         uint256 collateralAvailable;
@@ -603,6 +708,16 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return (collateralAmount, collateralAvailable);
     }
     
+    /**
+     * @dev Internal function to quote on the strategy contract.
+     * @param acoToken Address of the ACO token.
+     * @param isPoolSelling True whether the pool is selling an ACO token, otherwise the pool is buying.
+	 * @param strikePrice ACO token strike price.
+     * @param expiryTime ACO token expiry time on UNIX.
+     * @param collateralAmount Amount of collateral for the order size.
+     * @param collateralAvailable Amount of collateral available on the pool.
+     * @return The quote price, the underlying price and the volatility.
+     */
     function _strategyQuote(
         address acoToken,
         bool isPoolSelling,
@@ -630,6 +745,17 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         ));
     }
     
+    /**
+     * @dev Internal function to sell ACO tokens.
+     * @param to Address of the destination of the ACO tokens.
+     * @param acoToken Address of the ACO token.
+	 * @param collateralAmount Order collateral amount.
+     * @param tokenAmount Order token amount.
+     * @param maxPayment Maximum value to be paid for the ACO tokens.
+     * @param swapPrice The swap price quoted.
+     * @param protocolFee The protocol fee amount.
+     * @return The ACO token amount sold.
+     */
     function _internalSelling(
         address to,
         address acoToken, 
@@ -676,7 +802,17 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         
         return tokenAmount;
     }
-    
+	
+    /**
+     * @dev Internal function to buy ACO tokens.
+     * @param to Address of the destination of the premium.
+     * @param acoToken Address of the ACO token.
+     * @param tokenAmount Order token amount.
+     * @param minToReceive Minimum value to be received for the ACO tokens.
+     * @param swapPrice The swap price quoted.
+     * @param protocolFee The protocol fee amount.
+     * @return The premium amount transferred.
+     */
     function _internalBuying(
         address to,
         address acoToken, 
@@ -708,6 +844,12 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return swapPrice;
     }
     
+    /**
+     * @dev Internal function to get the normalized deposit amount.
+	 * The pool token has always with 18 decimals.
+     * @param collateralAmount Amount of collateral to be deposited.
+     * @return The normalized token amount and the collateral amount.
+     */
     function _getNormalizedDepositAmount(uint256 collateralAmount) internal view returns(uint256, uint256) {
         uint256 basePrecision = isCall ? underlyingPrecision : strikeAssetPrecision;
         uint256 normalizedAmount;
@@ -724,6 +866,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return (normalizedAmount, collateralAmount);
     }
     
+    /**
+     * @dev Internal function to get an amount of strike asset for the pool.
+	 * The pool swaps the collateral for it if necessary.
+     * @param strikeAssetAmount Amount of strike asset required.
+     */
     function _getStrikeAssetAmount(uint256 strikeAssetAmount) internal {
         address _strikeAsset = strikeAsset;
         uint256 balance = _getPoolBalanceOf(_strikeAsset);
@@ -736,6 +883,12 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         }
     }
 	
+    /**
+     * @dev Internal function to redeem the collateral from an ACO token.
+     * It redeems the collateral only if the ACO token is expired.
+     * @param acoToken Address of the ACO token.
+	 * @param expiryTime ACO token expiry time in UNIX.
+     */
 	function _redeemACOToken(address acoToken, uint256 expiryTime) internal {
 		if (expiryTime <= block.timestamp) {
 				
@@ -756,6 +909,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
 		}
     }
     
+    /**
+     * @dev Internal function to redeem the collateral and the premium from the pool from an account.
+     * @param account Address of the account.
+     * @return The amount of underlying asset received and the amount of strike asset received.
+     */
     function _redeem(address account) internal returns(uint256, uint256) {
         uint256 share = balanceOf(account);
         require(share > 0, "ACOPool:: Account with no share");
@@ -781,6 +939,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         return (underlyingBalance, strikeAssetBalance);
     }
     
+    /**
+     * @dev Internal function to burn pool tokens.
+     * @param account Address of the account.
+     * @param tokenAmount Amount of pool tokens to be burned.
+     */
     function _callBurn(address account, uint256 tokenAmount) internal {
         if (account == msg.sender) {
             super._burnAction(account, tokenAmount);
@@ -789,6 +952,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         }
     }
     
+    /**
+     * @dev Internal function to swap assets on the Uniswap V2 with an exact amount of an asset to be sold.
+     * @param assetOut Address of the asset to be sold.
+	 * @param assetIn Address of the asset to be purchased.
+     * @param minAmountIn Minimum amount to be received.
+     * @param amountOut The exact amount to be sold.
+     */
     function _swapAssetsExactAmountOut(address assetOut, address assetIn, uint256 minAmountIn, uint256 amountOut) internal {
         address[] memory path = new address[](2);
         if (ACOERC20Helper._isEther(assetOut)) {
@@ -806,6 +976,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         }
     }
     
+    /**
+     * @dev Internal function to swap assets on the Uniswap V2 with an exact amount of an asset to be purchased.
+     * @param assetOut Address of the asset to be sold.
+	 * @param assetIn Address of the asset to be purchased.
+     * @param amountIn The exact amount to be purchased.
+     * @param maxAmountOut Maximum amount to be paid.
+     */
     function _swapAssetsExactAmountIn(address assetOut, address assetIn, uint256 amountIn, uint256 maxAmountOut) internal {
         address[] memory path = new address[](2);
         if (ACOERC20Helper._isEther(assetOut)) {
@@ -834,8 +1011,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
     }
     
     /**
-     * @dev Internal function to set the base volatility percentage.
-     * 100000 = 100%
+     * @dev Internal function to set the base volatility percentage. (100000 = 100%)
      * @param newBaseVolatility Value of the new base volatility.
      */
     function _setBaseVolatility(uint256 newBaseVolatility) internal {
