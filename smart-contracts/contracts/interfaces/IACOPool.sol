@@ -24,16 +24,17 @@ interface IACOPool is IERC20 {
     }
     
 	function init(InitData calldata initData) external;
-    function numberOfACOTokensNegotiated() external view returns(uint256);
+    function numberOfACOTokensCurrentlyNegotiated() external view returns(uint256);
     function collateral() external view returns(address);
     function setStrategy(address strategy) external;
-    function setBaseVolatility(uint256 baeVolatility) external;
+    function setBaseVolatility(uint256 baseVolatility) external;
     function getEstimatedReturnOnExercise(address acoToken) external view returns(uint256);
     function quote(bool isBuying, address acoToken, uint256 tokenAmount) external view returns(uint256 swapPrice, uint256 fee, uint256 underlyingPrice);
     function swap(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) external returns(uint256);
     function swapWithGasToken(bool isBuying, address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) external returns(uint256);
     function exerciseACOToken(address acoToken) external;
     function redeemACOTokens() external;
+	function redeemACOToken(address acoToken) external;
     function deposit(uint256 collateralAmount, address to) external payable returns(uint256 acoPoolTokenAmount);
     function redeem() external returns(uint256 underlyingReceived, uint256 strikeAssetReceived);
     function redeemFrom(address account) external returns(uint256 underlyingReceived, uint256 strikeAssetReceived);

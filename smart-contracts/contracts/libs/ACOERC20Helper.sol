@@ -1,10 +1,6 @@
 pragma solidity ^0.6.6;
 
-/**
- * @title ACOERC20Helper
- * @dev A helper contract to handle with Ether and ERC20 tokens.
- */
-contract ACOERC20Helper {
+library ACOERC20Helper {
     
     /**
      * @dev Internal function to get if the address is for Ethereum (0x0).
