@@ -124,6 +124,8 @@ contract ACOStrategy1 is Ownable, IACOStrategy {
         uint256 _orderSizePenaltyFactor,
         uint256 _orderSizeDampingFactor
     ) public {
+		super.init();
+		
         _setUnderlyingPriceAdjustPercentage(_underlyingPriceAdjustPercentage);
 		_setMinOptionPricePercentage(_minOptionPricePercentage);
 		_setTolerancePercentageToOraclePrice(_tolerancePercentageToOraclePrice);
