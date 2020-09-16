@@ -120,6 +120,9 @@ describe("ACOPool", function() {
             expect(await ACOPool.canBuy()).to.equal(false);
             expect(await ACOPool.strategy()).to.equal(defaultStrategy.address);
             expect(await ACOPool.baseVolatility()).to.equal(100000);
+            expect(await ACOPool.chiToken()).to.equal(chiToken.address);
+            expect(await ACOPool.fee()).to.equal(100);
+            expect(await ACOPool.feeDestination()).to.equal(addr2Addr);
           });
         it("Check fail to init ACO pool", async function () {
             let now = Math.round(new Date().getTime() / 1000);
