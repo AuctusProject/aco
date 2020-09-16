@@ -28,7 +28,7 @@ describe("ACOStrategy1", function () {
     defaultAggregator = await (await ethers.getContractFactory("AggregatorForTest")).deploy(token2Decimals, 200000000);
     await defaultAggregator.deployed();
 
-    strategy1 = await createAcoStrategy1()
+    strategy1 = await createAcoStrategy1();
   });
   describe("ACOStrategy1 transactions", function () {
     it("Check set underlying price adjust percentage", async function () {

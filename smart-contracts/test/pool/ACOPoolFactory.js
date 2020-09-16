@@ -29,6 +29,7 @@ describe("ACOPoolFactory", function() {
   let uniswapRouter;
   let defaultStrategy;
   let chiToken;
+  let fee = 100;
 
   beforeEach(async function () {
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
@@ -67,7 +68,7 @@ describe("ACOPoolFactory", function() {
 
     poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
 
-    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, 0, ownerAddr]);
+    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, ownerAddr]);
     buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOPoolFactory.address, poolFactoryInitData);
     await buidlerACOPoolFactoryProxy.deployed();
     buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactory", buidlerACOPoolFactoryProxy.address);
@@ -101,6 +102,15 @@ describe("ACOPoolFactory", function() {
     it("Should set the right ACO Flash Exercise", async function () {
       expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(flashExercise.address);
     });
+    it("Should set the right Chi Token", async function () {
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
+    });
+    it("Should set the right ACO pool fee destination", async function () {
+      expect(await buidlerACOPoolFactory.acoPoolFeeDestination()).to.equal(await owner.getAddress());
+    });
+    it("Should set the right ACO pool fee", async function () {
+      expect(await buidlerACOPoolFactory.acoPoolFee()).to.equal(fee);
+    });
   });
 
   describe("ACOPoolFactory transactions", function () {
@@ -123,6 +133,9 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerPool.canBuy()).to.equal(false);
       expect(await buidlerPool.strategy()).to.equal(defaultStrategy.address);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
+      expect(await buidlerPool.chiToken()).to.equal(chiToken.address);
+      expect(await buidlerPool.fee()).to.equal(fee);
+      expect(await buidlerPool.feeDestination()).to.equal(await owner.getAddress());
     });
     it("Check fail to create ACO pool", async function () {      
       let now = Math.round(new Date().getTime() / 1000);
