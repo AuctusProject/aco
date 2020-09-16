@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const poolABI = require("../../artifacts/ACOPool.json");
 const factoryABI = require("../../artifacts/ACOFactory.json");
 const { createAcoStrategy1 } = require("./ACOStrategy1");
+const { AddressZero } = require("ethers/constants");
 
 describe("ACOPool", function() {
     let buidlerFactory;
@@ -22,6 +23,7 @@ describe("ACOPool", function() {
     let token2Decimals = 8;
     let token2TotalSupply = 100000000000;
     let ACOTokenAddress;
+    let ACOEthTokenAddress;
     let defaultAggregator;
 
     beforeEach(async function () {
@@ -75,6 +77,10 @@ describe("ACOPool", function() {
         let tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price, time, maxExercisedAccounts)).wait();
         let result1 = tx.events[tx.events.length - 1].args;
         ACOTokenAddress = result1.acoToken;
+
+        let tx2 = await (await buidlerFactory.createAcoToken(AddressZero, token2.address, true, price, time, maxExercisedAccounts)).wait();
+        let result2 = tx2.events[tx2.events.length - 1].args;
+        ACOEthTokenAddress = result2.acoToken;
     });
 
     describe("ACOPool transactions", function () {
@@ -244,6 +250,126 @@ describe("ACOPool", function() {
             console.log(await ACOPool.quote(true, ACOTokenAddress, 1));
 
             await network.provider.send("evm_increaseTime", [-86400]);
+        });
+        it("Check ERC20 deposit", async function () {            
+            let addr2Addr = await addr2.getAddress();
+            let now = Math.round(new Date().getTime() / 1000);
+            var initData = {
+                poolStart: now + 86400,
+                acoFlashExercise: flashExercise.address,
+                acoFactory: buidlerFactory.address,
+                chiToken: chiToken.address,
+                fee: 100,
+                feeDestination: addr2Addr,
+                underlying: token1.address,
+                strikeAsset: token2.address,
+                minStrikePrice: 1,
+                maxStrikePrice: ethers.utils.bigNumberify("600000000"),
+                minExpiration: now + 86400,
+                maxExpiration: now + (5*86400),
+                isCall: true,
+                canBuy: false,
+                strategy: defaultStrategy.address,
+                baseVolatility: 100000
+            };
+            await ACOPool.init(initData);            
+            let ownerAddr = await owner.getAddress();
+            let depositAmount = 1000;
+
+            await token1.connect(owner).transfer(addr2Addr, depositAmount);
+            
+            await token1.connect(owner).approve(ACOPool.address, token1TotalSupply);            
+            
+            await ACOPool.deposit(depositAmount, ownerAddr);
+
+            expect(await ACOPool.collateralDeposited()).to.equal(depositAmount);
+
+            await token1.connect(addr2).approve(ACOPool.address, token1TotalSupply);            
+            await ACOPool.connect(addr2).deposit(depositAmount, addr2Addr);
+            
+            expect(await ACOPool.collateralDeposited()).to.equal(depositAmount*2);
+        });
+        it("Check ether deposit", async function () {            
+            let addr2Addr = await addr2.getAddress();
+            let now = Math.round(new Date().getTime() / 1000);
+            var initData = {
+                poolStart: now + 86400,
+                acoFlashExercise: flashExercise.address,
+                acoFactory: buidlerFactory.address,
+                chiToken: chiToken.address,
+                fee: 100,
+                feeDestination: addr2Addr,
+                underlying: AddressZero,
+                strikeAsset: token2.address,
+                minStrikePrice: 1,
+                maxStrikePrice: ethers.utils.bigNumberify("600000000"),
+                minExpiration: now + 86400,
+                maxExpiration: now + (5*86400),
+                isCall: true,
+                canBuy: false,
+                strategy: defaultStrategy.address,
+                baseVolatility: 100000
+            };
+            await ACOPool.init(initData);            
+            let ownerAddr = await owner.getAddress();
+
+            let depositAmount = ethers.utils.bigNumberify("1000000000000000000");
+            await ACOPool.deposit(depositAmount, ownerAddr, {value: depositAmount});
+            
+            expect(await ACOPool.collateralDeposited()).to.equal(depositAmount);
+
+            await ACOPool.connect(addr2).deposit(depositAmount, addr2Addr, {value: depositAmount});
+            
+            expect(await ACOPool.collateralDeposited()).to.equal(ethers.utils.bigNumberify("2000000000000000000"));
+        });
+        it("Check fail to deposit", async function () {            
+            let addr2Addr = await addr2.getAddress();
+            let now = Math.round(new Date().getTime() / 1000);
+            var initData = {
+                poolStart: now + 86400,
+                acoFlashExercise: flashExercise.address,
+                acoFactory: buidlerFactory.address,
+                chiToken: chiToken.address,
+                fee: 100,
+                feeDestination: addr2Addr,
+                underlying: token1.address,
+                strikeAsset: token2.address,
+                minStrikePrice: 1,
+                maxStrikePrice: ethers.utils.bigNumberify("600000000"),
+                minExpiration: now + 86400,
+                maxExpiration: now + (5*86400),
+                isCall: true,
+                canBuy: false,
+                strategy: defaultStrategy.address,
+                baseVolatility: 100000
+            };
+            await ACOPool.init(initData);            
+            let ownerAddr = await owner.getAddress();
+            let depositAmount = 1000;
+            
+            await network.provider.send("evm_increaseTime", [86400]);
+            
+            await expect(
+                ACOPool.deposit(depositAmount, ownerAddr)
+            ).to.be.revertedWith("ACOPool:: Pool already started");
+
+            await network.provider.send("evm_increaseTime", [-86400]);
+
+            await expect(
+                ACOPool.deposit(0, ownerAddr)
+            ).to.be.revertedWith("ACOPool:: Invalid collateral amount");
+            
+            await expect(
+                ACOPool.deposit(depositAmount, AddressZero)
+            ).to.be.revertedWith("ACOPool:: Invalid to");
+
+            await expect(
+                ACOPool.deposit(depositAmount, ownerAddr, {value: 1})
+            ).to.be.revertedWith("ACOHelper:: Ether is not expected");
+            
+            await expect(
+                ACOPool.deposit(depositAmount, ownerAddr)
+            ).to.be.revertedWith("ACOERC20Helper::_callTransferFromERC20");
         });
     });
 });
