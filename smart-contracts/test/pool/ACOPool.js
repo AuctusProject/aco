@@ -1,50 +1,85 @@
 const { expect } = require("chai");
-const poolABI = require("../../artifacts/ACOPool.json");
+const poolFactoryABI = require("../../artifacts/ACOPoolFactory.json");
 const factoryABI = require("../../artifacts/ACOFactory.json");
 const { createAcoStrategy1 } = require("./ACOStrategy1");
 const { AddressZero } = require("ethers/constants");
 
+let started = false;
+
 describe("ACOPool", function() {
-    let buidlerFactory;
-    let buidlerACOFactoryProxy;
-    let buidlerACOPoolFactoryProxy;
-    let buidlerACOPoolFactory;
-    let poolFactoryInterface;
-    let ACOPool;
+    let ACOFactory;
     let ACOPoolFactory;
+    let owner;
+    let addr1;
+    let addr2;
+    let addr3;
+    let fee = ethers.utils.bigNumberify("100");
+    let maxExercisedAccounts = 120;
     let token1;
     let token1Name = "TOKEN1";
     let token1Symbol = "TOK1";
-    let token1Decimals = 4;
-    let token1TotalSupply = 20000000;
+    let token1Decimals = 8;
+    let token1TotalSupply = ethers.utils.bigNumberify("100000000000000000");
     let token2;
     let token2Name = "TOKEN2";
     let token2Symbol = "TOK2";
-    let token2Decimals = 8;
-    let token2TotalSupply = 100000000000;
-    let ACOTokenAddress;
-    let ACOEthTokenAddress;
-    let defaultAggregator;
+    let token2Decimals = 6;
+    let token2TotalSupply = ethers.utils.bigNumberify("1000000000000000");
+    let pairToken1Token2;
+    let pairWethToken2;
+    let token1Liq = ethers.utils.bigNumberify("50000000000");
+    let token2Liq = ethers.utils.bigNumberify("5000000000000");
+    let wethLiq = ethers.utils.bigNumberify("12500000000000000000000");
+    let defaultStrategy;
+    let aggregatorToken1Token2;
+    let aggregatorWethToken2;
+    let flashExercise;
+    let uniswapFactory;
+    let weth;
+    let uniswapRouter;
+    let chiToken;
+
+    let token1Token2Price = ethers.utils.bigNumberify("10000000000");
+    let ethToken2Price = ethers.utils.bigNumberify("400000000");
+    let expiration;
+    let start;
+    let acoEthToken2CallPrice = ethers.utils.bigNumberify("500000000");
+    let acoEthToken2PutPrice = ethers.utils.bigNumberify("300000000");
+    let acoToken1Token2CallPrice = ethers.utils.bigNumberify("12000000000");
+    let acoToken1Token2PutPrice = ethers.utils.bigNumberify("9000000000");
+    let ethToken2BaseVolatility = 85000;
+    let token1Token2BaseVolatility = 70000;
+    let ACOEthToken2Call;
+    let ACOEthToken2Put;
+    let ACOToken1Token2Call;
+    let ACOToken1Token2Put;
+    let ACOPoolEthToken2Call;
+    let ACOPoolEthToken2Put;
+    let ACOPoolToken1Token2Call;
+    let ACOPoolToken1Token2Put;
 
     beforeEach(async function () {
-        [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
-    
-        let ACOFactory = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
-        await ACOFactory.deployed();
+        [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
         
+        if (!started) {
+            let baseTx = {to: await owner.getAddress(), value: ethers.utils.bigNumberify("5000000000000000000000")};
+            await addr1.sendTransaction(baseTx);
+            await addr2.sendTransaction(baseTx);
+            await addr3.sendTransaction(baseTx);
+            started = true;
+        }
+
+        let ACOFactoryTemp = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
+        await ACOFactoryTemp.deployed();
+
+        let ACOTokenTemp = await (await ethers.getContractFactory("ACOToken")).deploy();
+        await ACOTokenTemp.deployed();
+    
         let factoryInterface = new ethers.utils.Interface(factoryABI.abi);
-    
-        let ACOToken = await (await ethers.getContractFactory("ACOToken")).deploy();
-        await ACOToken.deployed();
-    
-        let ownerAddr = await owner.getAddress();
-        let addr2Addr = await addr2.getAddress();
-        let fee = 100
-        let factoryInitData = factoryInterface.functions.init.encode([ownerAddr, ACOToken.address, fee, addr2Addr]);
-        buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactory.address, factoryInitData);
+        let factoryInitData = factoryInterface.functions.init.encode([await owner.getAddress(), ACOTokenTemp.address, 0, await addr3.getAddress()]);
+        let buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOFactoryTemp.address, factoryInitData);
         await buidlerACOFactoryProxy.deployed();
-    
-        buidlerFactory = await ethers.getContractAt("ACOFactoryV2", buidlerACOFactoryProxy.address);
+        ACOFactory = await ethers.getContractAt("ACOFactoryV2", buidlerACOFactoryProxy.address);
 
         uniswapFactory = await (await ethers.getContractFactory("UniswapV2Factory")).deploy(await owner.getAddress());
         await uniswapFactory.deployed();
@@ -59,38 +94,136 @@ describe("ACOPool", function() {
         
         token1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token1Name, token1Symbol, token1Decimals, token1TotalSupply);
         await token1.deployed();
+
+        await token1.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("100000000000000"));
+        await token1.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("100000000000000"));
+        await token1.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("100000000000000"));
     
         token2 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token2Name, token2Symbol, token2Decimals, token2TotalSupply);
         await token2.deployed();
+        
+        await token2.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("1000000000000"));
+        await token2.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("1000000000000"));
+        await token2.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("1000000000000"));
+
+        aggregatorToken1Token2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, token1Token2Price.mul(100));
+        await aggregatorToken1Token2.deployed();
+
+        aggregatorWethToken2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, ethToken2Price.mul(100));
+        await aggregatorWethToken2.deployed();
     
         defaultStrategy = await createAcoStrategy1();
-        
-        defaultAggregator = await (await ethers.getContractFactory("AggregatorForTest")).deploy(token2Decimals, 200000000);
-        await defaultAggregator.deployed();
-        
-        ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
-        await ACOPool.deployed();
+        await defaultStrategy.setAgreggator(token1.address, token2.address, aggregatorToken1Token2.address);
+        await defaultStrategy.setAgreggator(AddressZero, token2.address, aggregatorWethToken2.address);
 
-        const maxExercisedAccounts = 120;
-        let time = Math.round(new Date().getTime() / 1000) + (3*86400);
-        let price = 3 * 10 ** token2Decimals;
-        let tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price, time, maxExercisedAccounts)).wait();
-        let result1 = tx.events[tx.events.length - 1].args;
-        ACOTokenAddress = result1.acoToken;
+        let ACOPoolTemp = await (await ethers.getContractFactory("ACOPool")).deploy();
+        await ACOPoolTemp.deployed();
 
-        let tx2 = await (await buidlerFactory.createAcoToken(AddressZero, token2.address, true, price, time, maxExercisedAccounts)).wait();
+        let ACOPoolFactoryTemp = await (await ethers.getContractFactory("ACOPoolFactory")).deploy();
+        await ACOPoolFactoryTemp.deployed();
+        
+        let poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
+        let poolFactoryInitData = poolFactoryInterface.functions.init.encode([await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, await addr3.getAddress()]);
+        let buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOPoolFactoryTemp.address, poolFactoryInitData);
+        await buidlerACOPoolFactoryProxy.deployed();
+        ACOPoolFactory = await ethers.getContractAt("ACOPoolFactory", buidlerACOPoolFactoryProxy.address);
+
+        await ACOPoolFactory.setAcoPoolStrategyPermission(defaultStrategy.address, true);
+
+        await uniswapFactory.createPair(token1.address, token2.address);
+        await uniswapFactory.createPair(token2.address, weth.address);
+        
+        pairToken1Token2 = await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(token1.address, token2.address));
+        pairWethToken2 =  await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(token2.address, weth.address));
+
+        await token1.connect(owner).approve(pairToken1Token2.address, token1TotalSupply);
+        await token1.connect(addr1).approve(pairToken1Token2.address, token1TotalSupply);
+        await token1.connect(addr2).approve(pairToken1Token2.address, token1TotalSupply);
+        await token1.connect(addr3).approve(pairToken1Token2.address, token1TotalSupply);
+        await token1.connect(owner).approve(uniswapRouter.address, token1TotalSupply);
+        await token1.connect(addr1).approve(uniswapRouter.address, token1TotalSupply);
+        await token1.connect(addr2).approve(uniswapRouter.address, token1TotalSupply);
+        await token1.connect(addr3).approve(uniswapRouter.address, token1TotalSupply);
+        await token2.connect(owner).approve(pairWethToken2.address, token2TotalSupply);
+        await token2.connect(addr1).approve(pairWethToken2.address, token2TotalSupply);
+        await token2.connect(addr2).approve(pairWethToken2.address, token2TotalSupply);
+        await token2.connect(addr3).approve(pairWethToken2.address, token2TotalSupply);
+        await token2.connect(owner).approve(pairToken1Token2.address, token2TotalSupply);
+        await token2.connect(addr1).approve(pairToken1Token2.address, token2TotalSupply);
+        await token2.connect(addr2).approve(pairToken1Token2.address, token2TotalSupply);
+        await token2.connect(addr3).approve(pairToken1Token2.address, token2TotalSupply);
+        await token2.connect(owner).approve(uniswapRouter.address, token2TotalSupply);
+        await token2.connect(addr1).approve(uniswapRouter.address, token2TotalSupply);
+        await token2.connect(addr2).approve(uniswapRouter.address, token2TotalSupply);
+        await token2.connect(addr3).approve(uniswapRouter.address, token2TotalSupply);
+        await pairToken1Token2.connect(owner).approve(uniswapRouter.address, token2TotalSupply);
+        await pairWethToken2.connect(owner).approve(uniswapRouter.address, token2TotalSupply);
+    
+        await token1.connect(owner).transfer(pairToken1Token2.address, token1Liq);
+        await token2.connect(owner).transfer(pairToken1Token2.address, token2Liq);
+        await pairToken1Token2.connect(owner).mint(await owner.getAddress());
+      
+        await token2.connect(owner).transfer(pairWethToken2.address, token2Liq);
+        await weth.connect(owner).deposit({value: wethLiq});
+        await weth.connect(owner).transfer(pairWethToken2.address, wethLiq);
+        await pairWethToken2.connect(owner).mint(await owner.getAddress());
+
+        let current = await getCurrentTimestamp();
+        expiration = current + 3 * 86400;
+
+        let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, true, acoToken1Token2CallPrice, expiration, maxExercisedAccounts)).wait();
+        let result0 = tx.events[tx.events.length - 1].args;
+        ACOToken1Token2Call = await ethers.getContractAt("ACOToken", result0.acoToken);
+
+        let tx1 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration, maxExercisedAccounts)).wait();
+        let result1 = tx1.events[tx1.events.length - 1].args;
+        ACOToken1Token2Put = await ethers.getContractAt("ACOToken", result1.acoToken);
+
+        let tx2 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, true, acoEthToken2CallPrice, expiration, maxExercisedAccounts)).wait();
         let result2 = tx2.events[tx2.events.length - 1].args;
-        ACOEthTokenAddress = result2.acoToken;
+        ACOEthToken2Call = await ethers.getContractAt("ACOToken", result2.acoToken);
+
+        let tx3 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, acoEthToken2PutPrice, expiration, maxExercisedAccounts)).wait();
+        let result3 = tx3.events[tx3.events.length - 1].args;
+        ACOEthToken2Put = await ethers.getContractAt("ACOToken", result3.acoToken);
+
+        current = await getCurrentTimestamp();
+        start = current + 100;
+
+        let tx4 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+        let result4 = tx4.events[tx4.events.length - 1].args;
+        ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool", result4.acoPool);
+
+        let tx5 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+        let result5 = tx5.events[tx5.events.length - 1].args;
+        ACOPoolToken1Token2Put = await ethers.getContractAt("ACOPool", result5.acoPool);
+        
+        let tx6 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+        let result6 = tx6.events[tx6.events.length - 1].args;
+        ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool", result6.acoPool);
+
+        let tx7 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+        let result7 = tx7.events[tx7.events.length - 1].args;
+        ACOPoolEthToken2Put = await ethers.getContractAt("ACOPool", result7.acoPool);
+    });
+
+    afterEach(async function () {
+        let balLP = await pairWethToken2.balanceOf(await owner.getAddress());
+        let addr = await owner.getAddress();
+        await pairWethToken2.connect(owner).transfer(pairWethToken2.address, balLP);
+        await pairWethToken2.connect(owner).burn(addr);
+        let balWETH = await weth.balanceOf(addr);
+        await weth.connect(owner).withdraw(balWETH);
     });
 
     describe("ACOPool transactions", function () {
         it("Check init ACO pool", async function () {            
             let addr2Addr = await addr2.getAddress();
-            let now = Math.round(new Date().getTime() / 1000);
+            let now = await getCurrentTimestamp();
             var initData = {
                 poolStart: now + 86400,
                 acoFlashExercise: flashExercise.address,
-                acoFactory: buidlerACOFactoryProxy.address,
+                acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
                 fee: 100,
                 feeDestination: addr2Addr,
@@ -105,6 +238,8 @@ describe("ACOPool", function() {
                 strategy: defaultStrategy.address,
                 baseVolatility: 100000
             };
+            let ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
+            await ACOPool.deployed();
             await ACOPool.init(initData);
       
             expect(await ACOPool.underlying()).to.equal(token1.address);    
@@ -112,7 +247,7 @@ describe("ACOPool", function() {
             expect(await ACOPool.isCall()).to.equal(true); 
             expect(await ACOPool.poolStart()).to.equal(now + 86400);
             expect(await ACOPool.acoFlashExercise()).to.equal(flashExercise.address);
-            expect(await ACOPool.acoFactory()).to.equal(buidlerACOFactoryProxy.address);
+            expect(await ACOPool.acoFactory()).to.equal(ACOFactory.address);
             expect(await ACOPool.minStrikePrice()).to.equal(1);
             expect(await ACOPool.maxStrikePrice()).to.equal(ethers.utils.bigNumberify("10000000000000000000000"));
             expect(await ACOPool.minExpiration()).to.equal(now + 86400);
@@ -121,16 +256,16 @@ describe("ACOPool", function() {
             expect(await ACOPool.strategy()).to.equal(defaultStrategy.address);
             expect(await ACOPool.baseVolatility()).to.equal(100000);
             expect(await ACOPool.chiToken()).to.equal(chiToken.address);
-            expect(await ACOPool.fee()).to.equal(100);
+            expect(await ACOPool.fee()).to.equal(fee);
             expect(await ACOPool.feeDestination()).to.equal(addr2Addr);
           });
         it("Check fail to init ACO pool", async function () {
-            let now = Math.round(new Date().getTime() / 1000);
+            let now = await getCurrentTimestamp();
             let addr2Addr = await addr2.getAddress();
             var baseInitData = {
                 poolStart: now + 86400,
                 acoFlashExercise: flashExercise.address,
-                acoFactory: buidlerACOFactoryProxy.address,
+                acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
                 fee: 100,
                 feeDestination: addr2Addr,
@@ -145,6 +280,8 @@ describe("ACOPool", function() {
                 strategy: defaultStrategy.address,
                 baseVolatility: 100000
             };
+            let ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
+            await ACOPool.deployed();
       
             var cloneInitData = JSON.parse(JSON.stringify(baseInitData));
             cloneInitData.poolStart = now - 86400;
@@ -185,11 +322,11 @@ describe("ACOPool", function() {
           });    
         it("Check ACO pool views", async function () {            
             let addr2Addr = await addr2.getAddress();
-            let now = Math.round(new Date().getTime() / 1000);
+            let now = await getCurrentTimestamp();
             var initData = {
                 poolStart: now + 86400,
                 acoFlashExercise: flashExercise.address,
-                acoFactory: buidlerACOFactoryProxy.address,
+                acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
                 fee: 100,
                 feeDestination: addr2Addr,
@@ -204,6 +341,8 @@ describe("ACOPool", function() {
                 strategy: defaultStrategy.address,
                 baseVolatility: 100000
             };
+            let ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
+            await ACOPool.deployed();
             await ACOPool.init(initData);
       
             expect(await ACOPool.decimals()).to.equal(18);
@@ -220,47 +359,13 @@ describe("ACOPool", function() {
             expect(await ACOPool.notFinished()).to.equal(false);
             await network.provider.send("evm_increaseTime", [-32*86400]);
         });
-        it("Check ACO pool quote", async function () {            
-            let addr2Addr = await addr2.getAddress();
-            let now = Math.round(new Date().getTime() / 1000);
-            var initData = {
-                poolStart: now + 86400,
-                acoFlashExercise: flashExercise.address,
-                acoFactory: buidlerFactory.address,
-                chiToken: chiToken.address,
-                fee: 100,
-                feeDestination: addr2Addr,
-                underlying: token1.address,
-                strikeAsset: token2.address,
-                minStrikePrice: 1,
-                maxStrikePrice: ethers.utils.bigNumberify("600000000"),
-                minExpiration: now + 86400,
-                maxExpiration: now + (5*86400),
-                isCall: true,
-                canBuy: false,
-                strategy: defaultStrategy.address,
-                baseVolatility: 100000
-            };
-            await ACOPool.init(initData);            
-            let ownerAddr = await owner.getAddress();
-
-            await token1.connect(owner).approve(ACOPool.address, token1TotalSupply);            
-            await ACOPool.deposit(token1TotalSupply, ownerAddr);
-
-            await network.provider.send("evm_increaseTime", [86400]);
-            await network.provider.send("evm_mine");
-            await defaultStrategy.setAgreggator(token1.address, token2.address, defaultAggregator.address);
-            console.log(await ACOPool.quote(true, ACOTokenAddress, 1));
-
-            await network.provider.send("evm_increaseTime", [-86400]);
-        });
         it("Check ERC20 deposit", async function () {            
             let addr2Addr = await addr2.getAddress();
-            let now = Math.round(new Date().getTime() / 1000);
+            let now = await getCurrentTimestamp();
             var initData = {
                 poolStart: now + 86400,
                 acoFlashExercise: flashExercise.address,
-                acoFactory: buidlerFactory.address,
+                acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
                 fee: 100,
                 feeDestination: addr2Addr,
@@ -275,7 +380,10 @@ describe("ACOPool", function() {
                 strategy: defaultStrategy.address,
                 baseVolatility: 100000
             };
-            await ACOPool.init(initData);            
+            let ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
+            await ACOPool.deployed();
+            await ACOPool.init(initData);
+
             let ownerAddr = await owner.getAddress();
             let depositAmount = 1000;
 
@@ -294,11 +402,11 @@ describe("ACOPool", function() {
         });
         it("Check ether deposit", async function () {            
             let addr2Addr = await addr2.getAddress();
-            let now = Math.round(new Date().getTime() / 1000);
+            let now = await getCurrentTimestamp();
             var initData = {
                 poolStart: now + 86400,
                 acoFlashExercise: flashExercise.address,
-                acoFactory: buidlerFactory.address,
+                acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
                 fee: 100,
                 feeDestination: addr2Addr,
@@ -313,7 +421,10 @@ describe("ACOPool", function() {
                 strategy: defaultStrategy.address,
                 baseVolatility: 100000
             };
-            await ACOPool.init(initData);            
+            let ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
+            await ACOPool.deployed();
+            await ACOPool.init(initData);  
+
             let ownerAddr = await owner.getAddress();
 
             let depositAmount = ethers.utils.bigNumberify("1000000000000000000");
@@ -327,11 +438,11 @@ describe("ACOPool", function() {
         });
         it("Check fail to deposit", async function () {            
             let addr2Addr = await addr2.getAddress();
-            let now = Math.round(new Date().getTime() / 1000);
+            let now = await getCurrentTimestamp();
             var initData = {
                 poolStart: now + 86400,
                 acoFlashExercise: flashExercise.address,
-                acoFactory: buidlerFactory.address,
+                acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
                 fee: 100,
                 feeDestination: addr2Addr,
@@ -346,7 +457,10 @@ describe("ACOPool", function() {
                 strategy: defaultStrategy.address,
                 baseVolatility: 100000
             };
-            await ACOPool.init(initData);            
+            let ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
+            await ACOPool.deployed();
+            await ACOPool.init(initData);  
+
             let ownerAddr = await owner.getAddress();
             let depositAmount = 1000;
             
@@ -376,3 +490,16 @@ describe("ACOPool", function() {
         });
     });
 });
+
+const getCurrentTimestamp = async () => {
+    let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);
+    return parseInt(block.timestamp, 16);
+};
+
+const jumpUntilStart = async (start) => {
+    let time = await getCurrentTimestamp();
+    while (time < start) {
+        await network.provider.send("evm_mine");
+        time = await getCurrentTimestamp();
+    } 
+}

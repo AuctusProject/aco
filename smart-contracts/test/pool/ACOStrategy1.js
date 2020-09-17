@@ -117,8 +117,8 @@ describe("ACOStrategy1", function () {
       expect(await strategy1.getUnderlyingPrice(token1.address, token2.address)).to.equal(200000000);
       await aggregator.updateAnswer(250000000);
       expect(await strategy1.getUnderlyingPrice(token1.address, token2.address)).to.equal(250000000);
-      expect(await strategy1.getAcceptableUnderlyingPriceToSwapAssets(token1.address, token2.address, true)).to.equal(0.95*250000000);
-      expect(await strategy1.getAcceptableUnderlyingPriceToSwapAssets(token1.address, token2.address, false)).to.equal(1.05*250000000);
+      expect(await strategy1.getAcceptableUnderlyingPriceToSwapAssets(token1.address, token2.address, true)).to.equal(0.99*250000000);
+      expect(await strategy1.getAcceptableUnderlyingPriceToSwapAssets(token1.address, token2.address, false)).to.equal(1.01*250000000);
     });
     it("Check fail to set agreggator", async function () {
       var aggregator = await (await ethers.getContractFactory("AggregatorForTest")).deploy(token2Decimals, 200000000);
@@ -165,9 +165,9 @@ describe("ACOStrategy1", function () {
 
 const createAcoStrategy1 = async () => {
   let percentagePrecision = 100000;
-  let underlyingPriceAdjustPercentage = 0.05 * percentagePrecision;
-  let minOptionPricePercentage = 0.05 * percentagePrecision;
-  let tolerancePercentageToOraclePrice = 0.05 * percentagePrecision;
+  let underlyingPriceAdjustPercentage = 0.005 * percentagePrecision;
+  let minOptionPricePercentage = 0.0075 * percentagePrecision;
+  let tolerancePercentageToOraclePrice = 0.01 * percentagePrecision;
   let orderSizePenaltyFactor = 50;
   let orderSizeDampingFactor = 4;
   let newStrategy = await (await ethers.getContractFactory("ACOStrategy1")).deploy(

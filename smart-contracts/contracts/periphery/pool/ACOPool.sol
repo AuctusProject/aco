@@ -1106,7 +1106,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
             _strikePrice <= maxStrikePrice &&
             _expiryTime >= minExpiration &&
             _expiryTime <= maxExpiration,
-            "ACOPool::Invalid ACO Token"
+            "ACOPool:: Invalid ACO Token"
         );
         return (_strikePrice, _expiryTime);
     }

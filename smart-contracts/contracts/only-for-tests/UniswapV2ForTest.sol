@@ -2,7 +2,7 @@
  * Adapted from https://github.com/Uniswap/
 */
 
-pragma solidity = 0.6.6;
+pragma solidity ^0.6.6;
 
 
 interface IUniswapV2Factory {
@@ -349,6 +349,10 @@ contract UniswapV2Factory is IUniswapV2Factory {
 
     function allPairsLength() external view returns (uint) {
         return allPairs.length;
+    }
+
+    function getHashToCreation2UniswapPair() external pure returns(bytes32) {
+        return keccak256(type(UniswapV2Pair).creationCode);
     }
 
     function createPair(address tokenA, address tokenB) external override returns (address pair) {
