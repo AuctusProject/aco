@@ -44,15 +44,23 @@ describe("ACOPool", function() {
     let expiration;
     let start;
     let acoEthToken2CallPrice = ethers.utils.bigNumberify("500000000");
+    let acoEthToken2CallPrice2 = ethers.utils.bigNumberify("300000000");
     let acoEthToken2PutPrice = ethers.utils.bigNumberify("300000000");
+    let acoEthToken2PutPrice2 = ethers.utils.bigNumberify("500000000");
     let acoToken1Token2CallPrice = ethers.utils.bigNumberify("12000000000");
+    let acoToken1Token2CallPrice2 = ethers.utils.bigNumberify("9000000000");
     let acoToken1Token2PutPrice = ethers.utils.bigNumberify("9000000000");
+    let acoToken1Token2PutPrice2 = ethers.utils.bigNumberify("12000000000");
     let ethToken2BaseVolatility = 85000;
     let token1Token2BaseVolatility = 70000;
     let ACOEthToken2Call;
+    let ACOEthToken2Call2;
     let ACOEthToken2Put;
+    let ACOEthToken2Put2;
     let ACOToken1Token2Call;
+    let ACOToken1Token2Call2;
     let ACOToken1Token2Put;
+    let ACOToken1Token2Put2;
     let ACOPoolEthToken2Call;
     let ACOPoolEthToken2Put;
     let ACOPoolToken1Token2Call;
@@ -175,36 +183,52 @@ describe("ACOPool", function() {
         let result0 = tx.events[tx.events.length - 1].args;
         ACOToken1Token2Call = await ethers.getContractAt("ACOToken", result0.acoToken);
 
-        let tx1 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration, maxExercisedAccounts)).wait();
+        let tx1 = await (await ACOFactory.createAcoToken(token1.address, token2.address, true, acoToken1Token2CallPrice2, expiration, maxExercisedAccounts)).wait();
         let result1 = tx1.events[tx1.events.length - 1].args;
-        ACOToken1Token2Put = await ethers.getContractAt("ACOToken", result1.acoToken);
+        ACOToken1Token2Call2 = await ethers.getContractAt("ACOToken", result1.acoToken);
 
-        let tx2 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, true, acoEthToken2CallPrice, expiration, maxExercisedAccounts)).wait();
+        let tx2 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration, maxExercisedAccounts)).wait();
         let result2 = tx2.events[tx2.events.length - 1].args;
-        ACOEthToken2Call = await ethers.getContractAt("ACOToken", result2.acoToken);
+        ACOToken1Token2Put = await ethers.getContractAt("ACOToken", result2.acoToken);
 
-        let tx3 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, acoEthToken2PutPrice, expiration, maxExercisedAccounts)).wait();
+        let tx3 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice2, expiration, maxExercisedAccounts)).wait();
         let result3 = tx3.events[tx3.events.length - 1].args;
-        ACOEthToken2Put = await ethers.getContractAt("ACOToken", result3.acoToken);
+        ACOToken1Token2Put2 = await ethers.getContractAt("ACOToken", result3.acoToken);
+
+        let tx4 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, true, acoEthToken2CallPrice, expiration, maxExercisedAccounts)).wait();
+        let result4 = tx4.events[tx4.events.length - 1].args;
+        ACOEthToken2Call = await ethers.getContractAt("ACOToken", result4.acoToken);
+
+        let tx5 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, true, acoEthToken2CallPrice2, expiration, maxExercisedAccounts)).wait();
+        let result5 = tx5.events[tx5.events.length - 1].args;
+        ACOEthToken2Call2 = await ethers.getContractAt("ACOToken", result5.acoToken);
+
+        let tx6 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, acoEthToken2PutPrice, expiration, maxExercisedAccounts)).wait();
+        let result6 = tx6.events[tx6.events.length - 1].args;
+        ACOEthToken2Put = await ethers.getContractAt("ACOToken", result6.acoToken);
+
+        let tx7 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, acoEthToken2PutPrice2, expiration, maxExercisedAccounts)).wait();
+        let result7 = tx7.events[tx7.events.length - 1].args;
+        ACOEthToken2Put2 = await ethers.getContractAt("ACOToken", result7.acoToken);
 
         current = await getCurrentTimestamp();
         start = current + 140;
 
-        let tx4 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
-        let result4 = tx4.events[tx4.events.length - 1].args;
-        ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool", result4.acoPool);
+        let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+        let result8 = tx8.events[tx8.events.length - 1].args;
+        ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool", result8.acoPool);
 
-        let tx5 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
-        let result5 = tx5.events[tx5.events.length - 1].args;
-        ACOPoolToken1Token2Put = await ethers.getContractAt("ACOPool", result5.acoPool);
+        let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+        let result9 = tx9.events[tx9.events.length - 1].args;
+        ACOPoolToken1Token2Put = await ethers.getContractAt("ACOPool", result9.acoPool);
         
-        let tx6 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
-        let result6 = tx6.events[tx6.events.length - 1].args;
-        ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool", result6.acoPool);
+        let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+        let result10 = tx10.events[tx10.events.length - 1].args;
+        ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool", result10.acoPool);
 
-        let tx7 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
-        let result7 = tx7.events[tx7.events.length - 1].args;
-        ACOPoolEthToken2Put = await ethers.getContractAt("ACOPool", result7.acoPool);
+        let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+        let result11 = tx11.events[tx11.events.length - 1].args;
+        ACOPoolEthToken2Put = await ethers.getContractAt("ACOPool", result11.acoPool);
     });
 
     afterEach(async function () {
@@ -591,6 +615,153 @@ describe("ACOPool", function() {
             await ACOPoolToken1Token2Put.connect(addr3).deposit(val1, await addr3.getAddress());
             expect(await ACOPoolToken1Token2Put.balanceOf(await addr3.getAddress())).to.equal(bal1.mul(2));
             expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(bal1.mul(3).add(bal2.mul(2)));
+        });
+        it("Check swap ACOPoolEthToken2Call", async function () {
+            expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
+
+            let val1 = ethers.utils.bigNumberify("5000000000000000000");
+            await ACOPoolEthToken2Call.connect(addr1).deposit(val1, await addr1.getAddress(), {value: val1});
+            await await ACOPoolEthToken2Call.connect(addr2).deposit(val1, await addr2.getAddress(), {value: val1});
+            expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(val1.mul(2));
+
+            await jumpUntilStart(start);
+            let deadline = (await getCurrentTimestamp()) + 100;
+            let swapAmount = ethers.utils.bigNumberify("1000000000000000000");
+            let maxValueToPay = ethers.utils.bigNumberify("30000000");
+            expect(await ACOEthToken2Call.balanceOf(await owner.getAddress())).to.equal(0);
+            await token2.connect(owner).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
+            await ACOPoolEthToken2Call.swap(true, ACOEthToken2Call.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
+            expect(await ACOEthToken2Call.balanceOf(await owner.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolEthToken2Call.acoTokensData(ACOEthToken2Call.address)).amountSold).to.equal(swapAmount);
+
+            expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(0);
+            await token2.connect(addr1).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
+            await ACOPoolEthToken2Call.swap(true, ACOEthToken2Call.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolEthToken2Call.acoTokensData(ACOEthToken2Call.address)).amountSold).to.equal(swapAmount.mul(2));
+
+            await ACOPoolEthToken2Call.swap(true, ACOEthToken2Call.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
+            expect((await ACOPoolEthToken2Call.acoTokensData(ACOEthToken2Call.address)).amountSold).to.equal(swapAmount.mul(3));
+
+            maxValueToPay = ethers.utils.bigNumberify("300000000");
+            await ACOPoolEthToken2Call.swap(true, ACOEthToken2Call2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOEthToken2Call2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolEthToken2Call.acoTokensData(ACOEthToken2Call2.address)).amountSold).to.equal(swapAmount);
+        });
+        it("Check swap ACOPoolEthToken2Put", async function () {
+            expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(0);
+
+            await token2.connect(addr1).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+            await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+
+            let val1 = ethers.utils.bigNumberify("3000000000");            
+            await ACOPoolEthToken2Put.connect(addr1).deposit(val1, await addr1.getAddress());
+            await await ACOPoolEthToken2Put.connect(addr2).deposit(val1, await addr2.getAddress());
+
+            let totalSupply = ethers.utils.bigNumberify("6000000000000000000000");
+            expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(totalSupply);
+
+            await jumpUntilStart(start);
+            let deadline = (await getCurrentTimestamp()) + 100;
+            let swapAmount = ethers.utils.bigNumberify("1000000000000000000");
+            let maxValueToPay = ethers.utils.bigNumberify("30000000");
+            expect(await ACOEthToken2Put.balanceOf(await owner.getAddress())).to.equal(0);
+            await token2.connect(owner).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+            await ACOPoolEthToken2Put.swap(true, ACOEthToken2Put.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
+            expect(await ACOEthToken2Put.balanceOf(await owner.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolEthToken2Put.acoTokensData(ACOEthToken2Put.address)).amountSold).to.equal(swapAmount);
+
+            expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
+            await token2.connect(addr1).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+            await ACOPoolEthToken2Put.swap(true, ACOEthToken2Put.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolEthToken2Put.acoTokensData(ACOEthToken2Put.address)).amountSold).to.equal(swapAmount.mul(2));
+
+            await ACOPoolEthToken2Put.swap(true, ACOEthToken2Put.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
+            expect((await ACOPoolEthToken2Put.acoTokensData(ACOEthToken2Put.address)).amountSold).to.equal(swapAmount.mul(3));
+
+            maxValueToPay = ethers.utils.bigNumberify("200000000");
+            await ACOPoolEthToken2Put.swap(true, ACOEthToken2Put2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOEthToken2Put2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolEthToken2Put.acoTokensData(ACOEthToken2Put2.address)).amountSold).to.equal(swapAmount);
+        });
+        it("Check swap ACOPoolToken1Token2Call", async function () {
+            expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(0);
+
+            await token1.connect(addr1).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
+            await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
+
+            let val1 = ethers.utils.bigNumberify("12000000000000");            
+            await ACOPoolToken1Token2Call.connect(addr1).deposit(val1, await addr1.getAddress());
+            await await ACOPoolToken1Token2Call.connect(addr2).deposit(val1, await addr2.getAddress());
+
+            let totalSupply = ethers.utils.bigNumberify("240000000000000000000000");
+            expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(totalSupply);
+
+            await jumpUntilStart(start);
+            let deadline = (await getCurrentTimestamp()) + 100;
+            let swapAmount = ethers.utils.bigNumberify("100000000");
+            let maxValueToPay = ethers.utils.bigNumberify("300000000");
+            expect(await ACOToken1Token2Call.balanceOf(await owner.getAddress())).to.equal(0);
+            await token2.connect(owner).approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
+            await ACOPoolToken1Token2Call.swap(true, ACOToken1Token2Call.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
+            expect(await ACOToken1Token2Call.balanceOf(await owner.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolToken1Token2Call.acoTokensData(ACOToken1Token2Call.address)).amountSold).to.equal(swapAmount);
+
+            expect(await ACOToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
+            await token2.connect(addr1).approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
+            await ACOPoolToken1Token2Call.swap(true, ACOToken1Token2Call.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolToken1Token2Call.acoTokensData(ACOToken1Token2Call.address)).amountSold).to.equal(swapAmount.mul(2));
+
+            await ACOPoolToken1Token2Call.swap(true, ACOToken1Token2Call.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
+            expect((await ACOPoolToken1Token2Call.acoTokensData(ACOToken1Token2Call.address)).amountSold).to.equal(swapAmount.mul(3));
+
+            maxValueToPay = ethers.utils.bigNumberify("3000000000");
+            await ACOPoolToken1Token2Call.swap(true, ACOToken1Token2Call2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOToken1Token2Call2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolToken1Token2Call.acoTokensData(ACOToken1Token2Call2.address)).amountSold).to.equal(swapAmount);
+        });
+        it("Check swap ACOPoolToken1Token2Put", async function () {
+            expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(0);
+
+            await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+            await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+
+            let val1 = ethers.utils.bigNumberify("90000000000");            
+            await ACOPoolToken1Token2Put.connect(addr1).deposit(val1, await addr1.getAddress());
+            await await ACOPoolToken1Token2Put.connect(addr2).deposit(val1, await addr2.getAddress());
+
+            let totalSupply = ethers.utils.bigNumberify("180000000000000000000000");
+            expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(totalSupply);
+
+            await jumpUntilStart(start)
+            let deadline = (await getCurrentTimestamp()) + 100;
+            let swapAmount = ethers.utils.bigNumberify("1000000");
+            let maxValueToPay = ethers.utils.bigNumberify("300000000");
+            expect(await ACOToken1Token2Put.balanceOf(await owner.getAddress())).to.equal(0);
+            await token2.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+            await ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
+            expect(await ACOToken1Token2Put.balanceOf(await owner.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolToken1Token2Put.acoTokensData(ACOToken1Token2Put.address)).amountSold).to.equal(swapAmount);
+
+            expect(await ACOToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(0);
+            await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+            await ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolToken1Token2Put.acoTokensData(ACOToken1Token2Put.address)).amountSold).to.equal(swapAmount.mul(2));
+
+            await ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
+            expect((await ACOPoolToken1Token2Put.acoTokensData(ACOToken1Token2Put.address)).amountSold).to.equal(swapAmount.mul(3));
+
+            maxValueToPay = ethers.utils.bigNumberify("3000000000");
+            await ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
+            expect(await ACOToken1Token2Put2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
+            expect((await ACOPoolToken1Token2Put.acoTokensData(ACOToken1Token2Put2.address)).amountSold).to.equal(swapAmount);
         });
     });
 });
