@@ -5,8 +5,7 @@ import '../../util/Ownable.sol';
 import '../../libs/SafeMath.sol';
 import '../../libs/Address.sol';
 import '../../libs/ACONameFormatter.sol';
-import '../../libs/ACOHelper.sol';
-import '../../libs/ACOERC20Helper.sol';
+import '../../libs/ACOAssetHelper.sol';
 import '../../core/ERC20.sol';
 import '../../interfaces/IACOPool.sol';
 import '../../interfaces/IACOFactory.sol';
@@ -277,8 +276,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         require(initData.minStrikePrice > 0, "ACOPool:: Invalid strike price");
         require(initData.minExpiration <= initData.maxExpiration, "ACOPool:: Invalid expiration range");
         require(initData.underlying != initData.strikeAsset, "ACOPool:: Same assets");
-        require(ACOERC20Helper._isEther(initData.underlying) || initData.underlying.isContract(), "ACOPool:: Invalid underlying");
-        require(ACOERC20Helper._isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "ACOPool:: Invalid strike asset");
+        require(ACOAssetHelper._isEther(initData.underlying) || initData.underlying.isContract(), "ACOPool:: Invalid underlying");
+        require(ACOAssetHelper._isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "ACOPool:: Invalid strike asset");
         
         super.init();
         
@@ -307,12 +306,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         
         _approveAssetsOnRouter(initData.isCall, initData.canBuy, _uniswapRouter, initData.underlying, initData.strikeAsset);
     }
-    
-    /**
-     * @dev Function to guarantee that the contract will not receive ether directly.
-     */
+
     receive() external payable {
-        revert();
     }
     
     /**
@@ -425,7 +420,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         
         (uint256 normalizedAmount, uint256 amount) = _getNormalizedDepositAmount(collateralAmount);
         
-        ACOHelper._receiveAsset(collateral(), amount);
+        ACOAssetHelper._receiveAsset(collateral(), amount);
         
         collateralDeposited = collateralDeposited.add(amount);
         _mintAction(to, normalizedAmount);
@@ -646,7 +641,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         }
         
         if (protocolFee > 0) {
-            ACOHelper._transferAsset(strikeAsset, feeDestination, protocolFee);
+            ACOAssetHelper._transferAsset(strikeAsset, feeDestination, protocolFee);
         }
         
         emit Swap(isPoolSelling, msg.sender, acoToken, tokenAmount, swapPrice, protocolFee, underlyingPrice);
@@ -767,7 +762,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
     ) internal returns(uint256) {
         require(swapPrice <= maxPayment, "ACOPool:: Swap restriction");
         
-        ACOERC20Helper._callTransferFromERC20(strikeAsset, msg.sender, address(this), swapPrice);
+        ACOAssetHelper._callTransferFromERC20(strikeAsset, msg.sender, address(this), swapPrice);
         
         uint256 acoBalance = _getPoolBalanceOf(acoToken);
 
@@ -784,7 +779,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
             }
             if (collateralAmount > 0) {
                 address _collateral = collateral();
-                if (ACOERC20Helper._isEther(_collateral)) {
+                if (ACOAssetHelper._isEther(_collateral)) {
                     tokenAmount = tokenAmount.add(IACOToken(acoToken).mintPayable{value: collateralAmount}());
                 } else {
                     if (_amountSold == 0) {
@@ -798,7 +793,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         acoTokenData.amountSold = tokenAmount.add(_amountSold);
         strikeAssetEarnedSelling = swapPrice.sub(protocolFee).add(strikeAssetEarnedSelling); 
         
-        ACOERC20Helper._callTransferERC20(acoToken, to, tokenAmount);
+        ACOAssetHelper._callTransferERC20(acoToken, to, tokenAmount);
         
         return tokenAmount;
     }
@@ -828,7 +823,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
             _getStrikeAssetAmount(requiredStrikeAsset);
         }
         
-        ACOERC20Helper._callTransferFromERC20(acoToken, msg.sender, address(this), tokenAmount);
+        ACOAssetHelper._callTransferFromERC20(acoToken, msg.sender, address(this), tokenAmount);
         
         ACOTokenData storage acoTokenData = acoTokensData[acoToken];
         uint256 _amountPurchased = acoTokenData.amountPurchased;
@@ -839,7 +834,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         acoTokenData.amountPurchased = tokenAmount.add(_amountPurchased);
         strikeAssetSpentBuying = requiredStrikeAsset.add(strikeAssetSpentBuying);
         
-        ACOHelper._transferAsset(strikeAsset, to, swapPrice);
+        ACOAssetHelper._transferAsset(strikeAsset, to, swapPrice);
         
         return swapPrice;
     }
@@ -928,10 +923,10 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         _callBurn(account, share);
         
         if (underlyingBalance > 0) {
-            ACOHelper._transferAsset(underlying, msg.sender, underlyingBalance);
+            ACOAssetHelper._transferAsset(underlying, msg.sender, underlyingBalance);
         }
         if (strikeAssetBalance > 0) {
-            ACOHelper._transferAsset(strikeAsset, msg.sender, strikeAssetBalance);
+            ACOAssetHelper._transferAsset(strikeAsset, msg.sender, strikeAssetBalance);
         }
         
         emit Redeem(msg.sender, underlyingBalance, strikeAssetBalance);
@@ -961,11 +956,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      */
     function _swapAssetsExactAmountOut(address assetOut, address assetIn, uint256 minAmountIn, uint256 amountOut) internal {
         address[] memory path = new address[](2);
-        if (ACOERC20Helper._isEther(assetOut)) {
+        if (ACOAssetHelper._isEther(assetOut)) {
             path[0] = acoFlashExercise.weth();
             path[1] = assetIn;
             uniswapRouter.swapExactETHForTokens{value: amountOut}(minAmountIn, path, address(this), block.timestamp);
-        } else if (ACOERC20Helper._isEther(assetIn)) {
+        } else if (ACOAssetHelper._isEther(assetIn)) {
             path[0] = assetOut;
             path[1] = acoFlashExercise.weth();
             uniswapRouter.swapExactTokensForETH(amountOut, minAmountIn, path, address(this), block.timestamp);
@@ -985,11 +980,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      */
     function _swapAssetsExactAmountIn(address assetOut, address assetIn, uint256 amountIn, uint256 maxAmountOut) internal {
         address[] memory path = new address[](2);
-        if (ACOERC20Helper._isEther(assetOut)) {
+        if (ACOAssetHelper._isEther(assetOut)) {
             path[0] = acoFlashExercise.weth();
             path[1] = assetIn;
             uniswapRouter.swapETHForExactTokens{value: maxAmountOut}(amountIn, path, address(this), block.timestamp);
-        } else if (ACOERC20Helper._isEther(assetIn)) {
+        } else if (ACOAssetHelper._isEther(assetIn)) {
             path[0] = assetOut;
             path[1] = acoFlashExercise.weth();
             uniswapRouter.swapTokensForExactETH(amountIn, maxAmountOut, path, address(this), block.timestamp);
@@ -1026,8 +1021,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param _strikeAsset Address of the strike asset.
      */
     function _setAssetsPrecision(address _underlying, address _strikeAsset) internal {
-        underlyingPrecision = 10 ** uint256(ACOERC20Helper._getAssetDecimals(_underlying));
-        strikeAssetPrecision = 10 ** uint256(ACOERC20Helper._getAssetDecimals(_strikeAsset));
+        underlyingPrecision = 10 ** uint256(ACOAssetHelper._getAssetDecimals(_underlying));
+        strikeAssetPrecision = 10 ** uint256(ACOAssetHelper._getAssetDecimals(_strikeAsset));
     }
     
     /**
@@ -1046,13 +1041,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         address _strikeAsset
     ) internal {
         if (_isCall) {
-            if (!ACOERC20Helper._isEther(_strikeAsset)) {
+            if (!ACOAssetHelper._isEther(_strikeAsset)) {
                 _setAuthorizedSpender(_strikeAsset, _uniswapRouter);
             }
-            if (_canBuy && !ACOERC20Helper._isEther(_underlying)) {
+            if (_canBuy && !ACOAssetHelper._isEther(_underlying)) {
                 _setAuthorizedSpender(_underlying, _uniswapRouter);
             }
-        } else if (!ACOERC20Helper._isEther(_underlying)) {
+        } else if (!ACOAssetHelper._isEther(_underlying)) {
             _setAuthorizedSpender(_underlying, _uniswapRouter);
         }
     }
@@ -1063,7 +1058,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param spender Address of the spender to be authorized.
      */
     function _setAuthorizedSpender(address asset, address spender) internal {
-        ACOERC20Helper._callApproveERC20(asset, spender, MAX_UINT);
+        ACOAssetHelper._callApproveERC20(asset, spender, MAX_UINT);
     }
     
     /**
@@ -1072,7 +1067,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @return The pool balance.
      */
     function _getPoolBalanceOf(address asset) internal view returns(uint256) {
-        return ACOERC20Helper._getAssetBalanceOf(asset, address(this));
+        return ACOAssetHelper._getAssetBalanceOf(asset, address(this));
     }
     
     /**
@@ -1118,7 +1113,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @return The token name.
      */
     function _name() internal view returns(string memory) {
-        uint8 strikeDecimals = ACOERC20Helper._getAssetDecimals(strikeAsset);
+        uint8 strikeDecimals = ACOAssetHelper._getAssetDecimals(strikeAsset);
         string memory strikePriceFormatted;
         if (minStrikePrice != maxStrikePrice) {
             strikePriceFormatted = string(abi.encodePacked(ACONameFormatter.formatNumber(minStrikePrice, strikeDecimals), "-", ACONameFormatter.formatNumber(maxStrikePrice, strikeDecimals)));
@@ -1133,9 +1128,9 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         }
         return string(abi.encodePacked(
             "ACO POOL ",
-            ACOERC20Helper._getAssetSymbol(underlying),
+            ACOAssetHelper._getAssetSymbol(underlying),
             "-",
-            ACOERC20Helper._getAssetSymbol(strikeAsset),
+            ACOAssetHelper._getAssetSymbol(strikeAsset),
             "-",
             ACONameFormatter.formatType(isCall),
             (canBuy ? "" : "-SELL"),
