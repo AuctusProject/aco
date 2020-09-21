@@ -1034,6 +1034,8 @@ const getCurrentTimestamp = async () => {
     return parseInt(block.timestamp, 16);
 };
 
+exports.getCurrentTimestamp = getCurrentTimestamp;
+
 const jumpUntilStart = async (start) => {
     let time = await getCurrentTimestamp();
     while (time < start) {
