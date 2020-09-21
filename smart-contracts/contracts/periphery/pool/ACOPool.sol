@@ -376,19 +376,6 @@ contract ACOPool is Ownable, ERC20, IACOPool {
     }
     
     /**
-     * @dev Function to get the estimated collateral to be received through a flash exercise.
-     * @param acoToken Address of the ACO token.
-     * @return The estimated collateral to be received through a flash exercise using the standard exercise function.
-     */
-    function getEstimatedReturnOnExercise(address acoToken) open public override view returns(uint256) {
-        uint256 exercisableAmount = _getExercisableAmount(acoToken);
-        if (exercisableAmount > 0) {
-            return acoFlashExercise.getEstimatedReturn(acoToken, exercisableAmount);
-        }
-        return 0;
-    }
-    
-    /**
      * @dev Function to set the pool strategy address.
      * Only can be called by the ACO pool factory contract.
      * @param newStrategy Address of the new strategy.
@@ -886,8 +873,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      */
 	function _redeemACOToken(address acoToken, uint256 expiryTime) internal {
 		if (expiryTime <= block.timestamp) {
-				
-			uint256 collateralIn = IACOToken(acoToken).redeem();
+
+            uint256 collateralIn = 0;
+            if (IACOToken(acoToken).currentCollateralizedTokens(address(this)) > 0) {	
+			    collateralIn = IACOToken(acoToken).redeem();
+            }
 			
 			ACOTokenData storage data = acoTokensData[acoToken];
 			uint256 lastIndex = acoTokens.length - 1;

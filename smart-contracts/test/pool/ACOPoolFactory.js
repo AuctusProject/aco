@@ -115,7 +115,7 @@ describe("ACOPoolFactory", function() {
 
   describe("ACOPoolFactory transactions", function () {
     it("Check create ACO pool", async function () {
-      let now = Math.round(new Date().getTime() / 1000);
+      let now = await getCurrentTimestamp();
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result1 = tx.events[tx.events.length - 1].args;
 
@@ -138,7 +138,7 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerPool.feeDestination()).to.equal(await owner.getAddress());
     });
     it("Check fail to create ACO pool", async function () {      
-      let now = Math.round(new Date().getTime() / 1000);
+      let now = await getCurrentTimestamp();
       await expect(
         buidlerACOPoolFactory.connect(addr1).createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
@@ -315,7 +315,7 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(false);
     });
     it("Check set ACO pool strategy", async function () {
-      let now = Math.round(new Date().getTime() / 1000);
+      let now = await getCurrentTimestamp();
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
       
@@ -338,7 +338,7 @@ describe("ACOPoolFactory", function() {
       ).to.be.revertedWith("ACOPoolFactory::onlyPoolAdmin");
     });
     it("Check set ACO pool base volatility", async function () {
-      let now = Math.round(new Date().getTime() / 1000);
+      let now = await getCurrentTimestamp();
      
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
@@ -355,7 +355,7 @@ describe("ACOPoolFactory", function() {
         buidlerACOPoolFactory.setAcoPoolBaseVolatility([100000], [])
       ).to.be.revertedWith("ACOPoolFactory::_setAcoPoolBaseVolatility: Invalid arguments");
 
-      let now = Math.round(new Date().getTime() / 1000);
+      let now = await getCurrentTimestamp();
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool", result.acoPool);
@@ -374,4 +374,9 @@ describe("ACOPoolFactory", function() {
 
   });
 });
+
+const getCurrentTimestamp = async () => {
+  let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);
+  return parseInt(block.timestamp, 16);
+};
 
