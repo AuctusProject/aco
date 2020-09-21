@@ -487,8 +487,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * It redeems the collateral only if the respective ACO token is expired.
      */
     function redeemACOTokens() public override {
-        for (uint256 i = 0; i < acoTokens.length; ++i) {
-            address acoToken = acoTokens[i];
+        for (uint256 i = acoTokens.length; i > 0; --i) {
+            address acoToken = acoTokens[i - 1];
 			uint256 expiryTime = IACOToken(acoToken).expiryTime();
             _redeemACOToken(acoToken, expiryTime);
         }

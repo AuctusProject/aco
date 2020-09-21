@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const poolFactoryABI = require("../../artifacts/ACOPoolFactory.json");
 const factoryABI = require("../../artifacts/ACOFactory.json");
-const { createAcoStrategy1 } = require("./ACOStrategy1");
+const { createAcoStrategy1 } = require("./ACOStrategy1.js");
 
 describe("ACOPoolFactory", function() {
   let buidlerACOFactoryProxy;
