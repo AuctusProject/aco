@@ -269,7 +269,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         require(initData.acoFactory.isContract(), "ACOPool:: Invalid ACO Factory");
         require(initData.acoFlashExercise.isContract(), "ACOPool:: Invalid ACO flash exercise");
         require(initData.chiToken.isContract(), "ACOPool:: Invalid Chi Token");
-        require(initData.fee <= 500, "ACOPool:: The maximum fee allowed is 0.5%");
+        require(initData.fee <= 12500, "ACOPool:: The maximum fee allowed is 12.5%");
         require(initData.poolStart > block.timestamp, "ACOPool:: Invalid pool start");
         require(initData.minExpiration > block.timestamp, "ACOPool:: Invalid expiration");
         require(initData.minStrikePrice <= initData.maxStrikePrice, "ACOPool:: Invalid strike price range");
