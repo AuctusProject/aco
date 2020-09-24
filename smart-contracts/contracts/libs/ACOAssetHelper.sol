@@ -131,7 +131,8 @@ library ACOAssetHelper {
      */
     function _transferAsset(address asset, address to, uint256 amount) internal {
         if (_isEther(asset)) {
-            payable(to).transfer(amount);
+            (bool success,) = to.call{value:amount}(new bytes(0));
+            require(success, 'ACOAssetHelper::_transferAsset');
         } else {
             _callTransferERC20(asset, to, amount);
         }

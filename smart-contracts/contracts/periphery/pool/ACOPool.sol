@@ -269,7 +269,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         require(initData.acoFactory.isContract(), "ACOPool:: Invalid ACO Factory");
         require(initData.acoFlashExercise.isContract(), "ACOPool:: Invalid ACO flash exercise");
         require(initData.chiToken.isContract(), "ACOPool:: Invalid Chi Token");
-        require(initData.fee <= 500, "ACOPool:: The maximum fee allowed is 0.5%");
+        require(initData.fee <= 12500, "ACOPool:: The maximum fee allowed is 12.5%");
         require(initData.poolStart > block.timestamp, "ACOPool:: Invalid pool start");
         require(initData.minExpiration > block.timestamp, "ACOPool:: Invalid expiration");
         require(initData.minStrikePrice <= initData.maxStrikePrice, "ACOPool:: Invalid strike price range");
@@ -373,19 +373,6 @@ contract ACOPool is Ownable, ERC20, IACOPool {
     function quote(bool isBuying, address acoToken, uint256 tokenAmount) open public override view returns(uint256, uint256, uint256) {
         (uint256 swapPrice, uint256 protocolFee, uint256 underlyingPrice,) = _internalQuote(isBuying, acoToken, tokenAmount);
         return (swapPrice, protocolFee, underlyingPrice);
-    }
-    
-    /**
-     * @dev Function to get the estimated collateral to be received through a flash exercise.
-     * @param acoToken Address of the ACO token.
-     * @return The estimated collateral to be received through a flash exercise using the standard exercise function.
-     */
-    function getEstimatedReturnOnExercise(address acoToken) open public override view returns(uint256) {
-        uint256 exercisableAmount = _getExercisableAmount(acoToken);
-        if (exercisableAmount > 0) {
-            return acoFlashExercise.getEstimatedReturn(acoToken, exercisableAmount);
-        }
-        return 0;
     }
     
     /**
@@ -500,8 +487,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * It redeems the collateral only if the respective ACO token is expired.
      */
     function redeemACOTokens() public override {
-        for (uint256 i = 0; i < acoTokens.length; ++i) {
-            address acoToken = acoTokens[i];
+        for (uint256 i = acoTokens.length; i > 0; --i) {
+            address acoToken = acoTokens[i - 1];
 			uint256 expiryTime = IACOToken(acoToken).expiryTime();
             _redeemACOToken(acoToken, expiryTime);
         }
@@ -886,8 +873,11 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      */
 	function _redeemACOToken(address acoToken, uint256 expiryTime) internal {
 		if (expiryTime <= block.timestamp) {
-				
-			uint256 collateralIn = IACOToken(acoToken).redeem();
+
+            uint256 collateralIn = 0;
+            if (IACOToken(acoToken).currentCollateralizedTokens(address(this)) > 0) {	
+			    collateralIn = IACOToken(acoToken).redeem();
+            }
 			
 			ACOTokenData storage data = acoTokensData[acoToken];
 			uint256 lastIndex = acoTokens.length - 1;

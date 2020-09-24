@@ -1,6 +1,5 @@
 const { expect } = require("chai");
 const strategy1ABI = require("../../artifacts/ACOStrategy1.json");
-const { getCurrentTimestamp } = require("./ACOPool");
 
 describe("ACOStrategy1", function () {
   let buidlerFactory;
@@ -331,6 +330,11 @@ describe("ACOStrategy1", function () {
   });
 });
 
+const getCurrentTimestamp = async () => {
+  let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);
+  return parseInt(block.timestamp, 16);
+};
+
 const createAcoStrategy1 = async () => {
   let percentagePrecision = 100000;
   let underlyingPriceAdjustPercentage = 0.005 * percentagePrecision;
@@ -346,6 +350,6 @@ const createAcoStrategy1 = async () => {
     orderSizeDampingFactor);
   await newStrategy.deployed();
   return newStrategy;
-}
+};
 
 exports.createAcoStrategy1 = createAcoStrategy1;

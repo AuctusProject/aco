@@ -6,3 +6,6 @@
 /smart-contracts/artifacts
 /smart-contracts/cache
 /smart-contracts/node_modules
+/smart-contracts/contracts/core/artifacts
+/smart-contracts/contracts/interfaces/artifacts
+/smart-contracts/contracts/periphery/pool/artifacts
