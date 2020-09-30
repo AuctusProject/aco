@@ -50,6 +50,19 @@ const getTokenInfo = (token) => {
   });
 };
 
+const getBaseVolatility = (pool) => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0xbbe024a9"}).then((result) => 
+      {
+        if (result) {
+          resolve(parseInt(result, 16));
+        } else {
+          reject(new Error("Invalid volatility"));
+        }
+      }).catch((err) => reject(err));
+  });
+};
+
 const getSymbol = (token) => {
   return new Promise((resolve, reject) => {
     if (isEther(token)) {
@@ -138,8 +151,8 @@ const listAcoPools = () => {
           let numChunks = Math.ceil(pureData.length / size);
           for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
             if (i === 0) event.poolStart = parseInt(pureData.substring(o, o + size), 16) * 1000;
-            else if (i === 1) event.minStrikePrice = BigInt("0x" + pureData.substring(o, o + size));
-            else if (i === 2) event.maxStrikePrice = BigInt("0x" + pureData.substring(o, o + size));
+            else if (i === 1) event.minStrikePrice = BigInt("0x" + pureData.substring(o, o + size)).toString(10);
+            else if (i === 2) event.maxStrikePrice = BigInt("0x" + pureData.substring(o, o + size)).toString(10);
             else if (i === 3) event.minExpiration = parseInt(pureData.substring(o, o + size), 16) * 1000;
             else if (i === 4) event.maxExpiration = parseInt(pureData.substring(o, o + size), 16) * 1000;
             else if (i === 5) event.canBuy = (parseInt(pureData.substring(o, o + size), 16) === 1);
@@ -217,6 +230,8 @@ module.exports.acoPools = () => {
       const promises = [];
       let added = {};
       for (let i = 0; i < response.length; ++i) {
+        added[(response[i].acoPool+"vol")] = promises.length;
+        promises.push(getBaseVolatility(response[i].acoPool));
         added[response[i].acoPool] = promises.length;
         promises.push(getTokenInfo(response[i].acoPool));
         if (added[response[i].underlying] === undefined) {
@@ -231,6 +246,7 @@ module.exports.acoPools = () => {
       Promise.all(promises).then((result) =>
       {
         for (let j = 0; j < response.length; ++j) {
+          response[j].volatility = result[added[(response[j].acoPool+"vol")]];
           response[j].acoPoolInfo = result[added[response[j].acoPool]];
           response[j].underlyingInfo = result[added[response[j].underlying]];
           response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
