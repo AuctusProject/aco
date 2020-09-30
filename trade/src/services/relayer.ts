@@ -23,10 +23,8 @@ export class Relayer {
     }
 
     public async getAllOrdersAsync(baseTokenAssetData: string, quoteTokenAssetData: string): Promise<SignedOrder[]> {
-        const [sellOrders, buyOrders] = await Promise.all([
-            this._getOrdersAsync(baseTokenAssetData, quoteTokenAssetData),
-            this._getOrdersAsync(quoteTokenAssetData, baseTokenAssetData),
-        ]);
+        const sellOrders = await this._getOrdersAsync(baseTokenAssetData, quoteTokenAssetData);
+        const buyOrders = await this._getOrdersAsync(quoteTokenAssetData, baseTokenAssetData);
         return [...sellOrders, ...buyOrders];
     }
 

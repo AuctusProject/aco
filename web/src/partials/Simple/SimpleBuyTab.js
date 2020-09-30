@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, getBinanceSymbolForPair, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE } from '../../util/constants'
 import { getOptionFormattedPrice, getBalanceOfAsset } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
@@ -52,8 +52,7 @@ class SimpleBuyTab extends Component {
 
   setPairCurrentPrice = () => {
     if (this.props.selectedPair) {
-      var pairSymbol = getBinanceSymbolForPair(this.props.selectedPair)
-      var price = this.context.ticker && this.context.ticker.data[pairSymbol] && this.context.ticker.data[pairSymbol].currentClosePrice
+      var price = this.context.ticker && this.context.ticker[this.props.selectedPair.underlyingSymbol]
       if (price) {
         this.setState({currentPairPrice: price})
       }

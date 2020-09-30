@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import StepIndicator from '../Write/StepIndicator'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getBinanceSymbolForPair, getSecondsToExpiry, formatPercentage, formatWithPrecision, swapQuoteBuySize } from '../../util/constants'
+import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getSecondsToExpiry, formatPercentage, formatWithPrecision, swapQuoteBuySize } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import { getSwapQuote } from '../../util/zrxApi'
 import Loading from '../Util/Loading'
@@ -144,8 +144,8 @@ class SimpleWriteTab extends Component {
 
   getPairCurrentPrice = () => {
     if (this.props.selectedPair) {
-      var pairSymbol = getBinanceSymbolForPair(this.props.selectedPair)
-      return this.context.ticker && this.context.ticker.data[pairSymbol] && this.context.ticker.data[pairSymbol].currentClosePrice
+      var price = this.context.ticker && this.context.ticker[this.props.selectedPair.underlyingSymbol]
+      return price
     }
     return null
   }
@@ -162,7 +162,7 @@ class SimpleWriteTab extends Component {
     var pair = this.props.selectedPair
     var iconUrl = null
     if (isCall === "true") {
-      iconUrl = ASSETS_INFO[pair.underlyingSymbol] ? ASSETS_INFO[pair.underlyingSymbol].icon : null
+      iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[pair.underlyingSymbol]
     }
     else {
       iconUrl = ASSETS_INFO[pair.strikeAssetSymbol] ? ASSETS_INFO[pair.strikeAssetSymbol].icon : null
@@ -236,6 +236,7 @@ class SimpleWriteTab extends Component {
 }
 
 SimpleWriteTab.contextTypes = {
+  assetsImages: PropTypes.object,
   web3: PropTypes.object,
   ticker: PropTypes.object
 }

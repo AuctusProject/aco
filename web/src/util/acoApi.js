@@ -19,6 +19,24 @@ export function getTokensList() {
     })
 }
 
+var acoAssets = null
+export function getAcoAssets() {
+    return new Promise(function(resolve,reject){
+        if (acoAssets != null) {
+            resolve(acoAssets)
+            return
+        }
+        Axios.get(apiUrl + "assets")
+        .then(res => {
+            if (res && res.data) {
+                acoAssets = res.data
+            }
+            resolve(acoAssets)
+        })
+        .catch(err => reject(err));
+    })
+}
+
 export function isStrikeStableCoin(optionData) {
     return (optionData.strikeAssetInfo.symbol === "USDC" || optionData.strikeAssetInfo.symbol === "DAI"
     || optionData.strikeAssetInfo.symbol === "USDT")
