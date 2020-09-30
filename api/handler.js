@@ -1,5 +1,6 @@
 const web3Interface = require('./web3Interface.js');
 const deribitInterface = require('./deribitInterface.js');
+const internalInterface = require('./internalInterface.js');
 const email = require('./email.js');
 
 const setError = (statusCode, error) => {
@@ -48,6 +49,12 @@ module.exports.deribitTicker = (event, context, callback) => {
 
 module.exports.opynQuote = (event, context, callback) => {
   web3Interface.opynQuote(event.queryStringParameters).then((response) => {
+    callback(null, successCallback(response));
+  }).catch((err) => setError(null, err).then(error => callback(null, error)));
+};
+
+module.exports.assets = (event, context, callback) => {
+  internalInterface.assets(event.queryStringParameters).then((response) => {
     callback(null, successCallback(response));
   }).catch((err) => setError(null, err).then(error => callback(null, error)));
 };

@@ -6,7 +6,7 @@ import OptionBadge from '../OptionBadge'
 import { getOptionFormattedPrice, getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
 import { listPositionsForExercise } from '../../util/acoFactoryMethods'
 import { confirm } from '../../util/sweetalert'
-import { getBinanceSymbolForPair, fromDecimals, formatDate, PositionsLayoutMode } from '../../util/constants'
+import { fromDecimals, formatDate, PositionsLayoutMode } from '../../util/constants'
 
 class ExercisePositions extends Component {
   constructor() {
@@ -53,8 +53,7 @@ class ExercisePositions extends Component {
   }
 
   checkApiPrice = (position) => {
-    var pairSymbol = getBinanceSymbolForPair(this.props.selectedPair)
-    var price = this.context.ticker && this.context.ticker.data[pairSymbol] && this.context.ticker.data[pairSymbol].currentClosePrice
+    var price = this.context.ticker && this.context.ticker[this.props.selectedPair.underlyingSymbol]
     var option = position.option
     var formattedStrikePrice = fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals)
     if ((formattedStrikePrice > price && option.isCall) || (formattedStrikePrice < price && !option.isCall)) {

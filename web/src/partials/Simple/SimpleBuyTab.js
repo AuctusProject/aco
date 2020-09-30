@@ -5,10 +5,9 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, getBinanceSymbolForPair } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE } from '../../util/constants'
 import { getOptionFormattedPrice, getBalanceOfAsset } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
-import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
 import Web3Utils from 'web3-utils'
 import { checkTransactionIsMined, getNextNonce, sendTransactionWithNonce } from '../../util/web3Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
@@ -19,6 +18,13 @@ import { allowDeposit, allowance } from '../../util/erc20Methods'
 import { getDeribiData, getOpynQuote } from '../../util/acoApi'
 import StepsModal from '../StepsModal/StepsModal'
 import VerifyModal from '../VerifyModal'
+import { swap } from '../../util/acoPoolMethods'
+import { getBestQuote } from '../../util/acoQuote'
+import BigNumber from 'bignumber.js'
+import SlippageModal from '../SlippageModal'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import ReactTooltip from 'react-tooltip'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -30,7 +36,8 @@ class SimpleBuyTab extends Component {
       deribitPrice: null, 
       qtyValue: "1.00", 
       strikeAssetBalance: null,
-      currentPairPrice: null 
+      currentPairPrice: null,
+      maxSlippage: DEFAULT_SLIPPAGE
     }
   }
 
@@ -45,8 +52,7 @@ class SimpleBuyTab extends Component {
 
   setPairCurrentPrice = () => {
     if (this.props.selectedPair) {
-      var pairSymbol = getBinanceSymbolForPair(this.props.selectedPair)
-      var price = this.context.ticker && this.context.ticker.data[pairSymbol] && this.context.ticker.data[pairSymbol].currentClosePrice
+      var price = this.context.ticker && this.context.ticker[this.props.selectedPair.underlyingSymbol]
       if (price) {
         this.setState({currentPairPrice: price})
       }
@@ -210,7 +216,7 @@ class SimpleBuyTab extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.state.selectedOption.strikeAsset, erc20Proxy, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.state.selectedOption.strikeAsset, this.getAllowanceAddress(), nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -249,7 +255,7 @@ class SimpleBuyTab extends Component {
     var previousQuote = this.state.swapQuote
     this.showVerifyQuote(() => {
         this.refreshSwapQuote(this.state.selectedOption, () => {
-          if (previousQuote && this.state.swapQuote && previousQuote.price === this.state.swapQuote.price) {
+          if (previousQuote && this.state.swapQuote && previousQuote.price.toString() === this.state.swapQuote.price.toString()) {
             this.setState({verifyModalInfo: null})
             this.sendBuyTransaction(stepNumber, nonce, needApproval)
           }
@@ -282,32 +288,52 @@ class SimpleBuyTab extends Component {
     return <>Pay {this.getTotalToBePaidFormatted()} in return for the right to {this.state.selectedOption.isCall ? "sell" : "buy"} {this.state.qtyValue} {this.state.selectedOption.underlyingInfo.symbol} for {getOptionFormattedPrice(this.state.selectedOption)} each until {formatDate(this.state.selectedOption.expiryTime)}.</>
   }
 
+  sendQuotedTransaction = (nonce) => {
+    if (this.state.swapQuote.isPoolQuote) {
+      var amount = toDecimals(this.state.qtyValue, this.state.selectedOption.acoTokenInfo.decimals)
+      var restriction = this.getMaxToPay()
+      var deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
+      return swap(this.context.web3.selectedAccount, true, this.state.swapQuote.poolAddress, this.state.selectedOption.acoToken, amount.toString(), restriction.toString(), deadline, nonce)
+    }
+    else {
+      return sendTransactionWithNonce(this.state.swapQuote.gasPrice, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
+    }
+  }
+
+  getMaxToPay = () => {
+    if (this.state.qtyValue && this.state.qtyValue > 0 && this.state.selectedOption && this.state.swapQuote) {
+      var amount = new BigNumber(this.state.qtyValue)
+      var value = amount.times(new BigNumber(this.state.swapQuote.price)).times(new BigNumber(1+this.state.maxSlippage))
+      return toDecimals(value, this.state.selectedOption.underlyingInfo.decimals)
+    }
+  }
+
   sendBuyTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
-    sendTransactionWithNonce(this.state.swapQuote.gasPrice, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
-      .then(result => {
-        if (result) {
-          this.setStepsModalInfo(++stepNumber, needApproval)
-          checkTransactionIsMined(result)
-            .then(result => {
-              if (result) {
-                this.setStepsModalInfo(++stepNumber, needApproval)
-              }
-              else {
-                this.setStepsModalInfo(-1, needApproval)
-              }
-            })
-            .catch(() => {
+    this.sendQuotedTransaction(nonce)
+    .then(result => {
+      if (result) {
+        this.setStepsModalInfo(++stepNumber, needApproval)
+        checkTransactionIsMined(result)
+          .then(result => {
+            if (result) {
+              this.setStepsModalInfo(++stepNumber, needApproval)
+            }
+            else {
               this.setStepsModalInfo(-1, needApproval)
-            })
-        }
-        else {
-          this.setStepsModalInfo(-1, needApproval)
-        }
-      })
-      .catch(() => {
+            }
+          })
+          .catch(() => {
+            this.setStepsModalInfo(-1, needApproval)
+          })
+      }
+      else {
         this.setStepsModalInfo(-1, needApproval)
-      })
+      }
+    })
+    .catch(() => {
+      this.setStepsModalInfo(-1, needApproval)
+    })
   }
 
   setStepsModalInfo = (stepNumber, needApproval) => {
@@ -373,7 +399,7 @@ class SimpleBuyTab extends Component {
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isPayEth()) {
-        allowance(this.context.web3.selectedAccount, this.state.selectedOption.strikeAsset, erc20Proxy).then(result => {
+        allowance(this.context.web3.selectedAccount, this.state.selectedOption.strikeAsset, this.getAllowanceAddress()).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(toDecimals(this.getTotalToBePaid(), this.state.selectedOption.strikeAssetInfo.decimals)))
         })
@@ -382,6 +408,10 @@ class SimpleBuyTab extends Component {
         resolve(false)
       }
     })
+  }
+
+  getAllowanceAddress = () => {
+    return this.state.swapQuote.isPoolQuote ? this.state.swapQuote.poolAddress : erc20Proxy
   }
   
   isPayEth = () => {
@@ -429,21 +459,20 @@ class SimpleBuyTab extends Component {
   }
 
   refreshSwapQuote = (selectedOption, callback) => {
-    this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
+    this.setState({poolQuote: null, swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
       this.internalRefreshSwapQuote(selectedOption, callback)
     })
   }
 
   internalRefreshSwapQuote = (selectedOption, callback) => {
     if (selectedOption && this.state.qtyValue && this.state.qtyValue > 0) {
-      getSwapQuote(selectedOption.acoToken, selectedOption.strikeAsset, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString(), true).then(swapQuote => {
-        this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false}, callback)
-      }).catch((err) => {
-        if (isInsufficientLiquidity(err)) {
-          this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false}, callback)
+      getBestQuote(selectedOption, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString(), true)
+      .then(result => {
+        if (result.isPoolQuote) {
+          this.setState({swapQuote: result, errorMessage: null, loadingSwap: false}, callback)
         }
         else {
-          this.setState({swapQuote: null, errorMessage: "Exchange unavailable", loadingSwap: false}, callback)
+          this.setState({swapQuote: result.quote, errorMessage: result.errorMessage, loadingSwap: false}, callback)
         }
       })
     }
@@ -470,6 +499,14 @@ class SimpleBuyTab extends Component {
     return "-"
   }
 
+  getMaxToPayFormatted = () => {
+    var maxToPay = this.getMaxToPay()
+    if (maxToPay) {
+      return fromDecimals(maxToPay, this.state.selectedOption.underlyingInfo.decimals) + " " + this.props.selectedPair.strikeAssetSymbol
+    }
+    return "-"
+  }
+
   formatPrice = (price) => {
     if (price) {
       return "$" + formatWithPrecision(price)
@@ -484,6 +521,17 @@ class SimpleBuyTab extends Component {
   isInsufficientFunds = () => {
     var totalToBePaid = this.getTotalToBePaid()
     return this.state.selectedOption != null && totalToBePaid !== null && this.state.strikeAssetBalance !== null && this.state.strikeAssetBalance.lt(toDecimals(this.getTotalToBePaid(), this.getStrikeAssetDecimals()))
+  }
+
+  getSlippageFormatted = () => {
+    return formatPercentage(this.state.maxSlippage)
+  }
+
+  onSlippageClick = () => {
+    let slippageModalInfo = {}
+    slippageModalInfo.onClose = () => this.setState({slippageModalInfo: null})
+    slippageModalInfo.setMaxSlippage = (value) => this.setState({maxSlippage: value})
+    this.setState({slippageModalInfo: slippageModalInfo})
   }
 
   render() {
@@ -539,6 +587,23 @@ class SimpleBuyTab extends Component {
             <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.formatPrice(this.state.opynPrice)}</div></div>
             <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
           </div>
+          <div className="separator"></div>
+          <div className="input-column configurations-column">
+            <div className="input-label">Slippage tolerance&nbsp;<FontAwesomeIcon data-tip data-for={"slippage-tolerance-tooltip"} icon={faInfoCircle}></FontAwesomeIcon></div>
+            <div className="input-value clickable" onClick={this.onSlippageClick}>
+              {this.getSlippageFormatted()}
+            </div>
+            <ReactTooltip className="info-tooltip" id={"slippage-tolerance-tooltip"}>
+              Your transaction will revert if the price changes unfavorably by more than this percentage.
+            </ReactTooltip>
+            <div className="input-label">Maximum to be paid&nbsp;<FontAwesomeIcon data-tip data-for={"maximum-to-pay-tooltip"} icon={faInfoCircle}></FontAwesomeIcon></div>
+            <div className="input-value">
+              {this.getMaxToPayFormatted()}
+            </div>
+            <ReactTooltip className="info-tooltip" id={"maximum-to-pay-tooltip"}>
+              Your transaction will revert if there is a large, unfavorable price movement before it is confirmed.
+            </ReactTooltip>
+          </div>
         </div>
       </div>
       <div className="action-button-wrapper">
@@ -556,6 +621,7 @@ class SimpleBuyTab extends Component {
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
       {this.state.verifyModalInfo && <VerifyModal {...this.state.verifyModalInfo} />}
+      {this.state.slippageModalInfo && <SlippageModal {...this.state.slippageModalInfo} maxSlippage={this.state.maxSlippage} />}
     </div>
   }
 }

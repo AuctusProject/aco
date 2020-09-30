@@ -1,15 +1,12 @@
 import './PairInfo.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { ASSETS_INFO } from '../util/assets'
-import { getBinanceSymbolForPair } from '../util/constants'
 
 class PairInfo extends Component {
   render() {
     var pair = this.props.pair
-    var iconUrl = ASSETS_INFO[pair.underlyingSymbol] ? ASSETS_INFO[pair.underlyingSymbol].icon : null
-    var pairSymbol = getBinanceSymbolForPair(pair)
-    var price = this.context.ticker && this.context.ticker.data[pairSymbol] && this.context.ticker.data[pairSymbol].currentClosePrice
+    var iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[pair.underlyingSymbol]
+    var price = this.context.ticker && this.context.ticker[pair.underlyingSymbol]
     return (
       <div className="pair-info">
         <div className="pair-img-symbol">
@@ -23,6 +20,7 @@ class PairInfo extends Component {
   }
 }
 PairInfo.contextTypes = {
+  assetsImages: PropTypes.object,
   ticker: PropTypes.object
 }
 export default PairInfo

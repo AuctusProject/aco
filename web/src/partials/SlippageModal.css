@@ -1,0 +1,66 @@
+.slippage-modal .modal-body{
+    padding: 0 1rem 1rem;
+}
+
+.slippage-modal .steps-modal-title {
+    margin-top: 0;
+}
+
+.slippage-modal button {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.slippage-modal .btn-outline-secondary {
+    color: #4c4c4c;
+    border-color: #4c4c4c;
+    border-radius: 0;
+    height: 35px;
+}
+
+.slippage-modal .btn-secondary {
+    background-color: #4c4c4c;
+    border-color: #4c4c4c;
+    border-radius: 0;
+    height: 35px;
+}
+
+.slippage-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slippage-modal .action-btn {
+    margin-top: 20px;
+}
+
+.slippage-options .input-field {
+    width: 80px;
+}
+
+.slippage-options .input-field input {
+    color: white;
+    font-size: 15px;
+}
+
+.percentage-label {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 500;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.25px;
+    height: 20px;
+    line-height: 20px;
+    position: absolute;
+    right: 4px;
+    width: 12px;
+    text-align: center;
+}
+
+.error-alert { 
+    margin-top: 8px;
+    color: red;
+    font-size: 14px;
+}

@@ -49,9 +49,9 @@ class OptionChart extends Component {
         lineTension: 0.01,
         showLine: true,
         pointRadius: 0,
-        hitRadius: 4,
-        pointHitRadius: 4,
-        hoverRadius: 3,
+        hitRadius: 5,
+        pointHitRadius: 5,
+        hoverRadius: 4,
         hoverBorderWidth: 0,
         data: [],
         backgroundColor: '#a8c708'
@@ -83,16 +83,18 @@ class OptionChart extends Component {
         max = max + 2.6 * step
       }
       var x = min
+      var internalStep = Math.min(1, (step/3))
       var inflectionPoint = false
       while (x <= max) {
         chart.datasets[0].data.push({x: x, y: this.getProfit(x)})
-        if (!inflectionPoint && x + 1 > this.props.strikePrice) {
+        if (!inflectionPoint && x + internalStep > this.props.strikePrice) {
           chart.datasets[0].data.push({x: this.props.strikePrice, y: this.getProfit(this.props.strikePrice)})
           inflectionPoint = true
         }
-        x += 1
-        if (x < max && x + 1 > max) x = max
+        x += internalStep
+        if (x < max && x + internalStep > max) x = max
       }
+      chart.datasets[0].data.sort((a,b) => a.x > b.x ? 1 : -1)
       const xAxes = JSON.parse(axesProprerties)
       xAxes.scaleLabel.labelString = "Price"
       xAxes.gridLines.borderDash = [step/2, step/2]
@@ -107,12 +109,13 @@ class OptionChart extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if ((!!this.props.optionPrice && !isNaN(this.props.optionPrice) && prevProps.optionPrice !== this.props.optionPrice) || 
-        (!!this.props.strikePrice && !isNaN(this.props.strikePrice) && prevProps.strikePrice !== this.props.strikePrice) ||
-        (!!this.props.quantity && !isNaN(this.props.quantity) && prevProps.quantity !== this.props.quantity) ||
-        (!!this.props.volatility && !isNaN(this.props.volatility) && prevProps.volatility !== this.props.volatility) ||
-        (!!this.props.currentPrice && !isNaN(this.props.currentPrice) && prevProps.currentPrice !== this.props.currentPrice) ||
-        prevProps.isBuy !== this.props.isBuy || prevProps.isCall !== this.props.isCall) {
+    if (prevProps.optionPrice !== this.props.optionPrice || 
+        prevProps.strikePrice !== this.props.strikePrice ||
+        prevProps.quantity !== this.props.quantity ||
+        prevProps.volatility !== this.props.volatility ||
+        prevProps.currentPrice !== this.props.currentPrice ||
+        prevProps.isBuy !== this.props.isBuy || 
+        prevProps.isCall !== this.props.isCall) {
         this.componentDidMount()
     }
   }

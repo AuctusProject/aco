@@ -4,6 +4,7 @@ export const zero = new Web3Utils.BN(0);
 const negative1 = new Web3Utils.BN(-1);
 
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
+export const acoPoolFactoryAddress = process.env.REACT_APP_ACO_POOL_FACTORY_ADDRESS; 
 export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
 export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
 export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
@@ -16,7 +17,7 @@ export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE)
 export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
-export const pairMappedToBinanceSymbols = JSON.parse(process.env.REACT_APP_PAIR_TO_BINANCE_SYMBOLS)
+export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
 export const swapQuoteBuySize = "1000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
@@ -25,6 +26,7 @@ export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
+export const DEFAULT_SLIPPAGE = 0.05
 
 export const OPTION_TYPES = {
     1: {
@@ -184,13 +186,6 @@ export function formatWithPrecision(number, significantDigits = 4) {
     }
 }
 
-export function getBinanceSymbolForPair(pair) {
-    if (pairMappedToBinanceSymbols[pair.id.toUpperCase()]){
-        return pairMappedToBinanceSymbols[pair.id.toUpperCase()].toLowerCase()
-    }
-    return pair.id.replace("_","").toLowerCase()
-}
-
 
 export function getNumberWithSignal(number) {
     if(number > 0){
@@ -301,4 +296,21 @@ export const getCurrentRoute = (location) => {
       }
     }
     return null;
+}
+
+
+export const addressToData = (address) => {
+    return address.substring(2).toLowerCase().padStart(64, '0');
+}
+  
+export const dataToAddress = (data) => {
+    return data.substring(23)
+}
+  
+export const numberToData = (num) => {
+    return num.toString(16).padStart(64, '0')
+}
+  
+export const booleanToData = (bool) => {
+    return "000000000000000000000000000000000000000000000000000000000000000" + (bool ? "1" : "0")
 }

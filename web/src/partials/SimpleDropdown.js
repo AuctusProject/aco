@@ -1,6 +1,5 @@
 import './SimpleDropdown.css'
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
@@ -32,8 +31,5 @@ class SimpleDropdown extends Component {
       </li>
       </ul>)
   }
-}
-SimpleDropdown.contextTypes = {
-  ticker: PropTypes.object
 }
 export default SimpleDropdown
