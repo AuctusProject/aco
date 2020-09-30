@@ -34,6 +34,12 @@ module.exports.tokens = (event, context, callback) => {
   }).catch((err) => setError(null, err).then(error => callback(null, error)));
 };
 
+module.exports.pools = (event, context, callback) => {
+  web3Interface.acoPools().then((response) => {
+    callback(null, successCallback(response));
+  }).catch((err) => setError(null, err).then(error => callback(null, error)));
+};
+
 module.exports.deribitTicker = (event, context, callback) => {
   deribitInterface.ticker(event.queryStringParameters).then((response) => {
     callback(null, successCallback(response));
