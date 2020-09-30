@@ -63,6 +63,19 @@ const getBaseVolatility = (pool) => {
   });
 };
 
+const getCollateralDeposited = (pool) => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0x6311d06a"}).then((result) => 
+      {
+        if (result) {
+          resolve(BigInt(result).toString());
+        } else {
+          reject(new Error("Invalid collateral deposited"));
+        }
+      }).catch((err) => reject(err));
+  });
+};
+
 const getSymbol = (token) => {
   return new Promise((resolve, reject) => {
     if (isEther(token)) {
@@ -232,6 +245,8 @@ module.exports.acoPools = () => {
       for (let i = 0; i < response.length; ++i) {
         added[(response[i].acoPool+"vol")] = promises.length;
         promises.push(getBaseVolatility(response[i].acoPool));
+        added[(response[i].acoPool+"deposit")] = promises.length;
+        promises.push(getCollateralDeposited(response[i].acoPool));
         added[response[i].acoPool] = promises.length;
         promises.push(getTokenInfo(response[i].acoPool));
         if (added[response[i].underlying] === undefined) {
@@ -247,6 +262,7 @@ module.exports.acoPools = () => {
       {
         for (let j = 0; j < response.length; ++j) {
           response[j].volatility = result[added[(response[j].acoPool+"vol")]];
+          response[j].collateralDeposited = result[added[(response[j].acoPool+"deposit")]];
           response[j].acoPoolInfo = result[added[response[j].acoPool]];
           response[j].underlyingInfo = result[added[response[j].underlying]];
           response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
