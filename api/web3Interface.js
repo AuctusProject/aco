@@ -157,17 +157,17 @@ const listAcoPools = () => {
       const response = [];
       if (result) {
         const size = 64;
-        const now = Date.now();
+        const now = Math.ceil(Date.now() / 1000);
         for (let k = 0; k < result.length; ++k) {
           let event = {};
           let pureData = result[k].data.substring(2);
           let numChunks = Math.ceil(pureData.length / size);
           for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
-            if (i === 0) event.poolStart = parseInt(pureData.substring(o, o + size), 16) * 1000;
+            if (i === 0) event.poolStart = parseInt(pureData.substring(o, o + size), 16);
             else if (i === 1) event.minStrikePrice = BigInt("0x" + pureData.substring(o, o + size)).toString(10);
             else if (i === 2) event.maxStrikePrice = BigInt("0x" + pureData.substring(o, o + size)).toString(10);
-            else if (i === 3) event.minExpiration = parseInt(pureData.substring(o, o + size), 16) * 1000;
-            else if (i === 4) event.maxExpiration = parseInt(pureData.substring(o, o + size), 16) * 1000;
+            else if (i === 3) event.minExpiration = parseInt(pureData.substring(o, o + size), 16);
+            else if (i === 4) event.maxExpiration = parseInt(pureData.substring(o, o + size), 16);
             else if (i === 5) event.canBuy = (parseInt(pureData.substring(o, o + size), 16) === 1);
             else if (i === 6) event.acoPool = ("0x" + pureData.substring(o + 24, o + size));
             else if (i === 7) event.acoPoolImplementation = ("0x" + pureData.substring(o + 24, o + size));
