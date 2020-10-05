@@ -71,7 +71,7 @@ function fillTokensInformations(options, assetsAddresses) {
                 acoTokenPromises.push(acoTokenFeePromise)
                 acoTokenFeePromise.then(result => {
                     options[i].acoFee = result
-                })                
+                })
             }
             Promise.all(acoTokenPromises).then(() => {
                 resolve(options)

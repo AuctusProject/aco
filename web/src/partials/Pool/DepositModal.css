@@ -1,0 +1,12 @@
+.deposit-modal .confirm-card-header {
+    height: unset;
+}
+
+.pool-summary {
+    padding: 14px;
+}
+
+.pool-warning {
+    padding-top: 20px;
+    color: #a8c708;
+}

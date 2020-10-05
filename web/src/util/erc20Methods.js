@@ -1,4 +1,3 @@
-import Web3Utils from 'web3-utils'
 import { getWeb3, sendTransactionWithNonce, sendTransaction } from './web3Methods'
 import { isEther } from './constants'
 import { erc20ABI } from './erc20ABI'
@@ -41,22 +40,8 @@ export function allowance(from, token, to) {
     return tokenContract.methods.allowance(from, to).call()
 }
 
-export function getTokenBalance(tknContractAddress, accountAddrs) {
-    return new Promise(function (resolve, reject) {
-        const _web3 = getWeb3()
-        const exchangeContract = new _web3.eth.Contract(erc20ABI, tknContractAddress)
-        var data = exchangeContract.methods.balanceOf(accountAddrs).encodeABI()
-        _web3.eth.call({
-            to: tknContractAddress,
-            data: data
-        }, function (err, result) {
-            if (result) {
-                var tokensBN = Web3Utils.toBN(result)
-                resolve(tokensBN)
-            }
-            else {
-                resolve(0)
-            }
-        })
-    })
+export function balanceOf(erc20Address, userAddress) {
+    const _web3 = getWeb3()
+    const erc20Contract = new _web3.eth.Contract(erc20ABI, erc20Address)
+    return erc20Contract.methods.balanceOf(userAddress).call()
 }

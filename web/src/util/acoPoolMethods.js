@@ -1,4 +1,4 @@
-import { getWeb3, sendTransactionWithNonce } from './web3Methods'
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
 import { acoPoolABI } from './acoPoolABI';
 import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
@@ -57,9 +57,31 @@ export const getBestPoolQuote = (isBuying, option, amount) => {
     })
 }
 
-
 export const swap = (from, isBuying, acoPoolAddress, acoToken, amount, restriction, deadline, nonce) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
     var data = acoPoolContract.methods.swap(isBuying, acoToken, amount, restriction, from, deadline).encodeABI()
     return sendTransactionWithNonce(null, null, from, acoPoolAddress, null, data, null, nonce)
+}
+
+export function collateralDeposited(acoPoolAddress) {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.collateralDeposited().call()
+}
+
+export function baseVolatility(acoPoolAddress) {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.baseVolatility().call()
+}
+
+export const deposit = (from, acoPoolAddress, amount, isEther, nonce) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    var data = acoPoolContract.methods.deposit(amount, from).encodeABI()
+    var value = isEther ? amount : 0
+    return sendTransactionWithNonce(null, null, from, acoPoolAddress, value, data, null, nonce)
+}
+
+export const redeem = (from, acoPoolAddress) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    var data = acoPoolContract.methods.redeem().encodeABI()
+    return sendTransaction(null, null, from, acoPoolAddress, null, data)
 }

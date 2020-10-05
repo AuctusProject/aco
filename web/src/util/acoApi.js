@@ -37,6 +37,24 @@ export function getAcoAssets() {
     })
 }
 
+var acoPools = null
+export function getAcoPools() {
+    return new Promise(function(resolve,reject){
+        if (acoPools != null) {
+            resolve(acoPools)
+            return
+        }
+        Axios.get(apiUrl + "pools")
+        .then(res => {
+            if (res && res.data) {
+                acoPools = res.data
+            }
+            resolve(acoPools)
+        })
+        .catch(err => reject(err));
+    })
+}
+
 export function isStrikeStableCoin(optionData) {
     return (optionData.strikeAssetInfo.symbol === "USDC" || optionData.strikeAssetInfo.symbol === "DAI"
     || optionData.strikeAssetInfo.symbol === "USDT")

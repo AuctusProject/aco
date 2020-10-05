@@ -1,4 +1,6 @@
 import Web3Utils from 'web3-utils'
+import { balanceOf } from './erc20Methods';
+import { checkEthBalanceOf } from './web3Methods';
 
 export const zero = new Web3Utils.BN(0);
 const negative1 = new Web3Utils.BN(-1);
@@ -80,8 +82,20 @@ export const isEther = (assetAddress) => {
     return assetAddress === ethAddress
 }
 
+export function getBalanceOfAsset(assetAddress, userAddress) {
+    if (isEther(assetAddress)) {
+        return checkEthBalanceOf(userAddress)
+    }
+    else {
+        return balanceOf(assetAddress, userAddress)
+    }
+}
+
 export function fromDecimals(input, decimals, maxSignificantsDigits = 4, minSignificantsDigits = 4) {
-    if (input && input.decimalPlaces) {
+    if (!input) {
+        return null
+    }
+    if (input.decimalPlaces) {
         input = input.decimalPlaces(0)
     }
     var integerValue = Web3Utils.toBN(input.toString())
@@ -285,9 +299,11 @@ export const getCurrentRoute = (location) => {
       "/advanced/exercise",
       "/advanced/mint",
       "/advanced/trade",
+      "/advanced/pools",
       "/buy",
       "/write",
-      "/manage",      
+      "/manage",
+      "/pools"
     ]
     for (let i = 0; i < routes.length; i++) {
       const route = routes[i];

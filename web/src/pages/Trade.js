@@ -4,9 +4,9 @@ import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
 import TradeMenu from '../partials/TradeMenu'
 import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeOptionsList'
-import { getMarketDetails } from '../util/constants'
+import { getBalanceOfAsset, getMarketDetails } from '../util/constants'
 import { listOptions } from '../util/acoFactoryMethods'
-import { balanceOf, getBalanceOfAsset } from '../util/acoTokenMethods'
+import { balanceOf } from '../util/acoTokenMethods'
 
 export const ALL_OPTIONS_KEY = "all"
 

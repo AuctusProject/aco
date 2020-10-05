@@ -19,6 +19,7 @@ import { getNetworkName, CHAIN_ID, getMarketDetails, getCurrentRoute, getPairIdF
 import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
+import Pools from './pages/Pools'
 
 class App extends Component {
   constructor() {
@@ -167,7 +168,7 @@ class App extends Component {
                   /> }
                 />                
                 <Route 
-                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
+                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`, '/pools/:pair?/:tokenAddress?']}
                   render={ routeProps => <Simple 
                     {...routeProps}
                     signIn={this.showSignInModal}
@@ -178,6 +179,14 @@ class App extends Component {
                     orderBooks={this.state.orderBooks}
                     toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
                     loadOrderbookFromOptions={this.loadOrderbookFromOptions}
+                  /> }
+                />
+                <Route 
+                  path={`/advanced/pools/:pair?/:tokenAddress?`}
+                  render={ routeProps => <Pools 
+                    {...routeProps}
+                    signIn={this.showSignInModal}
+                    accountToggle={this.state.accountToggle}
                   /> }
                 />
                 <Route 
