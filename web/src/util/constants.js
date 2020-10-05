@@ -83,12 +83,24 @@ export const isEther = (assetAddress) => {
 }
 
 export function getBalanceOfAsset(assetAddress, userAddress) {
-    if (isEther(assetAddress)) {
-        return checkEthBalanceOf(userAddress)
-    }
-    else {
-        return balanceOf(assetAddress, userAddress)
-    }
+    return new Promise(function (resolve, reject) {
+        let balance
+        if (isEther(assetAddress)) {
+            balance = checkEthBalanceOf(userAddress)
+        }
+        else {
+            balance = balanceOf(assetAddress, userAddress)
+        }
+        balance.then(result => {
+            if (result) {
+                var tokensBN = Web3Utils.toBN(result)
+                resolve(tokensBN)
+            }
+            else {
+                resolve(0)
+            }
+        })
+    })    
 }
 
 export function fromDecimals(input, decimals, maxSignificantsDigits = 4, minSignificantsDigits = 4) {

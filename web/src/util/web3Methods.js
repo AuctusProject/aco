@@ -26,13 +26,7 @@ export function connectMetamask() {
 export function checkEthBalanceOf(address) {    
     return new Promise(function (resolve, reject) {
         getWeb3().eth.getBalance(address, function (err, result) {
-            if (result) {
-                var tokensBN = Web3Utils.toBN(result)
-                resolve(tokensBN)
-            }
-            else {
-                resolve(0)
-            }
+            resolve(result)
         })
     })
 }
