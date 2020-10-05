@@ -18,6 +18,14 @@ functions:
           path: /tokens
           method: get
           cors: true
+  pools:
+    handler: handler.pools
+    timeout: 30
+    events:
+      - http:
+          path: /pools
+          method: get
+          cors: true
   deribit:
     handler: handler.deribitTicker
     timeout: 30

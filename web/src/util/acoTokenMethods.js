@@ -1,8 +1,7 @@
-import { getWeb3, sendTransaction, checkEthBalanceOf, sendTransactionWithNonce } from './web3Methods'
-import { isEther, fromDecimals, toDecimals } from './constants';
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
+import { isEther, fromDecimals, toDecimals, getBalanceOfAsset } from './constants';
 import { acoTokenABI } from './acoTokenABI';
 import Web3Utils from 'web3-utils';
-import { getTokenBalance } from './erc20Methods';
 
 function getAcoTokenContract(address) {
     var acoTokenContract = null
@@ -67,15 +66,6 @@ export function getBalanceOfCollateralAsset(optionInfo, userAddress) {
 export function getBalanceOfExerciseAsset(optionInfo, userAddress) {
     var assetAddress = getExerciseAddress(optionInfo)
     return getBalanceOfAsset(assetAddress, userAddress)
-}
-
-export function getBalanceOfAsset(assetAddress, userAddress) {
-    if (isEther(assetAddress)) {
-        return checkEthBalanceOf(userAddress)
-    }
-    else {
-        return getTokenBalance(assetAddress, userAddress)
-    }
 }
 
 export function acoFee(optionInfo) {

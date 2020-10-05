@@ -1,9 +1,12 @@
 import Web3Utils from 'web3-utils'
+import { balanceOf } from './erc20Methods';
+import { checkEthBalanceOf } from './web3Methods';
 
 export const zero = new Web3Utils.BN(0);
 const negative1 = new Web3Utils.BN(-1);
 
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
+export const acoPoolFactoryAddress = process.env.REACT_APP_ACO_POOL_FACTORY_ADDRESS; 
 export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
 export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
 export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
@@ -25,6 +28,7 @@ export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
+export const DEFAULT_SLIPPAGE = 0.05
 
 export const OPTION_TYPES = {
     1: {
@@ -78,8 +82,20 @@ export const isEther = (assetAddress) => {
     return assetAddress === ethAddress
 }
 
+export function getBalanceOfAsset(assetAddress, userAddress) {
+    if (isEther(assetAddress)) {
+        return checkEthBalanceOf(userAddress)
+    }
+    else {
+        return balanceOf(assetAddress, userAddress)
+    }
+}
+
 export function fromDecimals(input, decimals, maxSignificantsDigits = 4, minSignificantsDigits = 4) {
-    if (input && input.decimalPlaces) {
+    if (!input) {
+        return null
+    }
+    if (input.decimalPlaces) {
         input = input.decimalPlaces(0)
     }
     var integerValue = Web3Utils.toBN(input.toString())
@@ -283,9 +299,11 @@ export const getCurrentRoute = (location) => {
       "/advanced/exercise",
       "/advanced/mint",
       "/advanced/trade",
+      "/advanced/pools",
       "/buy",
       "/write",
-      "/manage",      
+      "/manage",
+      "/pools"
     ]
     for (let i = 0; i < routes.length; i++) {
       const route = routes[i];
@@ -294,4 +312,21 @@ export const getCurrentRoute = (location) => {
       }
     }
     return null;
+}
+
+
+export const addressToData = (address) => {
+    return address.substring(2).toLowerCase().padStart(64, '0');
+}
+  
+export const dataToAddress = (data) => {
+    return data.substring(23)
+}
+  
+export const numberToData = (num) => {
+    return num.toString(16).padStart(64, '0')
+}
+  
+export const booleanToData = (bool) => {
+    return "000000000000000000000000000000000000000000000000000000000000000" + (bool ? "1" : "0")
 }

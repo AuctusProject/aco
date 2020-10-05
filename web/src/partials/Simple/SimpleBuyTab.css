@@ -108,7 +108,7 @@
 
 .prices-wrapper .input-label {
     height: unset;
-    padding-bottom: 8px;
+    padding-bottom: 2px;
 }
 
 .action-button-wrapper {
@@ -189,4 +189,13 @@
         width: 200px;
         margin: 10px auto;
     }
+}
+
+.configurations-column .input-value {
+    padding-bottom: 8px;
+}
+
+.info-tooltip {
+    max-width: 300px;
+    text-align: left;
 }

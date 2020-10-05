@@ -31,10 +31,6 @@ class NavBar extends Component {
     if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
       this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
     }
-
-    // if (this.props.location.pathname !== prevProps.location.pathname) {
-    //   this.forceUpdate()
-    // }
   }
 
   isAdvanced = () => {
@@ -60,6 +56,10 @@ class NavBar extends Component {
       url = "/write"
     } else if (window.location.pathname.indexOf("exercise") > 0) {
       url = "/manage"
+    } else if (window.location.pathname.indexOf("advanced/pools") > 0) {
+      url = "/pools"
+    } else if (window.location.pathname.indexOf("pools") > 0) {
+      url = "/advanced/pools"
     }
 
     url = this.getUrlWithPairId(url)
@@ -109,6 +109,7 @@ class NavBar extends Component {
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/trade")}>Trade</NavLink>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/mint")}>Mint</NavLink>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise</NavLink>
+                <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/pools")}>Pools</NavLink>
               </ul>}
               <ul className="navbar-nav nav-modes ml-auto">
                 <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>

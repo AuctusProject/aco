@@ -1,0 +1,67 @@
+.pool-card,
+.pooled-liquidity {
+    max-width: 640px;
+    border-radius: 12px;
+    margin: auto;
+    padding: 16px;
+    background-color: #151515;
+    margin-bottom: 16px;
+}
+
+.pooled-liquidity {
+    background-color: transparent;
+}
+
+.pooled-liquidity-title {
+    margin-bottom: 16px;
+    font-weight: bold;
+}
+
+.alert-message {
+    margin-top: 16px;
+    color: #a8c708;
+}
+
+.pool-header {
+    margin-bottom: 16px;
+}
+
+.pool-header,
+.pool-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pool-title {
+    display: flex;
+    flex-direction: column;
+}
+
+.pool-assets-type {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.pool-assets {
+    font-size: 20px;
+    margin-right: 8px;
+}
+
+.pool-countdown {
+    font-size: 14px;
+}
+
+.deposit-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.pooled-liquidity-empty {
+    max-width: 640px;
+    border-radius: 12px;
+    margin: auto;
+    padding: 0px 16px;
+}

@@ -61,6 +61,7 @@
     "react-chartjs-2": "^2.10.0",
     "react-color": "^2.17.3",
     "react-compound-slider": "^2.3.0",
+    "react-countdown": "^2.2.1",
     "react-dev-utils": "^9.0.1",
     "react-dom": "^16.8.6",
     "react-router-dom": "^4.3.1",

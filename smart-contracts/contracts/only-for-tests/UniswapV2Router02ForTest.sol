@@ -2,7 +2,7 @@
  * From https://etherscan.io/address/0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D#code
 */
 
-pragma solidity =0.6.6;
+pragma solidity ^0.6.6;
 
 interface IUniswapV2Factory {
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
@@ -697,7 +697,7 @@ library UniswapV2Library {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'96e8ac4277198ff8b6f785478aa9a39f403cb768dd02cbee326c3e7da348845f' // init code hash
+                hex'5314fac1c3973898785b27119e626591ac11c857f17e9219a7dd00fb6ad69657' // init code hash
             ))));
     }
 

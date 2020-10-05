@@ -11,6 +11,7 @@ import SimpleManageTab from '../partials/Simple/SimpleManageTab'
 import { getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import Pools from './Pools'
 
 class Simple extends Component {
   constructor() {
@@ -71,6 +72,9 @@ class Simple extends Component {
             <li className="nav-item">
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/manage`)}>Manage</NavLink>
             </li>
+            <li className="nav-item">
+              <NavLink className="nav-link" to={this.getUrlWithPairId(`/pools`)}>Pools</NavLink>
+            </li>
           </ul>
           <div className="tab-content" id="simpleTabsContent">
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("buy") > 0 ? " show active" : "")}>
@@ -81,6 +85,9 @@ class Simple extends Component {
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("manage") > 0 ? " show active" : "")}>
               <SimpleManageTab {...this.props} isConnected={this.isConnected()}/>
+            </div>
+            <div className={"tab-pane fade" + (window.location.pathname.indexOf("pools") > 0 ? " show active" : "")}>
+              <Pools {...this.props}/>
             </div>
           </div>
         </div>

@@ -50,6 +50,32 @@ const getTokenInfo = (token) => {
   });
 };
 
+const getBaseVolatility = (pool) => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0xbbe024a9"}).then((result) => 
+      {
+        if (result) {
+          resolve(parseInt(result, 16));
+        } else {
+          reject(new Error("Invalid volatility"));
+        }
+      }).catch((err) => reject(err));
+  });
+};
+
+const getCollateralDeposited = (pool) => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0x6311d06a"}).then((result) => 
+      {
+        if (result) {
+          resolve(BigInt(result).toString());
+        } else {
+          reject(new Error("Invalid collateral deposited"));
+        }
+      }).catch((err) => reject(err));
+  });
+};
+
 const getSymbol = (token) => {
   return new Promise((resolve, reject) => {
     if (isEther(token)) {
@@ -125,6 +151,41 @@ const listAcoTokens = () => {
   });
 };
 
+const listAcoPools = () => {   
+  return new Promise((resolve, reject) => { 
+    return callEthereum("eth_getLogs", {"address": [process.env.ACO_POOL_FACTORY], "fromBlock": fromBlock, "topics": ["0x603b4cf5dbf9184fdb9839cf9675603f15d10459e128ddbeea523235a47d2984"]}, null).then((result) => {
+      const response = [];
+      if (result) {
+        const size = 64;
+        const now = Math.ceil(Date.now() / 1000);
+        for (let k = 0; k < result.length; ++k) {
+          let event = {};
+          let pureData = result[k].data.substring(2);
+          let numChunks = Math.ceil(pureData.length / size);
+          for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+            if (i === 0) event.poolStart = parseInt(pureData.substring(o, o + size), 16);
+            else if (i === 1) event.minStrikePrice = BigInt("0x" + pureData.substring(o, o + size)).toString(10);
+            else if (i === 2) event.maxStrikePrice = BigInt("0x" + pureData.substring(o, o + size)).toString(10);
+            else if (i === 3) event.minExpiration = parseInt(pureData.substring(o, o + size), 16);
+            else if (i === 4) event.maxExpiration = parseInt(pureData.substring(o, o + size), 16);
+            else if (i === 5) event.canBuy = (parseInt(pureData.substring(o, o + size), 16) === 1);
+            else if (i === 6) event.acoPool = ("0x" + pureData.substring(o + 24, o + size));
+            else if (i === 7) event.acoPoolImplementation = ("0x" + pureData.substring(o + 24, o + size));
+          }
+          if (event.maxExpiration > now){
+            event.started = now >= event.poolStart;
+            event.underlying = ("0x" + result[k].topics[1].substring(26));
+            event.strikeAsset = ("0x" + result[k].topics[2].substring(26));
+            event.isCall = (parseInt(result[k].topics[3], 16) === 1);
+            response.push(event);
+          }
+        }
+      }
+      resolve(response);
+    }).catch((err) => reject(err));
+  });
+};
+
 module.exports.opynQuote = (queryArguments) => { 
   return new Promise((resolve, reject) => {
     if (!queryArguments || !queryArguments.exchange || !queryArguments.token || !queryArguments.swappedToken || 
@@ -166,6 +227,43 @@ module.exports.acoTokens = () => {
       {
         for (let j = 0; j < response.length; ++j) {
           response[j].acoTokenInfo = result[added[response[j].acoToken]];
+          response[j].underlyingInfo = result[added[response[j].underlying]];
+          response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
+        }
+        resolve(response);
+      }).catch((err) => reject(err));
+    }).catch((err) => reject(err));
+  });
+};
+
+module.exports.acoPools = () => {   
+  return new Promise((resolve, reject) => { 
+    listAcoPools().then((response) =>
+    {
+      const promises = [];
+      let added = {};
+      for (let i = 0; i < response.length; ++i) {
+        added[(response[i].acoPool+"vol")] = promises.length;
+        promises.push(getBaseVolatility(response[i].acoPool));
+        added[(response[i].acoPool+"deposit")] = promises.length;
+        promises.push(getCollateralDeposited(response[i].acoPool));
+        added[response[i].acoPool] = promises.length;
+        promises.push(getTokenInfo(response[i].acoPool));
+        if (added[response[i].underlying] === undefined) {
+          added[response[i].underlying] = promises.length;
+          promises.push(getTokenInfo(response[i].underlying));
+        }
+        if (added[response[i].strikeAsset] === undefined) {
+          added[response[i].strikeAsset] = promises.length;
+          promises.push(getTokenInfo(response[i].strikeAsset));
+        }
+      }
+      Promise.all(promises).then((result) =>
+      {
+        for (let j = 0; j < response.length; ++j) {
+          response[j].volatility = result[added[(response[j].acoPool+"vol")]];
+          response[j].collateralDeposited = result[added[(response[j].acoPool+"deposit")]];
+          response[j].acoPoolInfo = result[added[response[j].acoPool]];
           response[j].underlyingInfo = result[added[response[j].underlying]];
           response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
         }
