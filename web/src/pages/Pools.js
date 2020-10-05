@@ -46,7 +46,6 @@ class Pools extends Component {
       for (let index = 0; index < pools.length; index++) {
         const pool = pools[index]; 
         pool.balance = new BigNumber(results[index])
-        //pool.poolStart = Date.now()/1000 + 60*60*24
         if (pool.maxExpiration > now || pool.balance.gt(zero)) {
           filteredPools.push(pool) 
         }
@@ -111,6 +110,7 @@ class Pools extends Component {
           <div className="pooled-liquidity">
             <div className="pooled-liquidity-title">Pooled Liquidity</div>
             <div>Become a liquidity provider and receive premiums by automatically selling covered options.</div>
+            <div className="alert-message">Pooled liquidity is in beta. Use at your own risk.</div>
           </div>
         {this.state.pools && this.state.pools.map(pool => (
           <div className="pool-card" key={pool.acoPool}>

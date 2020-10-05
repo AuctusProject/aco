@@ -1,6 +1,6 @@
 import './Home.css'
 import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
+import { NavLink, withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { groupBy, formatDate } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -31,7 +31,7 @@ class Home extends Component {
       case4class: "",
       joinAnimation: (this.isMobile ? "" : " unshown "),
       startTradingAnimation: (this.isMobile ? "" : " unshown "),
-      showBanner: false
+      showBanner: true
     }
   }
 
@@ -183,9 +183,9 @@ class Home extends Component {
     <div className="home">
       {this.state.showBanner && 
         <div className="top-banner">
-            <div className="banner-title">SNX options now available!</div>
-            <div className="banner-subtitle">Start trading trustless SNX options immediately</div>
-            <a href="/buy/SNX_USDC/"><div className="banner-button">TRADE</div></a>
+            <div className="banner-title">Pooled liquidity is live!</div>
+            <div className="banner-subtitle">Become a liquidity provider and automatically sell covered options</div>
+            <NavLink to="/pools/ETH_USDC/"><div className="banner-button">DEPOSIT</div></NavLink>
             <div className="banner-dismiss" onClick={() => {this.setState({showBanner:false})}}><FontAwesomeIcon icon={faTimes}/></div>
         </div>
       }
@@ -204,6 +204,7 @@ class Home extends Component {
                 <a target="_blank"  rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
                 <a target="_blank"  rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
                 <a target="_blank"  rel="noopener noreferrer" href="https://discord.gg/9JqeMxs">DISCORD</a>
+                <NavLink to="/pools/ETH_USDC/">POOLS</NavLink>
               </ul>
               <ul className="navbar-nav nav-btns mt-2 mt-sm-0">
                 <div className="home-btn small white" onClick={() => this.onAction("trade")}>

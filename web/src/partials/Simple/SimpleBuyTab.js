@@ -60,7 +60,7 @@ class SimpleBuyTab extends Component {
   }
 
   refreshAccountBalance = () => {
-    if (this.context.web3.selectedAccount) {
+    if (this.context.web3.selectedAccount && this.props.selectedPair) {
       getBalanceOfAsset(this.props.selectedPair.strikeAsset, this.context.web3.selectedAccount)
       .then(result => this.setState({strikeAssetBalance: result}))
     }
