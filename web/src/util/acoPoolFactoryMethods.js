@@ -113,7 +113,8 @@ export const getAvailablePoolsForOption = (option) => {
             let filteredPools = []
             for (let i = 0; i < pools.length; i++) {
                 const pool = pools[i];
-                if (pool.minExpiration <= option.expiryTime &&
+                if (pool.poolStart * 1000 <= Date.now() &&
+                    pool.minExpiration <= option.expiryTime &&
                     pool.maxExpiration >= option.expiryTime &&
                     pool.minStrikePrice <= option.strikePrice &&
                     pool.maxStrikePrice >= option.strikePrice) {

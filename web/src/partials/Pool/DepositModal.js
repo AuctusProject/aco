@@ -14,6 +14,8 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { deposit } from '../../util/acoPoolMethods'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 
 class DepositModal extends Component {
   constructor(props) {
@@ -251,7 +253,7 @@ class DepositModal extends Component {
             </div>
             <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
               <div className="balance-column">
-                <div>Amount available to deposit: <span>{this.getFormattedDepositAssetBalance()}</span></div>
+                <div>Amount available to deposit: <span>{this.state.loading ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : this.getFormattedDepositAssetBalance()}</span></div>
               </div>
               <div className="card-separator"></div>
               <div className="input-row">
