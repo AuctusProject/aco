@@ -20,13 +20,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     using Address for address;
     
     uint256 internal constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
-    
-    struct AccountData {
-        uint256 accumulatedExercisedValue;
-        mapping(address => uint256) previousAcoTokensAmounts;
-        mapping(address => uint256) acoTokenOnDepositIndex;
-        address[] acoTokensOnDeposit;
-    }
 
     event SetController(address indexed oldController, address indexed newController);
     event SetAssetConverter(address indexed oldAssetConverter, address indexed newAssetConverter);
@@ -38,32 +31,30 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     event SetMinExpiration(uint256 indexed oldMinExpiration, uint256 indexed newMinExpiration);
     event SetMaxExpiration(uint256 indexed oldMaxExpiration, uint256 indexed newMaxExpiration);
     event SetMinTimeToExercise(uint256 indexed oldMinTimeToExercise, uint256 indexed newMinTimeToExercise);
-    event RemoveExpiredAco(address indexed acoToken);
+    event RewardAco(address indexed acoToken, uint256 acoTokenAmountIn);
     event ExerciseAco(address indexed acoToken, uint256 acoTokensOut, uint256 tokenIn);
 
-    IACOPoolFactory public immutable acoPoolFactory;
-    IACOFactory public immutable acoFactory;
-    IERC20 public immutable token;
+    IACOPoolFactory public immutable override acoPoolFactory;
+    IACOFactory public immutable override acoFactory;
+    IERC20 public immutable override token;
     
-    uint256 public minPercentageToKeep;
+    uint256 public override minPercentageToKeep;
     
-    IController public controller;
-    IACOAssetConverterHelper public assetConverter;
-    IACOFlashExercise public acoFlashExercise;
+    IController public override controller;
+    IACOAssetConverterHelper public override assetConverter;
+    IACOFlashExercise public override acoFlashExercise;
     
-    IACOPool public acoPool;
-    IACOToken public currentAcoToken;
-    address[] public acoTokens;
-    mapping(address => uint256) public acoTokensAmount;
-    mapping(address => uint256) public acoTokensIndex;
-    uint256 public tolerancePriceAbove;
-    uint256 public tolerancePriceBelow;
-    uint256 public minExpiration;
-    uint256 public maxExpiration;
-    uint256 public minTimeToExercise;
+    IACOPool public override acoPool;
+    IACOToken public override currentAcoToken;
+    address[] public override acoTokens;
+    uint256 public override tolerancePriceAbove;
+    uint256 public override tolerancePriceBelow;
+    uint256 public override minExpiration;
+    uint256 public override maxExpiration;
+    uint256 public override minTimeToExercise;
     
-    uint256 public totalTokensOnExercise;
-    mapping(address => AccountData) public accounts;
+    mapping(address => Position) internal positions;
+    mapping(address => AccountData) internal accounts;
     
     constructor(VaultInitData memory initData) public {
         super.init();
@@ -84,7 +75,14 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         _setMinExpiration(initData.minExpiration);
         _setTolerancePriceAbove(initData.tolerancePriceAbove);
         _setTolerancePriceBelow(initData.tolerancePriceBelow);
-        _setAcoToken(IACOAssetConverterHelper(initData.assetConverter), IACOFactory(initData.acoFactory), IACOPoolFactory(initData.acoPoolFactory), initData.currentAcoToken, initData.acoPool);
+        _setAcoToken(
+            IERC20(initData.token),
+            IACOAssetConverterHelper(initData.assetConverter), 
+            IACOFactory(initData.acoFactory), 
+            IACOPoolFactory(initData.acoPoolFactory), 
+            initData.currentAcoToken, 
+            initData.acoPool
+        );
     }
 
     function name() public view override returns(string memory) {
@@ -97,6 +95,25 @@ contract ACOVault is Ownable, ERC20, IACOVault {
 
     function decimals() public view override returns(uint8) {
         return ACOAssetHelper._getAssetDecimals(address(token));
+    }
+    
+    function getPosition(address acoToken) external view override returns(Position memory) {
+        return positions[acoToken];
+    }
+    
+    function getAccountPositionsCount(address account) external view override returns(uint256) {
+        AccountData storage data = accounts[account];
+        return data.acoTokensOnDeposit.length;
+    }
+    
+    function getAccountPositionByIndex(address account, uint256 index) external view override returns(address, Position memory) {
+        AccountData storage data = accounts[account];
+        address acoToken = data.acoTokensOnDeposit[index];
+        return (acoToken, data.positionsOnDeposit[acoToken]);
+    }
+    
+    function getAccountPositionByAco(address account, address acoToken) external view override returns(Position memory) {
+        return accounts[account].positionsOnDeposit[acoToken];   
     }
 
     function balance() public override view returns(uint256) {
@@ -153,7 +170,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function setAcoToken(address newAcoToken, address newAcoPool) external override {
-        _setAcoToken(assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
+        _setAcoToken(token, assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
     }
     
     function earn() public override {
@@ -165,7 +182,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         uint256 _totalBalance = balance();
         ACOAssetHelper._receiveAsset(address(token), amount);
         
-        uint256 previousShare = balanceOf(msg.sender);
         uint256 shares = 0;
         if (_totalBalance == 0) {
             shares = amount;
@@ -174,95 +190,62 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         }
             
         address _currentAcoToken = address(currentAcoToken);
-        bool addCurrentAcoToken = true;
-        AccountData storage data = accounts[msg.sender];
-        if (previousShare > 0) {
-            _removeExpiredAcoTokensFromAccountData(data);
-            
-            //TODO check calculation
-            data.accumulatedExercisedValue = previousShare.mul(data.accumulatedExercisedValue).add(shares.mul(totalTokensOnExercise)).div(shares.add(previousShare));
-
-            for (uint256 i = 0; i < data.acoTokensOnDeposit.length; ++i) {
-                if (data.acoTokensOnDeposit[i] == _currentAcoToken) {
-                    addCurrentAcoToken = false;
-                    break;
-                }
-            }
-        } else {
-            data.accumulatedExercisedValue = totalTokensOnExercise;
-        }
-        
-        if (addCurrentAcoToken) {
-            data.previousAcoTokensAmounts[_currentAcoToken] = acoTokensAmount[_currentAcoToken];
-            data.acoTokenOnDepositIndex[_currentAcoToken] = data.acoTokensOnDeposit.length;
-            data.acoTokensOnDeposit.push(_currentAcoToken);
-        }
+        Position storage acoData = positions[_currentAcoToken];
+        AccountData storage accountData = accounts[msg.sender];
+        _setAccountData(_currentAcoToken, acoData.amount, acoData.profit, balanceOf(msg.sender), shares, accountData);
         
         super._mintAction(msg.sender, shares);
     }
 
     function withdraw(uint256 shares) external override {
-        //TODO
+        uint256 vaulTotalSupply = totalSupply();
+        uint256 accountBalance = shares.mul(balance()).div(vaulTotalSupply);
+        
+        uint256 accountShares = balanceOf(msg.sender);
+        super._burnAction(msg.sender, shares);
         
         AccountData storage data = accounts[msg.sender];
-        uint256 vaultBalance = balance();
-        uint256 vaulTotalSupply = totalSupply();
-        uint256 profit = totalTokensOnExercise.sub(data.accumulatedExercisedValue);
-        uint256 _balance = shares.add(profit.mul(vaultBalance).div(vaulTotalSupply));
+        for (uint256 i = data.acoTokensOnDeposit.length; i > 0; --i) {
+            address acoToken = data.acoTokensOnDeposit[i - 1];
+            (uint256 acoAmount,,uint256 adjust) = _getPositionData(acoToken, shares, vaulTotalSupply, data);
+            accountBalance = accountBalance.sub(adjust);
+            uint256 expiryTime = IACOToken(acoToken).expiryTime();
+            if (expiryTime >= block.timestamp) {
+                _removeFromAccountData(acoToken, data);
+            } else {
+                if (acoAmount > 0) {
+                    ACOAssetHelper._transferAsset(acoToken, msg.sender, acoAmount);
+                }
+                data.positionsOnDeposit[acoToken].amount = positions[acoToken].amount;  
+                data.positionsOnDeposit[acoToken].profit = positions[acoToken].profit;  
+            }
+        }
         
-        _removeExpiredAcoTokensFromAccountData(data);
-        //(address _acoTokens[], uint256 amounts) = _getAcoTokensOnWithdraw(data, vaultBalance, vaulTotalSupply);
-        uint256 totalShares = balanceOf(msg.sender);
-        if (totalShares == shares) {
+        if (accountShares == shares) {
             delete accounts[msg.sender];
         }
         
-        super._burnAction(msg.sender, shares);
-        
         uint256 bufferBalance = token.balanceOf(address(this));
-        if (bufferBalance < _balance) {
-            uint256 _withdraw = _balance.sub(bufferBalance);
+        if (bufferBalance < accountBalance) {
+            uint256 _withdraw = accountBalance.sub(bufferBalance);
             controller.withdraw(address(token), _withdraw);
             uint256 afterBalance = token.balanceOf(address(this));
             uint256 diff = afterBalance.sub(bufferBalance);
             if (diff < _withdraw) {
-                _balance = bufferBalance.add(diff);
+                accountBalance = bufferBalance.add(diff);
             }
         }
-        ACOAssetHelper._transferAsset(address(token), msg.sender, _balance);
-        /*for (uint256 i = 0; i < _acoTokens.length; ++i) {
-            ACOAssetHelper._transferAsset(_acoTokens[i], msg.sender, amounts[i]);
-        }*/
+        ACOAssetHelper._transferAsset(address(token), msg.sender, accountBalance);
     }
     
-    function exerciseAco(address _acoToken) public override {
-        (address underlying, 
-         address strikeAsset, 
-         bool isCall,, 
-         uint256 expiryTime) = acoFactory.acoTokenData(_acoToken);
-        require(expiryTime <= minTimeToExercise.add(block.timestamp), "ACOVault:: Invalid time to exercise");
-        
-        uint256 acoBalance = ACOAssetHelper._getAssetBalanceOf(_acoToken, address(this));
-        require(acoBalance > 0, "ACOVault:: No balance to exercise");
-        
-        address collateral;
-        uint256 _decimals;
-        if (isCall) {
-            collateral = underlying;
-            _decimals = ACOAssetHelper._getAssetDecimals(strikeAsset);
-        } else {
-            collateral = strikeAsset;
-            _decimals = ACOAssetHelper._getAssetDecimals(underlying);
-        }
-        uint256 price = assetConverter.getPrice(underlying, strikeAsset);
-        uint256 minIntrinsicValue = price.mul(acoBalance).add(1).div(10 ** _decimals);
-        require(minIntrinsicValue > 0, "ACOVault:: Balance too small");
+    function exerciseAco(address acoToken) external override {
+        (uint256 acoBalance, uint256 minIntrinsicValue, address collateral) = _exerciseValidation(acoToken);
         
         uint256 previousTokenAmount = token.balanceOf(address(this));
-        if (IACOToken(_acoToken).allowance(address(this), address(acoFlashExercise)) < acoBalance) {
-            ACOAssetHelper._callApproveERC20(_acoToken, address(acoFlashExercise), MAX_UINT);    
+        if (IACOToken(acoToken).allowance(address(this), address(acoFlashExercise)) < acoBalance) {
+            ACOAssetHelper._callApproveERC20(acoToken, address(acoFlashExercise), MAX_UINT);    
         }
-        acoFlashExercise.flashExercise(_acoToken, acoBalance, minIntrinsicValue, block.timestamp);
+        acoFlashExercise.flashExercise(acoToken, acoBalance, minIntrinsicValue, block.timestamp);
         
         if (collateral != address(token)) {
             uint256 collateralBalance = ACOAssetHelper._getAssetBalanceOf(collateral, address(this));
@@ -276,55 +259,147 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         }
         
         uint256 tokenIn = token.balanceOf(address(this)).sub(previousTokenAmount);
-        totalTokensOnExercise = tokenIn.add(totalTokensOnExercise);
+        positions[acoToken].profit = positions[acoToken].profit.add(tokenIn); 
         
-        emit ExerciseAco(_acoToken, acoBalance, tokenIn);
+        emit ExerciseAco(acoToken, acoBalance, tokenIn);
     }
     
-    function removeExpiredAcos() public override {
-        for (uint256 i = acoTokens.length; i > 0; --i) {
-            address acoToken = acoTokens[i - 1];
-            removeExpiredAco(acoToken);
-        }
+    function setReward(uint256 acoTokenAmount, uint256 assetAmount) external override {
+        require(msg.sender == controller.getStrategy(address(this)), "ACOVault:: Invalid sender");
+        address _currentAcoToken = address(currentAcoToken);
+        uint256 amount = acoPool.swap(true, _currentAcoToken, acoTokenAmount, assetAmount, address(this), block.timestamp);
+        positions[_currentAcoToken].amount = amount.add(positions[_currentAcoToken].amount);
+        emit RewardAco(_currentAcoToken, amount);
     }
     
-    function removeExpiredAco(address _acoToken) public override {
-        uint256 expiryTime = IACOToken(_acoToken).expiryTime();
-        if (expiryTime >= block.timestamp) {
-			uint256 lastIndex = acoTokens.length - 1;
-			uint256 index = acoTokensIndex[_acoToken];
-			if (lastIndex != index) {
-				address last = acoTokens[lastIndex];
-				acoTokensIndex[last] = index;
-				acoTokens[index] = last;
-			}
-            acoTokens.pop();
-            delete acoTokensIndex[_acoToken];
-            delete acoTokensAmount[_acoToken];
-            emit RemoveExpiredAco(_acoToken);
-        }
-    }
-    
-    function _removeExpiredAcoTokensFromAccountData(AccountData storage data) internal {
-        for (uint256 i = data.acoTokensOnDeposit.length; i > 0; --i) {
-            address _acoToken = data.acoTokensOnDeposit[i - 1];
-            uint256 expiryTime = IACOToken(_acoToken).expiryTime();
-            if (expiryTime >= block.timestamp) {
-                uint256 lastIndex = data.acoTokensOnDeposit.length - 1;
-			    uint256 index = data.acoTokenOnDepositIndex[_acoToken];
-    			if (lastIndex != index) {
-    				address last = data.acoTokensOnDeposit[lastIndex];
-    				data.acoTokenOnDepositIndex[last] = index;
-    				data.acoTokensOnDeposit[index] = last;
-    			}
-                data.acoTokensOnDeposit.pop();
-                delete data.acoTokenOnDepositIndex[_acoToken];
-                delete data.previousAcoTokensAmounts[_acoToken];
+    function _transfer(address sender, address recipient, uint256 amount) internal override {
+        AccountData storage senderData = accounts[sender];
+        AccountData storage recipientData = accounts[recipient];
+        uint256 senderPreviousShares = balanceOf(sender);
+        uint256 recipientPreviousShares = balanceOf(recipient);
+        for (uint256 i = senderData.acoTokensOnDeposit.length; i > 0; --i) {
+            address acoToken = senderData.acoTokensOnDeposit[i - 1];
+            uint256 acoAmount;
+            uint256 acoProfit;
+            
+            if (senderPreviousShares == amount) {
+                acoAmount = senderData.positionsOnDeposit[acoToken].amount;
+                acoProfit = senderData.positionsOnDeposit[acoToken].profit;
+                _removeFromAccountData(acoToken, senderData);
+            } else {
+                (acoAmount, acoProfit) = _setAcoDataForTransfer(acoToken, amount, senderPreviousShares, senderData);
             }
+            
+            _setAccountData(acoToken, acoAmount, acoProfit, recipientPreviousShares, amount, recipientData);
+        }
+        super._transferAction(sender, recipient, amount);   
+    }
+    
+    function _setAcoDataForTransfer(
+        address acoToken,
+        uint256 amount,
+        uint256 senderPreviousShares,
+        AccountData storage senderData
+    ) internal returns(uint256, uint256) {
+        Position storage acoData = positions[acoToken];
+        uint256 senderAmount = senderData.positionsOnDeposit[acoToken].amount;
+        uint256 senderProfit = senderData.positionsOnDeposit[acoToken].profit;
+        uint256 diffAmount = acoData.amount.sub(senderAmount);
+        uint256 diffProfit = acoData.profit.sub(senderProfit);
+        uint256 remainingAmount = amount.mul(diffAmount).div(senderPreviousShares);
+        uint256 remainingProfit = amount.mul(diffProfit).div(senderPreviousShares);
+        senderData.positionsOnDeposit[acoToken].amount = senderAmount.add(remainingAmount);
+        senderData.positionsOnDeposit[acoToken].profit = senderProfit.add(remainingProfit);
+        uint256 acoAmount = senderAmount.add(diffAmount.sub(remainingAmount));
+        uint256 acoProfit = senderProfit.add(diffProfit.sub(remainingProfit));
+        return (acoAmount, acoProfit);           
+    }
+    
+    function _removeFromAccountData(address acoToken, AccountData storage data) internal {
+        uint256 index = data.positionsOnDeposit[acoToken].index;
+        uint256 lastIndex = data.acoTokensOnDeposit.length - 1;
+		if (lastIndex != index) {
+			address last = data.acoTokensOnDeposit[lastIndex];
+			data.positionsOnDeposit[last].index = index;
+			data.acoTokensOnDeposit[index] = last;
+		}
+        data.acoTokensOnDeposit.pop();
+        delete data.positionsOnDeposit[acoToken];
+    }
+    
+    function _setAccountData(
+        address acoToken, 
+        uint256 acoAmount, 
+        uint256 acoProfit, 
+        uint256 previousShares,
+        uint256 newShares,
+        AccountData storage accountData
+    ) internal {
+        if (accountData.positionsOnDeposit[acoToken].initialized) {
+            //TODO check calculation
+            uint256 weight = newShares.add(previousShares);
+            accountData.positionsOnDeposit[acoToken].amount = newShares.mul(acoAmount).add(previousShares.mul(accountData.positionsOnDeposit[acoToken].amount)).div(weight);
+            accountData.positionsOnDeposit[acoToken].profit = newShares.mul(acoProfit).add(previousShares.mul(accountData.positionsOnDeposit[acoToken].profit)).div(weight);
+        } else {
+            accountData.positionsOnDeposit[acoToken] = Position(acoAmount, acoProfit, accountData.acoTokensOnDeposit.length, true);
+            accountData.acoTokensOnDeposit.push(acoToken);
         }
     }
     
+    function _getPositionData(
+        address acoToken,
+        uint256 shares, 
+        uint256 vaulTotalSupply,
+        AccountData storage data
+    ) internal view returns(uint256, uint256, uint256) {
+        Position storage _position = positions[acoToken];
+        uint256 amount = shares.mul(_position.amount.sub(data.positionsOnDeposit[acoToken].amount)).div(vaulTotalSupply);
+        uint256 totalProfit = _position.profit.sub(data.positionsOnDeposit[acoToken].profit);
+        uint256 profit = 0;
+        uint256 adjust = 0;
+        if (totalProfit > 0) {
+            address _token = address(token);
+            profit = shares.mul(totalProfit).div(vaulTotalSupply);
+            uint256 actualTotalValue = controller.actualBalance(_token, totalProfit);
+            adjust = actualTotalValue.sub(controller.actualBalance(_token, profit));
+        }
+        return (amount, profit, adjust);
+    }
+    
+    function _exerciseValidation(address acoToken) internal view returns(uint256, uint256, address) {
+        (address underlying, 
+         address strikeAsset, 
+         bool isCall,
+         uint256 strikePrice, 
+         uint256 expiryTime) = acoFactory.acoTokenData(acoToken);
+        require(expiryTime <= minTimeToExercise.add(block.timestamp), "ACOVault:: Invalid time to exercise");
+        
+        uint256 acoBalance = ACOAssetHelper._getAssetBalanceOf(acoToken, address(this));
+        require(acoBalance > 0, "ACOVault:: No balance to exercise");
+        
+        uint256 price = assetConverter.getPrice(underlying, strikeAsset);
+        uint256 diff;
+        address collateral;
+        uint256 _decimals;
+        if (isCall) {
+            require(price > strikePrice, "ACOVault:: It's not ITM");
+            diff = price.sub(strikePrice);
+            collateral = underlying;
+            _decimals = ACOAssetHelper._getAssetDecimals(strikeAsset);
+        } else {
+            require(price < strikePrice, "ACOVault:: It's not ITM");
+            diff = strikePrice.sub(price);
+            collateral = strikeAsset;
+            _decimals = ACOAssetHelper._getAssetDecimals(underlying);
+        }
+        uint256 minIntrinsicValue = diff.mul(acoBalance).div((10 ** _decimals));
+        require(minIntrinsicValue > 0, "ACOVault:: Profit too small");
+        
+        return (acoBalance, minIntrinsicValue, collateral);
+    }
+
     function _setAcoToken(
+        IERC20 _token,
         IACOAssetConverterHelper _assetConverter,
         IACOFactory _acoFactory, 
         IACOPoolFactory _acoPoolFactory, 
@@ -338,15 +413,10 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         acoPool = IACOPool(newAcoPool);
         currentAcoToken = IACOToken(newAcoToken);
         
-        bool add = true;
-        for (uint256 i = 0; i < acoTokens.length; ++i) {
-            if (acoTokens[i] == newAcoToken) {
-                add = false;
-                break;
-            }
-        }
-        if (add) {
-            acoTokensIndex[newAcoToken] = acoTokens.length;
+        _token.approve(newAcoPool, MAX_UINT);
+        
+        if (!positions[newAcoToken].initialized) {
+            positions[newAcoToken] = Position(0, 0, acoTokens.length, true);
             acoTokens.push(newAcoToken);
         }
     }
@@ -410,10 +480,10 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             underlying == poolUnderlying &&
             strikeAsset == poolStrikeAsset &&
             isCall == poolIsCall &&
-            poolMinStrikePrice >= strikePrice &&
-            poolMaxStrikePrice <= strikePrice &&
-            poolMinExpiration >= expiryTime &&
-            poolMaxExpiration <= expiryTime, 
+            poolMinStrikePrice <= strikePrice &&
+            poolMaxStrikePrice >= strikePrice &&
+            poolMinExpiration <= expiryTime &&
+            poolMaxExpiration >= expiryTime, 
             "ACOVault:: Invalid ACO pool");
     }
     
@@ -461,7 +531,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function _setMaxExpiration(uint256 newMaxExpiration) internal {
-        require(newMaxExpiration >= maxExpiration, "ACOVault:: Invalid max expiration");
+        require(newMaxExpiration >= minExpiration, "ACOVault:: Invalid max expiration");
         emit SetMaxExpiration(maxExpiration, newMaxExpiration);
         maxExpiration = newMaxExpiration;
     }

@@ -1,6 +1,14 @@
 pragma solidity ^0.6.6;
+pragma experimental ABIEncoderV2;
 
 import './IERC20.sol';
+import './IController.sol';
+import './IACOPoolFactory.sol';
+import './IACOFlashExercise.sol';
+import './IACOFactory.sol';
+import './IACOAssetConverterHelper.sol';
+import './IACOToken.sol';
+import './IACOPool.sol';
 
 interface IACOVault is IERC20 {
     struct VaultInitData {
@@ -19,6 +27,38 @@ interface IACOVault is IERC20 {
         uint256 maxExpiration;
         uint256 minTimeToExercise;
     }
+        
+    struct Position {
+        uint256 amount;
+        uint256 profit;
+        uint256 index;
+        bool initialized;
+    }
+    
+    struct AccountData {
+        mapping(address => Position) positionsOnDeposit;
+        address[] acoTokensOnDeposit;
+    }
+    
+    function acoPoolFactory() external view returns(IACOPoolFactory);
+    function acoFactory() external view returns(IACOFactory);
+    function token() external view returns(IERC20);
+    function controller() external view returns(IController);
+    function assetConverter() external view returns(IACOAssetConverterHelper);
+    function acoFlashExercise() external view returns(IACOFlashExercise);
+    function acoPool() external view returns(IACOPool);
+    function currentAcoToken() external view returns(IACOToken);
+    function acoTokens(uint256 index) external view returns(address);
+    function minPercentageToKeep() external view returns(uint256);
+    function tolerancePriceAbove() external view returns(uint256);
+    function tolerancePriceBelow() external view returns(uint256);
+    function minExpiration() external view returns(uint256);
+    function maxExpiration() external view returns(uint256);
+    function minTimeToExercise() external view returns(uint256);
+    function getPosition(address acoToken) external view returns(Position memory);
+    function getAccountPositionsCount(address account) external view returns(uint256);
+    function getAccountPositionByIndex(address account, uint256 index) external view returns(address, Position memory);
+    function getAccountPositionByAco(address account, address acoToken) external view returns(Position memory);
     function setController(address newController) external;
     function setAssetConverter(address newAssetConverter) external;
     function setAcoFlashExercise(address newAcoFlashExercise) external;
@@ -33,10 +73,9 @@ interface IACOVault is IERC20 {
     function available() external view returns(uint256);
     function getPricePerFullShare() external view returns(uint256);
     function numberOfAcoTokensNegotiated() external view returns(uint256);
-    function removeExpiredAcos() external;
-    function removeExpiredAco(address acoToken) external;
     function exerciseAco(address acoToken) external;
     function deposit(uint256 amount) external;
     function earn() external;
     function withdraw(uint256 shares) external;
+    function setReward(uint256 acoTokenAmount, uint256 assetAmount) external;
 }
