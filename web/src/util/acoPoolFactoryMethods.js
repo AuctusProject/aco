@@ -19,7 +19,7 @@ var availablePools = null
 function getAvailablePools(underlying, strikeAsset, isCall) {
     return new Promise((resolve, reject) => {
         getAllAvailablePools().then(pools => {
-            let filteredPools = pools.filter(p => p.underlying === underlying && p.strikeAsset === strikeAsset && p.isCall === isCall)
+            let filteredPools = pools.filter(p => p.underlying.toLowerCase() === underlying.toLowerCase() && p.strikeAsset.toLowerCase() === strikeAsset.toLowerCase() && p.isCall === isCall)
             resolve(filteredPools)
         })
     })
