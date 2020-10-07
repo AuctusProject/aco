@@ -246,13 +246,17 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             accountBalance = accountBalance.sub(adjust);
             uint256 expiryTime = IACOToken(acoToken).expiryTime();
             if (expiryTime >= block.timestamp) {
-                _removeFromAccountData(acoToken, data);
+                if (accountShares > shares) {
+                    _removeFromAccountData(acoToken, data);
+                }
             } else {
                 if (acoAmount > 0) {
                     ACOAssetHelper._transferAsset(acoToken, msg.sender, acoAmount);
                 }
-                data.positionsOnDeposit[acoToken].amount = positions[acoToken].amount;  
-                data.positionsOnDeposit[acoToken].profit = positions[acoToken].profit;  
+                if (accountShares > shares) {
+                    data.positionsOnDeposit[acoToken].amount = positions[acoToken].amount;  
+                    data.positionsOnDeposit[acoToken].profit = positions[acoToken].profit;  
+                }
             }
         }
         
@@ -311,83 +315,22 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     function _transfer(address sender, address recipient, uint256 amount) internal override {
         AccountData storage senderData = accounts[sender];
         AccountData storage recipientData = accounts[recipient];
-        uint256 senderPreviousShares = balanceOf(sender);
         uint256 recipientPreviousShares = balanceOf(recipient);
-        uint256 _totalSupply = totalSupply();
-        for (uint256 i = senderData.acoTokensOnDeposit.length; i > 0; --i) {
-            address acoToken = senderData.acoTokensOnDeposit[i - 1];
-            uint256 acoAmount;
-            uint256 acoProfit;
-            
-            if (senderPreviousShares == amount) {
-                acoAmount = senderData.positionsOnDeposit[acoToken].amount;
-                acoProfit = senderData.positionsOnDeposit[acoToken].profit;
-                _removeFromAccountData(acoToken, senderData);
-            } else {
-                (acoAmount, acoProfit) = _setAcoDataForTransfer(acoToken, amount, senderPreviousShares, _totalSupply, senderData);
-            }
-            
-            _setAccountData(acoToken, acoAmount, acoProfit, recipientPreviousShares, amount, recipientData);
+        for (uint256 i = 0; i < senderData.acoTokensOnDeposit.length; ++i) {
+            address acoToken = senderData.acoTokensOnDeposit[i];
+            _setAccountData(
+                acoToken, 
+                senderData.positionsOnDeposit[acoToken].amount, 
+                senderData.positionsOnDeposit[acoToken].profit, 
+                recipientPreviousShares, 
+                amount, 
+                recipientData
+            );
+        }
+        if (amount == balanceOf(sender)) {
+            delete accounts[sender];
         }
         super._transferAction(sender, recipient, amount);   
-    }
-    
-    function _setAcoDataForTransfer(
-        address acoToken,
-        uint256 amount,
-        uint256 senderPreviousShares,
-        uint256 _totalSupply,
-        AccountData storage senderData
-    ) internal returns(uint256, uint256) {
-        (uint256 senderAmount, 
-         uint256 senderProfit, 
-         uint256 diffAmount, 
-         uint256 diffProfit) = _getSenderData(acoToken, senderPreviousShares, _totalSupply, senderData);
-        
-        _setSenderData(acoToken, amount, senderPreviousShares, senderAmount, senderProfit, diffAmount, diffProfit, senderData);
-        
-        return _getRecipientData(amount, senderPreviousShares, senderAmount, senderProfit, diffAmount, diffProfit);
-    }
-    
-    function _setSenderData(
-        address acoToken,
-        uint256 amount,
-        uint256 senderPreviousShares,
-        uint256 senderAmount, 
-        uint256 senderProfit, 
-        uint256 diffAmount, 
-        uint256 diffProfit,
-        AccountData storage senderData
-    ) internal {
-        senderData.positionsOnDeposit[acoToken].amount = senderAmount.add(amount.mul(diffAmount).div(senderPreviousShares));
-        senderData.positionsOnDeposit[acoToken].profit = senderProfit.add(amount.mul(diffProfit).div(senderPreviousShares));                  
-    }
-    
-    function _getRecipientData(
-        uint256 amount,
-        uint256 senderPreviousShares,
-        uint256 senderAmount, 
-        uint256 senderProfit, 
-        uint256 diffAmount, 
-        uint256 diffProfit
-    ) internal pure returns(uint256, uint256) {
-        uint256 acoAmount = senderAmount.add(diffAmount.sub(amount.mul(diffAmount).div(senderPreviousShares)));
-        uint256 acoProfit = senderProfit.add(diffProfit.sub(amount.mul(diffProfit).div(senderPreviousShares)));
-        return (acoAmount, acoProfit);                      
-    }
-    
-    function _getSenderData(
-        address acoToken,
-        uint256 senderPreviousShares,
-        uint256 _totalSupply,
-        AccountData storage senderData
-    ) internal view returns(uint256, uint256, uint256, uint256) {
-        Position storage acoData = positions[acoToken];
-        uint256 senderAmount = senderData.positionsOnDeposit[acoToken].amount;
-        uint256 senderProfit = senderData.positionsOnDeposit[acoToken].profit;
-        uint256 diffAmount = senderPreviousShares.mul(acoData.amount.sub(senderAmount)).div(_totalSupply);
-        uint256 diffProfit = senderPreviousShares.mul(acoData.profit.sub(senderProfit)).div(_totalSupply);
-        return (senderAmount, senderProfit, diffAmount, diffProfit);           
     }
     
     function _removeFromAccountData(address acoToken, AccountData storage data) internal {
