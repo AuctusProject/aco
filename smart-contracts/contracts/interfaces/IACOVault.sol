@@ -9,13 +9,13 @@ import './IACOFactory.sol';
 import './IACOAssetConverterHelper.sol';
 import './IACOToken.sol';
 import './IACOPool.sol';
+import './IControlled.sol';
 
-interface IACOVault is IERC20 {
+interface IACOVault is IERC20, IControlled {
     struct VaultInitData {
         address acoFactory;
         address acoPoolFactory;
         address token;
-        address controller;
         address assetConverter;
         address acoFlashExercise;
         uint256 minPercentageToKeep;
@@ -72,6 +72,7 @@ interface IACOVault is IERC20 {
     function setMinTimeToExercise(uint256 newMinTimeToExercise) external;
     function setExerciseSlippage(uint256 newMinTimeToExercise) external;
     function setAcoToken(address newAcoToken, address newAcoPool) external;
+    function setAcoPool(address newAcoPool) external;
     function balance() external view returns(uint256);
     function available() external view returns(uint256);
     function getPricePerFullShare() external view returns(uint256);

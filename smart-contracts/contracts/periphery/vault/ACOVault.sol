@@ -26,7 +26,8 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     event SetAssetConverter(address indexed oldAssetConverter, address indexed newAssetConverter);
     event SetAcoFlashExercise(address indexed oldAcoFlashExercise, address indexed newAcoFlashExercise);
     event SetMinPercentageToKeep(uint256 indexed oldMinPercentageToKeep, uint256 indexed newMinPercentageToKeep);
-    event SetAcoToken(address indexed oldAcoToken, address indexed oldAcoPool, address newAcoToken, address newAcoPool);
+    event SetAcoToken(address indexed oldAcoToken, address indexed newAcoToken);
+    event SetAcoPool(address indexed oldAcoPool, address indexed newAcoPool);
     event SetTolerancePriceAbove(uint256 indexed oldTolerancePriceAbove, uint256 indexed newTolerancePriceAbove);
     event SetTolerancePriceBelow(uint256 indexed oldTolerancePriceBelow, uint256 indexed newTolerancePriceBelow);
     event SetMinExpiration(uint256 indexed oldMinExpiration, uint256 indexed newMinExpiration);
@@ -69,7 +70,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         acoPoolFactory = IACOPoolFactory(initData.acoPoolFactory);
         acoFactory = IACOFactory(initData.acoFactory);
         token = IERC20(initData.token);
-        _setController(IERC20(initData.token), initData.controller);
         _setAssetConverter(initData.assetConverter);
         _setAcoFlashExercise(initData.acoFlashExercise);
         _setMinPercentageToKeep(initData.minPercentageToKeep);
@@ -121,7 +121,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
 
     function balance() public override view returns(uint256) {
-        return token.balanceOf(address(this)).add(controller.balanceOf(address(token)));
+        return token.balanceOf(address(this)).add(controller.balanceOf(address(this)));
     }
 
     function available() public override view returns(uint256) {
@@ -138,7 +138,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
   
     function setController(address newController) onlyOwner external override {
-        _setController(token, newController);
+        _setController(newController);
     }
     
     function setAssetConverter(address newAssetConverter) onlyOwner external override {
@@ -181,11 +181,30 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         _setAcoToken(token, assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
     }
     
-    function earn() public override {
-        controller.earn(address(token), available());
+    function setAcoPool(address newAcoPool) external override {
+        (address underlying, 
+         address strikeAsset, 
+         bool isCall, 
+         uint256 strikePrice, 
+         uint256 expiryTime) = acoFactory.acoTokenData(address(currentAcoToken));
+        _setAcoPool(token, acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
+    }
+    
+    function withdrawStuckToken(address _token, address destination) external override {
+        require(msg.sender == address(controller), "ACOVault:: Invalid sender");
+        require(address(token) != _token, "ACOVault:: Invalid token");
+        uint256 _balance = ACOAssetHelper._getAssetBalanceOf(_token, address(this));
+        if (_balance > 0) {
+            ACOAssetHelper._transferAsset(_token, destination, _balance);
+        }
+    }
+    
+    function earn() external override {
+        controller.earn(available());
     }
 
     function deposit(uint256 amount) external override {
+        require(address(controller) != address(0), "ACOVault:: No controller");
         require(amount > 0, "ACOVault:: Invalid amount");
         uint256 _totalBalance = balance();
         ACOAssetHelper._receiveAsset(address(token), amount);
@@ -235,8 +254,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         
         uint256 bufferBalance = token.balanceOf(address(this));
         if (bufferBalance < accountBalance) {
-            uint256 _withdraw = accountBalance.sub(bufferBalance);
-            controller.withdraw(address(token), _withdraw);
+            uint256 _withdraw = controller.withdraw(accountBalance.sub(bufferBalance));
             uint256 afterBalance = token.balanceOf(address(this));
             uint256 diff = afterBalance.sub(bufferBalance);
             if (diff < _withdraw) {
@@ -273,7 +291,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function setReward(uint256 acoTokenAmount, uint256 assetAmount) external override {
-        require(msg.sender == controller.getStrategy(address(this)), "ACOVault:: Invalid sender");
+        require(msg.sender == address(controller), "ACOVault:: Invalid sender");
         address _currentAcoToken = address(currentAcoToken);
         uint256 amount = acoPool.swap(true, _currentAcoToken, acoTokenAmount, assetAmount, address(this), block.timestamp);
         positions[_currentAcoToken].amount = amount.add(positions[_currentAcoToken].amount);
@@ -405,10 +423,9 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         uint256 profit = 0;
         uint256 adjust = 0;
         if (totalProfit > 0) {
-            address _token = address(token);
             profit = shares.mul(totalProfit).div(vaulTotalSupply);
-            uint256 actualTotalValue = controller.actualBalance(_token, totalProfit);
-            adjust = actualTotalValue.sub(controller.actualBalance(_token, profit));
+            uint256 actualTotalValue = controller.actualAmount(address(this), totalProfit);
+            adjust = actualTotalValue.sub(controller.actualAmount(address(this), profit));
         }
         return (amount, profit, adjust);
     }
@@ -459,14 +476,19 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         address newAcoToken, 
         address newAcoPool
     ) internal {
-        _acoTokenAndPoolValidation(_assetConverter, _acoFactory, _acoPoolFactory, newAcoToken, newAcoPool);
+        (address underlying, 
+         address strikeAsset, 
+         bool isCall, 
+         uint256 strikePrice, 
+         uint256 expiryTime) = _acoFactory.acoTokenData(newAcoToken);
+         
+        _acoTokenValidation(_assetConverter, underlying, strikeAsset, strikePrice, expiryTime);
         
-        emit SetAcoToken(address(currentAcoToken), address(acoPool), newAcoToken, newAcoPool);
+        _setAcoPool(_token, _acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
         
-        acoPool = IACOPool(newAcoPool);
+        emit SetAcoToken(address(currentAcoToken), newAcoToken);
+        
         currentAcoToken = IACOToken(newAcoToken);
-        
-        _token.approve(newAcoPool, MAX_UINT);
         
         if (!positions[newAcoToken].initialized) {
             positions[newAcoToken] = Position(0, 0, acoTokens.length, true);
@@ -474,23 +496,22 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         }
     }
     
-    function _acoTokenAndPoolValidation(
-        IACOAssetConverterHelper _assetConverter,
-        IACOFactory _acoFactory, 
+    function _setAcoPool(
+        IERC20 _token,
         IACOPoolFactory _acoPoolFactory, 
-        address newAcoToken, 
-        address newAcoPool
-    ) internal view {
-        
-        (address underlying, 
-         address strikeAsset, 
-         bool isCall, 
-         uint256 strikePrice, 
-         uint256 expiryTime) = _acoFactory.acoTokenData(newAcoToken);
-        require(underlying != strikeAsset, "ACOVault:: Invalid ACO token");
-        
-        _acoTokenValidation(_assetConverter, underlying, strikeAsset, strikePrice, expiryTime);
+        address newAcoPool,
+        address underlying, 
+        address strikeAsset, 
+        bool isCall, 
+        uint256 strikePrice, 
+        uint256 expiryTime
+    ) internal {
         _acoPoolValidation(_acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime); 
+        
+        emit SetAcoPool(address(acoPool), newAcoPool);
+        
+        _token.approve(newAcoPool, MAX_UINT);
+        acoPool = IACOPool(newAcoPool);
     }
     
     function _acoTokenValidation(
@@ -500,6 +521,8 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         uint256 strikePrice, 
         uint256 expiryTime
     ) internal view {
+        require(underlying != strikeAsset, "ACOVault:: Invalid ACO token");
+        
         uint256 minExpiryTime = minExpiration.add(block.timestamp);
         uint256 maxExpiryTime = maxExpiration.add(block.timestamp);
         require(expiryTime >= minExpiryTime && expiryTime <= maxExpiryTime, "ACOVault:: Invalid ACO expiry time");
@@ -540,10 +563,10 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             "ACOVault:: Invalid ACO pool");
     }
     
-    function _setController(IERC20 _token, address newController) internal {
+    function _setController(address newController) internal {
         require(newController.isContract(), "ACOVault:: Invalid controller");
         emit SetController(address(controller), newController);
-        _token.approve(newController, MAX_UINT);  
+        token.approve(newController, MAX_UINT);  
         controller = IController(newController);
     }
     
