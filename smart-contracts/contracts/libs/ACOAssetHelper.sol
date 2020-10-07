@@ -1,7 +1,8 @@
 pragma solidity ^0.6.6;
 
 library ACOAssetHelper {
-    
+    uint256 internal constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+
     /**
      * @dev Internal function to get if the address is for Ethereum (0x0).
      * @param _address Address to be checked.
@@ -149,6 +150,19 @@ library ACOAssetHelper {
         } else {
             require(msg.value == 0, "ACOAssetHelper:: Ether is not expected");
             _callTransferFromERC20(asset, msg.sender, address(this), amount);
+        }
+    }
+
+    /**
+     * @dev Internal function to check asset allowance and set to Infinity if necessary.
+     * @param asset Address of the asset.
+     * @param owner Address of the owner of the tokens.
+     * @param spender Address of the spender authorized.
+     * @param amount Amount to check allowance.
+     */
+    function _setAssetInfinityApprove(address asset, address owner, address spender, uint amount) internal {
+        if (_getAssetAllowance(asset, owner, spender) < amount) {
+            _callApproveERC20(asset, spender, MAX_UINT);
         }
     }
 }
