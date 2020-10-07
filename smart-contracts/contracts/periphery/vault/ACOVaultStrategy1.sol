@@ -137,7 +137,7 @@ contract ACOVaultUSDCStrategy1 is Ownable, IACOVaultStrategy {
     function _collectGasSubsidyFee(uint256 amount) internal {
         if (amount > 0) {
             uint256 _fee = amount.mul(gasSubsidyFee).div(MAX_GAS_SUBSIDY_FEE);
-            //controller.sendFee(address(usdc), _fee)
+            controller.sendFee(_fee);
         }
     }
     
