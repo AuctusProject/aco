@@ -26,6 +26,7 @@ interface IACOVault is IERC20 {
         uint256 minExpiration;
         uint256 maxExpiration;
         uint256 minTimeToExercise;
+        uint256 exerciseSlippage;
     }
         
     struct Position {
@@ -55,6 +56,7 @@ interface IACOVault is IERC20 {
     function minExpiration() external view returns(uint256);
     function maxExpiration() external view returns(uint256);
     function minTimeToExercise() external view returns(uint256);
+    function exerciseSlippage() external view returns(uint256);
     function getPosition(address acoToken) external view returns(Position memory);
     function getAccountPositionsCount(address account) external view returns(uint256);
     function getAccountPositionByIndex(address account, uint256 index) external view returns(address, Position memory);
@@ -68,6 +70,7 @@ interface IACOVault is IERC20 {
     function setMinExpiration(uint256 newMinExpiration) external;
     function setMaxExpiration(uint256 newMaxExpiration) external;
     function setMinTimeToExercise(uint256 newMinTimeToExercise) external;
+    function setExerciseSlippage(uint256 newMinTimeToExercise) external;
     function setAcoToken(address newAcoToken, address newAcoPool) external;
     function balance() external view returns(uint256);
     function available() external view returns(uint256);

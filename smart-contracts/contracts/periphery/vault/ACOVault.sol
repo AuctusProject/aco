@@ -19,6 +19,7 @@ import '../../interfaces/IACOPool.sol';
 contract ACOVault is Ownable, ERC20, IACOVault {
     using Address for address;
     
+    uint256 internal constant PERCENTAGE_PRECISION = 100000;
     uint256 internal constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     event SetController(address indexed oldController, address indexed newController);
@@ -31,6 +32,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     event SetMinExpiration(uint256 indexed oldMinExpiration, uint256 indexed newMinExpiration);
     event SetMaxExpiration(uint256 indexed oldMaxExpiration, uint256 indexed newMaxExpiration);
     event SetMinTimeToExercise(uint256 indexed oldMinTimeToExercise, uint256 indexed newMinTimeToExercise);
+    event SetExerciseSlippage(uint256 indexed oldExerciseSlippage, uint256 indexed newExerciseSlippage);
     event RewardAco(address indexed acoToken, uint256 acoTokenAmountIn);
     event ExerciseAco(address indexed acoToken, uint256 acoTokensOut, uint256 tokenIn);
 
@@ -52,6 +54,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     uint256 public override minExpiration;
     uint256 public override maxExpiration;
     uint256 public override minTimeToExercise;
+    uint256 public override exerciseSlippage;
     
     mapping(address => Position) internal positions;
     mapping(address => AccountData) internal accounts;
@@ -71,6 +74,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         _setAcoFlashExercise(initData.acoFlashExercise);
         _setMinPercentageToKeep(initData.minPercentageToKeep);
         _setMinTimeToExercise(initData.minTimeToExercise);
+        _setExerciseSlippage(initData.exerciseSlippage);
         _setMaxExpiration(initData.maxExpiration);
         _setMinExpiration(initData.minExpiration);
         _setTolerancePriceAbove(initData.tolerancePriceAbove);
@@ -121,7 +125,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
 
     function available() public override view returns(uint256) {
-        return token.balanceOf(address(this)).mul(minPercentageToKeep).div(100000);
+        return token.balanceOf(address(this)).mul(minPercentageToKeep).div(PERCENTAGE_PRECISION);
     }
 
     function numberOfAcoTokensNegotiated() public override view returns(uint256) {
@@ -167,6 +171,10 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     
     function setMinTimeToExercise(uint256 newMinTimeToExercise) onlyOwner external override {
         _setMinTimeToExercise(newMinTimeToExercise);
+    }
+    
+    function setExerciseSlippage(uint256 newExerciseSlippage) onlyOwner external override {
+        _setExerciseSlippage(newExerciseSlippage);
     }
     
     function setAcoToken(address newAcoToken, address newAcoPool) external override {
@@ -277,6 +285,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         AccountData storage recipientData = accounts[recipient];
         uint256 senderPreviousShares = balanceOf(sender);
         uint256 recipientPreviousShares = balanceOf(recipient);
+        uint256 _totalSupply = totalSupply();
         for (uint256 i = senderData.acoTokensOnDeposit.length; i > 0; --i) {
             address acoToken = senderData.acoTokensOnDeposit[i - 1];
             uint256 acoAmount;
@@ -287,7 +296,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
                 acoProfit = senderData.positionsOnDeposit[acoToken].profit;
                 _removeFromAccountData(acoToken, senderData);
             } else {
-                (acoAmount, acoProfit) = _setAcoDataForTransfer(acoToken, amount, senderPreviousShares, senderData);
+                (acoAmount, acoProfit) = _setAcoDataForTransfer(acoToken, amount, senderPreviousShares, _totalSupply, senderData);
             }
             
             _setAccountData(acoToken, acoAmount, acoProfit, recipientPreviousShares, amount, recipientData);
@@ -299,20 +308,58 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         address acoToken,
         uint256 amount,
         uint256 senderPreviousShares,
+        uint256 _totalSupply,
         AccountData storage senderData
     ) internal returns(uint256, uint256) {
+        (uint256 senderAmount, 
+         uint256 senderProfit, 
+         uint256 diffAmount, 
+         uint256 diffProfit) = _getSenderData(acoToken, senderPreviousShares, _totalSupply, senderData);
+        
+        _setSenderData(acoToken, amount, senderPreviousShares, senderAmount, senderProfit, diffAmount, diffProfit, senderData);
+        
+        return _getRecipientData(amount, senderPreviousShares, senderAmount, senderProfit, diffAmount, diffProfit);
+    }
+    
+    function _setSenderData(
+        address acoToken,
+        uint256 amount,
+        uint256 senderPreviousShares,
+        uint256 senderAmount, 
+        uint256 senderProfit, 
+        uint256 diffAmount, 
+        uint256 diffProfit,
+        AccountData storage senderData
+    ) internal {
+        senderData.positionsOnDeposit[acoToken].amount = senderAmount.add(amount.mul(diffAmount).div(senderPreviousShares));
+        senderData.positionsOnDeposit[acoToken].profit = senderProfit.add(amount.mul(diffProfit).div(senderPreviousShares));                  
+    }
+    
+    function _getRecipientData(
+        uint256 amount,
+        uint256 senderPreviousShares,
+        uint256 senderAmount, 
+        uint256 senderProfit, 
+        uint256 diffAmount, 
+        uint256 diffProfit
+    ) internal pure returns(uint256, uint256) {
+        uint256 acoAmount = senderAmount.add(diffAmount.sub(amount.mul(diffAmount).div(senderPreviousShares)));
+        uint256 acoProfit = senderProfit.add(diffProfit.sub(amount.mul(diffProfit).div(senderPreviousShares)));
+        return (acoAmount, acoProfit);                      
+    }
+    
+    function _getSenderData(
+        address acoToken,
+        uint256 senderPreviousShares,
+        uint256 _totalSupply,
+        AccountData storage senderData
+    ) internal view returns(uint256, uint256, uint256, uint256) {
         Position storage acoData = positions[acoToken];
         uint256 senderAmount = senderData.positionsOnDeposit[acoToken].amount;
         uint256 senderProfit = senderData.positionsOnDeposit[acoToken].profit;
-        uint256 diffAmount = acoData.amount.sub(senderAmount);
-        uint256 diffProfit = acoData.profit.sub(senderProfit);
-        uint256 remainingAmount = amount.mul(diffAmount).div(senderPreviousShares);
-        uint256 remainingProfit = amount.mul(diffProfit).div(senderPreviousShares);
-        senderData.positionsOnDeposit[acoToken].amount = senderAmount.add(remainingAmount);
-        senderData.positionsOnDeposit[acoToken].profit = senderProfit.add(remainingProfit);
-        uint256 acoAmount = senderAmount.add(diffAmount.sub(remainingAmount));
-        uint256 acoProfit = senderProfit.add(diffProfit.sub(remainingProfit));
-        return (acoAmount, acoProfit);           
+        uint256 diffAmount = senderPreviousShares.mul(acoData.amount.sub(senderAmount)).div(_totalSupply);
+        uint256 diffProfit = senderPreviousShares.mul(acoData.profit.sub(senderProfit)).div(_totalSupply);
+        return (senderAmount, senderProfit, diffAmount, diffProfit);           
     }
     
     function _removeFromAccountData(address acoToken, AccountData storage data) internal {
@@ -378,17 +425,23 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         require(acoBalance > 0, "ACOVault:: No balance to exercise");
         
         uint256 price = assetConverter.getPrice(underlying, strikeAsset);
-        uint256 diff;
+        uint256 diff = 1;
         address collateral;
         uint256 _decimals;
         if (isCall) {
             require(price > strikePrice, "ACOVault:: It's not ITM");
-            diff = price.sub(strikePrice);
+            uint256 priceWithSlippage = price.mul(PERCENTAGE_PRECISION.sub(exerciseSlippage));
+            if (priceWithSlippage > strikePrice) {
+                diff = priceWithSlippage.sub(strikePrice);
+            }
             collateral = underlying;
             _decimals = ACOAssetHelper._getAssetDecimals(strikeAsset);
         } else {
             require(price < strikePrice, "ACOVault:: It's not ITM");
-            diff = strikePrice.sub(price);
+            uint256 priceWithSlippage = price.mul(PERCENTAGE_PRECISION.add(exerciseSlippage));
+            if (priceWithSlippage < strikePrice) {
+                diff = strikePrice.sub(priceWithSlippage);
+            }
             collateral = strikeAsset;
             _decimals = ACOAssetHelper._getAssetDecimals(underlying);
         }
@@ -452,8 +505,8 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         require(expiryTime >= minExpiryTime && expiryTime <= maxExpiryTime, "ACOVault:: Invalid ACO expiry time");
         
         uint256 price = _assetConverter.getPrice(underlying, strikeAsset);
-        uint256 maxPrice = price.mul(uint256(100000).add(tolerancePriceAbove));
-        uint256 minPrice = price.mul(uint256(100000).sub(tolerancePriceAbove));
+        uint256 maxPrice = price.mul(PERCENTAGE_PRECISION.add(tolerancePriceAbove));
+        uint256 minPrice = price.mul(PERCENTAGE_PRECISION.sub(tolerancePriceBelow));
         
         require(strikePrice >= minPrice && strikePrice <= maxPrice, "ACOVault:: Invalid ACO strike price");
     }
@@ -507,19 +560,19 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function _setMinPercentageToKeep(uint256 newMinPercentageToKeep) internal {
-        require(newMinPercentageToKeep < 100000, "ACOVault:: Invalid percentage");
+        require(newMinPercentageToKeep < PERCENTAGE_PRECISION, "ACOVault:: Invalid percentage");
         emit SetMinPercentageToKeep(minPercentageToKeep, newMinPercentageToKeep);
         minPercentageToKeep = newMinPercentageToKeep;
     }
     
     function _setTolerancePriceAbove(uint256 newTolerancePriceAbove) internal {
-        require(newTolerancePriceAbove < 100000, "ACOVault:: Invalid tolerance");
+        require(newTolerancePriceAbove < PERCENTAGE_PRECISION, "ACOVault:: Invalid tolerance");
         emit SetTolerancePriceAbove(tolerancePriceAbove, newTolerancePriceAbove);
         tolerancePriceAbove = newTolerancePriceAbove;
     }
     
     function _setTolerancePriceBelow(uint256 newTolerancePriceBelow) internal {
-        require(newTolerancePriceBelow < 100000, "ACOVault:: Invalid tolerance");
+        require(newTolerancePriceBelow < PERCENTAGE_PRECISION, "ACOVault:: Invalid tolerance");
         emit SetTolerancePriceBelow(tolerancePriceBelow, newTolerancePriceBelow);
         tolerancePriceBelow = newTolerancePriceBelow;
     }
@@ -540,5 +593,11 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         require(newMinTimeToExercise >= 3600, "ACOVault:: Invalid min time to exercise");
         emit SetMinTimeToExercise(minTimeToExercise, newMinTimeToExercise);
         minTimeToExercise = newMinTimeToExercise;
+    }
+    
+    function _setExerciseSlippage(uint256 newExerciseSlippage) internal {
+        require(newExerciseSlippage < PERCENTAGE_PRECISION, "ACOVault:: Invalid exercise slippage");
+        emit SetExerciseSlippage(exerciseSlippage, newExerciseSlippage);
+        exerciseSlippage = newExerciseSlippage;
     }
 }
