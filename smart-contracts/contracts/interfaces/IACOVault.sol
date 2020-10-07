@@ -27,6 +27,7 @@ interface IACOVault is IERC20, IControlled {
         uint256 maxExpiration;
         uint256 minTimeToExercise;
         uint256 exerciseSlippage;
+        uint256 withdrawFee;
     }
         
     struct Position {
@@ -43,7 +44,6 @@ interface IACOVault is IERC20, IControlled {
     
     function acoPoolFactory() external view returns(IACOPoolFactory);
     function acoFactory() external view returns(IACOFactory);
-    function token() external view returns(IERC20);
     function controller() external view returns(IController);
     function assetConverter() external view returns(IACOAssetConverterHelper);
     function acoFlashExercise() external view returns(IACOFlashExercise);
@@ -57,6 +57,7 @@ interface IACOVault is IERC20, IControlled {
     function maxExpiration() external view returns(uint256);
     function minTimeToExercise() external view returns(uint256);
     function exerciseSlippage() external view returns(uint256);
+    function withdrawFee() external view returns(uint256);
     function getPosition(address acoToken) external view returns(Position memory);
     function getAccountPositionsCount(address account) external view returns(uint256);
     function getAccountPositionByIndex(address account, uint256 index) external view returns(address, Position memory);
@@ -71,6 +72,7 @@ interface IACOVault is IERC20, IControlled {
     function setMaxExpiration(uint256 newMaxExpiration) external;
     function setMinTimeToExercise(uint256 newMinTimeToExercise) external;
     function setExerciseSlippage(uint256 newMinTimeToExercise) external;
+    function setWithdrawFee(uint256 newWithdrawFee) external;
     function setAcoToken(address newAcoToken, address newAcoPool) external;
     function setAcoPool(address newAcoPool) external;
     function balance() external view returns(uint256);

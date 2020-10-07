@@ -34,12 +34,14 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     event SetMaxExpiration(uint256 indexed oldMaxExpiration, uint256 indexed newMaxExpiration);
     event SetMinTimeToExercise(uint256 indexed oldMinTimeToExercise, uint256 indexed newMinTimeToExercise);
     event SetExerciseSlippage(uint256 indexed oldExerciseSlippage, uint256 indexed newExerciseSlippage);
+    event SetWithdrawFee(uint256 indexed oldWithdrawFee, uint256 indexed newWithdrawFee);
     event RewardAco(address indexed acoToken, uint256 acoTokenAmountIn);
     event ExerciseAco(address indexed acoToken, uint256 acoTokensOut, uint256 tokenIn);
+    event Withdraw(address indexed account, uint256 amount, uint256 fee);
 
     IACOPoolFactory public immutable override acoPoolFactory;
     IACOFactory public immutable override acoFactory;
-    IERC20 public immutable override token;
+    address public immutable override token;
     
     uint256 public override minPercentageToKeep;
     
@@ -56,6 +58,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     uint256 public override maxExpiration;
     uint256 public override minTimeToExercise;
     uint256 public override exerciseSlippage;
+    uint256 public override withdrawFee;
     
     mapping(address => Position) internal positions;
     mapping(address => AccountData) internal accounts;
@@ -69,18 +72,19 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         
         acoPoolFactory = IACOPoolFactory(initData.acoPoolFactory);
         acoFactory = IACOFactory(initData.acoFactory);
-        token = IERC20(initData.token);
+        token = initData.token;
         _setAssetConverter(initData.assetConverter);
         _setAcoFlashExercise(initData.acoFlashExercise);
         _setMinPercentageToKeep(initData.minPercentageToKeep);
         _setMinTimeToExercise(initData.minTimeToExercise);
         _setExerciseSlippage(initData.exerciseSlippage);
+        _setWithdrawFee(initData.withdrawFee);
         _setMaxExpiration(initData.maxExpiration);
         _setMinExpiration(initData.minExpiration);
         _setTolerancePriceAbove(initData.tolerancePriceAbove);
         _setTolerancePriceBelow(initData.tolerancePriceBelow);
         _setAcoToken(
-            IERC20(initData.token),
+            initData.token,
             IACOAssetConverterHelper(initData.assetConverter), 
             IACOFactory(initData.acoFactory), 
             IACOPoolFactory(initData.acoPoolFactory), 
@@ -121,11 +125,11 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
 
     function balance() public override view returns(uint256) {
-        return token.balanceOf(address(this)).add(controller.balanceOf(address(this)));
+        return ACOAssetHelper._getAssetBalanceOf(token, address(this)).add(controller.balanceOf(address(this)));
     }
 
     function available() public override view returns(uint256) {
-        return token.balanceOf(address(this)).mul(minPercentageToKeep).div(PERCENTAGE_PRECISION);
+        return ACOAssetHelper._getAssetBalanceOf(token, address(this)).mul(minPercentageToKeep).div(PERCENTAGE_PRECISION);
     }
 
     function numberOfAcoTokensNegotiated() public override view returns(uint256) {
@@ -177,6 +181,10 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         _setExerciseSlippage(newExerciseSlippage);
     }
     
+    function setWithdrawFee(uint256 newWithdrawFee) onlyOwner external override {
+        _setWithdrawFee(newWithdrawFee);
+    }
+    
     function setAcoToken(address newAcoToken, address newAcoPool) external override {
         _setAcoToken(token, assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
     }
@@ -192,7 +200,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     
     function withdrawStuckToken(address _token, address destination) external override {
         require(msg.sender == address(controller), "ACOVault:: Invalid sender");
-        require(address(token) != _token, "ACOVault:: Invalid token");
+        require(address(token) != _token && !positions[_token].initialized, "ACOVault:: Invalid token");
         uint256 _balance = ACOAssetHelper._getAssetBalanceOf(_token, address(this));
         if (_balance > 0) {
             ACOAssetHelper._transferAsset(_token, destination, _balance);
@@ -252,22 +260,24 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             delete accounts[msg.sender];
         }
         
-        uint256 bufferBalance = token.balanceOf(address(this));
+        uint256 bufferBalance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (bufferBalance < accountBalance) {
-            uint256 _withdraw = controller.withdraw(accountBalance.sub(bufferBalance));
-            uint256 afterBalance = token.balanceOf(address(this));
-            uint256 diff = afterBalance.sub(bufferBalance);
-            if (diff < _withdraw) {
-                accountBalance = bufferBalance.add(diff);
-            }
+            accountBalance = bufferBalance.add(controller.withdraw(accountBalance.sub(bufferBalance)));
         }
+        
+        uint256 fee = accountBalance.mul(withdrawFee).div(PERCENTAGE_PRECISION);
+        accountBalance = accountBalance.sub(fee);
+        
+        controller.sendFee(fee);
         ACOAssetHelper._transferAsset(address(token), msg.sender, accountBalance);
+        
+        emit Withdraw(msg.sender, accountBalance, fee);
     }
     
     function exerciseAco(address acoToken) external override {
         (uint256 acoBalance, uint256 minIntrinsicValue, address collateral) = _exerciseValidation(acoToken);
         
-        uint256 previousTokenAmount = token.balanceOf(address(this));
+        uint256 previousTokenAmount = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (IACOToken(acoToken).allowance(address(this), address(acoFlashExercise)) < acoBalance) {
             ACOAssetHelper._callApproveERC20(acoToken, address(acoFlashExercise), MAX_UINT);    
         }
@@ -284,7 +294,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             assetConverter.swapExactAmountOut{value: etherAmount}(collateral, address(token), collateralBalance);
         }
         
-        uint256 tokenIn = token.balanceOf(address(this)).sub(previousTokenAmount);
+        uint256 tokenIn = ACOAssetHelper._getAssetBalanceOf(token, address(this)).sub(previousTokenAmount);
         positions[acoToken].profit = positions[acoToken].profit.add(tokenIn); 
         
         emit ExerciseAco(acoToken, acoBalance, tokenIn);
@@ -469,7 +479,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
 
     function _setAcoToken(
-        IERC20 _token,
+        address _token,
         IACOAssetConverterHelper _assetConverter,
         IACOFactory _acoFactory, 
         IACOPoolFactory _acoPoolFactory, 
@@ -497,7 +507,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function _setAcoPool(
-        IERC20 _token,
+        address _token,
         IACOPoolFactory _acoPoolFactory, 
         address newAcoPool,
         address underlying, 
@@ -510,7 +520,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         
         emit SetAcoPool(address(acoPool), newAcoPool);
         
-        _token.approve(newAcoPool, MAX_UINT);
+        ACOAssetHelper._callApproveERC20(_token, newAcoPool, MAX_UINT);
         acoPool = IACOPool(newAcoPool);
     }
     
@@ -566,7 +576,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     function _setController(address newController) internal {
         require(newController.isContract(), "ACOVault:: Invalid controller");
         emit SetController(address(controller), newController);
-        token.approve(newController, MAX_UINT);  
+        ACOAssetHelper._callApproveERC20(token, newController, MAX_UINT);
         controller = IController(newController);
     }
     
@@ -622,5 +632,11 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         require(newExerciseSlippage < PERCENTAGE_PRECISION, "ACOVault:: Invalid exercise slippage");
         emit SetExerciseSlippage(exerciseSlippage, newExerciseSlippage);
         exerciseSlippage = newExerciseSlippage;
+    }
+    
+    function _setWithdrawFee(uint256 newWithdrawFee) internal {
+        require(newWithdrawFee <= 1000, "ACOVault:: Invalid withdraw fee");
+        emit SetWithdrawFee(withdrawFee, newWithdrawFee);
+        withdrawFee = newWithdrawFee;
     }
 }

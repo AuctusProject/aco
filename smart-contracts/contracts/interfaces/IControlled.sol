@@ -1,5 +1,6 @@
 pragma solidity ^0.6.6;
 
 interface IControlled {
-    function withdrawStuckToken(address token, address destination) external;
+    function token() external view returns(address);
+    function withdrawStuckToken(address _token, address destination) external;
 }

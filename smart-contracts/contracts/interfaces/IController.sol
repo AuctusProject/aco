@@ -5,4 +5,5 @@ interface IController {
     function actualAmount(address vault, uint256 amount) external view returns(uint256);
     function earn(uint256 amount) external;
     function withdraw(uint256 amount) external returns(uint256);
+    function sendFee(uint256 amount) external;
 }
