@@ -37,7 +37,8 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     event SetWithdrawFee(uint256 indexed oldWithdrawFee, uint256 indexed newWithdrawFee);
     event RewardAco(address indexed acoToken, uint256 acoTokenAmountIn);
     event ExerciseAco(address indexed acoToken, uint256 acoTokensOut, uint256 tokenIn);
-    event Withdraw(address indexed account, uint256 amount, uint256 fee);
+    event Deposit(address indexed account, uint256 shares, uint256 amount);
+    event Withdraw(address indexed account, uint256 shares, uint256 amount, uint256 fee);
 
     IACOPoolFactory public immutable override acoPoolFactory;
     IACOFactory public immutable override acoFactory;
@@ -84,7 +85,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         _setTolerancePriceAbove(initData.tolerancePriceAbove);
         _setTolerancePriceBelow(initData.tolerancePriceBelow);
         _setAcoToken(
-            initData.token,
             IACOAssetConverterHelper(initData.assetConverter), 
             IACOFactory(initData.acoFactory), 
             IACOPoolFactory(initData.acoPoolFactory), 
@@ -186,7 +186,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function setAcoToken(address newAcoToken, address newAcoPool) external override {
-        _setAcoToken(token, assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
+        _setAcoToken(assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
     }
     
     function setAcoPool(address newAcoPool) external override {
@@ -195,7 +195,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
          bool isCall, 
          uint256 strikePrice, 
          uint256 expiryTime) = acoFactory.acoTokenData(address(currentAcoToken));
-        _setAcoPool(token, acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
+        _setAcoPool(acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
     }
     
     function withdrawStuckToken(address _token, address destination) external override {
@@ -230,13 +230,15 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         _setAccountData(_currentAcoToken, acoData.amount, acoData.profit, balanceOf(msg.sender), shares, accountData);
         
         super._mintAction(msg.sender, shares);
+        
+        emit Deposit(msg.sender, shares, amount);
     }
 
     function withdraw(uint256 shares) external override {
+        uint256 accountShares = balanceOf(msg.sender);
         uint256 vaulTotalSupply = totalSupply();
         uint256 accountBalance = shares.mul(balance()).div(vaulTotalSupply);
         
-        uint256 accountShares = balanceOf(msg.sender);
         super._burnAction(msg.sender, shares);
         
         AccountData storage data = accounts[msg.sender];
@@ -249,15 +251,9 @@ contract ACOVault is Ownable, ERC20, IACOVault {
                 if (accountShares > shares) {
                     _removeFromAccountData(acoToken, data);
                 }
-            } else {
-                if (acoAmount > 0) {
-                    ACOAssetHelper._transferAsset(acoToken, msg.sender, acoAmount);
-                }
-                if (accountShares > shares) {
-                    data.positionsOnDeposit[acoToken].amount = positions[acoToken].amount;  
-                    data.positionsOnDeposit[acoToken].profit = positions[acoToken].profit;  
-                }
-            }
+            } else if (acoAmount > 0) {
+                ACOAssetHelper._transferAsset(acoToken, msg.sender, acoAmount);
+            }   
         }
         
         if (accountShares == shares) {
@@ -275,14 +271,14 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         controller.sendFee(fee);
         ACOAssetHelper._transferAsset(address(token), msg.sender, accountBalance);
         
-        emit Withdraw(msg.sender, accountBalance, fee);
+        emit Withdraw(msg.sender, shares, accountBalance, fee);
     }
     
     function exerciseAco(address acoToken) external override {
         (uint256 acoBalance, uint256 minIntrinsicValue, address collateral) = _exerciseValidation(acoToken);
         
         uint256 previousTokenAmount = ACOAssetHelper._getAssetBalanceOf(token, address(this));
-        if (IACOToken(acoToken).allowance(address(this), address(acoFlashExercise)) < acoBalance) {
+        if (ACOAssetHelper._getAssetAllowance(acoToken, address(this), address(acoFlashExercise)) < acoBalance) {
             ACOAssetHelper._callApproveERC20(acoToken, address(acoFlashExercise), MAX_UINT);    
         }
         acoFlashExercise.flashExercise(acoToken, acoBalance, minIntrinsicValue, block.timestamp);
@@ -304,11 +300,29 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         emit ExerciseAco(acoToken, acoBalance, tokenIn);
     }
     
-    function setReward(uint256 acoTokenAmount, uint256 assetAmount) external override {
+    function setReward(uint256 acoTokenAmount, uint256 rewardAmount) external override {
         require(msg.sender == address(controller), "ACOVault:: Invalid sender");
         address _currentAcoToken = address(currentAcoToken);
-        uint256 amount = acoPool.swap(true, _currentAcoToken, acoTokenAmount, assetAmount, address(this), block.timestamp);
+        address _token = token;
+        address poolExpectedAsset = IACOToken(_currentAcoToken).strikeAsset();
+        
+        uint256 restriction;
+        if (_token != poolExpectedAsset) {
+            restriction = assetConverter.swapExactAmountOutWithMinAmountToReceive(_token, poolExpectedAsset, rewardAmount, 1);    
+        } else {
+            restriction = rewardAmount;
+        }
+        
+        uint256 amount = acoPool.swap(true, _currentAcoToken, acoTokenAmount, restriction, address(this), block.timestamp);
         positions[_currentAcoToken].amount = amount.add(positions[_currentAcoToken].amount);
+        
+        if (_token != poolExpectedAsset) {
+            uint256 poolAssetBalance = ACOAssetHelper._getAssetBalanceOf(poolExpectedAsset, address(this));
+            if (poolAssetBalance > 0) {
+                assetConverter.swapExactAmountOutWithMinAmountToReceive(poolExpectedAsset, _token, poolAssetBalance, 1);  
+            }
+        }
+        
         emit RewardAco(_currentAcoToken, amount);
     }
     
@@ -354,7 +368,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         AccountData storage accountData
     ) internal {
         if (accountData.positionsOnDeposit[acoToken].initialized) {
-            //TODO check calculation
             uint256 weight = newShares.add(previousShares);
             accountData.positionsOnDeposit[acoToken].amount = newShares.mul(acoAmount).add(previousShares.mul(accountData.positionsOnDeposit[acoToken].amount)).div(weight);
             accountData.positionsOnDeposit[acoToken].profit = newShares.mul(acoProfit).add(previousShares.mul(accountData.positionsOnDeposit[acoToken].profit)).div(weight);
@@ -370,11 +383,22 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         uint256 vaulTotalSupply,
         AccountData storage data
     ) internal view returns(uint256, uint256, uint256) {
-        Position storage _position = positions[acoToken];
-        uint256 amount = shares.mul(_position.amount.sub(data.positionsOnDeposit[acoToken].amount)).div(vaulTotalSupply);
-        uint256 totalProfit = _position.profit.sub(data.positionsOnDeposit[acoToken].profit);
+        uint256 amount = 0;
         uint256 profit = 0;
         uint256 adjust = 0;
+        
+        Position storage _position = positions[acoToken];
+        
+        uint256 acoAmount = ACOAssetHelper._getAssetBalanceOf(acoToken, address(this));
+        if (acoAmount > 0) {
+            uint256 expectedAmount = _position.amount.sub(data.positionsOnDeposit[acoToken].amount);
+            if (expectedAmount > acoAmount) {
+                expectedAmount = acoAmount;
+            }
+            amount = shares.mul(expectedAmount).div(vaulTotalSupply);
+        }
+        
+        uint256 totalProfit = _position.profit.sub(data.positionsOnDeposit[acoToken].profit);
         if (totalProfit > 0) {
             profit = shares.mul(totalProfit).div(vaulTotalSupply);
             uint256 actualTotalValue = controller.actualAmount(address(this), totalProfit);
@@ -422,7 +446,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
 
     function _setAcoToken(
-        address _token,
         IACOAssetConverterHelper _assetConverter,
         IACOFactory _acoFactory, 
         IACOPoolFactory _acoPoolFactory, 
@@ -437,7 +460,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
          
         _acoTokenValidation(_assetConverter, underlying, strikeAsset, strikePrice, expiryTime);
         
-        _setAcoPool(_token, _acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
+        _setAcoPool(_acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
         
         emit SetAcoToken(address(currentAcoToken), newAcoToken);
         
@@ -450,7 +473,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function _setAcoPool(
-        address _token,
         IACOPoolFactory _acoPoolFactory, 
         address newAcoPool,
         address underlying, 
@@ -463,7 +485,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         
         emit SetAcoPool(address(acoPool), newAcoPool);
         
-        ACOAssetHelper._callApproveERC20(_token, newAcoPool, MAX_UINT);
+        ACOAssetHelper._callApproveERC20(strikeAsset, newAcoPool, MAX_UINT);
         acoPool = IACOPool(newAcoPool);
     }
     

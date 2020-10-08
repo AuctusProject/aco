@@ -83,5 +83,5 @@ interface IACOVault is IERC20, IControlled {
     function deposit(uint256 amount) external;
     function earn() external;
     function withdraw(uint256 shares) external;
-    function setReward(uint256 acoTokenAmount, uint256 assetAmount) external;
+    function setReward(uint256 acoTokenAmount, uint256 rewardAmount) external;
 }

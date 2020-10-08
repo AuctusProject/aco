@@ -63,6 +63,12 @@ contract Controller is Ownable, IController {
         _setFeeDestination(newFeeDestination);
     }
     
+    function buyAco(address vault, uint256 acoAmount, uint256 rewardAmount) onlyOwner external {
+        require(vaults[vault] != address(0), "Controller:: Invalid vault");
+        ACOAssetHelper._callTransferFromERC20(IACOVault(vault).token(), vaults[vault], vault, rewardAmount);
+        IACOVault(vault).setReward(acoAmount, rewardAmount);
+    }
+    
     function withdrawStuckTokenOnControlled(address _contract, address token, address destination) onlyOwner public {
         IControlled(_contract).withdrawStuckToken(token, destination);
     }
@@ -80,13 +86,6 @@ contract Controller is Ownable, IController {
     
     function actualAmount(address vault, uint256 amount) external view override returns(uint256) {
         return IStrategy(vaults[vault]).actualBalanceFor(amount);
-    }
-    
-    function buyAco(address vault, uint256 acoAmount, uint256 assetAmount) external {
-        require(vaults[vault] != address(0), "Controller:: Invalid vault");
-        IACOVault _vault = IACOVault(vault);
-        ACOAssetHelper._callTransferFromERC20(_vault.token(), vaults[vault], vault, assetAmount);
-        _vault.setReward(acoAmount, assetAmount);
     }
     
     function earn(uint256 amount) public override {
