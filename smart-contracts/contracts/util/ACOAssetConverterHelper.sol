@@ -265,9 +265,7 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
      */
     function swapExactAmountOutWithMinAmountToReceive(address assetToSold, address assetToBuy, uint256 amountToSold, uint256 minAmountToReceive) public payable override returns(uint256) {
         (bool reversed, PairData storage data) = _getPair(assetToSold, assetToBuy, false);
-        if (assetPrecision[assetToSold] == 0) {
-            _setAsset(assetToSold);
-        }
+        _setAsset(assetToSold);
         return _swapExactAmountOutWithMinAmountToReceive(assetToSold, assetToBuy, amountToSold, minAmountToReceive, reversed, data.uniswapMiddleRoute);
     }
     
@@ -307,9 +305,7 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
      */
     function swapExactAmountInWithMaxAmountToSold(address assetToSold, address assetToBuy, uint256 amountToBuy, uint256 maxAmountToSold) public payable override returns(uint256) {
         (bool reversed, PairData storage data) = _getPair(assetToSold, assetToBuy, false);
-        if (assetPrecision[assetToSold] == 0) {
-            _setAsset(assetToSold);
-        }
+        _setAsset(assetToSold);
         return _swapExactAmountInWithMaxAmountToSold(assetToSold, assetToBuy, amountToBuy, maxAmountToSold, reversed, data.uniswapMiddleRoute);
     }
     
