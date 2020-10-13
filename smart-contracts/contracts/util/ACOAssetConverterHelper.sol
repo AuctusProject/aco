@@ -93,7 +93,7 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
 	/**
      * @dev The Oracle aggregators data. (baseAsset => quoteAsset => PairData)
      */
-    mapping(address => mapping(address => PairData)) public pairs; 
+    mapping(address => mapping(address => PairData)) internal pairs; 
 	
 	/**
      * @dev The asset precision. (6 decimals = 1000000)
@@ -120,11 +120,16 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
      */
     function setPairTolerancePercentage(address baseAsset, address quoteAsset, uint256 tolerancePercentage) onlyOwner public override {
         require(tolerancePercentage <= PERCENTAGE_PRECISION, "ACOAssetConverterHelper:: Invalid tolerance percentage");
-        (,PairData storage data) = _getPair(baseAsset, quoteAsset, false);
-        emit SetPairTolerancePercentage(baseAsset, quoteAsset, data.tolerancePercentage, tolerancePercentage);
+        (bool reversed, PairData storage data) = _getPair(baseAsset, quoteAsset, false);
         if (data.initialized) {
+			if (reversed) {
+				emit SetPairTolerancePercentage(quoteAsset, baseAsset, data.tolerancePercentage, tolerancePercentage);
+			} else {
+				emit SetPairTolerancePercentage(baseAsset, quoteAsset, data.tolerancePercentage, tolerancePercentage);
+			}
             data.tolerancePercentage = tolerancePercentage;
         } else {
+			emit SetPairTolerancePercentage(baseAsset, quoteAsset, 0, tolerancePercentage);
             _createPair(baseAsset, quoteAsset, address(0), 0, tolerancePercentage, new address[](0));
         }
     }
@@ -136,15 +141,20 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
      * @param quoteAsset Address of the quote asset.
 	 * @param aggregator Address of the Oracle aggregator.
      */
-    function setAgreggator(address baseAsset, address quoteAsset, address aggregator) onlyOwner public override {
+    function setAggregator(address baseAsset, address quoteAsset, address aggregator) onlyOwner public override {
         require(aggregator.isContract(), "ACOAssetConverterHelper:: Invalid aggregator");
         uint256 aggregatorPrecision = (10 ** uint256(AggregatorV3Interface(aggregator).decimals()));
-        (,PairData storage data) = _getPair(baseAsset, quoteAsset, false);
-        emit SetAggregator(baseAsset, quoteAsset, data.aggregator, aggregator);
+        (bool reversed, PairData storage data) = _getPair(baseAsset, quoteAsset, false);
         if (data.initialized) {
+			if (reversed) {
+				emit SetAggregator(quoteAsset, baseAsset, data.aggregator, aggregator);
+			} else {
+				emit SetAggregator(baseAsset, quoteAsset, data.aggregator, aggregator);
+			}
             data.aggregator = aggregator;
             data.aggregatorPrecision = aggregatorPrecision;
         } else {
+			emit SetAggregator(baseAsset, quoteAsset, address(0), aggregator);
             _createPair(baseAsset, quoteAsset, aggregator, aggregatorPrecision, 0, new address[](0));
         }
     }
@@ -157,16 +167,26 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
 	 * @param uniswapMiddleRoute Addresses of Uniswap middle route for a swap.
      */
     function setUniswapMiddleRoute(address baseAsset, address quoteAsset, address[] memory uniswapMiddleRoute) onlyOwner public override {
+        _validateUniswapMiddleRoute(baseAsset, quoteAsset, uniswapMiddleRoute);
         (bool reversed, PairData storage data) = _getPair(baseAsset, quoteAsset, false);
-        emit SetUniswapMiddleRoute(baseAsset, quoteAsset, data.uniswapMiddleRoute, uniswapMiddleRoute);
         if (data.initialized) {
-            address asset0 = (reversed ? quoteAsset : baseAsset);
-            address asset1 = (reversed ? baseAsset : quoteAsset);
-            _validateUniswapMiddleRoute(asset0, asset1, uniswapMiddleRoute);
-            delete data.uniswapMiddleRoute;
-            data.uniswapMiddleRoute = uniswapMiddleRoute;
+            if (reversed) {
+                address[] memory route = new address[](uniswapMiddleRoute.length);
+                uint256 index = 0;
+                for (uint256 i = uniswapMiddleRoute.length; i > 0; --i) {
+                    route[index] = uniswapMiddleRoute[i-1];
+                    ++index;
+                }
+				emit SetUniswapMiddleRoute(quoteAsset, baseAsset, data.uniswapMiddleRoute, route);
+                delete data.uniswapMiddleRoute;
+                data.uniswapMiddleRoute = route;
+            } else {
+				emit SetUniswapMiddleRoute(baseAsset, quoteAsset, data.uniswapMiddleRoute, uniswapMiddleRoute);
+                delete data.uniswapMiddleRoute;
+                data.uniswapMiddleRoute = uniswapMiddleRoute;
+            }
         } else {
-            _validateUniswapMiddleRoute(baseAsset, quoteAsset, uniswapMiddleRoute);
+			emit SetUniswapMiddleRoute(baseAsset, quoteAsset, new address[](0), uniswapMiddleRoute);
             _createPair(baseAsset, quoteAsset, address(0), 0, 0, uniswapMiddleRoute);
         }
     }
@@ -195,6 +215,37 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
         return (data.aggregator != address(0));
     }
     
+    /**
+     * @dev Function to get the pair data
+     * @param baseAsset Address of the base asset.
+     * @param quoteAsset Address of the quote asset.
+	 * @return Aggregator, aggregator precision, tolerance percentage, Uniswap middle route length.
+     */
+    function getPairData(address baseAsset, address quoteAsset) public override view returns(address, uint256, uint256, uint256) {
+        (,PairData storage data) = _getPair(baseAsset, quoteAsset, false);
+        return (data.aggregator, data.aggregatorPrecision, data.tolerancePercentage, data.uniswapMiddleRoute.length);
+    }
+    
+    /**
+     * @dev Function to get an Uniswap middle route token by array index.
+     * @param baseAsset Address of the base asset.
+     * @param quoteAsset Address of the quote asset.
+     * @param index Th array index.
+	 * @return The Uniswap middle route token.
+     */
+    function getUniswapMiddleRouteByIndex(address baseAsset, address quoteAsset, uint256 index) public override view returns(address) {
+        (bool reversed, PairData memory data) = _getPair(baseAsset, quoteAsset, false);
+        if (reversed) {
+            if (index >= data.uniswapMiddleRoute.length) {
+                return address(0);
+            } else {
+                return data.uniswapMiddleRoute[(data.uniswapMiddleRoute.length - index - 1)];    
+            }
+        } else {
+            return data.uniswapMiddleRoute[index];
+        }
+    }
+    
 	/**
      * @dev Function to get the price on the Oracle aggregator.
      * @param baseAsset Address of the base asset.
@@ -204,17 +255,6 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
     function getPrice(address baseAsset, address quoteAsset) public override view returns(uint256) {
         (uint256 price,) = _getAggregatorPriceAndTolerance(baseAsset, quoteAsset);  
         return price;
-    }
-    
-    /**
-     * @dev Function to get the price on the Oracle aggregator.
-     * @param baseAsset Address of the base asset.
-     * @param quoteAsset Address of the quote asset.
-	 * @return The tolerance percentage on Oracle price.
-     */
-    function getTolerancePercentage(address baseAsset, address quoteAsset) public override view returns(uint256) {
-        (,uint256 tolerancePercentage) = _getAggregatorPriceAndTolerance(baseAsset, quoteAsset);  
-        return tolerancePercentage;
     }
     
 	/**
@@ -422,15 +462,15 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
     
     /**
      * @dev Internal function to validate the addresses on the Uniswap middle route.
-     * @param baseAsset Address of the base asset.
-     * @param quoteAsset Address of the quote asset.
+     * @param asset0 Address of a pair asset.
+     * @param asset1 Address of another pair asset.
 	 * @param uniswapMiddleRoute Addresses of Uniswap middle route for a swap.
      */
-    function _validateUniswapMiddleRoute(address baseAsset, address quoteAsset, address[] memory uniswapMiddleRoute) internal pure {
+    function _validateUniswapMiddleRoute(address asset0, address asset1, address[] memory uniswapMiddleRoute) internal pure {
         for (uint256 i = 0; i < uniswapMiddleRoute.length; ++i) {
             address asset = uniswapMiddleRoute[i];
-            require(baseAsset != asset && quoteAsset != asset, "ACOAssetConverterHelper:: Invalid middle route");
-            for (uint256 j = i; j < uniswapMiddleRoute.length; ++j) {
+            require(asset0 != asset && asset1 != asset, "ACOAssetConverterHelper:: Invalid middle route");
+            for (uint256 j = i+1; j < uniswapMiddleRoute.length; ++j) {
                 require(asset != uniswapMiddleRoute[j], "ACOAssetConverterHelper:: Invalid middle route");
             }
         }
@@ -460,13 +500,14 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
      */
     function _getPair(address baseAsset, address quoteAsset, bool validateAggregatorExistence) internal view returns(bool, PairData storage) {
         PairData storage data = pairs[baseAsset][quoteAsset];
-        if (data.aggregator != address(0)) {
+        if (data.initialized) {
+			require(!validateAggregatorExistence || data.aggregator != address(0), "ACOAssetConverterHelper:: No aggregator");
             return (false, data);
         } else {
-            PairData storage data2 = pairs[quoteAsset][baseAsset];
-            require(!validateAggregatorExistence || data2.aggregator != address(0), "ACOAssetConverterHelper:: No aggregator");
-            return (true, data2);
-        }
+			PairData storage data2 = pairs[quoteAsset][baseAsset];
+			require(!validateAggregatorExistence || data2.aggregator != address(0), "ACOAssetConverterHelper:: No aggregator");
+			return (data2.initialized, data2);
+		}
     }
     
     /**
@@ -513,8 +554,8 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
      * @param uniswapMiddleRoute Addresses of Uniswap middle route for a swap.
      */
 	function _createPair(
-	    address baseAsset, 
-	    address quoteAsset, 
+	    address baseAsset,
+	    address quoteAsset,
 	    address aggregator, 
 	    uint256 aggregatorPrecision,
 	    uint256 tolerancePercentage, 
@@ -526,7 +567,7 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
         
         _setAsset(baseAsset);
         _setAsset(quoteAsset);
-            
+        
         pairs[baseAsset][quoteAsset] = PairData(true, aggregator, aggregatorPrecision, tolerancePercentage, uniswapMiddleRoute);
     }
 	
