@@ -640,4 +640,169 @@ describe("ACOAssetConverterHelper", function() {
       ).to.be.revertedWith("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
     });
   });
+
+  describe("Swap without aggregator functions", function () {
+    it("Swap exact amount out with minimum amount to receive", async function () {
+      await token1.connect(addr2).approve(converterHelper.address, token1TotalSupply);
+      await token2.connect(addr2).approve(converterHelper.address, token2TotalSupply);
+      await token3.connect(addr2).approve(converterHelper.address, token3TotalSupply);
+
+      let s1 = ethers.utils.bigNumberify("100000000");
+      let r1 = ethers.utils.bigNumberify("9900000000");
+      let bal11 = await token1.balanceOf(await addr2.getAddress());
+      let bal12 = await token2.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token1.address, token2.address, s1, r1);
+      await expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal11.sub(s1));
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.be.above(bal12.add(r1));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token1.address, token2.address, s1, ethers.utils.bigNumberify("10000000000"))
+      ).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+
+      let s2 = ethers.utils.bigNumberify("1000000000000000000");
+      let r2 = ethers.utils.bigNumberify("396000000");
+      let bal21 = await addr2.getBalance();
+      let bal22 = await token2.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(AddressZero, token2.address, s2, r2, {value: s2});
+      await expect(await addr2.getBalance()).to.be.below(bal21.sub(s2));
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.be.above(bal22.add(r2));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(AddressZero, token2.address, s2, ethers.utils.bigNumberify("400000000"), {value: s2})
+      ).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+
+      await converterHelper.setUniswapMiddleRoute(token2.address, token3.address, [weth.address]);
+
+      let s3 = ethers.utils.bigNumberify("80000000");
+      let r3 = ethers.utils.bigNumberify("990000000000000000");
+      let bal32 = await token2.balanceOf(await addr2.getAddress());
+      let bal33 = await token3.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token2.address, token3.address, s3, r3);
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal32.sub(s3));
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.be.above(bal33.add(r3));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token2.address, token3.address, s3, ethers.utils.bigNumberify("1000000000000000000"))
+      ).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+
+      let s4 = ethers.utils.bigNumberify("1000000000000000000");
+      let r4 = ethers.utils.bigNumberify("79000000");
+      let bal43 = await token3.balanceOf(await addr2.getAddress());
+      let bal42 = await token2.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token3.address, token2.address, s4, r4);
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.equal(bal43.sub(s4));
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.be.above(bal42.add(r4));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token3.address, token2.address, s4, ethers.utils.bigNumberify("80000000"))
+      ).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+
+      await converterHelper.setUniswapMiddleRoute(token1.address, token3.address, [token2.address, weth.address]);
+        
+      let s5 = ethers.utils.bigNumberify("100000000");
+      let r5 = ethers.utils.bigNumberify("120000000000000000000");
+      let bal51 = await token1.balanceOf(await addr2.getAddress());
+      let bal53 = await token3.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token1.address, token3.address, s5, r5);
+      await expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal51.sub(s5));
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.be.above(bal53.add(r5));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token1.address, token3.address, s5, ethers.utils.bigNumberify("125000000000000000000"))
+      ).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+
+      let s6 = ethers.utils.bigNumberify("1000000000000000000");
+      let r6 = ethers.utils.bigNumberify("800000");
+      let bal63 = await token3.balanceOf(await addr2.getAddress());
+      let bal61 = await token1.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token3.address, token1.address, s6, r6);
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.equal(bal63.sub(s6));
+      await expect(await token1.balanceOf(await addr2.getAddress())).to.be.above(bal61.add(r6));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountOutWithMinAmountToReceive(token3.address, token1.address, s6, ethers.utils.bigNumberify("810000"))
+      ).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+    });
+    it("Swap exact amount in with maximum amount to pay", async function () {
+      await token1.connect(addr2).approve(converterHelper.address, token1TotalSupply);
+      await token2.connect(addr2).approve(converterHelper.address, token2TotalSupply);
+      await token3.connect(addr2).approve(converterHelper.address, token3TotalSupply);
+
+      let s1 = ethers.utils.bigNumberify("10000000000");
+      let r1 = ethers.utils.bigNumberify("101000000");
+      let bal11 = await token1.balanceOf(await addr2.getAddress());
+      let bal12 = await token2.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token1.address, token2.address, s1, r1);
+      await expect(await token1.balanceOf(await addr2.getAddress())).to.be.above(bal11.sub(r1));
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal12.add(s1));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token1.address, token2.address, s1, ethers.utils.bigNumberify("100000000"))
+      ).to.be.revertedWith("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+
+      let s2 = ethers.utils.bigNumberify("400000000");
+      let r2 = ethers.utils.bigNumberify("1010000000000000000");
+      let bal21 = await addr2.getBalance();
+      let bal22 = await token2.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(AddressZero, token2.address, s2, r2, {value: r2});
+      await expect(await addr2.getBalance()).to.be.above(bal21.sub(r2));
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(s2));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(AddressZero, token2.address, s2, ethers.utils.bigNumberify("1000000000000000000"), {value: ethers.utils.bigNumberify("1000000000000000000")})
+      ).to.be.revertedWith("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+
+      await converterHelper.setUniswapMiddleRoute(token2.address, token3.address, [weth.address]);
+
+      let s3 = ethers.utils.bigNumberify("1000000000000000000");
+      let r3 = ethers.utils.bigNumberify("81000000");
+      let bal32 = await token2.balanceOf(await addr2.getAddress());
+      let bal33 = await token3.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token2.address, token3.address, s3, r3);
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.be.above(bal32.sub(r3));
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.equal(bal33.add(s3));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token2.address, token3.address, s3, ethers.utils.bigNumberify("80000000"))
+      ).to.be.revertedWith("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+
+      let s4 = ethers.utils.bigNumberify("80000000");
+      let r4 = ethers.utils.bigNumberify("1010000000000000000");
+      let bal43 = await token3.balanceOf(await addr2.getAddress());
+      let bal42 = await token2.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token3.address, token2.address, s4, r4);
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.be.above(bal43.sub(r4));
+      await expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal42.add(s4));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token3.address, token2.address, s4, ethers.utils.bigNumberify("1000000000000000000"))
+      ).to.be.revertedWith("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+
+      await converterHelper.setUniswapMiddleRoute(token1.address, token3.address, [token2.address, weth.address]);
+        
+      let s5 = ethers.utils.bigNumberify("1000000000000000000");
+      let r5 = ethers.utils.bigNumberify("820000");
+      let bal51 = await token1.balanceOf(await addr2.getAddress());
+      let bal53 = await token3.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token1.address, token3.address, s5, r5);
+      await expect(await token1.balanceOf(await addr2.getAddress())).to.be.above(bal51.sub(r5));
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.equal(bal53.add(s5));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token1.address, token3.address, s5, ethers.utils.bigNumberify("800000"))
+      ).to.be.revertedWith("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+
+      let s6 = ethers.utils.bigNumberify("100000000");
+      let r6 = ethers.utils.bigNumberify("129000000000000000000");
+      let bal63 = await token3.balanceOf(await addr2.getAddress());
+      let bal61 = await token1.balanceOf(await addr2.getAddress());
+      await converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token3.address, token1.address, s6, r6);
+      await expect(await token3.balanceOf(await addr2.getAddress())).to.be.above(bal63.sub(r6));
+      await expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal61.add(s6));
+
+      await expect(
+        converterHelper.connect(addr2).swapExactAmountInWithMaxAmountToSold(token3.address, token1.address, s6, ethers.utils.bigNumberify("125000000000000000000"))
+      ).to.be.revertedWith("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+    });
+  });
 });
