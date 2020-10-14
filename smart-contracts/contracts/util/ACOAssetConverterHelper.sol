@@ -270,6 +270,31 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
     }
     
     /**
+     * @dev Function to get the expected amount to be sold to swap for an exact amount to be purchased.
+     * @param assetToSold Address of the asset to be sold.
+     * @param assetToBuy Address of the asset to be purchased.
+     * @param amountToBuy Amount to be purchased.
+	 * @return The expected amount to be sold.
+     */
+    function getExpectedAmountOutToSwapExactAmountIn(address assetToSold, address assetToBuy, uint256 amountToBuy) public override view returns(uint256) {
+        (bool reversed, PairData storage data) = _getPair(assetToSold, assetToBuy, true);
+        return _getMaxAmountToSoldToSwapExactAmountIn(assetToSold, assetToBuy, amountToBuy, data.tolerancePercentage, reversed, data);
+    }
+
+    /**
+     * @dev Function to get the expected amount to be sold to swap for an exact amount to be purchased and specifying a tolerance percentage on Oracle.
+     * @param assetToSold Address of the asset to be sold.
+     * @param assetToBuy Address of the asset to be purchased.
+     * @param amountToBuy Amount to be purchased.
+     * @param tolerancePercentage Value of the tolerance percentage. (100% = 100000)
+	 * @return The expected amount to be sold.
+     */
+    function getExpectedAmountOutToSwapExactAmountInWithSpecificTolerance(address assetToSold, address assetToBuy, uint256 amountToBuy, uint256 tolerancePercentage) public override view returns(uint256) {
+        (bool reversed, PairData storage data) = _getPair(assetToSold, assetToBuy, true);
+        return _getMaxAmountToSoldToSwapExactAmountIn(assetToSold, assetToBuy, amountToBuy, tolerancePercentage, reversed, data);
+    }
+    
+    /**
      * @dev Function to swap assets with the exact amount of asset to be sold.
      * @param assetToSold Address of the asset to be sold.
      * @param assetToBuy Address of the asset to be purchased.
@@ -367,10 +392,37 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
         bool reversed,
         PairData storage data
     ) internal returns(uint256) {
-        uint256 price = _getPriceWithTolerance(_getAggregatorPriceValue(assetToBuy, reversed, data), tolerancePercentage, false);
-        uint256 maxAmountToSold = price.mul(amount).div(assetPrecision[assetToBuy]);
-        
+        uint256 maxAmountToSold = _getMaxAmountToSoldToSwapExactAmountIn(
+            assetToSold,
+            assetToBuy,
+            amount,
+            tolerancePercentage,
+            reversed,
+            data
+        );
         return _swapExactAmountInWithMaxAmountToSold(assetToSold, assetToBuy, amount, maxAmountToSold, reversed, data.uniswapMiddleRoute);
+    }
+
+    /**
+     * @dev Internal function to get the max amount to be sold.
+     * @param assetToSold Address of the asset to be sold.
+     * @param assetToBuy Address of the asset to be purchased.
+     * @param amount Amount to be purchased.
+     * @param tolerancePercentage Value of the tolerance percentage. (100% = 100000)
+     * @param reversed If the pairs are reversed.
+     * @param data The pair data.
+	 * @return The max amount to be sold.
+     */
+    function _getMaxAmountToSoldToSwapExactAmountIn(
+        address assetToSold, 
+        address assetToBuy, 
+        uint256 amount, 
+        uint256 tolerancePercentage,
+        bool reversed,
+        PairData storage data
+    ) internal view returns(uint256) {
+        uint256 price = _getPriceWithTolerance(_getAggregatorPriceValue(assetToBuy, reversed, data), tolerancePercentage, true);
+        return amount.mul(assetPrecision[assetToSold]).div(price);
     }
     
     /**
@@ -393,7 +445,13 @@ contract ACOAssetConverterHelper is Ownable, IACOAssetConverterHelper {
     ) internal returns(uint256) {
         uint256 previousAmount = ACOAssetHelper._getAssetBalanceOf(assetToSold, address(this));
         
-        ACOAssetHelper._receiveAsset(assetToSold, maxAmountToSold);
+        if (ACOAssetHelper._isEther(assetToSold)) {
+            previousAmount = previousAmount.sub(msg.value);
+            require(msg.value >= maxAmountToSold, "ACOAssetConverterHelper:: Invalid ETH amount");
+        } else {
+            require(msg.value == 0, "ACOAssetConverterHelper:: Ether is not expected");
+            ACOAssetHelper._callTransferFromERC20(assetToSold, msg.sender, address(this), maxAmountToSold);
+        }
 
         _swapAssetsExactAmountIn(assetToSold, assetToBuy, amountToBuy, maxAmountToSold, reversed, uniswapMiddleRoute);
         
