@@ -503,10 +503,10 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         require(expiryTime >= minExpiryTime && expiryTime <= maxExpiryTime, "ACOVault:: Invalid ACO expiry time");
         
         uint256 price = _assetConverter.getPrice(underlying, strikeAsset);
-        uint256 maxPrice = price.mul(PERCENTAGE_PRECISION.add(tolerancePriceAbove)).div(PERCENTAGE_PRECISION);
-        uint256 minPrice = price.mul(PERCENTAGE_PRECISION.sub(tolerancePriceBelow)).div(PERCENTAGE_PRECISION);
+        uint256 maxPrice = strikePrice.mul(PERCENTAGE_PRECISION.add(tolerancePriceAbove)).div(PERCENTAGE_PRECISION);
+        uint256 minPrice = strikePrice.mul(PERCENTAGE_PRECISION.sub(tolerancePriceBelow)).div(PERCENTAGE_PRECISION);
         
-        require(strikePrice >= minPrice && strikePrice <= maxPrice, "ACOVault:: Invalid ACO strike price");
+        require(price >= minPrice && price <= maxPrice, "ACOVault:: Invalid ACO strike price");
     }
     
     function _acoPoolValidation(
@@ -518,14 +518,16 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         uint256 strikePrice, 
         uint256 expiryTime
     ) internal view {
-        (,address poolUnderlying, 
-          address poolStrikeAsset, 
-          bool poolIsCall, 
-          uint256 poolMinStrikePrice, 
-          uint256 poolMaxStrikePrice, 
-          uint256 poolMinExpiration, 
-          uint256 poolMaxExpiration,) = _acoPoolFactory.acoPoolData(newAcoPool);
+        (uint256 poolStart, 
+         address poolUnderlying, 
+         address poolStrikeAsset, 
+         bool poolIsCall, 
+         uint256 poolMinStrikePrice, 
+         uint256 poolMaxStrikePrice, 
+         uint256 poolMinExpiration, 
+         uint256 poolMaxExpiration,) = _acoPoolFactory.acoPoolData(newAcoPool);
         require(
+            poolStart <= block.timestamp &&
             underlying == poolUnderlying &&
             strikeAsset == poolStrikeAsset &&
             isCall == poolIsCall &&
