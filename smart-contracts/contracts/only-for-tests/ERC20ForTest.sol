@@ -35,4 +35,12 @@ contract ERC20ForTest is ERC20 {
     function decimals() public view override returns(uint8) {
         return _decimals;
     }
+
+    function mint(address account, uint256 amount) external {
+        super._mintAction(account, amount);
+    }
+
+    function burnFrom(address account, uint256 amount) external {
+        super._burnFrom(account, amount);
+    }
 }
