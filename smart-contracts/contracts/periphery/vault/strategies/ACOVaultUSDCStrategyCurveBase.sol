@@ -44,6 +44,14 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
     IACOAssetConverterHelper public assetConverter;
     uint256 public gasSubsidyFee;    
 
+    /**
+     * @dev Throws if called by any address other than the controller.
+     */
+    modifier onlyController() {
+        require(msg.sender == address(controller), "ACOVaultUSDCStrategyCurveBase:: caller is not the controller");
+        _;
+    }
+
     constructor(VaultUSDCStrategyCurveBaseInitData memory initData) public {
         super.init();
         
@@ -56,9 +64,7 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         _setController(initData.controller);
         _setAssetConverter(initData.assetConverter);
         _setGasSubsidyFee(initData.gasSubsidyFee);
-    }
-
-    
+    }    
 
     function setGasSubsidyFee(uint256 newGasSubsidyFee) onlyOwner external {
         _setGasSubsidyFee(newGasSubsidyFee);
@@ -73,8 +79,7 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         _setAssetConverter(newAssetConverter);
     }    
     
-    function withdrawStuckToken(address _token, address destination) external override {
-        require(msg.sender == address(controller), "ACOVaultUSDCStrategyCurveBase:: Invalid sender");
+    function withdrawStuckToken(address _token, address destination) onlyController external override {
         require(token != address(_token), "ACOVaultUSDCStrategyCurveBase:: Invalid token");
         require(address(crv) != address(_token), "ACOVaultUSDCStrategyCurveBase:: Invalid token");
         require(address(crvPoolToken) != address(_token), "ACOVaultUSDCStrategyCurveBase:: Invalid token");
@@ -84,13 +89,11 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         }
     }
     
-    function withdraw(uint _amount) external override returns (uint256 amount) {
-        require(msg.sender == address(controller), "ACOVaultUSDCStrategyCurveBase:: Invalid sender");
+    function withdraw(uint _amount) onlyController external override returns (uint256 amount) {
         amount = _withdrawSome(_amount);
     }
     
-    function withdrawAll() external override {
-        require(msg.sender == address(controller), "ACOVaultUSDCStrategyCurveBase:: Invalid sender");
+    function withdrawAll() onlyController external override {
         _withdrawAll();
     }
 
