@@ -189,61 +189,7 @@ describe("Controller", function() {
 
   describe("Set functions", function () {
     it("Set vault", async function () {
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Call.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call.address);
-
-      await vault.connect(addr3).setAcoToken(ACOEthToken2Put.address, ACOPoolEthToken2Put.address);
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
-
-      let ACOTokenTemp = await (await ethers.getContractFactory("ACOToken")).deploy();
-      await ACOTokenTemp.deployed();
-      await expect(
-        vault.setAcoToken(ACOTokenTemp.address, ACOPoolToken1Token2Put.address)
-      ).to.be.revertedWith("ACOVault:: Invalid ACO token");
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
-
-      await vault.setMinExpiration(86400 * 5);
-      await expect(
-        vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
-      ).to.be.revertedWith("ACOVault:: Invalid ACO expiry time");
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
-
-      await vault.setMinExpiration(86400);
-      await vault.setMaxExpiration(86400 * 2);
-      await expect(
-        vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
-      ).to.be.revertedWith("ACOVault:: Invalid ACO expiry time");
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
-
-      await vault.setMaxExpiration(86400 * 5);
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(104).add(100));
-      await expect(
-        vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
-      ).to.be.revertedWith("ACOVault:: Invalid ACO strike price");
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
-
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(96).sub(100));
-      await expect(
-        vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
-      ).to.be.revertedWith("ACOVault:: Invalid ACO strike price");
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
-
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(100));
-      await expect(
-        vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Put.address)
-      ).to.be.revertedWith("ACOVault:: Invalid ACO pool");
-      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
-
-      await vault.connect(addr2).setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address);
-      expect(await vault.currentAcoToken()).to.equal(ACOToken1Token2Call.address);
-      expect(await vault.acoPool()).to.equal(ACOPoolToken1Token2Call.address);
+      
     });
   });
 });

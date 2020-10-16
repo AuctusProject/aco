@@ -63,7 +63,7 @@ interface IACOVault is IERC20, IControlled {
     function getAccountPositionsCount(address account) external view returns(uint256);
     function getAccountPositionByIndex(address account, uint256 index) external view returns(address, Position memory);
     function getAccountPositionByAco(address account, address acoToken) external view returns(Position memory);
-    function getAccountSituation(address account) external view returns(uint256, uint256, address[] memory, uint256[] memory);
+    function getAccountSituation(address account, uint256 shares) external view returns(uint256, uint256, address[] memory, uint256[] memory);
     function setController(address newController) external;
     function setAssetConverter(address newAssetConverter) external;
     function setAcoFlashExercise(address newAcoFlashExercise) external;
@@ -81,7 +81,7 @@ interface IACOVault is IERC20, IControlled {
     function available() external view returns(uint256);
     function getPricePerFullShare() external view returns(uint256);
     function numberOfAcoTokensNegotiated() external view returns(uint256);
-    function exerciseAco(address acoToken) external;
+    function exerciseAco(address acoToken, uint256 acoAmount) external;
     function deposit(uint256 amount) external;
     function earn() external;
     function withdraw(uint256 shares) external;
