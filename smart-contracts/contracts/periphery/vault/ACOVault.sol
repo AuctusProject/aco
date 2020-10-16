@@ -127,15 +127,15 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     function getAccountSituation(address account) external view override returns(uint256, uint256, address[] memory, uint256[] memory) {
         uint256 shares = balanceOf(account);
         uint256 vaulTotalSupply = totalSupply();
-        uint256 accountBalance = shares.mul(balance()).div(vaulTotalSupply);
         
         AccountData storage data = accounts[account];
         uint256[] memory accountPositions = new uint256[](data.acoTokensOnDeposit.length);
         uint256 openPositions = 0;
+        uint256 totalAdjust = 0;
         for (uint256 i = 0; i < data.acoTokensOnDeposit.length; ++i) {
             address acoToken = data.acoTokensOnDeposit[i];
             (uint256 acoAmount, uint256 adjust) = _getPositionData(acoToken, shares, vaulTotalSupply, data);
-            accountBalance = accountBalance.sub(adjust);
+            totalAdjust = totalAdjust.add(adjust);
             if (block.timestamp >= IACOToken(acoToken).expiryTime() || acoAmount == 0) {
                 accountPositions[i] = 0;
             } else {
@@ -154,6 +154,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             }
         }
         
+        uint256 accountBalance = shares.mul(balance().sub(totalAdjust)).div(vaulTotalSupply);
         uint256 bufferBalance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (bufferBalance < accountBalance) {
             accountBalance = bufferBalance.add(controller.actualAmount(address(this), accountBalance.sub(bufferBalance)));
@@ -277,16 +278,15 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     function withdraw(uint256 shares) external override {
         uint256 accountShares = balanceOf(msg.sender);
         uint256 vaulTotalSupply = totalSupply();
-        uint256 accountBalance = shares.mul(balance()).div(vaulTotalSupply);
         
         super._burnAction(msg.sender, shares);
         
         AccountData storage data = accounts[msg.sender];
+        uint256 totalAdjust = 0;
         for (uint256 i = data.acoTokensOnDeposit.length; i > 0; --i) {
             address acoToken = data.acoTokensOnDeposit[i - 1];
             (uint256 acoAmount, uint256 adjust) = _getPositionData(acoToken, shares, vaulTotalSupply, data);
-            accountBalance = accountBalance.sub(adjust);
-            
+            totalAdjust = totalAdjust.add(adjust);
             if (block.timestamp >= IACOToken(acoToken).expiryTime()) {
                 if (accountShares > shares && adjust == 0) {
                     _removeFromAccountData(acoToken, data);
@@ -300,6 +300,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             delete accounts[msg.sender];
         }
         
+        uint256 accountBalance = shares.mul(balance().sub(totalAdjust)).div(vaulTotalSupply);
         uint256 bufferBalance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (bufferBalance < accountBalance) {
             accountBalance = bufferBalance.add(controller.withdraw(accountBalance.sub(bufferBalance)));
@@ -456,8 +457,9 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         uint256 adjust = 0;
         
         Position storage _position = positions[acoToken];
+        Position storage _accountPosition = data.positionsOnDeposit[acoToken];
         
-        uint256 expectedAmount = _position.amount.sub(data.positionsOnDeposit[acoToken].amount);
+        uint256 expectedAmount = _position.amount.sub(_accountPosition.amount);
         if (expectedAmount > 0) {
             uint256 acoAmount = ACOAssetHelper._getAssetBalanceOf(acoToken, address(this));
             if (expectedAmount > acoAmount) {
@@ -466,11 +468,11 @@ contract ACOVault is Ownable, ERC20, IACOVault {
             amount = shares.mul(expectedAmount).div(vaulTotalSupply);
         }
         
-        uint256 exercisedAmount = _position.exercised.sub(data.positionsOnDeposit[acoToken].exercised);
+        uint256 exercisedAmount = _position.exercised.sub(_accountPosition.exercised);
         if (exercisedAmount > 0) {
-            uint256 totalProfit = _position.profit.sub(data.positionsOnDeposit[acoToken].profit);
-            uint256 openPosition = _position.amount.sub(data.positionsOnDeposit[acoToken].exercised);
-            uint256 profit = exercisedAmount.mul(totalProfit).div(openPosition);
+            uint256 totalProfit = _position.profit.sub(_accountPosition.profit);
+            uint256 accountPosition = exercisedAmount.sub(_accountPosition.amount.sub(_accountPosition.exercised));
+            uint256 profit = accountPosition.mul(totalProfit).div(exercisedAmount);
             adjust = controller.actualAmount(address(this), totalProfit.sub(profit));
         }
         return (amount, adjust);
