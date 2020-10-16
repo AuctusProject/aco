@@ -110,10 +110,6 @@ describe("ACOVault", function() {
     await _coin1.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000000000000000"));
     await token2.connect(owner).approve(_curve.address, 1000000);
     await _coin3.connect(owner).approve(_curve.address, 1000000);
-    [xp1, xp2, xp3] = await _curve._xp_mem([ethers.utils.bigNumberify("1000000000000000000"), ethers.utils.bigNumberify("1000000000000000000000000000000"), ethers.utils.bigNumberify("1000000000000000000000000000000")], [ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000]);
-    let D = await _curve.get_D([xp1, xp2, xp3]);
-    [d1, d0, rates, nb] = await _curve.getD1D0([ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000], 0);
-    console.log(xp1, xp2, xp3, D, d1, d0, rates, nb);
     await _curve.add_liquidity([ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000], 0);
 
     vaultStrategy = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
@@ -665,22 +661,26 @@ describe("ACOVault", function() {
       let depositValue = 10000 * 1000000;
       await vault.connect(addr1).deposit(depositValue);      
       await expect(await vault.balance()).to.equal(depositValue);
-      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr1.getAddress());
+      let shares = await vault.balanceOf(await addr1.getAddress());
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr1.getAddress(), shares);
       await expect(accountBalance.add(fee)).to.equal(depositValue);
       
       await vault.connect(addr2).deposit(depositValue);
       await expect(await vault.balance()).to.equal(2*depositValue);
-      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr2.getAddress());
+      shares = await vault.balanceOf(await addr2.getAddress());
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr2.getAddress(), shares);
       await expect(accountBalance.add(fee)).to.equal(depositValue);
 
       await vault.connect(addr3).deposit(depositValue);
       await expect(await vault.balance()).to.equal(3*depositValue);
-      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress());
+      shares = await vault.balanceOf(await addr3.getAddress());
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress(), shares);
       await expect(accountBalance.add(fee)).to.equal(depositValue);
 
       await vault.connect(addr3).deposit(depositValue);
       await expect(await vault.balance()).to.equal(4*depositValue);
-      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress());
+      shares = await vault.balanceOf(await addr3.getAddress());
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress(), shares);
       await expect(accountBalance.add(fee)).to.equal(2*depositValue);
     });
   });
