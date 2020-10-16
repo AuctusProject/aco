@@ -15,15 +15,19 @@ contract Controller is Ownable, IController {
     event SetVault(address indexed newVault, address indexed newStrategy);
     event ChangeStrategy(address indexed vault, address indexed oldStrategy, address indexed newStrategy);
     event SetFeeDestination(address indexed oldFeeDestination, address indexed newFeeDestination);
+    event SetOperator(address indexed operator, bool indexed previousPermission, bool indexed newPermission);
 
     address public feeDestination;
 
     mapping(address => address) public vaults;
     mapping(address => address) public strategies;
 
+    mapping(address => bool) public operators;
+
     constructor(address _feeDestination) public {
         super.init();
         _setFeeDestination(_feeDestination);
+        _setOperator(msg.sender, true);
     }
     
     function setVault(address newVault, address newStrategy) onlyOwner public {
@@ -53,7 +57,7 @@ contract Controller is Ownable, IController {
         
         vaults[vault] = newStrategy;
         
-        uint256 amount = IStrategy(oldStrategy).balanceOf();
+        uint256 amount = IStrategy(oldStrategy).balanceOfWant();
         if (amount > 0) {
             ACOAssetHelper._callTransferFromERC20(token, oldStrategy, vault, amount);
         }
@@ -62,15 +66,20 @@ contract Controller is Ownable, IController {
     function setFeeDestination(address newFeeDestination) onlyOwner public {
         _setFeeDestination(newFeeDestination);
     }
-    
-    function buyAco(address vault, uint256 acoAmount, uint256 rewardAmount) onlyOwner external {
-        require(vaults[vault] != address(0), "Controller:: Invalid vault");
-        ACOAssetHelper._callTransferFromERC20(IACOVault(vault).token(), vaults[vault], vault, rewardAmount);
-        IACOVault(vault).setReward(acoAmount, rewardAmount);
+
+    function setOperator(address operator, bool permission) onlyOwner public {
+        _setOperator(operator, permission);
     }
     
     function withdrawStuckTokenOnControlled(address _contract, address token, address destination) onlyOwner public {
         IControlled(_contract).withdrawStuckToken(token, destination);
+    }
+    
+    function buyAco(address vault, uint256 acoAmount, uint256 rewardAmount) external {
+        require(operators[msg.sender], "Controller:: Invalid sender");
+        require(vaults[vault] != address(0), "Controller:: Invalid vault");
+        ACOAssetHelper._callTransferFromERC20(IACOVault(vault).token(), vaults[vault], vault, rewardAmount);
+        IACOVault(vault).setReward(acoAmount, rewardAmount);
     }
     
     function sendFee(uint256 amount) public override {
@@ -107,5 +116,10 @@ contract Controller is Ownable, IController {
         require(newFeeDestination != address(0), "Controller:: Invalid fee destination");
         emit SetFeeDestination(feeDestination, newFeeDestination);
         feeDestination = newFeeDestination;
+    }
+
+    function _setOperator(address operator, bool newPermission) internal {
+        emit SetOperator(operator, operators[operator], newPermission);
+        operators[operator] = newPermission;
     }
 }
