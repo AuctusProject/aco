@@ -20,7 +20,7 @@ contract ACOVaultUSDCStrategy3CRV is ACOVaultUSDCStrategyCurveBase {
         return "ACOVaultUSDCStrategy3CRV";
     }
 
-    function deposit(uint256 amount) external override {
+    function deposit(uint256 amount) onlyController external override {
         if (amount > 0) {
             ACOAssetHelper._setAssetInfinityApprove(token, address(this), address(curve), amount);
             ICurveFi3 _curve = ICurveFi3(address(curve));

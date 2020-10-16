@@ -23,7 +23,7 @@ contract ACOVaultUSDCStrategyYCRV is ACOVaultUSDCStrategyCurveBase {
         return "ACOVaultUSDCStrategyYCRV";
     }
 
-    function deposit(uint256 amount) external override {
+    function deposit(uint256 amount) onlyController external override {
         if (amount > 0) {
             ACOAssetHelper._setAssetInfinityApprove(token, address(this), address(yusdc), amount);
             IyERC20(address(yusdc)).deposit(amount);

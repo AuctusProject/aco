@@ -64,11 +64,9 @@ contract Curve3PoolForTest is ICurveFi3 {
         uint256[N_COINS] memory new_balances = old_balances;
 
         for (uint256 i = 0; i < N_COINS; i++) {
-            uint256 in_amount = amounts[i];
             if (token_supply == 0) {
                 assert(amounts[i] > 0);
             }
-            address in_coin = i_coins[i];
             new_balances[i] = old_balances[i] + amounts[i];
         }
         
@@ -120,7 +118,6 @@ contract Curve3PoolForTest is ICurveFi3 {
     function remove_liquidity(uint256 _amount, uint256[N_COINS] calldata min_amounts) external override {
         uint256 total_supply = token.totalSupply();
         uint256[N_COINS] memory amounts = ZEROS;
-        uint256[N_COINS] memory fees = ZEROS;
 
         for (uint256 i = 0; i < N_COINS; i++) {
             uint256 value = balances[i] * _amount / total_supply;
@@ -212,10 +209,10 @@ contract Curve3PoolForTest is ICurveFi3 {
         return _dy;
     }
 
-    function get_y(uint256 i, uint256 j, uint256 x, uint256[N_COINS] memory _xp) internal view returns (uint256) {        
+    function get_y(uint256 i, uint256 j, uint256 x, uint256[N_COINS] memory _xp_) internal view returns (uint256) {        
         assert((i != j) && (i >= 0) && (j >= 0) && (i < N_COINS) && (j < N_COINS));
 
-        uint256 D = get_D(_xp);
+        uint256 D = get_D(_xp_);
         uint256 c = D;
         uint256 S_ = 0;
         uint256 Ann = A * N_COINS;
@@ -226,7 +223,7 @@ contract Curve3PoolForTest is ICurveFi3 {
                 _x = x;
             }
             else if (_i != j) {
-                _x = _xp[_i];
+                _x = _xp_[_i];
             }                
             else {
                 continue;
