@@ -575,7 +575,12 @@ describe("ACOVault", function() {
       let ACOPoolEthToken2Call2 = await ethers.getContractAt("ACOPool", result.acoPool);
       await jumpUntilStart(start2);
 
-      await vault.connect(addr3).setAcoPool(ACOPoolEthToken2Call2.address);
+      await vault.setAcoPool(ACOPoolEthToken2Call2.address);
+      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call2.address);
+
+      await expect(
+        vault.connect(addr3).setAcoPool(ACOPoolEthToken2Call.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call2.address);
 
       await expect(
@@ -583,14 +588,20 @@ describe("ACOVault", function() {
       ).to.be.revertedWith("ACOVault:: Invalid ACO pool");
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call2.address);
 
-      await vault.connect(addr2).setAcoPool(ACOPoolEthToken2Call.address);
+      await vault.setAcoPool(ACOPoolEthToken2Call.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call.address);
     });
     it("Set ACO token", async function () {
       expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Call.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call.address);
 
-      await vault.connect(addr3).setAcoToken(ACOEthToken2Put.address, ACOPoolEthToken2Put.address);
+      await vault.setAcoToken(ACOEthToken2Put.address, ACOPoolEthToken2Put.address);
+      expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
+      expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
+
+      await expect(
+        vault.connect(addr3).setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
       expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
 
@@ -639,7 +650,7 @@ describe("ACOVault", function() {
       expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
 
-      await vault.connect(addr2).setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address);
+      await vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address);
       expect(await vault.currentAcoToken()).to.equal(ACOToken1Token2Call.address);
       expect(await vault.acoPool()).to.equal(ACOPoolToken1Token2Call.address);
     });

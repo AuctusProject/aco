@@ -32,6 +32,7 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
     event SetAssetConverter(address indexed oldAssetConverter, address indexed newAssetConverter);
     event SetWithdrawalFee(uint256 indexed oldWithdrawalFee, uint256 indexed newWithdrawalFee);
     event SetGasSubsidyFee(uint256 indexed oldGasSubsidyFee, uint256 indexed newGasSubsidyFee);
+    event SetOperator(address indexed operator, bool indexed previousPermission, bool indexed newPermission);
     
     IGauge public immutable gauge;
     IMintr public immutable mintr;
@@ -43,6 +44,8 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
     IController public controller;
     IACOAssetConverterHelper public assetConverter;
     uint256 public gasSubsidyFee;    
+
+    mapping(address => bool) public operators;
 
     /**
      * @dev Throws if called by any address other than the controller.
@@ -64,6 +67,7 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         _setController(initData.controller);
         _setAssetConverter(initData.assetConverter);
         _setGasSubsidyFee(initData.gasSubsidyFee);
+        _setOperator(msg.sender, true);
     }    
 
     function setGasSubsidyFee(uint256 newGasSubsidyFee) onlyOwner external {
@@ -77,7 +81,11 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
 
     function setAssetConverter(address newAssetConverter) onlyOwner external {
         _setAssetConverter(newAssetConverter);
-    }    
+    } 
+
+    function setOperator(address operator, bool permission) onlyOwner external {
+        _setOperator(operator, permission);
+    }   
     
     function withdrawStuckToken(address _token, address destination) onlyController external override {
         require(token != address(_token), "ACOVaultUSDCStrategyCurveBase:: Invalid token");
@@ -97,15 +105,16 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         _withdrawAll();
     }
 
-    function harvest() onlyOwner external {
+    function harvest() external {
+        require(operators[msg.sender], "ACOVaultUSDCStrategyCurveBase:: Invalid sender");
         mintr.mint(address(gauge));
         uint256 _crvBalance = crv.balanceOf(address(this));
         if (_crvBalance > 0) {    
             ACOAssetHelper._setAssetInfinityApprove(address(crv), address(this), address(assetConverter), _crvBalance);
-            IERC20 usdc = IERC20(token);
-            uint256 _before = usdc.balanceOf(address(this));
-            assetConverter.swapExactAmountOut(address(usdc), address(crv), _crvBalance);
-            uint256 _after = usdc.balanceOf(address(this));
+            IERC20 _token = IERC20(token);
+            uint256 _before = _token.balanceOf(address(this));
+            assetConverter.swapExactAmountOutWithMinAmountToReceive(address(crv), address(_token), _crvBalance, 1);
+            uint256 _after = _token.balanceOf(address(this));
 
             _collectGasSubsidyFee(_after.sub(_before));
         }
@@ -152,7 +161,7 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         return _withdrawUnderlying(_after.sub(_before));
     }
     
-    function balanceOfWant() public view returns (uint) {
+    function balanceOfWant() public view override returns (uint) {
         return IERC20(token).balanceOf(address(this));
     }
     
@@ -184,5 +193,10 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         require(newGasSubsidyFee < MAX_GAS_SUBSIDY_FEE, "ACOVaultUSDCStrategyCurveBase:: Invalid gas subsidy fee");
         emit SetGasSubsidyFee(gasSubsidyFee, newGasSubsidyFee);
         gasSubsidyFee = newGasSubsidyFee;
+    }
+    
+    function _setOperator(address operator, bool newPermission) internal {
+        emit SetOperator(operator, operators[operator], newPermission);
+        operators[operator] = newPermission;
     }
 }
