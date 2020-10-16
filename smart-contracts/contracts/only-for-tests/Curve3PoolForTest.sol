@@ -140,8 +140,7 @@ contract Curve3PoolForTest is ICurveFi3 {
     }
     
     function _stored_rates() internal view returns (uint256[N_COINS] memory result) {
-        result = RATES;
-        
+        result = RATES;        
     }
     
     function _xp(uint256[N_COINS] memory rates) internal view returns (uint256[N_COINS] memory result) {
@@ -184,7 +183,7 @@ contract Curve3PoolForTest is ICurveFi3 {
     }
 
     function get_D_mem(uint256[N_COINS] memory rates, uint256[N_COINS] memory _balances) internal view returns (uint256) {
-        get_D(_xp_mem(rates, _balances));
+        return get_D(_xp_mem(rates, _balances));
     }
 
     function _xp_mem(uint256[N_COINS] memory rates, uint256[N_COINS] memory _balances) internal view returns (uint256[N_COINS] memory result) {

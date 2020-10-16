@@ -56,6 +56,78 @@ describe("ACOVault", function() {
   let ACOPoolEthToken2Put;
   let ACOPoolToken1Token2Call;
   let ACOPoolToken1Token2Put;
+  let vaultStrategy;
+  let mintr;
+  let crv;
+  let crvPoolToken;
+  let coins;
+  let gasSubsidyFee = 5000;
+
+  const createVaultStrategy = async () => {
+    let tokenName = "Curve DAO Token";
+    let tokenSymbol = "CRV";
+    let tokenDecimals = 18;
+    let tokenTotalSupply = ethers.utils.bigNumberify("10000000000000000000000000");
+    crv = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await crv.deployed();
+
+    tokenName = "Curve Pool Token";
+    tokenSymbol = "CRV Pool";
+    tokenDecimals = 18;
+    tokenTotalSupply = ethers.utils.bigNumberify("0");
+    crvPoolToken = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await crvPoolToken.deployed();
+
+    mintr = await (await ethers.getContractFactory("MintrForTest")).deploy(crv.address);
+    await mintr.deployed();
+
+    _gauge = await (await ethers.getContractFactory("GaugeForTest")).deploy(crvPoolToken.address);
+    await _gauge.deployed();
+
+    tokenName = "DAI";
+    tokenSymbol = "DAI";
+    tokenDecimals = 18;
+    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000000000000000");
+    _coin1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await _coin1.deployed();
+
+    tokenName = "USDT";
+    tokenSymbol = "USDT";
+    tokenDecimals = 6;
+    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000");
+    _coin3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await _coin3.deployed();
+
+    coins = [_coin1.address, token2.address, _coin3.address];
+    _curve = await (await ethers.getContractFactory("Curve3PoolForTest")).deploy(
+      coins,
+      crvPoolToken.address,
+      100, 
+      0
+    );
+    await _curve.deployed();
+
+    await _coin1.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000000000000000"));
+    await token2.connect(owner).approve(_curve.address, 1000000);
+    await _coin3.connect(owner).approve(_curve.address, 1000000);
+    [xp1, xp2, xp3] = await _curve._xp_mem([ethers.utils.bigNumberify("1000000000000000000"), ethers.utils.bigNumberify("1000000000000000000000000000000"), ethers.utils.bigNumberify("1000000000000000000000000000000")], [ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000]);
+    let D = await _curve.get_D([xp1, xp2, xp3]);
+    [d1, d0, rates, nb] = await _curve.getD1D0([ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000], 0);
+    console.log(xp1, xp2, xp3, D, d1, d0, rates, nb);
+    await _curve.add_liquidity([ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000], 0);
+
+    vaultStrategy = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
+      _curve.address,
+      _gauge.address,
+      mintr.address,
+      crv.address,
+      crvPoolToken.address,
+      controller.address,
+      converterHelper.address,
+      gasSubsidyFee
+    ]);
+    await vaultStrategy.deployed();
+  }
 
   beforeEach(async function () {
     [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, addr9, addr10, addr11, addr12, addr13, addr14, addr15, ...addrs] = await ethers.getSigners();
@@ -259,11 +331,12 @@ describe("ACOVault", function() {
     ]);
     await vault.deployed();
 
-    //TODO SET STRATEGY
-
     controller = await (await ethers.getContractFactory("Controller")).deploy(await owner.getAddress());
     await controller.deployed();
-    //await controller.setVault(vault.address, strategy.address);
+
+    await createVaultStrategy();
+
+    await controller.setVault(vault.address, vaultStrategy.address);
     
     await vault.setController(controller.address);
   });
@@ -569,6 +642,35 @@ describe("ACOVault", function() {
       await vault.connect(addr2).setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address);
       expect(await vault.currentAcoToken()).to.equal(ACOToken1Token2Call.address);
       expect(await vault.acoPool()).to.equal(ACOPoolToken1Token2Call.address);
+    });
+  });
+
+  describe("Vault transactions", function () {
+    it("Vault Deposit", async function () {
+      await token2.connect(addr1).approve(vault.address, token2TotalSupply);
+      await token2.connect(addr2).approve(vault.address, token2TotalSupply);
+      await token2.connect(addr3).approve(vault.address, token2TotalSupply);
+      
+      let depositValue = 10000 * 1000000;
+      await vault.connect(addr1).deposit(depositValue);      
+      await expect(await vault.balance()).to.equal(depositValue);
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr1.getAddress());
+      await expect(accountBalance.add(fee)).to.equal(depositValue);
+      
+      await vault.connect(addr2).deposit(depositValue);
+      await expect(await vault.balance()).to.equal(2*depositValue);
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr2.getAddress());
+      await expect(accountBalance.add(fee)).to.equal(depositValue);
+
+      await vault.connect(addr3).deposit(depositValue);
+      await expect(await vault.balance()).to.equal(3*depositValue);
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress());
+      await expect(accountBalance.add(fee)).to.equal(depositValue);
+
+      await vault.connect(addr3).deposit(depositValue);
+      await expect(await vault.balance()).to.equal(4*depositValue);
+      [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress());
+      await expect(accountBalance.add(fee)).to.equal(2*depositValue);
     });
   });
 });
