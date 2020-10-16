@@ -5,7 +5,6 @@ import '../../util/Ownable.sol';
 import '../../libs/SafeMath.sol';
 import '../../libs/Address.sol';
 import '../../libs/ACOAssetHelper.sol';
-import '../../core/ERC20.sol';
 import '../../interfaces/IACOVault.sol';
 import '../../interfaces/IController.sol';
 import '../../interfaces/IACOPoolFactory.sol';
@@ -16,8 +15,9 @@ import '../../interfaces/IACOToken.sol';
 import '../../interfaces/IACOPool.sol';
 
 
-contract ACOVault is Ownable, ERC20, IACOVault {
+contract ACOVault is Ownable, IACOVault {
     using Address for address;
+    using SafeMath for uint256;
     
     uint256 internal constant PERCENTAGE_PRECISION = 100000;
     uint256 internal constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
@@ -60,7 +60,9 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     uint256 public override minTimeToExercise;
     uint256 public override exerciseSlippage;
     uint256 public override withdrawFee;
+    uint256 public override totalSupply;
     
+    mapping (address => uint256) internal balances;
     mapping(address => Position) internal positions;
     mapping(address => AccountData) internal accounts;
     
@@ -97,12 +99,12 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         return string(abi.encodePacked("ACO Vault ", ACOAssetHelper._getAssetSymbol(address(token))));
     }
 
-    function symbol() public view override returns(string memory) {
-        return name();
-    }
-
     function decimals() public view override returns(uint8) {
         return ACOAssetHelper._getAssetDecimals(address(token));
+    }
+    
+    function balanceOf(address account) public view override returns(uint256) {
+        return balances[account];
     }
     
     function getPosition(address acoToken) external view override returns(Position memory) {
@@ -129,7 +131,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         
         (uint256 totalAdjust, address[] memory acos, uint256[] memory acosAmount) = _getAccountAcoSituation(account, shares);
         
-        uint256 accountBalance = shares.mul(balance().sub(totalAdjust)).div(totalSupply());
+        uint256 accountBalance = shares.mul(balance().sub(totalAdjust)).div(totalSupply);
         uint256 bufferBalance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (bufferBalance < accountBalance) {
             accountBalance = bufferBalance.add(controller.actualAmount(address(this), accountBalance.sub(bufferBalance)));
@@ -154,7 +156,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
 
     function getPricePerFullShare() public override view returns(uint256) {
         uint256 _decimals = uint256(decimals());
-        return balance().mul(_decimals).div(totalSupply());
+        return balance().mul(_decimals).div(totalSupply);
     }
   
     function setController(address newController) onlyOwner external override {
@@ -237,7 +239,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         if (_totalBalance == 0) {
             shares = amount;
         } else {
-            shares = amount.mul(totalSupply()).div(_totalBalance);
+            shares = amount.mul(totalSupply).div(_totalBalance);
         }
             
         address _currentAcoToken = address(currentAcoToken);
@@ -245,16 +247,16 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         AccountData storage accountData = accounts[msg.sender];
         _setAccountData(_currentAcoToken, acoData.amount, acoData.profit, acoData.exercised, balanceOf(msg.sender), shares, accountData);
         
-        super._mintAction(msg.sender, shares);
+        _mint(msg.sender, shares);
         
         emit Deposit(msg.sender, shares, amount);
     }
 
     function withdraw(uint256 shares) external override {
         uint256 accountShares = balanceOf(msg.sender);
-        uint256 vaulTotalSupply = totalSupply();
+        uint256 vaulTotalSupply = totalSupply;
         
-        super._burnAction(msg.sender, shares);
+        _burn(msg.sender, shares);
         
         AccountData storage data = accounts[msg.sender];
         uint256 totalAdjust = 0;
@@ -345,7 +347,7 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     
     function skim(address account) external override {
         uint256 shares = balanceOf(account);
-        uint256 vaulTotalSupply = totalSupply();
+        uint256 vaulTotalSupply = totalSupply;
         AccountData storage data = accounts[account];
         for (uint256 i = data.acoTokensOnDeposit.length; i > 0; --i) {
             address acoToken = data.acoTokensOnDeposit[i - 1];
@@ -356,28 +358,6 @@ contract ACOVault is Ownable, ERC20, IACOVault {
                 }
             }
         }
-    }
-    
-    function _transfer(address sender, address recipient, uint256 amount) internal override {
-        AccountData storage senderData = accounts[sender];
-        AccountData storage recipientData = accounts[recipient];
-        uint256 recipientPreviousShares = balanceOf(recipient);
-        for (uint256 i = 0; i < senderData.acoTokensOnDeposit.length; ++i) {
-            address acoToken = senderData.acoTokensOnDeposit[i];
-            _setAccountData(
-                acoToken, 
-                senderData.positionsOnDeposit[acoToken].amount, 
-                senderData.positionsOnDeposit[acoToken].profit, 
-                senderData.positionsOnDeposit[acoToken].exercised, 
-                recipientPreviousShares, 
-                amount, 
-                recipientData
-            );
-        }
-        if (amount == balanceOf(sender)) {
-            delete accounts[sender];
-        }
-        super._transferAction(sender, recipient, amount);   
     }
     
     function _removeFromAccountData(address acoToken, AccountData storage data) internal {
@@ -424,11 +404,11 @@ contract ACOVault is Ownable, ERC20, IACOVault {
     }
     
     function _getAccountAcoSituation(address account, uint256 shares) internal view returns(uint256, address[] memory, uint256[] memory) {
-        uint256 vaulTotalSupply = totalSupply();
         AccountData storage data = accounts[account];
         uint256[] memory accountPositions = new uint256[](data.acoTokensOnDeposit.length);
         uint256 count = 0;
         uint256 totalAdjust = 0;
+        uint256 vaulTotalSupply = totalSupply;
         for (uint256 i = 0; i < data.acoTokensOnDeposit.length; ++i) {
             address acoToken = data.acoTokensOnDeposit[i];
             (uint256 acoAmount, uint256 adjust) = _getPositionData(acoToken, shares, vaulTotalSupply, data);
@@ -683,5 +663,17 @@ contract ACOVault is Ownable, ERC20, IACOVault {
         require(newWithdrawFee <= 1000, "ACOVault:: Invalid withdraw fee");
         emit SetWithdrawFee(withdrawFee, newWithdrawFee);
         withdrawFee = newWithdrawFee;
+    }
+    
+    function _mint(address account, uint256 amount) internal {
+        require(account != address(0), "ACOVault:: Invalid account");
+        totalSupply = totalSupply.add(amount);
+        balances[account] = balances[account].add(amount);
+    }
+
+    function _burn(address account, uint256 amount) internal {
+        require(account != address(0), "ACOVault:: Invalid account");
+        balances[account] = balances[account].sub(amount);
+        totalSupply = totalSupply.sub(amount);
     }
 }
