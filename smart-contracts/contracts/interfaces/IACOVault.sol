@@ -1,7 +1,6 @@
 pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
-import './IERC20.sol';
 import './IController.sol';
 import './IACOPoolFactory.sol';
 import './IACOFlashExercise.sol';
@@ -11,7 +10,7 @@ import './IACOToken.sol';
 import './IACOPool.sol';
 import './IControlled.sol';
 
-interface IACOVault is IERC20, IControlled {
+interface IACOVault is IControlled {
     struct VaultInitData {
         address acoFactory;
         address acoPoolFactory;
@@ -43,6 +42,10 @@ interface IACOVault is IERC20, IControlled {
         address[] acoTokensOnDeposit;
     }
     
+    function name() external view returns(string memory);
+    function decimals() external view returns(uint8);
+    function totalSupply() external view returns(uint256);
+    function balanceOf(address account) external view returns(uint256);
     function acoPoolFactory() external view returns(IACOPoolFactory);
     function acoFactory() external view returns(IACOFactory);
     function controller() external view returns(IController);
