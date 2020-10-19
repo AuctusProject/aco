@@ -683,6 +683,28 @@ describe("ACOVault", function() {
       [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress(), shares);
       await expect(accountBalance.add(fee)).to.equal(2*depositValue);
     });
+
+    it("Vault Withdraw", async function () {
+      await token2.connect(addr1).approve(vault.address, token2TotalSupply);
+      await token2.connect(addr2).approve(vault.address, token2TotalSupply);
+      await token2.connect(addr3).approve(vault.address, token2TotalSupply);
+      
+      let depositValue = 10000 * 1000000;
+      await vault.connect(addr1).deposit(depositValue);
+      await vault.connect(addr2).deposit(depositValue);
+
+      let shares = await vault.connect(addr1).balanceOf(await addr1.getAddress());
+      await vault.connect(addr1).withdraw(shares);
+      await expect(await vault.balanceOf(await addr1.getAddress())).to.equal(0);
+
+      shares = await vault.balanceOf(await addr2.getAddress());
+      await expect(
+        vault.connect(addr2).withdraw(shares.add(1))
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+      await expect(await vault.balanceOf(await addr2.getAddress())).to.equal(shares);
+      await vault.connect(addr2).withdraw(shares);
+      await expect(await vault.balanceOf(await addr2.getAddress())).to.equal(0);
+    });
   });
 });
 
