@@ -197,7 +197,7 @@ contract CurveYForTest is ICurveFi4 {
         return get_D(_xp_mem(rates, _balances));
     }
 
-    function _xp_mem(uint256[N_COINS] memory rates, uint256[N_COINS] memory _balances) internal view returns (uint256[N_COINS] memory result) {
+    function _xp_mem(uint256[N_COINS] memory rates, uint256[N_COINS] memory _balances) internal pure returns (uint256[N_COINS] memory result) {
         result = rates;
         for (uint256 i = 0; i < N_COINS; i++) {
             result[i] = result[i] * _balances[i] / PRECISION;

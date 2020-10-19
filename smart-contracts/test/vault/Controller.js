@@ -17,7 +17,9 @@ describe("Controller", function() {
   let token2Decimals = 6;
   let token2TotalSupply = ethers.utils.bigNumberify("1000000000000000");
   let pairWethToken2;
+  let pairCrvToken2;
   let token2Liq = ethers.utils.bigNumberify("5000000000000");
+  let crvLiq = ethers.utils.bigNumberify("5000000000000000000000000");
   let wethLiq = ethers.utils.bigNumberify("12500000000000000000000");
   let aggregatorWethToken2;
   let ACOFactory;
@@ -40,6 +42,74 @@ describe("Controller", function() {
   let ethToken2BaseVolatility = 85000;
   let ACOEthToken2Call;
   let ACOPoolEthToken2Call;
+  let vaultStrategy;
+  let mintr;
+  let crv;
+  let crvPoolToken;
+  let coins;
+  let gasSubsidyFee = 5000;
+
+  const createVaultStrategy = async () => {
+    let tokenName = "Curve DAO Token";
+    let tokenSymbol = "CRV";
+    let tokenDecimals = 18;
+    let tokenTotalSupply = ethers.utils.bigNumberify("1000000000000000000000000000000");
+    crv = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await crv.deployed();
+
+    tokenName = "Curve Pool Token";
+    tokenSymbol = "CRV Pool";
+    tokenDecimals = 18;
+    tokenTotalSupply = ethers.utils.bigNumberify("0");
+    crvPoolToken = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await crvPoolToken.deployed();
+
+    mintr = await (await ethers.getContractFactory("MintrForTest")).deploy(crv.address);
+    await mintr.deployed();
+
+    _gauge = await (await ethers.getContractFactory("GaugeForTest")).deploy(crvPoolToken.address);
+    await _gauge.deployed();
+
+    tokenName = "DAI";
+    tokenSymbol = "DAI";
+    tokenDecimals = 18;
+    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000000000000000");
+    _coin1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await _coin1.deployed();
+
+    tokenName = "USDT";
+    tokenSymbol = "USDT";
+    tokenDecimals = 6;
+    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000");
+    _coin3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
+    await _coin3.deployed();
+
+    coins = [_coin1.address, token2.address, _coin3.address];
+    _curve = await (await ethers.getContractFactory("Curve3PoolForTest")).deploy(
+      coins,
+      crvPoolToken.address,
+      100, 
+      0
+    );
+    await _curve.deployed();
+
+    await _coin1.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000000000000000"));
+    await token2.connect(owner).approve(_curve.address, 1000000);
+    await _coin3.connect(owner).approve(_curve.address, 1000000);
+    await _curve.add_liquidity([ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000], 0);
+
+    vaultStrategy = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
+      _curve.address,
+      _gauge.address,
+      mintr.address,
+      crv.address,
+      crvPoolToken.address,
+      controller.address,
+      converterHelper.address,
+      gasSubsidyFee
+    ]);
+    await vaultStrategy.deployed();
+  }
 
   beforeEach(async function () {
     [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, addr9, addr10, addr11, addr12, ...addrs] = await ethers.getSigners();
@@ -95,10 +165,6 @@ describe("Controller", function() {
     await token2.connect(addr1).approve(pairWethToken2.address, token2TotalSupply);
     await token2.connect(addr2).approve(pairWethToken2.address, token2TotalSupply);
     await token2.connect(addr3).approve(pairWethToken2.address, token2TotalSupply);
-    await token2.connect(owner).approve(pairToken1Token2.address, token2TotalSupply);
-    await token2.connect(addr1).approve(pairToken1Token2.address, token2TotalSupply);
-    await token2.connect(addr2).approve(pairToken1Token2.address, token2TotalSupply);
-    await token2.connect(addr3).approve(pairToken1Token2.address, token2TotalSupply);
     await token2.connect(owner).approve(uniswapRouter.address, token2TotalSupply);
     await token2.connect(addr1).approve(uniswapRouter.address, token2TotalSupply);
     await token2.connect(addr2).approve(uniswapRouter.address, token2TotalSupply);
@@ -171,11 +237,23 @@ describe("Controller", function() {
       500
     ]);
     await vault.deployed();
-
-    //TODO SET STRATEGY
-
+    
     controller = await (await ethers.getContractFactory("Controller")).deploy(await owner.getAddress());
     await controller.deployed();
+
+    await createVaultStrategy();
+
+    await vault.setController(controller.address);
+    await token2.connect(owner).approve(vault.address, token2TotalSupply);
+    await token2.connect(addr1).approve(vault.address, token2TotalSupply);
+    await token2.connect(addr2).approve(vault.address, token2TotalSupply);
+    await token2.connect(addr3).approve(vault.address, token2TotalSupply);
+
+    await uniswapFactory.createPair(crv.address, token2.address);
+    pairCrvToken2 = await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(crv.address, token2.address));
+    await token2.connect(owner).transfer(pairCrvToken2.address, token2Liq);
+    await crv.connect(owner).transfer(pairCrvToken2.address, crvLiq);
+    await pairCrvToken2.connect(owner).mint(await owner.getAddress());
   });
 
   afterEach(async function () {
@@ -189,7 +267,169 @@ describe("Controller", function() {
 
   describe("Set functions", function () {
     it("Set vault", async function () {
+      await expect(
+        controller.setVault(await addr1.getAddress(), vaultStrategy.address)
+      ).to.be.revertedWith("Controller:: Invalid vault");
       
+      await expect(
+        controller.setVault(vault.address, await addr1.getAddress())
+      ).to.be.revertedWith("Controller:: Invalid strategy");
+
+      await expect(
+        controller.connect(addr1).setVault(vault.address, vaultStrategy.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+      
+      let vault2 = await (await ethers.getContractFactory("ACOVault")).deploy([
+        ACOFactory.address,
+        ACOPoolFactory.address,
+        crv.address,
+        converterHelper.address,
+        flashExercise.address,
+        5000,
+        ACOEthToken2Call.address,
+        ACOPoolEthToken2Call.address,
+        4000,
+        4000,
+        86400,
+        86400 * 5,
+        86400,
+        2000,
+        500
+      ]);
+      await vault2.deployed();
+
+      await expect(
+        controller.setVault(vault2.address, vaultStrategy.address)
+      ).to.be.revertedWith("Controller:: Asset does not match");
+
+      await controller.setVault(vault.address, vaultStrategy.address);
+      expect(await controller.strategiesOfVault(vault.address)).to.equal(vaultStrategy.address);
+      expect(await controller.vaultsOfStrategy(vaultStrategy.address)).to.equal(vault.address);
+
+      await expect(
+        controller.setVault(vault.address, vaultStrategy.address)
+      ).to.be.revertedWith("Controller:: Vault already exists");
+
+      await expect(
+        controller.setVault(vault2.address, vaultStrategy.address)
+      ).to.be.revertedWith("Controller:: Strategy already exists");
+    });
+    it("Set fee destination", async function () {
+      expect(await controller.feeDestination()).to.equal(await owner.getAddress());
+
+      await controller.setFeeDestination(await addr1.getAddress());
+      expect(await controller.feeDestination()).to.equal(await addr1.getAddress());
+
+      await expect(
+        controller.setFeeDestination(AddressZero)
+      ).to.be.revertedWith("Controller:: Invalid fee destination");
+      expect(await controller.feeDestination()).to.equal(await addr1.getAddress());
+
+      await expect(
+        controller.connect(addr1).setFeeDestination(controller.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+      expect(await controller.feeDestination()).to.equal(await addr1.getAddress());
+
+      await controller.setFeeDestination(await addr2.getAddress());
+      expect(await controller.feeDestination()).to.equal(await addr2.getAddress());
+    });
+    it("Set operator", async function () {
+      expect(await controller.operators(await owner.getAddress())).to.equal(true);
+      expect(await controller.operators(await addr1.getAddress())).to.equal(false);
+      expect(await controller.operators(await addr2.getAddress())).to.equal(false);
+
+      await expect(
+        controller.connect(addr1).setOperator(await addr1.getAddress(), true)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+
+      expect(await controller.operators(await owner.getAddress())).to.equal(true);
+      expect(await controller.operators(await addr1.getAddress())).to.equal(false);
+      expect(await controller.operators(await addr2.getAddress())).to.equal(false);
+
+      await controller.setOperator(await addr1.getAddress(), true);
+
+      expect(await controller.operators(await owner.getAddress())).to.equal(true);
+      expect(await controller.operators(await addr1.getAddress())).to.equal(true);
+      expect(await controller.operators(await addr2.getAddress())).to.equal(false);
+
+      await controller.setOperator(await addr2.getAddress(), true);
+
+      expect(await controller.operators(await owner.getAddress())).to.equal(true);
+      expect(await controller.operators(await addr1.getAddress())).to.equal(true);
+      expect(await controller.operators(await addr2.getAddress())).to.equal(true);
+
+      await controller.setOperator(await addr1.getAddress(), false);
+
+      expect(await controller.operators(await owner.getAddress())).to.equal(true);
+      expect(await controller.operators(await addr1.getAddress())).to.equal(false);
+      expect(await controller.operators(await addr2.getAddress())).to.equal(true);
+    });
+  });
+
+  describe("Controller transactions", function () {
+    it("Withdraw stuck asset", async function () {
+      await controller.setVault(vault.address, vaultStrategy.address);
+
+      let tokenX = await (await ethers.getContractFactory("ERC20ForTest")).deploy("X", "X", 18, ethers.utils.bigNumberify("1000000000000000000000000"));
+      await tokenX.deployed();
+
+      let amount = ethers.utils.bigNumberify("10000000");
+      await tokenX.transfer(vault.address, amount);
+      await tokenX.transfer(vaultStrategy.address, amount);
+      await tokenX.transfer(controller.address, amount);
+
+      await expect(
+        controller.connect(addr2).withdrawStuckTokenOnControlled(vault.address, tokenX.address, await addr2.getAddress())
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+
+      await expect(
+        controller.withdrawStuckTokenOnControlled(vault.address, token2.address, await addr2.getAddress())
+      ).to.be.revertedWith("ACOVault:: Invalid token");
+
+      expect(await tokenX.balanceOf(await addr2.getAddress())).to.equal(0);
+      await controller.withdrawStuckTokenOnControlled(vault.address, tokenX.address, await addr2.getAddress());
+      expect(await tokenX.balanceOf(await addr2.getAddress())).to.equal(amount);
+
+      await expect(
+        controller.withdrawStuckTokenOnControlled(vaultStrategy.address, token2.address, await addr1.getAddress())
+      ).to.be.revertedWith("ACOVaultUSDCStrategyCurveBase:: Invalid token");
+
+      await expect(
+        controller.withdrawStuckTokenOnControlled(vaultStrategy.address, crv.address, await addr1.getAddress())
+      ).to.be.revertedWith("ACOVaultUSDCStrategyCurveBase:: Invalid token");
+      
+      await expect(
+        controller.withdrawStuckTokenOnControlled(vaultStrategy.address, crvPoolToken.address, await addr1.getAddress())
+      ).to.be.revertedWith("ACOVaultUSDCStrategyCurveBase:: Invalid token");
+
+      expect(await tokenX.balanceOf(await addr1.getAddress())).to.equal(0);
+      await controller.withdrawStuckTokenOnControlled(vaultStrategy.address, tokenX.address, await addr1.getAddress());
+      expect(await tokenX.balanceOf(await addr1.getAddress())).to.equal(amount);
+
+      await expect(
+        controller.connect(addr3).withdrawStuckToken(tokenX.address, await addr3.getAddress())
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+
+      expect(await tokenX.balanceOf(await addr3.getAddress())).to.equal(0);
+      await controller.withdrawStuckToken(tokenX.address, await addr3.getAddress());
+      expect(await tokenX.balanceOf(await addr3.getAddress())).to.equal(amount);
+    });
+    it("Buy aco", async function () {
+      await controller.setVault(vault.address, vaultStrategy.address);
+      let deposit = ethers.utils.bigNumberify("100000000000");
+      await vault.connect(owner).deposit(deposit); 
+      await vault.earn();
+
+      let bal = ethers.utils.bigNumberify("1000000000000000000000");
+      await mintr.setBalanceToMint(bal);
+
+      await vaultStrategy.harvest();
+      let reward = await token2.balanceOf(vaultStrategy.address);
+
+      await controller.buyAco(vault.address, ethers.utils.bigNumberify("1000000000000000000"), reward);
+    });
+    it("Change strategy", async function () {
+
     });
   });
 });

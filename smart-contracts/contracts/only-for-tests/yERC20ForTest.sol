@@ -14,7 +14,7 @@ contract yERC20ForTest is ERC20ForTest {
         ERC20ForTest(_erc20name, _erc20symbol, _erc20decimals, _erc20totalSupply)
         public {}
 
-    function getPricePerFullShare() external view returns(uint) {
+    function getPricePerFullShare() external pure returns(uint) {
         return 1;
     }
 }

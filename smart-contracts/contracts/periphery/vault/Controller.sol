@@ -19,8 +19,8 @@ contract Controller is Ownable, IController {
 
     address public feeDestination;
 
-    mapping(address => address) public vaults;
-    mapping(address => address) public strategies;
+    mapping(address => address) public vaultsOfStrategy;
+    mapping(address => address) public strategiesOfVault;
 
     mapping(address => bool) public operators;
 
@@ -32,30 +32,30 @@ contract Controller is Ownable, IController {
     
     function setVault(address newVault, address newStrategy) onlyOwner public {
         require(newVault.isContract(), "Controller:: Invalid vault");
-        require(vaults[newVault] == address(0), "Controller:: Vault already exists");
+        require(strategiesOfVault[newVault] == address(0), "Controller:: Vault already exists");
         require(newStrategy.isContract(), "Controller:: Invalid strategy");
-        require(strategies[newStrategy] == address(0), "Controller:: Strategy already exists");
+        require(vaultsOfStrategy[newStrategy] == address(0), "Controller:: Strategy already exists");
         require(IACOVault(newVault).token() == IStrategy(newStrategy).token(), "Controller:: Asset does not match");
         
         emit SetVault(newVault, newStrategy);
         
-        vaults[newVault] = newStrategy;
-        strategies[newStrategy] = newVault;
+        strategiesOfVault[newVault] = newStrategy;
+        vaultsOfStrategy[newStrategy] = newVault;
     }
     
     function changeStrategy(address vault, address newStrategy) onlyOwner public {
-        address oldStrategy = vaults[vault];
+        address oldStrategy = strategiesOfVault[vault];
         require(oldStrategy != address(0), "Controller:: Invalid vault");
         require(newStrategy.isContract(), "Controller:: Invalid strategy");
-        require(strategies[newStrategy] == address(0), "Controller:: Strategy already exists");
+        require(vaultsOfStrategy[newStrategy] == address(0), "Controller:: Strategy already exists");
         address token = IACOVault(vault).token();
         require(token == IStrategy(newStrategy).token(), "Controller:: Asset does not match");
         
         IStrategy(oldStrategy).withdrawAll();
         
-        emit ChangeStrategy(vault, vaults[vault], newStrategy);
+        emit ChangeStrategy(vault, strategiesOfVault[vault], newStrategy);
         
-        vaults[vault] = newStrategy;
+        strategiesOfVault[vault] = newStrategy;
         
         uint256 amount = IStrategy(oldStrategy).balanceOfWant();
         if (amount > 0) {
@@ -75,38 +75,45 @@ contract Controller is Ownable, IController {
         IControlled(_contract).withdrawStuckToken(token, destination);
     }
     
+    function withdrawStuckToken(address token, address destination) onlyOwner public {
+        uint256 _balance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
+        if (_balance > 0) {
+            ACOAssetHelper._transferAsset(token, destination, _balance);
+        }
+    }
+
     function buyAco(address vault, uint256 acoAmount, uint256 rewardAmount) external {
         require(operators[msg.sender], "Controller:: Invalid sender");
-        require(vaults[vault] != address(0), "Controller:: Invalid vault");
-        ACOAssetHelper._callTransferFromERC20(IACOVault(vault).token(), vaults[vault], vault, rewardAmount);
+        require(strategiesOfVault[vault] != address(0), "Controller:: Invalid vault");
+        ACOAssetHelper._callTransferFromERC20(IACOVault(vault).token(), strategiesOfVault[vault], vault, rewardAmount);
         IACOVault(vault).setReward(acoAmount, rewardAmount);
     }
     
     function sendFee(uint256 amount) public override {
-        require(vaults[msg.sender] != address(0) || strategies[msg.sender] != address(0), "Controller:: Invalid sender");
+        require(strategiesOfVault[msg.sender] != address(0) || vaultsOfStrategy[msg.sender] != address(0), "Controller:: Invalid sender");
         if (amount > 0) {
             ACOAssetHelper._callTransferFromERC20(IControlled(msg.sender).token(), msg.sender, feeDestination, amount);
         }
     }
     
     function balanceOf(address vault) public view override returns(uint256) {
-        return IStrategy(vaults[vault]).balanceOf();
+        return IStrategy(strategiesOfVault[vault]).balanceOf();
     }
     
     function actualAmount(address vault, uint256 amount) external view override returns(uint256) {
-        return IStrategy(vaults[vault]).actualBalanceFor(amount);
+        return IStrategy(strategiesOfVault[vault]).actualBalanceFor(amount);
     }
     
     function earn(uint256 amount) public override {
-        require(vaults[msg.sender] != address(0), "Controller:: Invalid sender");
-        IStrategy strategy = IStrategy(vaults[msg.sender]);
+        require(strategiesOfVault[msg.sender] != address(0), "Controller:: Invalid sender");
+        IStrategy strategy = IStrategy(strategiesOfVault[msg.sender]);
         ACOAssetHelper._callTransferFromERC20(strategy.token(), msg.sender, address(strategy), amount);
         strategy.deposit(amount);
     }
     
     function withdraw(uint256 amount) public override returns(uint256) {
-        require(vaults[msg.sender] != address(0), "Controller:: Invalid sender");
-        IStrategy strategy = IStrategy(vaults[msg.sender]);
+        require(strategiesOfVault[msg.sender] != address(0), "Controller:: Invalid sender");
+        IStrategy strategy = IStrategy(strategiesOfVault[msg.sender]);
         uint256 _withdraw = strategy.withdraw(amount);
         ACOAssetHelper._callTransferFromERC20(strategy.token(), address(strategy), msg.sender, _withdraw);
         return _withdraw;
