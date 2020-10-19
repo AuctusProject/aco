@@ -687,7 +687,6 @@ describe("ACOVault", function() {
     it("Vault Withdraw", async function () {
       await token2.connect(addr1).approve(vault.address, token2TotalSupply);
       await token2.connect(addr2).approve(vault.address, token2TotalSupply);
-      await token2.connect(addr3).approve(vault.address, token2TotalSupply);
       
       let depositValue = 10000 * 1000000;
       await vault.connect(addr1).deposit(depositValue);
@@ -702,6 +701,7 @@ describe("ACOVault", function() {
         vault.connect(addr2).withdraw(shares.add(1))
       ).to.be.revertedWith("SafeMath: subtraction overflow");
       await expect(await vault.balanceOf(await addr2.getAddress())).to.equal(shares);
+
       await vault.connect(addr2).withdraw(shares);
       await expect(await vault.balanceOf(await addr2.getAddress())).to.equal(0);
     });
