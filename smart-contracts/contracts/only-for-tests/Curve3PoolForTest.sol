@@ -18,7 +18,7 @@ contract Curve3PoolForTest is ICurveFi3 {
     uint256[N_COINS] internal PRECISION_MUL = [uint256(1), 1000000000000, 1000000000000];
     uint256 internal constant PRECISION = 10 ** 18;
     uint256[N_COINS] internal RATES = [uint256(1000000000000000000), 1000000000000000000000000000000, 1000000000000000000000000000000];
-    uint256 FEE_DENOMINATOR = 10 ** 10;
+    uint256 constant FEE_DENOMINATOR = 10 ** 10;
     int128 FEE_INDEX = 2;    
     address[N_COINS] internal i_coins;
     uint256[N_COINS] public balances;
@@ -59,7 +59,7 @@ contract Curve3PoolForTest is ICurveFi3 {
         if (token_supply > 0) {
             D0 = get_D_mem(old_balances);
         }
-        uint256[N_COINS] memory new_balances = old_balances;
+        uint256[N_COINS] memory new_balances = balances;
 
         for (uint256 i = 0; i < N_COINS; i++) {
             if (token_supply == 0) {

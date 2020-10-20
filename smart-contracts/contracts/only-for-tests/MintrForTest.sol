@@ -17,9 +17,9 @@ contract MintrForTest is IMintr {
         token = token_addr;
     }    
     
-    function mint(address) external override {
-        uint256 _balance = balanceToMint[msg.sender];
-        balanceToMint[msg.sender] = 0;
+    function mint(address addr) external override {
+        uint256 _balance = balanceToMint[addr];
+        balanceToMint[addr] = 0;
         ERC20ForTest(token).mint(msg.sender, _balance);
     }
 

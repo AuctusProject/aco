@@ -422,7 +422,7 @@ describe("Controller", function() {
       await vault.earn();
 
       let bal = ethers.utils.bigNumberify("1000000000000000000000");
-      await mintr.setBalanceToMint(bal);
+      await mintr.setBalanceToMint(_gauge.address, bal);
 
       await vaultStrategy.harvest();
       let reward = await token2.balanceOf(vaultStrategy.address);
