@@ -174,8 +174,8 @@ contract CurveYForTest is ICurveFi4 {
         uint256 Ann = A * N_COINS;
         for (uint256 i = 0; i < uint256(255); i++) {
             uint256 D_P = D;
-            for (uint256 i = 0; i < N_COINS; i++) {
-                D_P = D_P * D / (xp[i] * N_COINS + 1);
+            for (uint256 j = 0; j < N_COINS; j++) {
+                D_P = D_P * D / (xp[j] * N_COINS + 1);
             }
             Dprev = D;
             D = (Ann * S + D_P * N_COINS) * D / ((Ann - 1) * D + (N_COINS + 1) * D_P);

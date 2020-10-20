@@ -44,7 +44,7 @@ contract Curve3PoolForTest is ICurveFi3 {
     }
 
     function get_virtual_price() external view override returns (uint) {
-        uint256 D = get_D(_xp(_stored_rates()));
+        uint256 D = get_D(_xp());
         uint256 token_supply = token.totalSupply();
         return D * PRECISION / token_supply;
     }
@@ -53,13 +53,11 @@ contract Curve3PoolForTest is ICurveFi3 {
         uint256[N_COINS] memory fees = ZEROS;
         uint256 _fee = fee * N_COINS / (4 * (N_COINS - 1));
         uint256 _admin_fee = admin_fee;
-
         uint256 token_supply = token.totalSupply();
-        uint256[N_COINS] memory rates = _stored_rates();
         uint256 D0 = 0;
         uint256[N_COINS] memory old_balances = balances;
         if (token_supply > 0) {
-            D0 = get_D_mem(rates, old_balances);
+            D0 = get_D_mem(old_balances);
         }
         uint256[N_COINS] memory new_balances = old_balances;
 
@@ -70,7 +68,7 @@ contract Curve3PoolForTest is ICurveFi3 {
             new_balances[i] = old_balances[i] + amounts[i];
         }
         
-        uint256 D1 = get_D_mem(rates, new_balances);
+        uint256 D1 = get_D_mem(new_balances);
         assert(D1 > D0);
 
         uint256 D2 = D1;
@@ -88,7 +86,7 @@ contract Curve3PoolForTest is ICurveFi3 {
                 balances[i] = new_balances[i] - fees[i] * _admin_fee / FEE_DENOMINATOR;
                 new_balances[i] -= fees[i];
             }
-            D2 = get_D_mem(rates, new_balances);
+            D2 = get_D_mem(new_balances);
         }
         else {
             balances = new_balances;
@@ -130,24 +128,12 @@ contract Curve3PoolForTest is ICurveFi3 {
     }
     
     function exchange(int128 i, int128 j, uint256 dx, uint256 min_dy) external override {
-        uint256[N_COINS] memory rates = _stored_rates();
-        uint256 dy = _exchange(uint256(i), uint256(j), dx, rates);
+        uint256 dy = _exchange(uint256(i), uint256(j), dx);
         require(dy >= min_dy, "Exchange resulted in fewer coins than expected");
 
         ACOAssetHelper._callTransferFromERC20(i_coins[uint256(i)], msg.sender, address(this), dx);
 
         ACOAssetHelper._callTransferERC20(i_coins[uint256(j)], msg.sender, dy);
-    }
-    
-    function _stored_rates() internal view returns (uint256[N_COINS] memory result) {
-        result = RATES;        
-    }
-    
-    function _xp(uint256[N_COINS] memory rates) internal view returns (uint256[N_COINS] memory result) {
-        result = rates;
-        for (uint256 i = 0; i < N_COINS; i++) {
-            result[i] = result[i] * balances[i] / PRECISION;
-        }
     }
     
     function get_D(uint256[N_COINS] memory xp) internal view returns (uint256) {
@@ -176,34 +162,39 @@ contract Curve3PoolForTest is ICurveFi3 {
             else {
                 if (Dprev - D <= 1) {
                     break;
-                }                    
+                }
             }
         }
         return D;
     }
 
-    function get_D_mem(uint256[N_COINS] memory rates, uint256[N_COINS] memory _balances) internal view returns (uint256) {
-        return get_D(_xp_mem(rates, _balances));
+    function get_D_mem(uint256[N_COINS] memory _balances) internal view returns (uint256) {
+        return get_D(_xp_mem(_balances));
     }
 
-    function _xp_mem(uint256[N_COINS] memory rates, uint256[N_COINS] memory _balances) internal view returns (uint256[N_COINS] memory result) {
-        result = rates;
+    function _xp() internal view returns (uint256[N_COINS] memory) {
+        return _xp_mem(balances);
+    }
+
+    function _xp_mem(uint256[N_COINS] memory _balances) internal view returns (uint256[N_COINS] memory) {
+        uint256[N_COINS] memory result = RATES;
         for (uint256 i = 0; i < N_COINS; i++) {
             result[i] = result[i] * _balances[i] / PRECISION;
         }
+        return result;
     }
     
-    function _exchange(uint256 i, uint256 j, uint256 dx, uint256[N_COINS] memory rates) internal returns (uint256) {
-        uint256[N_COINS] memory xp = _xp(rates);
-        uint256 x = xp[i] + dx * rates[i] / PRECISION;
+    function _exchange(uint256 i, uint256 j, uint256 dx) internal returns (uint256) {
+        uint256[N_COINS] memory xp = _xp();
+        uint256 x = xp[i] + dx * RATES[i] / PRECISION;
         uint256 y = get_y(i, j, x, xp);
         uint256 dy = xp[j] - y;
         uint256 dy_fee = dy * fee / FEE_DENOMINATOR;
         uint256 dy_admin_fee = dy_fee * admin_fee / FEE_DENOMINATOR;
-        balances[i] = x * PRECISION / rates[i];
-        balances[j] = (y + (dy_fee - dy_admin_fee)) * PRECISION / rates[j];
+        balances[i] = x * PRECISION / RATES[i];
+        balances[j] = (y + (dy_fee - dy_admin_fee)) * PRECISION / RATES[j];
 
-        uint256 _dy = (dy - dy_fee) * PRECISION / rates[j];
+        uint256 _dy = (dy - dy_fee) * PRECISION / RATES[j];
 
         return _dy;
     }

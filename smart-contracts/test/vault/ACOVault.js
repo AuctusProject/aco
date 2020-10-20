@@ -102,15 +102,15 @@ describe("ACOVault", function() {
     _curve = await (await ethers.getContractFactory("Curve3PoolForTest")).deploy(
       coins,
       crvPoolToken.address,
-      100, 
+      200, 
       0
     );
     await _curve.deployed();
 
-    await _coin1.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000000000000000"));
-    await token2.connect(owner).approve(_curve.address, 1000000);
-    await _coin3.connect(owner).approve(_curve.address, 1000000);
-    await _curve.add_liquidity([ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000], 0);
+    await _coin1.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("50000000000000000000000"));
+    await token2.connect(owner).approve(_curve.address, 50000 * 1000000);
+    await _coin3.connect(owner).approve(_curve.address, 50000 * 1000000);
+    await _curve.add_liquidity([ethers.utils.bigNumberify("50000000000000000000000"), 50000 * 1000000, 50000 * 1000000], 0);
 
     vaultStrategy = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
       _curve.address,
@@ -658,7 +658,7 @@ describe("ACOVault", function() {
       await token2.connect(addr2).approve(vault.address, token2TotalSupply);
       await token2.connect(addr3).approve(vault.address, token2TotalSupply);
       
-      let depositValue = 10000 * 1000000;
+      let depositValue = 100 * 1000000;
       await vault.connect(addr1).deposit(depositValue);      
       await expect(await vault.balance()).to.equal(depositValue);
       let shares = await vault.balanceOf(await addr1.getAddress());
@@ -682,6 +682,8 @@ describe("ACOVault", function() {
       shares = await vault.balanceOf(await addr3.getAddress());
       [accountBalance, fee, acos, acosAmount] = await vault.getAccountSituation(await addr3.getAddress(), shares);
       await expect(accountBalance.add(fee)).to.equal(2*depositValue);
+
+      await vault.earn();
     });
 
     it("Vault Withdraw", async function () {

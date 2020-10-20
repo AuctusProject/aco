@@ -60,7 +60,7 @@ describe("ACOVaultUSDCStrategy3CRV", function() {
     _curve = await (await ethers.getContractFactory("Curve3PoolForTest")).deploy(
       coins,
       crvPoolToken.address,
-      100, 
+      200, 
       0
     );
     await _curve.deployed();
