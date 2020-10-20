@@ -73,14 +73,14 @@ describe("Controller", function() {
     tokenName = "DAI";
     tokenSymbol = "DAI";
     tokenDecimals = 18;
-    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000000000000000");
+    tokenTotalSupply = ethers.utils.bigNumberify("10000000000000000000000000000");
     _coin1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin1.deployed();
 
     tokenName = "USDT";
     tokenSymbol = "USDT";
-    tokenDecimals = 6;
-    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000");
+    tokenDecimals = 8;
+    tokenTotalSupply = ethers.utils.bigNumberify("100000000000000000");
     _coin3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin3.deployed();
 
@@ -88,15 +88,15 @@ describe("Controller", function() {
     _curve = await (await ethers.getContractFactory("Curve3PoolForTest")).deploy(
       coins,
       crvPoolToken.address,
-      100, 
+      100,
       0
     );
     await _curve.deployed();
 
     await _coin1.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000000000000000"));
-    await token2.connect(owner).approve(_curve.address, 1000000);
-    await _coin3.connect(owner).approve(_curve.address, 1000000);
-    await _curve.add_liquidity([ethers.utils.bigNumberify("1000000000000000000"), 1000000, 1000000], 0);
+    await token2.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000"));
+    await _coin3.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("100000000"));
+    await _curve.add_liquidity([ethers.utils.bigNumberify("1000000000000000000"), ethers.utils.bigNumberify("1000000"), ethers.utils.bigNumberify("100000000")], 0);
 
     vaultStrategy = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
       _curve.address,
@@ -416,8 +416,9 @@ describe("Controller", function() {
     });
     it("Buy aco", async function () {
       await controller.setVault(vault.address, vaultStrategy.address);
-      let deposit = ethers.utils.bigNumberify("100000000000");
+      let deposit = ethers.utils.bigNumberify("1000000000000");
       await vault.connect(owner).deposit(deposit); 
+
       await vault.earn();
 
       let bal = ethers.utils.bigNumberify("1000000000000000000000");
