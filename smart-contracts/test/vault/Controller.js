@@ -417,20 +417,121 @@ describe("Controller", function() {
     it("Buy aco", async function () {
       await controller.setVault(vault.address, vaultStrategy.address);
       let deposit = ethers.utils.bigNumberify("1000000000000");
+      let remain = ethers.utils.bigNumberify("50000000000");
       await vault.connect(owner).deposit(deposit); 
 
-      await vault.earn();
+      expect(await token2.balanceOf(vault.address)).to.equal(deposit);
+      expect(await _gauge.balanceOf(vaultStrategy.address)).to.equal(0);
+
+      await vault.connect(addr2).earn();
+
+      expect(await token2.balanceOf(vault.address)).to.equal(remain);
+      expect(await token2.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crvPoolToken.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await vaultStrategy.balanceOf()).to.be.above(0);
+      let gBal = await _gauge.balanceOf(vaultStrategy.address);
+      expect(await vaultStrategy.balanceOf()).to.equal(gBal);
 
       let bal = ethers.utils.bigNumberify("1000000000000000000000");
       await mintr.setBalanceToMint(_gauge.address, bal);
 
-      await vaultStrategy.harvest();
-      let reward = await token2.balanceOf(vaultStrategy.address);
+      let expected = ethers.utils.bigNumberify("1000000000");
+      let expectedFee = expected.mul(gasSubsidyFee).div(ethers.utils.bigNumberify("100000"));
+      let previous = await token2.balanceOf(await owner.getAddress());
+      
+      await expect(
+        vaultStrategy.connect(addr2).harvest()
+      ).to.be.revertedWith("ACOVaultUSDCStrategyCurveBase:: Invalid sender");
 
-      await controller.buyAco(vault.address, ethers.utils.bigNumberify("1000000000000000000"), reward);
+      await vaultStrategy.setOperator(await addr2.getAddress(), true);
+
+      await vaultStrategy.connect(addr2).harvest();
+      
+      expect(await token2.balanceOf(vault.address)).to.equal(remain);
+      expect(await token2.balanceOf(await owner.getAddress())).to.be.above(previous);
+      expect(await token2.balanceOf(await owner.getAddress())).to.be.below(previous.add(expectedFee));
+      expect(await token2.balanceOf(vaultStrategy.address)).to.be.below(expected.sub(expectedFee));
+      expect(await token2.balanceOf(vaultStrategy.address)).to.be.above(expected.sub(expectedFee.mul(2)));
+      expect(await crvPoolToken.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await vaultStrategy.balanceOf()).to.equal(gBal);
+
+      let reward = await token2.balanceOf(vaultStrategy.address);
+      let amount = ethers.utils.bigNumberify("23040000000000000000");
+      let aco = await ethers.getContractAt("ACOToken", await vault.currentAcoToken());
+
+      await expect(
+        controller.connect(addr2).buyAco(vault.address, amount, reward)
+      ).to.be.revertedWith("Controller:: Invalid sender");
+
+      await controller.setOperator(await addr2.getAddress(), true);
+
+      await expect(
+        controller.connect(addr2).buyAco(controller.address, amount, reward)
+      ).to.be.revertedWith("Controller:: Invalid vault");
+      
+      await controller.connect(addr2).buyAco(vault.address, amount, reward);
+      
+      expect(await token2.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crvPoolToken.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await vaultStrategy.balanceOf()).to.equal(gBal);
+      expect(await aco.balanceOf(vault.address)).to.equal(amount);
+      expect(await token2.balanceOf(vault.address)).to.be.above(remain);
     });
     it("Change strategy", async function () {
+      await controller.setVault(vault.address, vaultStrategy.address);
+      let deposit = ethers.utils.bigNumberify("1000000000000");
+      let remain = ethers.utils.bigNumberify("50000000000");
+      await vault.connect(owner).deposit(deposit); 
+      await vault.connect(addr2).earn();
 
+      let vaultStrategy2 = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
+        _curve.address,
+        _gauge.address,
+        mintr.address,
+        crv.address,
+        crvPoolToken.address,
+        controller.address,
+        converterHelper.address,
+        gasSubsidyFee
+      ]);
+      await vaultStrategy2.deployed();
+
+      await expect(
+        controller.connect(addr2).changeStrategy(vault.address, vaultStrategy2.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+
+      await expect(
+        controller.changeStrategy(controller.address, vaultStrategy2.address)
+      ).to.be.revertedWith("Controller:: Invalid vault");
+
+      await expect(
+        controller.changeStrategy(vault.address, await addr1.getAddress())
+      ).to.be.revertedWith("Controller:: Invalid strategy");
+
+      await expect(
+        controller.changeStrategy(vault.address, vaultStrategy.address)
+      ).to.be.revertedWith("Controller:: Strategy already exists");
+
+      expect(await token2.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crvPoolToken.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await vaultStrategy.balanceOf()).to.equal(await _gauge.balanceOf(vaultStrategy.address));
+      expect(await token2.balanceOf(vault.address)).to.equal(remain);
+
+      await controller.changeStrategy(vault.address, vaultStrategy2.address);
+
+      expect(await token2.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crvPoolToken.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
+      expect(await vaultStrategy.balanceOf()).to.equal(0);
+      expect(await token2.balanceOf(vaultStrategy2.address)).to.equal(0);
+      expect(await crvPoolToken.balanceOf(vaultStrategy2.address)).to.equal(0);
+      expect(await crv.balanceOf(vaultStrategy2.address)).to.equal(0);
+      expect(await vaultStrategy2.balanceOf()).to.equal(0);
+      expect(await token2.balanceOf(vault.address)).to.be.above(deposit.sub(remain));
     });
   });
 });
