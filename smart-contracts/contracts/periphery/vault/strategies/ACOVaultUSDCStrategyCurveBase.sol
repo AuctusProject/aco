@@ -43,7 +43,7 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
 
     IController public controller;
     IACOAssetConverterHelper public assetConverter;
-    uint256 public gasSubsidyFee;    
+    uint256 public gasSubsidyFee; 
 
     mapping(address => bool) public operators;
 
@@ -168,9 +168,12 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
     function balanceOfGauge() public view returns (uint) {
         return gauge.balanceOf(address(this));
     }
+
+    function normalizedBalanceOf(uint256 bal) internal pure virtual returns(uint256);
     
     function balanceOf() external view override returns (uint) {
-        return balanceOfGauge().mul(curve.get_virtual_price()).div(1e18);
+        uint bal = balanceOfGauge().mul(curve.get_virtual_price()).div(1e18);
+        return normalizedBalanceOf(bal);
     }
     
     function actualBalanceFor(uint256 amount) external view override returns(uint256) {

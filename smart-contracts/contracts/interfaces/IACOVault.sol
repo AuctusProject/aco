@@ -29,16 +29,28 @@ interface IACOVault is IControlled {
         uint256 withdrawFee;
     }
         
-    struct Position {
+    struct AcoData {
         uint256 amount;
         uint256 profit;
         uint256 exercised;
+        uint256 tokenPerShare;
+        uint256 withdrawNormalizedAmount;
+        uint256 index;
+        bool initialized;
+    }
+    
+    struct AccountAcoData {
+        uint256 amount;
+        uint256 profit;
+        uint256 exercised;
+        uint256 tokenPerShare;
+        uint256 tokenAccumulated;
         uint256 index;
         bool initialized;
     }
     
     struct AccountData {
-        mapping(address => Position) positionsOnDeposit;
+        mapping(address => AccountAcoData) dataOnDeposit;
         address[] acoTokensOnDeposit;
     }
     
@@ -54,6 +66,7 @@ interface IACOVault is IControlled {
     function acoPool() external view returns(IACOPool);
     function currentAcoToken() external view returns(IACOToken);
     function acoTokens(uint256 index) external view returns(address);
+    function validAcos(uint256 index) external view returns(address);
     function minPercentageToKeep() external view returns(uint256);
     function tolerancePriceAbove() external view returns(uint256);
     function tolerancePriceBelow() external view returns(uint256);
@@ -62,10 +75,10 @@ interface IACOVault is IControlled {
     function minTimeToExercise() external view returns(uint256);
     function exerciseSlippage() external view returns(uint256);
     function withdrawFee() external view returns(uint256);
-    function getPosition(address acoToken) external view returns(Position memory);
-    function getAccountPositionsCount(address account) external view returns(uint256);
-    function getAccountPositionByIndex(address account, uint256 index) external view returns(address, Position memory);
-    function getAccountPositionByAco(address account, address acoToken) external view returns(Position memory);
+    function getAcoData(address acoToken) external view returns(AcoData memory);
+    function getAccountAcoDataCount(address account) external view returns(uint256);
+    function getAccountAcoDataByIndex(address account, uint256 index) external view returns(address, AccountAcoData memory);
+    function getAccountAcoDataByAco(address account, address acoToken) external view returns(AccountAcoData memory);
     function getAccountSituation(address account, uint256 shares) external view returns(uint256, uint256, address[] memory, uint256[] memory);
     function setController(address newController) external;
     function setAssetConverter(address newAssetConverter) external;
@@ -84,10 +97,12 @@ interface IACOVault is IControlled {
     function available() external view returns(uint256);
     function getPricePerFullShare() external view returns(uint256);
     function numberOfAcoTokensNegotiated() external view returns(uint256);
+    function numberOfValidAcoTokens() external view returns(uint256);
     function exerciseAco(address acoToken, uint256 acoAmount) external;
     function deposit(uint256 amount) external;
     function earn() external;
     function withdraw(uint256 shares) external;
     function setReward(uint256 acoTokenAmount, uint256 rewardAmount) external;
     function skim(address account) external;
+    function setValidAcoTokens() external;
 }

@@ -431,6 +431,7 @@ describe("Controller", function() {
       expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
       expect(await vaultStrategy.balanceOf()).to.be.above(0);
       let gBal = await _gauge.balanceOf(vaultStrategy.address);
+      gBal = gBal.div(ethers.utils.bigNumberify("1000000000000"));
       expect(await vaultStrategy.balanceOf()).to.equal(gBal);
 
       let bal = ethers.utils.bigNumberify("1000000000000000000000");
@@ -518,7 +519,8 @@ describe("Controller", function() {
       expect(await token2.balanceOf(vaultStrategy.address)).to.equal(0);
       expect(await crvPoolToken.balanceOf(vaultStrategy.address)).to.equal(0);
       expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
-      expect(await vaultStrategy.balanceOf()).to.equal(await _gauge.balanceOf(vaultStrategy.address));
+      let gBal = await _gauge.balanceOf(vaultStrategy.address);
+      expect(await vaultStrategy.balanceOf()).to.equal(gBal.div(ethers.utils.bigNumberify("1000000000000")));
       expect(await token2.balanceOf(vault.address)).to.equal(remain);
 
       await controller.changeStrategy(vault.address, vaultStrategy2.address);

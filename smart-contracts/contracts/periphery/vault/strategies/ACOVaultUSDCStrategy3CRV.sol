@@ -16,6 +16,10 @@ contract ACOVaultUSDCStrategy3CRV is ACOVaultUSDCStrategyCurveBase {
         IERC20(token).approve(initData.controller, MAX_UINT);
     }
 
+    function normalizedBalanceOf(uint256 bal) internal pure override returns(uint256) {
+        return bal.div(1000000000000);
+    }
+
     function getName() external pure returns (string memory) {
         return "ACOVaultUSDCStrategy3CRV";
     }
