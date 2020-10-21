@@ -225,7 +225,7 @@ contract Curve3PoolForTest is ICurveFi3 {
         uint256 b = S_ + D / Ann;
         uint256 y_prev = 0;
         uint256 y = D;
-        for (uint256 _i = 0; _i < N_COINS; _i++) {
+        for (uint256 _i = 0; _i < uint256(255); _i++) {
             y_prev = y;
             y = (y*y + c) / (2 * y + b - D);            
             if (y > y_prev) {
