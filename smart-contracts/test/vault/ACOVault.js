@@ -801,11 +801,11 @@ describe("ACOVault", function() {
       await vault.connect(addr1).withdraw(shares1.div(2));
 
       expect(await token2.balanceOf(vault.address)).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Bal.add(accountBalance1));
+      validateRangeValue((await token2.balanceOf(await addr1.getAddress())).sub(addr1Bal), accountBalance1);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(addr2Bal);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(addr3Bal);
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(ownerBal.add(fee1));
-      expect(await vaultStrategy.balanceOf()).to.equal(stgyBal.add(buffBal).sub(accountBalance1).sub(fee1));
+      validateRangeValue((await token2.balanceOf(await owner.getAddress())).sub(ownerBal), fee1);
+      validateRangeValue(await vaultStrategy.balanceOf(), stgyBal.add(buffBal).sub(accountBalance1).sub(fee1));
 
       expect(await vault.balanceOf(await addr1.getAddress())).to.equal(shares1.div(2));
       expect(await vault.balanceOf(await addr2.getAddress())).to.equal(shares2);
@@ -822,11 +822,11 @@ describe("ACOVault", function() {
       await vault.connect(addr3).withdraw(shares3);
 
       expect(await token2.balanceOf(vault.address)).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Bal.add(accountBalance1));
+      validateRangeValue((await token2.balanceOf(await addr1.getAddress())).sub(addr1Bal), accountBalance1);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(addr2Bal);
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(addr3Bal.add(accountBalance3));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(ownerBal.add(fee1).add(fee3));
-      expect(await vaultStrategy.balanceOf()).to.equal(stgyBal.add(buffBal).sub(accountBalance1).sub(fee1).sub(accountBalance3).sub(fee3));
+      validateRangeValue((await token2.balanceOf(await addr3.getAddress())).sub(addr3Bal), accountBalance3);
+      validateRangeValue((await token2.balanceOf(await owner.getAddress())).sub(ownerBal), fee1.add(fee3));
+      validateRangeValue(await vaultStrategy.balanceOf(), stgyBal.add(buffBal).sub(accountBalance1).sub(fee1).sub(accountBalance3).sub(fee3));
 
       expect(await vault.balanceOf(await addr1.getAddress())).to.equal(shares1.div(2));
       expect(await vault.balanceOf(await addr2.getAddress())).to.equal(shares2);
@@ -843,11 +843,11 @@ describe("ACOVault", function() {
       await vault.connect(addr2).withdraw(shares2);
 
       expect(await token2.balanceOf(vault.address)).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Bal.add(accountBalance1));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(addr2Bal.add(accountBalance2));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(addr3Bal.add(accountBalance3));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(ownerBal.add(fee1).add(fee3).add(fee2));
-      expect(await vaultStrategy.balanceOf()).to.equal(stgyBal.add(buffBal).sub(accountBalance1).sub(fee1).sub(accountBalance3).sub(fee3).sub(accountBalance2).sub(fee2));
+      validateRangeValue((await token2.balanceOf(await addr1.getAddress())).sub(addr1Bal), accountBalance1);
+      validateRangeValue((await token2.balanceOf(await addr2.getAddress())).sub(addr2Bal), accountBalance2);
+      validateRangeValue((await token2.balanceOf(await addr3.getAddress())).sub(addr3Bal), accountBalance3);
+      validateRangeValue((await token2.balanceOf(await owner.getAddress())).sub(ownerBal), fee1.add(fee3).add(fee2));
+      validateRangeValue(await vaultStrategy.balanceOf(), stgyBal.add(buffBal).sub(accountBalance1).sub(fee1).sub(accountBalance3).sub(fee3).sub(accountBalance2).sub(fee2));
 
       expect(await vault.balanceOf(await addr1.getAddress())).to.equal(shares1.div(2));
       expect(await vault.balanceOf(await addr2.getAddress())).to.equal(0);
@@ -859,18 +859,17 @@ describe("ACOVault", function() {
       expect(await aco.balanceOf(vault.address)).to.equal(acoBal.sub(acosAmount1[0]).sub(acosAmount3[0]));
 
       [accountBalance12, fee12, acos12, acosAmount12] = await vault.getAccountSituation(await addr1.getAddress(), shares1.div(2));
-      expect(acosAmount12[0]).to.equal(acoBal.div(3).add(1));
+      expect(acosAmount12[0]).to.equal(acoBal.div(3));
 
       await vault.connect(addr1).withdraw(shares1.div(2));
 
       expect(await token2.balanceOf(vault.address)).to.equal(0);
-      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Bal.add(accountBalance1).add(accountBalance12));
-      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(addr2Bal.add(accountBalance2));
-      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(addr3Bal.add(accountBalance3));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(ownerBal.add(fee1).add(fee3).add(fee2).add(fee12));
-      expect(await vaultStrategy.balanceOf()).to.equal(stgyBal.add(buffBal).sub(accountBalance1).sub(fee1).sub(accountBalance3).sub(fee3).sub(accountBalance2).sub(fee2).sub(accountBalance12).sub(fee12));
-      expect(await vaultStrategy.balanceOf()).to.equal(0);
-      
+      validateRangeValue((await token2.balanceOf(await addr1.getAddress())).sub(addr1Bal), accountBalance1.add(accountBalance12));
+      validateRangeValue((await token2.balanceOf(await addr2.getAddress())).sub(addr2Bal), accountBalance2);
+      validateRangeValue((await token2.balanceOf(await addr3.getAddress())).sub(addr3Bal), accountBalance3);
+      validateRangeValue((await token2.balanceOf(await owner.getAddress())).sub(ownerBal), fee1.add(fee3).add(fee2).add(fee12));
+      expect(await vaultStrategy.balanceOf()).to.equal(1);
+
       expect(await vault.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await vault.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await vault.balanceOf(await addr3.getAddress())).to.equal(0);
@@ -894,6 +893,21 @@ describe("ACOVault", function() {
     });
   });
 });
+
+const validateRangeValue = (expected, actual, tolerancePercentage = 500) => {
+  validateBelowMaxValue(expected, actual, tolerancePercentage);
+  validateAboveMinValue(expected, actual, tolerancePercentage);
+};
+
+const validateBelowMaxValue = (expected, actual, tolerancePercentage = 500) => {
+  const precision = 100000;
+  expect(expected).to.be.below(actual.mul(precision + tolerancePercentage).div(precision));
+};
+
+const validateAboveMinValue = (expected, actual, tolerancePercentage = 500) => {
+  const precision = 100000;
+  expect(expected).to.be.above(actual.mul(precision - tolerancePercentage).div(precision));
+};
 
 const getCurrentTimestamp = async () => {
   let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);

@@ -50,7 +50,7 @@ contract CurveYForTest is ICurveFi4 {
         return i_underlying_coins[uint256(arg0)];
     }
 
-    function get_virtual_price() external view override returns (uint) {
+    function get_virtual_price() external view override returns (uint256) {
         uint256 D = get_D(_xp(_stored_rates()));
         uint256 token_supply = token.totalSupply();
         return D * PRECISION / token_supply;
@@ -244,7 +244,7 @@ contract CurveYForTest is ICurveFi4 {
         uint256 b = S_ + D / Ann;
         uint256 y_prev = 0;
         uint256 y = D;
-        for (uint256 _i = 0; _i < N_COINS; _i++) {
+        for (uint256 _i = 0; _i < 255; _i++) {
             y_prev = y;
             y = (y*y + c) / (2 * y + b - D);            
             if (y > y_prev) {

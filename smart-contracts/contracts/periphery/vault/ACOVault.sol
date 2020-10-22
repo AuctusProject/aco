@@ -438,7 +438,9 @@ contract ACOVault is Ownable, IACOVault {
             uint256 acoExercised = 0;
             if (previousShares > 0) {
                 uint256 weight = newShares.add(previousShares);  
-                acoAmount = newShares.mul(_acoData.amount).div(weight).add(1);
+                if (_acoData.amount > 0) {
+                    acoAmount = newShares.mul(_acoData.amount).div(weight).add(1);
+                }
                 if (_acoData.profit > 0) {
                     acoProfit = newShares.mul(_acoData.profit).div(weight).add(1);
                 }

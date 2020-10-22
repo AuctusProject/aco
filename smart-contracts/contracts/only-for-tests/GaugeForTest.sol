@@ -29,11 +29,11 @@ contract GaugeForTest is IGauge {
         }
     }
 
-    function balanceOf(address addr) external view override returns (uint) {
+    function balanceOf(address addr) external view override returns (uint256) {
         return balances[addr];
     }
 
-    function withdraw(uint _value) external override {
+    function withdraw(uint256 _value) external override {
         uint256 _balance = balances[msg.sender] - _value;
         uint256 _supply = totalSupply - _value;
         balances[msg.sender] = _balance;

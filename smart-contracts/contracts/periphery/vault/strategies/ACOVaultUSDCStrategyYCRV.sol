@@ -19,8 +19,12 @@ contract ACOVaultUSDCStrategyYCRV is ACOVaultUSDCStrategyCurveBase {
         IERC20(token).approve(initData.controller, MAX_UINT);
     }
 
-    function normalizedBalanceOf(uint256 bal) internal pure override returns(uint256) {
+    function _normalizedBalanceOf(uint256 bal) internal pure override returns(uint256) {
         return bal.div(1000000000000);
+    }
+
+    function _normalizedWithdrawAmount(uint256 amount) internal pure override returns(uint256) {
+        return amount.mul(1000000000000);
     }
 
     function getName() external pure returns (string memory) {
@@ -41,7 +45,7 @@ contract ACOVaultUSDCStrategyYCRV is ACOVaultUSDCStrategyCurveBase {
         _depositOnGauge();
     }
     
-    function _withdrawUnderlying(uint256 _amount) internal override returns (uint) {
+    function _withdrawUnderlying(uint256 _amount) internal override returns(uint256) {
         ACOAssetHelper._setAssetInfinityApprove(address(crvPoolToken), address(this), address(curve), _amount);
         ICurveFi4 _curve = ICurveFi4(address(curve));
         _curve.remove_liquidity(_amount, [uint256(0),0,0,0]);

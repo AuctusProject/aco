@@ -79,7 +79,7 @@ describe("Controller", function() {
 
     tokenName = "USDT";
     tokenSymbol = "USDT";
-    tokenDecimals = 8;
+    tokenDecimals = 6;
     tokenTotalSupply = ethers.utils.bigNumberify("100000000000000000");
     _coin3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin3.deployed();

@@ -160,7 +160,7 @@ library ACOAssetHelper {
      * @param spender Address of the spender authorized.
      * @param amount Amount to check allowance.
      */
-    function _setAssetInfinityApprove(address asset, address owner, address spender, uint amount) internal {
+    function _setAssetInfinityApprove(address asset, address owner, address spender, uint256 amount) internal {
         if (_getAssetAllowance(asset, owner, spender) < amount) {
             _callApproveERC20(asset, spender, MAX_UINT);
         }

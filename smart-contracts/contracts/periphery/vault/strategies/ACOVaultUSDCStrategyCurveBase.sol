@@ -97,8 +97,8 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         }
     }
     
-    function withdraw(uint _amount) onlyController external override returns (uint256 amount) {
-        amount = _withdrawSome(_amount);
+    function withdraw(uint256 _amount) onlyController external override returns (uint256) {
+        return _withdrawSome(_amount);
     }
     
     function withdrawAll() onlyController external override {
@@ -149,31 +149,33 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
         _withdrawUnderlying(crvPoolToken.balanceOf(address(this)));
     }
 
-    function _withdrawUnderlying(uint256 _amount) internal virtual returns (uint);
+    function _withdrawUnderlying(uint256 _amount) internal virtual returns (uint256);
+    function _normalizedWithdrawAmount(uint256 _amount) internal pure virtual returns(uint256);
 
-    function _withdrawSome(uint256 amount) internal returns (uint) {
-        uint _amount = amount.mul(1e18).div(curve.get_virtual_price());
+    function _withdrawSome(uint256 amount) internal returns (uint256) {
+        uint256 _amount = amount.mul(1e18).div(curve.get_virtual_price());
+        _amount = _normalizedWithdrawAmount(_amount);
         
-        uint _before = crvPoolToken.balanceOf(address(this));
+        uint256 _before = crvPoolToken.balanceOf(address(this));
         gauge.withdraw(_amount);
-        uint _after = crvPoolToken.balanceOf(address(this));
+        uint256 _after = crvPoolToken.balanceOf(address(this));
 
         return _withdrawUnderlying(_after.sub(_before));
     }
     
-    function balanceOfWant() public view override returns (uint) {
+    function balanceOfWant() public view override returns (uint256) {
         return IERC20(token).balanceOf(address(this));
     }
     
-    function balanceOfGauge() public view returns (uint) {
+    function balanceOfGauge() public view returns (uint256) {
         return gauge.balanceOf(address(this));
     }
 
-    function normalizedBalanceOf(uint256 bal) internal pure virtual returns(uint256);
+    function _normalizedBalanceOf(uint256 bal) internal pure virtual returns(uint256);
     
-    function balanceOf() external view override returns (uint) {
-        uint bal = balanceOfGauge().mul(curve.get_virtual_price()).div(1e18);
-        return normalizedBalanceOf(bal);
+    function balanceOf() external view override returns (uint256) {
+        uint256 bal = balanceOfGauge().mul(curve.get_virtual_price()).div(1e18);
+        return _normalizedBalanceOf(bal);
     }
     
     function actualBalanceFor(uint256 amount) external view override returns(uint256) {

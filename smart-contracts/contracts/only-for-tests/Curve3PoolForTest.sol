@@ -43,7 +43,7 @@ contract Curve3PoolForTest is ICurveFi3 {
         return i_coins[uint256(arg0)];
     }
 
-    function get_virtual_price() external view override returns (uint) {
+    function get_virtual_price() external view override returns (uint256) {
         uint256 D = get_D(_xp());
         uint256 token_supply = token.totalSupply();
         return D * PRECISION / token_supply;
