@@ -35,6 +35,7 @@ describe("Controller", function() {
   let controller;
   let fee = ethers.utils.bigNumberify("100");
   let maxExercisedAccounts = 120;
+  let minTimeToExercise = 43200;
 
   let ethToken2Price = ethers.utils.bigNumberify("400000000");
   let expiration;
@@ -232,7 +233,7 @@ describe("Controller", function() {
       4000,
       86400,
       86400 * 5,
-      86400,
+      minTimeToExercise,
       2000,
       500
     ]);
@@ -480,6 +481,15 @@ describe("Controller", function() {
       expect(await vaultStrategy.balanceOf()).to.equal(gBal);
       expect(await aco.balanceOf(vault.address)).to.equal(amount);
       expect(await token2.balanceOf(vault.address)).to.be.above(remain);
+
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration - minTimeToExercise]);
+
+      await mintr.setBalanceToMint(_gauge.address, bal);
+      await vaultStrategy.connect(addr2).harvest();
+      reward = await token2.balanceOf(vaultStrategy.address);
+      await expect(
+        controller.connect(addr2).buyAco(vault.address, amount, reward)
+      ).to.be.revertedWith("ACOVault:: Invalid time to buy");
     });
     it("Change strategy", async function () {
       await controller.setVault(vault.address, vaultStrategy.address);

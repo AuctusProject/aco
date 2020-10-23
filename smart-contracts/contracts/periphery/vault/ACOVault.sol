@@ -583,7 +583,6 @@ contract ACOVault is Ownable, IACOVault {
         uint256 price = assetConverter.getPrice(underlying, strikeAsset);
         uint256 diff = 1;
         address collateral;
-        uint256 _decimals;
         if (isCall) {
             require(price > strikePrice, "ACOVault:: It's not ITM");
             uint256 priceWithSlippage = price.mul(PERCENTAGE_PRECISION.sub(exerciseSlippage)).div(PERCENTAGE_PRECISION);
@@ -591,7 +590,6 @@ contract ACOVault is Ownable, IACOVault {
                 diff = priceWithSlippage.sub(strikePrice);
             }
             collateral = underlying;
-            _decimals = ACOAssetHelper._getAssetDecimals(strikeAsset);
         } else {
             require(price < strikePrice, "ACOVault:: It's not ITM");
             uint256 priceWithSlippage = price.mul(PERCENTAGE_PRECISION.add(exerciseSlippage)).div(PERCENTAGE_PRECISION);
@@ -599,9 +597,8 @@ contract ACOVault is Ownable, IACOVault {
                 diff = strikePrice.sub(priceWithSlippage);
             }
             collateral = strikeAsset;
-            _decimals = ACOAssetHelper._getAssetDecimals(underlying);
         }
-        uint256 minIntrinsicValue = diff.mul(acoBalance).div((10 ** _decimals));
+        uint256 minIntrinsicValue = diff.mul(acoBalance).div(price);
         require(minIntrinsicValue > 0, "ACOVault:: Profit too small");
         
         return (acoAmount, minIntrinsicValue, collateral);

@@ -43,6 +43,8 @@ describe("ACOVault", function() {
   let maxExercisedAccounts = 120;
   let minToKeep = 5000;
   let withdrawFee = 500;
+  let tolerance = 10000;
+  let minTimeToExercise = 43200;
 
   let token1Token2Price = ethers.utils.bigNumberify("10000000000");
   let ethToken2Price = ethers.utils.bigNumberify("400000000");
@@ -185,10 +187,10 @@ describe("ACOVault", function() {
     await token2.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("1000000000000"));
     await token2.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("1000000000000"));
 
-    aggregatorToken1Token2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, token1Token2Price.mul(100));
+    aggregatorToken1Token2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, token1Token2Price.mul(95));
     await aggregatorToken1Token2.deployed();
 
-    aggregatorWethToken2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, ethToken2Price.mul(100));
+    aggregatorWethToken2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, ethToken2Price.mul(95));
     await aggregatorWethToken2.deployed();
 
     await uniswapFactory.createPair(token1.address, token2.address);
@@ -265,19 +267,19 @@ describe("ACOVault", function() {
     let current = await getCurrentTimestamp();
     expiration = current + 4 * 86400;
 
-    let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, true, token1Token2Price, expiration, maxExercisedAccounts)).wait();
+    let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, true, token1Token2Price.mul(95).div(100), expiration, maxExercisedAccounts)).wait();
     let result0 = tx.events[tx.events.length - 1].args;
     ACOToken1Token2Call = await ethers.getContractAt("ACOToken", result0.acoToken);
 
-    let tx2 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, token1Token2Price, expiration, maxExercisedAccounts)).wait();
+    let tx2 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, token1Token2Price.mul(105).div(100), expiration, maxExercisedAccounts)).wait();
     let result2 = tx2.events[tx2.events.length - 1].args;
     ACOToken1Token2Put = await ethers.getContractAt("ACOToken", result2.acoToken);
 
-    let tx4 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, true, ethToken2Price, expiration, maxExercisedAccounts)).wait();
+    let tx4 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, true, ethToken2Price.mul(95).div(100), expiration, maxExercisedAccounts)).wait();
     let result4 = tx4.events[tx4.events.length - 1].args;
     ACOEthToken2Call = await ethers.getContractAt("ACOToken", result4.acoToken);
 
-    let tx6 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, ethToken2Price, expiration, maxExercisedAccounts)).wait();
+    let tx6 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, ethToken2Price.mul(105).div(100), expiration, maxExercisedAccounts)).wait();
     let result6 = tx6.events[tx6.events.length - 1].args;
     ACOEthToken2Put = await ethers.getContractAt("ACOToken", result6.acoToken);
 
@@ -326,11 +328,11 @@ describe("ACOVault", function() {
       minToKeep,
       ACOEthToken2Call.address,
       ACOPoolEthToken2Call.address,
-      4000,
-      4000,
+      tolerance,
+      tolerance,
       86400,
       86400 * 5,
-      86400,
+      minTimeToExercise,
       2000,
       withdrawFee
     ]);
@@ -439,7 +441,7 @@ describe("ACOVault", function() {
       expect(await vault.minPercentageToKeep()).to.equal(10000);
     });
     it("Set price tolerance percentage above", async function () {
-      expect(await vault.tolerancePriceAbove()).to.equal(4000);
+      expect(await vault.tolerancePriceAbove()).to.equal(tolerance);
 
       await vault.setTolerancePriceAbove(0);
       expect(await vault.tolerancePriceAbove()).to.equal(0);
@@ -458,7 +460,7 @@ describe("ACOVault", function() {
       expect(await vault.tolerancePriceAbove()).to.equal(10000);
     });
     it("Set price tolerance percentage below", async function () {
-      expect(await vault.tolerancePriceBelow()).to.equal(4000);
+      expect(await vault.tolerancePriceBelow()).to.equal(tolerance);
 
       await vault.setTolerancePriceBelow(0);
       expect(await vault.tolerancePriceBelow()).to.equal(0);
@@ -758,6 +760,10 @@ describe("ACOVault", function() {
       await vault.connect(addr1).deposit(depositValue);
       await vault.connect(addr2).deposit(depositValue);
 
+      await expect(
+        vault.connect(addr1).withdraw(0)
+      ).to.be.revertedWith("ACOVault:: Invalid shares");
+
       let shares = await vault.connect(addr1).balanceOf(await addr1.getAddress());
       await vault.connect(addr1).withdraw(shares);
       expect(await vault.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -880,6 +886,39 @@ describe("ACOVault", function() {
       expect(await aco.balanceOf(vault.address)).to.equal(0);
     });
     it("Vault exercise", async function () {
+      await token2.connect(addr1).approve(vault.address, token2TotalSupply);
+      await token2.connect(addr2).approve(vault.address, token2TotalSupply);
+      await token2.connect(addr3).approve(vault.address, token2TotalSupply);
+      
+      let depositValue = ethers.utils.bigNumberify("10000000000");
+      await vault.connect(addr1).deposit(depositValue);
+      await vault.connect(addr3).deposit(depositValue.div(2));
+      await vault.earn();
+      await mintr.setBalanceToMint(_gauge.address, ethers.utils.bigNumberify("100000000000000000000"));  
+      await vaultStrategy.harvest();
+      let acoBal = ethers.utils.bigNumberify("6000000000000000000");
+      await controller.buyAco(vault.address, acoBal, await token2.balanceOf(vaultStrategy.address));
+      await vault.connect(addr2).deposit(depositValue);
+      await vault.earn();
+      let aco = await ethers.getContractAt("ACOToken", await vault.currentAcoToken());
+
+      await expect(
+        vault.connect(addr3).exerciseAco(aco.address, acoBal)
+      ).to.be.revertedWith("ACOVault:: Invalid time to exercise");
+
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration - minTimeToExercise]);
+
+      await expect(
+        vault.connect(addr3).exerciseAco(ACOPoolToken1Token2Put.address, acoBal)
+      ).to.be.revertedWith("ACOVault:: Invalid ACO amount");
+
+      await expect(
+        vault.connect(addr3).exerciseAco(aco.address, acoBal)
+      ).to.be.revertedWith("ACOVault:: It's not ITM");
+
+      await aggregatorWethToken2.updateAnswer(ethToken2Price.mul(100));
+
+      //await vault.connect(addr3).exerciseAco(aco.address, acoBal);
     });
     it("Vault skim", async function () {
     });
