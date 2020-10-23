@@ -34,15 +34,13 @@ interface IACOVault is IControlled {
         uint256 profit;
         uint256 exercised;
         uint256 tokenPerShare;
-        uint256 withdrawNormalizedAmount;
+        uint256 withdrawnNormalizedAmount;
+        uint256 withdrawnProfit;
         uint256 index;
         bool initialized;
     }
     
     struct AccountAcoData {
-        uint256 amount;
-        uint256 profit;
-        uint256 exercised;
         uint256 tokenPerShare;
         uint256 tokenAccumulated;
         uint256 index;

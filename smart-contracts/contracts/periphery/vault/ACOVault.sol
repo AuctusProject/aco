@@ -63,7 +63,7 @@ contract ACOVault is Ownable, IACOVault {
     uint256 public override withdrawFee;
     uint256 public override totalSupply;
     
-    mapping (address => uint256) internal balances;
+    mapping(address => uint256) internal balances;
     mapping(address => AcoData) internal acoData;
     mapping(address => AccountData) internal accounts;
     
@@ -129,13 +129,13 @@ contract ACOVault is Ownable, IACOVault {
     
     function getAccountSituation(address account, uint256 shares) external view override returns(uint256, uint256, address[] memory, uint256[] memory) {
         require(shares > 0, "ACOVault:: Invalid shares");
-        uint256 fullShares = balanceOf(account);
-        require(fullShares >= shares, "ACOVault:: Shares not available");
+        uint256 fullShare = balanceOf(account);
+        require(fullShare >= shares, "ACOVault:: Shares not available");
         
-        (uint256 totalAdjust, address[] memory acos, uint256[] memory acosAmount) = _getAccountAcoSituation(account, shares, fullShares);
+        (uint256 totalProfit, uint256 individualProfit, address[] memory acos, uint256[] memory acosAmount) = _getAccountAcoSituation(account, shares, fullShare);
         
-        uint256 accountBalance = shares.mul(balance().sub(totalAdjust)).div(totalSupply);
         uint256 bufferBalance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
+        uint256 accountBalance = _getAccountBalance(shares, totalSupply, totalProfit, individualProfit, bufferBalance);
         if (bufferBalance < accountBalance) {
             accountBalance = bufferBalance.add(controller.actualAmount(address(this), accountBalance.sub(bufferBalance)));
         }
@@ -250,7 +250,7 @@ contract ACOVault is Ownable, IACOVault {
         }
             
         AccountData storage data = accounts[msg.sender];
-        _setAccountDataOnDeposit(address(currentAcoToken), balanceOf(msg.sender), shares, data);
+        _setAccountDataOnDeposit(address(currentAcoToken), balanceOf(msg.sender), data);
         
         _mint(msg.sender, shares);
         
@@ -259,48 +259,22 @@ contract ACOVault is Ownable, IACOVault {
 
     function withdraw(uint256 shares) external override {
         require(shares > 0, "ACOVault:: Invalid shares");
-        uint256 fullShares = balanceOf(msg.sender);
+        
+        uint256 fullShare = balanceOf(msg.sender);
         uint256 vaultTotalSupply = totalSupply;
         _burn(msg.sender, shares);
         
         AccountData storage data = accounts[msg.sender];
-        uint256 totalAdjust = 0;
-        for (uint256 i = data.acoTokensOnDeposit.length; i > 0; --i) {
-            address acoToken = data.acoTokensOnDeposit[i - 1];
-            AcoData storage _acoData = acoData[acoToken];
-            AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
-            
-            uint256 adjust = _getAccountAcoProfitAdjust(_acoData, accountData);
-            totalAdjust = totalAdjust.add(adjust);
-            
-            if (block.timestamp >= IACOToken(acoToken).expiryTime()) {
-                if (fullShares > shares && adjust == 0) {
-                    _removeFromAccountData(acoToken, data);
-                }
-            } else {
-                _setAccountDataOnWithdraw(acoToken, shares, fullShares, _acoData, accountData);
-            }   
-        }
-        for (uint256 j = validAcos.length; j > 0; --j) {
-            uint256 index = j - 1;
-            address acoToken = validAcos[index];
-            if (block.timestamp >= IACOToken(acoToken).expiryTime()) {
-                _removeFromValidAcos(index);
-            } else {
-                AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
-                if (!accountData.initialized) {
-                    AcoData storage _acoData = acoData[acoToken];
-                    _setAccountDataOnWithdraw(acoToken, shares, fullShares, _acoData, accountData);
-                }
-            }
-        }
+        (uint256 totalProfit, uint256 individualProfit) = _setAccountOpenPositionDataOnWithdraw(shares, fullShare, data);
+        
+        _setAccountValidAcoDataOnWithdraw(shares, fullShare, data);
 
-        if (fullShares == shares) {
+        if (fullShare == shares) {
             delete accounts[msg.sender];
         }
         
-        uint256 accountBalance = shares.mul(balance().sub(totalAdjust)).div(vaultTotalSupply);
         uint256 bufferBalance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
+        uint256 accountBalance = _getAccountBalance(shares, vaultTotalSupply, totalProfit, individualProfit, bufferBalance);
         if (bufferBalance < accountBalance) {
             accountBalance = bufferBalance.add(controller.withdraw(accountBalance.sub(bufferBalance)));
         }
@@ -317,9 +291,7 @@ contract ACOVault is Ownable, IACOVault {
         (uint256 acoBalance, uint256 minIntrinsicValue, address collateral) = _exerciseValidation(acoToken, acoAmount);
         
         uint256 previousTokenAmount = ACOAssetHelper._getAssetBalanceOf(token, address(this));
-        if (ACOAssetHelper._getAssetAllowance(acoToken, address(this), address(acoFlashExercise)) < acoBalance) {
-            ACOAssetHelper._callApproveERC20(acoToken, address(acoFlashExercise), MAX_UINT);    
-        }
+        
         acoFlashExercise.flashExercise(acoToken, acoBalance, minIntrinsicValue, block.timestamp);
         
         if (collateral != address(token)) {
@@ -344,6 +316,7 @@ contract ACOVault is Ownable, IACOVault {
     function setReward(uint256 acoTokenAmount, uint256 rewardAmount) external override {
         require(msg.sender == address(controller), "ACOVault:: Invalid sender");
         address _currentAcoToken = address(currentAcoToken);
+        require(IACOToken(_currentAcoToken).expiryTime() > minTimeToExercise.add(block.timestamp), "ACOVault:: Invalid time to buy");
         address _token = token;
         address poolExpectedAsset = IACOToken(_currentAcoToken).strikeAsset();
         
@@ -374,11 +347,10 @@ contract ACOVault is Ownable, IACOVault {
         AccountData storage data = accounts[account];
         for (uint256 i = data.acoTokensOnDeposit.length; i > 0; --i) {
             address acoToken = data.acoTokensOnDeposit[i - 1];
-            AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
             if (block.timestamp >= IACOToken(acoToken).expiryTime()) {
                 AcoData storage _acoData = acoData[acoToken];
-                uint256 adjust = _getAccountAcoProfitAdjust(_acoData, accountData);    
-                if (adjust == 0) {
+                uint256 acoTotalProfit = _acoData.profit.sub(_acoData.withdrawnProfit); 
+                if (acoTotalProfit == 0) {
                     _removeFromAccountData(acoToken, data);
                 }
             }
@@ -419,202 +391,163 @@ contract ACOVault is Ownable, IACOVault {
     function _setAccountDataOnDeposit(
         address acoToken, 
         uint256 previousShares,
-        uint256 newShares,
         AccountData storage data
     ) internal {
         AcoData storage _acoData = acoData[acoToken];
         if (data.dataOnDeposit[acoToken].initialized) {
-            uint256 weight = newShares.add(previousShares);
             AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
-            accountData.amount = newShares.mul(_acoData.amount).add(previousShares.mul(accountData.amount)).div(weight).add(1);
-            accountData.profit = newShares.mul(_acoData.profit).add(previousShares.mul(accountData.profit)).div(weight).add(1);
-            accountData.exercised = newShares.mul(_acoData.exercised).add(previousShares.mul(accountData.exercised)).div(weight).add(1);
-            accountData.tokenAccumulated = accountData.tokenAccumulated.add(_getAccountAcoAmountShare(previousShares, _acoData, accountData));
+            accountData.tokenAccumulated = accountData.tokenAccumulated.add(_getAccountAcoAmount(previousShares, _acoData, accountData));
             accountData.tokenPerShare = _acoData.tokenPerShare;
         } else if (previousShares > 0 || _acoData.amount > _acoData.exercised) {
             uint256 tokenAccumulated = 0;
-            uint256 acoAmount = 0;
-            uint256 acoProfit = 0;
-            uint256 acoExercised = 0;
             if (previousShares > 0) {
-                uint256 weight = newShares.add(previousShares);  
-                if (_acoData.amount > 0) {
-                    acoAmount = newShares.mul(_acoData.amount).div(weight).add(1);
-                }
-                if (_acoData.profit > 0) {
-                    acoProfit = newShares.mul(_acoData.profit).div(weight).add(1);
-                }
-                if (_acoData.exercised > 0) {
-                    acoExercised = newShares.mul(_acoData.exercised).div(weight).add(1);
-                }
-                tokenAccumulated = _getAccountAcoAmountShare(previousShares, _acoData, data.dataOnDeposit[acoToken]);
+                tokenAccumulated = _getAccountAcoAmount(previousShares, _acoData, data.dataOnDeposit[acoToken]);
             }
-            data.dataOnDeposit[acoToken] = AccountAcoData(acoAmount, acoProfit, acoExercised, _acoData.tokenPerShare, tokenAccumulated, data.acoTokensOnDeposit.length, true);
+            data.dataOnDeposit[acoToken] = AccountAcoData(_acoData.tokenPerShare, tokenAccumulated, data.acoTokensOnDeposit.length, true);
             data.acoTokensOnDeposit.push(acoToken);
         }
     }
     
     function _setAccountDataOnWithdraw(
         address acoToken,
-        uint256 share,
-        uint256 fullShares,
+        uint256 acoAmount,
+        uint256 tokenAccumulated,
+        uint256 individualProfit,
         AcoData storage _acoData,
         AccountAcoData storage accountData
     ) internal {
-        uint256 acoAmountFullShare = _getAccountAcoAmountShare(fullShares, _acoData, accountData).add(accountData.tokenAccumulated);
-        
-        uint256 amount = 0;
-        if (fullShares == share) {
-            amount = acoAmountFullShare;
-            accountData.tokenAccumulated = 0;
-        } else {
-            uint256 acoAmountShare = _getAccountAcoAmountShare(share, _acoData, accountData);
-            uint256 tokenAccumulatedShare = share.mul(accountData.tokenAccumulated).div(fullShares);
-            amount = acoAmountShare.add(tokenAccumulatedShare);
-             if (accountData.initialized) {
-                accountData.tokenAccumulated = acoAmountFullShare.sub(amount);
-             }
-        }
+        uint256 normalizedAmount = _getAcoNormalizedAmount(acoToken, acoAmount, _acoData);
         
         if (accountData.initialized) {
+            accountData.tokenAccumulated = tokenAccumulated;
             accountData.tokenPerShare = _acoData.tokenPerShare;
         }
+        _acoData.withdrawnNormalizedAmount = acoAmount.add(_acoData.withdrawnNormalizedAmount);
+        _acoData.withdrawnProfit = individualProfit.add(_acoData.withdrawnProfit);
         
-        uint256 normalizedAmount = _getAcoNormalizedAmount(acoToken, amount, _acoData);
         if (normalizedAmount > 0) {
-            _acoData.withdrawNormalizedAmount = amount.add(_acoData.withdrawNormalizedAmount);
             ACOAssetHelper._transferAsset(acoToken, msg.sender, normalizedAmount);
         }
     }
     
-    function _getAccountAcoSituation(
-        address account, 
+    function _setAccountOpenPositionDataOnWithdraw(
         uint256 shares,
-        uint256 fullShares
-    ) internal view returns(uint256, address[] memory, uint256[] memory) {
-        AccountData storage data = accounts[account];
-        
-        (uint256 totalAdjust, uint256 countOnDeposit, uint256[] memory accountAcoDataOnDeposit) = _getAccountOnDepositAcoAmounts(shares, fullShares, data);
-        (uint256 countValidAcos, uint256[] memory accountValidAcoData) = _getAccountValidAcoAmounts(shares, data);
-        
-        uint256[] memory acosAmount = new uint256[](countOnDeposit + countValidAcos);
-        address[] memory acos = new address[](countOnDeposit + countValidAcos);
-        uint256 index = 0;
-        for (uint256 i = 0; i < accountAcoDataOnDeposit.length; ++i) {
-            if (accountAcoDataOnDeposit[i] > 0) {
-                acosAmount[index] = accountAcoDataOnDeposit[i];
-                acos[index] = data.acoTokensOnDeposit[i];
-                ++index;
-            }
-        }
-        for (uint256 j = 0; j < accountValidAcoData.length; ++j) {
-            if (accountValidAcoData[j] > 0) {
-                acosAmount[index] = accountValidAcoData[j];
-                acos[index] = validAcos[j];
-                ++index;
-            }
-        }
-        return (totalAdjust, acos, acosAmount);
-    }
-
-    function _getAccountOnDepositAcoAmounts(
-        uint256 shares,
-        uint256 fullShares,
+        uint256 fullShare,
         AccountData storage data
-    ) internal view returns(uint256, uint256, uint256[] memory) {
-        uint256 totalAdjust = 0;
-        uint256 count = 0;
-        uint256[] memory accountAcoData = new uint256[](data.acoTokensOnDeposit.length);
-        for (uint256 i = 0; i < data.acoTokensOnDeposit.length; ++i) {
-            address acoToken = data.acoTokensOnDeposit[i];
+    ) internal returns(uint256, uint256) {
+        uint256 totalProfit = 0;
+        uint256 individualProfit = 0;
+        for (uint256 i = data.acoTokensOnDeposit.length; i > 0; --i) {
+            address acoToken = data.acoTokensOnDeposit[i - 1];
             AcoData storage _acoData = acoData[acoToken];
             AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
             
-            totalAdjust = totalAdjust.add( _getAccountAcoProfitAdjust(_acoData, accountData));
+            uint256 acoTotalProfit = _acoData.profit.sub(_acoData.withdrawnProfit);
+            (uint256 acoAmount, uint256 tokenAccumulated) = _getAcoAmountAndTokenAccumulated(shares, fullShare, _acoData, accountData);
+            uint256 acoProfit = _getAccountAcoProfit(acoAmount, acoTotalProfit, _acoData);
+            
+            totalProfit = totalProfit.add(acoTotalProfit);
+            individualProfit = individualProfit.add(acoProfit);
             
             if (block.timestamp >= IACOToken(acoToken).expiryTime()) {
-                accountAcoData[i] = 0;
-            } else {
-                uint256 amount = _getAcoAmountForShareNormalized(acoToken, shares, fullShares, _acoData, accountData);
-                if (amount > 0) {
-                    ++count;
-                    accountAcoData[i] = amount;
-                } else {
-                    accountAcoData[i] = 0;
+                if (fullShare > shares && acoTotalProfit == 0) {
+                    _removeFromAccountData(acoToken, data);
                 }
+            } else {
+                _setAccountDataOnWithdraw(acoToken, acoAmount, tokenAccumulated, acoProfit, _acoData, accountData);
             }   
         }
-        return (totalAdjust, count, accountAcoData);
+        return (totalProfit, individualProfit);
     }
     
-    function _getAcoAmountForShareNormalized(
-        address acoToken,
+    function _setAccountValidAcoDataOnWithdraw(
         uint256 shares,
-        uint256 fullShares,
-        AcoData storage _acoData,
-        AccountAcoData storage accountData
-    ) internal view returns(uint256) {
-        uint256 acoAmount = _getAccountAcoAmountShare(shares, _acoData, accountData);
-        uint256 tokenAccumulatedShare = shares.mul(accountData.tokenAccumulated).div(fullShares);
-        return _getAcoNormalizedAmount(acoToken, acoAmount.add(tokenAccumulatedShare), _acoData);
-    }
-    
-    function _getAccountValidAcoAmounts(
-        uint256 shares,
+        uint256 fullShare,
         AccountData storage data
-    ) internal view returns(uint256, uint256[] memory) {
-        uint256 count = 0;
-        uint256[] memory accountAcoData = new uint256[](validAcos.length);
-        for (uint256 i = 0; i < validAcos.length; ++i) {
-            address acoToken = validAcos[i];
-            if (block.timestamp < IACOToken(acoToken).expiryTime()) {
+    ) internal {
+        for (uint256 j = validAcos.length; j > 0; --j) {
+            uint256 index = j - 1;
+            address acoToken = validAcos[index];
+            if (block.timestamp >= IACOToken(acoToken).expiryTime()) {
+                _removeFromValidAcos(index);
+            } else {
                 AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
                 if (!accountData.initialized) {
                     AcoData storage _acoData = acoData[acoToken];
-                    uint256 acoAmount = _getAccountAcoAmountShare(shares, _acoData, accountData);
-                    uint256 amount = _getAcoNormalizedAmount(acoToken, acoAmount, _acoData);
-                    if (amount > 0) {
-                        ++count;
-                        accountAcoData[i] = amount;
-                    } else {
-                        accountAcoData[i] = 0;
-                    }    
-                } else {
-                    accountAcoData[i] = 0;
+                    (uint256 acoAmount,) = _getAcoAmountAndTokenAccumulated(shares, fullShare, _acoData, accountData);
+                    _setAccountDataOnWithdraw(acoToken, acoAmount, 0, 0, _acoData, accountData);
                 }
+            }
+        }
+    }
+    
+    function _getAccountBalance(
+        uint256 shares,
+        uint256 vaultTotalSupply,
+        uint256 totalProfit,
+        uint256 individualProfit,
+        uint256 tokenBalance
+    ) internal view returns(uint256) {
+        uint256 _balance = controller.balanceOf(address(this));
+        uint256 normalizedIndividualProfit = 0;
+        if (individualProfit > 0) {
+            normalizedIndividualProfit = controller.actualAmount(address(this), individualProfit);
+        }
+        if (totalProfit > 0) {
+            if (tokenBalance >= totalProfit) {
+                _balance = _balance.add(tokenBalance.sub(totalProfit));
             } else {
-                accountAcoData[i] = 0;
+                _balance = _balance.sub(controller.actualAmount(address(this), totalProfit.sub(tokenBalance)));
             }
-        }
-        return (count, accountAcoData);
-    }
-    
-    function _getAccountAcoProfitAdjust(
-        AcoData storage _acoData,
-        AccountAcoData storage accountData
-    ) internal view returns(uint256) {
-        uint256 adjust = 0;
-        if (accountData.initialized) {
-            uint256 exercisedAmount = _acoData.exercised.sub(accountData.exercised);
-            if (exercisedAmount > 0) {
-                uint256 totalProfit = _acoData.profit.sub(accountData.profit);
-                uint256 exercisedShare = exercisedAmount.sub(accountData.amount.sub(accountData.exercised));
-                uint256 profit = exercisedShare.mul(totalProfit).div(exercisedAmount);
-                adjust = controller.actualAmount(address(this), totalProfit.sub(profit));
-            }
-        }
-        return adjust;
-    }
-    
-    function _getAccountAcoAmountShare(
-        uint256 share,
-        AcoData storage _acoData,
-        AccountAcoData storage accountData
-    ) internal view returns(uint256) {
-        if (accountData.initialized) {
-            return _acoData.tokenPerShare.sub(accountData.tokenPerShare).mul(share).div(1e18);
         } else {
-            return _acoData.tokenPerShare.mul(share).div(1e18);
+            _balance = _balance.add(tokenBalance);
+        }
+        return shares.mul(_balance).div(vaultTotalSupply).add(normalizedIndividualProfit);
+    }
+    
+    function _getAcoAmountAndTokenAccumulated(
+        uint256 shares,
+        uint256 fullShare,
+        AcoData storage _acoData,
+        AccountAcoData storage accountData
+    ) internal view returns(uint256, uint256) {
+        uint256 acoAmountFullShare = _getAccountAcoAmount(fullShare, _acoData, accountData).add(accountData.tokenAccumulated);
+        
+        uint256 amount = 0;
+        uint256 tokenAccumulated = 0;
+        if (fullShare == shares) {
+            amount = acoAmountFullShare;
+        } else {
+            uint256 acoAmountShare = _getAccountAcoAmount(shares, _acoData, accountData);
+            uint256 tokenAccumulatedShare = shares.mul(accountData.tokenAccumulated).div(fullShare);
+            amount = acoAmountShare.add(tokenAccumulatedShare);
+            tokenAccumulated = acoAmountFullShare.sub(amount);
+        }
+        return (amount, tokenAccumulated);
+    }
+
+    function _getAccountAcoProfit(
+        uint256 acoAmount,
+        uint256 totalProfit,
+        AcoData storage _acoData
+    ) internal view returns(uint256) {
+        uint256 totalAmount = _acoData.amount.sub(_acoData.withdrawnNormalizedAmount);
+        if (totalAmount > 0) {
+            return acoAmount.mul(totalProfit).div(totalAmount);
+        } else {
+            return 0;
+        }
+    }
+    
+    function _getAccountAcoAmount(
+        uint256 shares,
+        AcoData storage _acoData,
+        AccountAcoData storage accountData
+    ) internal view returns(uint256) {
+        if (accountData.initialized) {
+            return _acoData.tokenPerShare.sub(accountData.tokenPerShare).mul(shares).div(1e18);
+        } else {
+            return _acoData.tokenPerShare.mul(shares).div(1e18);
         }
     }
     
@@ -624,11 +557,13 @@ contract ACOVault is Ownable, IACOVault {
         AcoData storage _acoData
     ) internal view returns(uint256) {
         if (amount > 0) {
-            uint256 acoAmount = ACOAssetHelper._getAssetBalanceOf(acoToken, address(this));
-            return acoAmount.mul(amount).div(_acoData.amount.sub(_acoData.withdrawNormalizedAmount));
-        } else {
-            return 0;
+            uint256 totalAmount = _acoData.amount.sub(_acoData.withdrawnNormalizedAmount);
+            if (totalAmount > 0) {
+                uint256 acoAmount = ACOAssetHelper._getAssetBalanceOf(acoToken, address(this));
+                return acoAmount.mul(amount).div(totalAmount);
+            }
         }
+        return 0;
     }
     
     function _exerciseValidation(address acoToken, uint256 acoAmount) internal view returns(uint256, uint256, address) {
@@ -671,6 +606,110 @@ contract ACOVault is Ownable, IACOVault {
         
         return (acoAmount, minIntrinsicValue, collateral);
     }
+        
+    function _getAccountAcoSituation(
+        address account, 
+        uint256 shares,
+        uint256 fullShare
+    ) internal view returns(uint256, uint256, address[] memory, uint256[] memory) {
+        AccountData storage data = accounts[account];
+        
+        (uint256 totalProfit, uint256 individualProfit, uint256 countOnDeposit, uint256[] memory accountAcoDataOnDeposit) = _getAccountOnDepositAcoAmounts(shares, fullShare, data);
+        (uint256 countValidAcos, uint256[] memory accountValidAcoData) = _getAccountValidAcoAmounts(shares, fullShare, data);
+        
+        uint256[] memory acosAmount = new uint256[](countOnDeposit + countValidAcos);
+        address[] memory acos = new address[](countOnDeposit + countValidAcos);
+        uint256 index = 0;
+        for (uint256 i = 0; i < accountAcoDataOnDeposit.length; ++i) {
+            if (accountAcoDataOnDeposit[i] > 0) {
+                acosAmount[index] = accountAcoDataOnDeposit[i];
+                acos[index] = data.acoTokensOnDeposit[i];
+                ++index;
+            }
+        }
+        for (uint256 j = 0; j < accountValidAcoData.length; ++j) {
+            if (accountValidAcoData[j] > 0) {
+                acosAmount[index] = accountValidAcoData[j];
+                acos[index] = validAcos[j];
+                ++index;
+            }
+        }
+        return (totalProfit, individualProfit, acos, acosAmount);
+    }
+
+    function _getAccountOnDepositAcoAmounts(
+        uint256 shares,
+        uint256 fullShare,
+        AccountData storage data
+    ) internal view returns(uint256 totalProfit, uint256 individualProfit, uint256 count, uint256[] memory accountAcoData) {
+        accountAcoData = new uint256[](data.acoTokensOnDeposit.length);
+        for (uint256 i = 0; i < data.acoTokensOnDeposit.length; ++i) {
+            address acoToken = data.acoTokensOnDeposit[i];
+            
+            (uint256 amount, uint256 acoTotalProfit, uint256 acoProfit) = _getAccountOnDepositAcoData(acoToken, shares, fullShare, data);
+
+            totalProfit = totalProfit.add(acoTotalProfit);
+            individualProfit = individualProfit.add(acoProfit);
+            
+            if (amount > 0) {
+                ++count;
+                accountAcoData[i] = amount;
+            } else {
+                accountAcoData[i] = 0;
+            }
+        }
+    }
+    
+    function _getAccountOnDepositAcoData(
+        address acoToken,
+        uint256 shares,
+        uint256 fullShare,
+        AccountData storage data
+    ) internal view returns(uint256, uint256, uint256) {
+        AcoData storage _acoData = acoData[acoToken];
+        AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
+        
+        uint256 acoTotalProfit = _acoData.profit.sub(_acoData.withdrawnProfit);
+        (uint256 acoAmount,) = _getAcoAmountAndTokenAccumulated(shares, fullShare, _acoData, accountData);
+        uint256 acoProfit = _getAccountAcoProfit(acoAmount, acoTotalProfit, _acoData);
+        
+        uint256 amount = 0;
+        if (block.timestamp < IACOToken(acoToken).expiryTime()) {
+            amount = _getAcoNormalizedAmount(acoToken, acoAmount, _acoData);
+        }   
+        return (amount, acoTotalProfit, acoProfit);
+    }
+
+    function _getAccountValidAcoAmounts(
+        uint256 shares,
+        uint256 fullShare,
+        AccountData storage data
+    ) internal view returns(uint256, uint256[] memory) {
+        uint256 count = 0;
+        uint256[] memory accountAcoData = new uint256[](validAcos.length);
+        for (uint256 i = 0; i < validAcos.length; ++i) {
+            address acoToken = validAcos[i];
+            if (block.timestamp < IACOToken(acoToken).expiryTime()) {
+                AccountAcoData storage accountData = data.dataOnDeposit[acoToken];
+                if (!accountData.initialized) {
+                    AcoData storage _acoData = acoData[acoToken];
+                    (uint256 acoAmount,) = _getAcoAmountAndTokenAccumulated(shares, fullShare, _acoData, accountData);
+                    uint256 amount = _getAcoNormalizedAmount(acoToken, acoAmount, _acoData);
+                    if (amount > 0) {
+                        ++count;
+                        accountAcoData[i] = amount;
+                    } else {
+                        accountAcoData[i] = 0;
+                    }    
+                } else {
+                    accountAcoData[i] = 0;
+                }
+            } else {
+                accountAcoData[i] = 0;
+            }
+        }
+        return (count, accountAcoData);
+    }
 
     function _setAcoToken(
         IACOAssetConverterHelper _assetConverter,
@@ -693,10 +732,12 @@ contract ACOVault is Ownable, IACOVault {
         
         setValidAcoTokens();
         
+        ACOAssetHelper._callApproveERC20(newAcoToken, address(acoFlashExercise), MAX_UINT);    
+        
         currentAcoToken = IACOToken(newAcoToken);
         
         if (!acoData[newAcoToken].initialized) {
-            acoData[newAcoToken] = AcoData(0, 0, 0, 0, 0, acoTokens.length, true);
+            acoData[newAcoToken] = AcoData(0, 0, 0, 0, 0, 0, acoTokens.length, true);
             acoTokens.push(newAcoToken);
             validAcos.push(newAcoToken);
         }
@@ -784,6 +825,12 @@ contract ACOVault is Ownable, IACOVault {
     function _setAcoFlashExercise(address newAcoFlashExercise) internal {
         require(newAcoFlashExercise.isContract(), "ACOVault:: Invalid ACO flash exercise");
         emit SetAcoFlashExercise(address(acoFlashExercise), newAcoFlashExercise);
+        
+        address _currentAcoToken = address(currentAcoToken);
+        if (_currentAcoToken != address(0)) {
+            ACOAssetHelper._callApproveERC20(_currentAcoToken, newAcoFlashExercise, MAX_UINT);   
+        }
+        
         acoFlashExercise = IACOFlashExercise(newAcoFlashExercise);
     }
     
