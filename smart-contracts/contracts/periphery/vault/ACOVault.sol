@@ -96,6 +96,10 @@ contract ACOVault is Ownable, IACOVault {
         );
     }
 
+    receive() external payable {
+        require(msg.sender != tx.origin, "ACOVault:: Only contract");
+    }
+
     function name() public view override returns(string memory) {
         return string(abi.encodePacked("ACO Vault ", ACOAssetHelper._getAssetSymbol(address(token))));
     }

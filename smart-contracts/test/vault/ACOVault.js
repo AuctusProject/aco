@@ -918,7 +918,7 @@ describe("ACOVault", function() {
 
       await aggregatorWethToken2.updateAnswer(ethToken2Price.mul(100));
 
-      //await vault.connect(addr3).exerciseAco(aco.address, acoBal);
+      await vault.connect(addr3).exerciseAco(aco.address, acoBal);
     });
     it("Vault skim", async function () {
     });
