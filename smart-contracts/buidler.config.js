@@ -3,10 +3,8 @@ usePlugin("@nomiclabs/buidler-ethers");
 usePlugin("buidler-gas-reporter");
 
 module.exports = {
-    networks: {
-        localhost: {
-            timeout: 60000
-        }
+    mocha: {
+        timeout: 60000,
     },
     solc: {
         version: "0.6.6",
