@@ -570,7 +570,14 @@ contract ACOVault is Ownable, IACOVault {
         return 0;
     }
     
-    function _exerciseValidation(address acoToken, uint256 acoAmount) internal view returns(uint256, uint256, address) {
+    function _exerciseValidation(
+        address acoToken, 
+        uint256 acoAmount
+    ) internal view returns(
+        uint256 actualAcoAmount, 
+        uint256 minIntrinsicValue, 
+        address collateral
+    ) {
         (address underlying, 
          address strikeAsset, 
          bool isCall,
@@ -580,13 +587,14 @@ contract ACOVault is Ownable, IACOVault {
         
         uint256 acoBalance = ACOAssetHelper._getAssetBalanceOf(acoToken, address(this));
         if (acoAmount > acoBalance) {
-            acoAmount = acoBalance;
+            actualAcoAmount = acoBalance;
+        } else {
+            actualAcoAmount = acoAmount;
         }
-        require(acoAmount > 0, "ACOVault:: Invalid ACO amount");
+        require(actualAcoAmount > 0, "ACOVault:: Invalid ACO amount");
         
         uint256 price = assetConverter.getPrice(underlying, strikeAsset);
         uint256 diff = 1;
-        address collateral;
         if (isCall) {
             require(price > strikePrice, "ACOVault:: It's not ITM");
             uint256 priceWithSlippage = price.mul(PERCENTAGE_PRECISION.sub(exerciseSlippage)).div(PERCENTAGE_PRECISION);
@@ -602,10 +610,8 @@ contract ACOVault is Ownable, IACOVault {
             }
             collateral = strikeAsset;
         }
-        uint256 minIntrinsicValue = diff.mul(acoBalance).div(price);
+        minIntrinsicValue = diff.mul(actualAcoAmount).div(price);
         require(minIntrinsicValue > 0, "ACOVault:: Profit too small");
-        
-        return (acoAmount, minIntrinsicValue, collateral);
     }
         
     function _getAccountAcoSituation(

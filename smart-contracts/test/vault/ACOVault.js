@@ -267,38 +267,38 @@ describe("ACOVault", function() {
     let current = await getCurrentTimestamp();
     expiration = current + 4 * 86400;
 
-    let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, true, token1Token2Price.mul(95).div(100), expiration, maxExercisedAccounts)).wait();
-    let result0 = tx.events[tx.events.length - 1].args;
-    ACOToken1Token2Call = await ethers.getContractAt("ACOToken", result0.acoToken);
-
-    let tx2 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, token1Token2Price.mul(105).div(100), expiration, maxExercisedAccounts)).wait();
-    let result2 = tx2.events[tx2.events.length - 1].args;
-    ACOToken1Token2Put = await ethers.getContractAt("ACOToken", result2.acoToken);
-
     let tx4 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, true, ethToken2Price.mul(95).div(100), expiration, maxExercisedAccounts)).wait();
     let result4 = tx4.events[tx4.events.length - 1].args;
     ACOEthToken2Call = await ethers.getContractAt("ACOToken", result4.acoToken);
 
-    let tx6 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, ethToken2Price.mul(105).div(100), expiration, maxExercisedAccounts)).wait();
+    let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, true, token1Token2Price.mul(95).div(100), expiration+minTimeToExercise, maxExercisedAccounts)).wait();
+    let result0 = tx.events[tx.events.length - 1].args;
+    ACOToken1Token2Call = await ethers.getContractAt("ACOToken", result0.acoToken);
+
+    let tx6 = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, ethToken2Price.mul(105).div(100), expiration+2*minTimeToExercise, maxExercisedAccounts)).wait();
     let result6 = tx6.events[tx6.events.length - 1].args;
     ACOEthToken2Put = await ethers.getContractAt("ACOToken", result6.acoToken);
+
+    let tx2 = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, token1Token2Price.mul(105).div(100), expiration+3*minTimeToExercise, maxExercisedAccounts)).wait();
+    let result2 = tx2.events[tx2.events.length - 1].args;
+    ACOToken1Token2Put = await ethers.getContractAt("ACOToken", result2.acoToken);
 
     current = await getCurrentTimestamp();
     start = current + 180;
 
-    let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+    let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration+4*minTimeToExercise, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
     let result8 = tx8.events[tx8.events.length - 1].args;
     ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool", result8.acoPool);
 
-    let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+    let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration+4*minTimeToExercise, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
     let result9 = tx9.events[tx9.events.length - 1].args;
     ACOPoolToken1Token2Put = await ethers.getContractAt("ACOPool", result9.acoPool);
     
-    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration+4*minTimeToExercise, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
     let result10 = tx10.events[tx10.events.length - 1].args;
     ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool", result10.acoPool);
 
-    let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+    let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration+4*minTimeToExercise, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
     let result11 = tx11.events[tx11.events.length - 1].args;
     ACOPoolEthToken2Put = await ethers.getContractAt("ACOPool", result11.acoPool);
 
@@ -517,20 +517,20 @@ describe("ACOVault", function() {
       expect(await vault.maxExpiration()).to.equal(86400 * 2);
     });
     it("Set minimum time to exercise", async function () {
-      expect(await vault.minTimeToExercise()).to.equal(86400);
+      expect(await vault.minTimeToExercise()).to.equal(minTimeToExercise);
 
-      await vault.setMinTimeToExercise(43200);
-      expect(await vault.minTimeToExercise()).to.equal(43200);
+      await vault.setMinTimeToExercise(minTimeToExercise*2);
+      expect(await vault.minTimeToExercise()).to.equal(minTimeToExercise*2);
 
       await expect(
         vault.setMinTimeToExercise(3500)
       ).to.be.revertedWith("ACOVault:: Invalid min time to exercise");
-      expect(await vault.minTimeToExercise()).to.equal(43200);
+      expect(await vault.minTimeToExercise()).to.equal(minTimeToExercise*2);
 
       await expect(
         vault.connect(addr1).setMinTimeToExercise(86400 * 2)
       ).to.be.revertedWith("Ownable: caller is not the owner");
-      expect(await vault.minTimeToExercise()).to.equal(43200);
+      expect(await vault.minTimeToExercise()).to.equal(minTimeToExercise*2);
 
       await vault.setMinTimeToExercise(86400 * 2);
       expect(await vault.minTimeToExercise()).to.equal(86400 * 2);
@@ -577,7 +577,7 @@ describe("ACOVault", function() {
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call.address);
 
       let start2 = (await getCurrentTimestamp()) + 20;
-      let tx = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start2, ethers.utils.bigNumberify("390000000"), ethers.utils.bigNumberify("410000000"), start2, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+      let tx = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start2, ethers.utils.bigNumberify("370000000"), ethers.utils.bigNumberify("430000000"), start2, expiration+3*minTimeToExercise, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let ACOPoolEthToken2Call2 = await ethers.getContractAt("ACOPool", result.acoPool);
       await jumpUntilStart(start2);
@@ -628,7 +628,7 @@ describe("ACOVault", function() {
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
 
       await vault.setMinExpiration(86400);
-      await vault.setMaxExpiration(86400 * 2);
+      await vault.setMaxExpiration(86400 * 3);
       await expect(
         vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
       ).to.be.revertedWith("ACOVault:: Invalid ACO expiry time");
@@ -636,14 +636,14 @@ describe("ACOVault", function() {
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
 
       await vault.setMaxExpiration(86400 * 5);
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(104).add(100));
+      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(95).mul(100000+tolerance).div(100000).add(100));
       await expect(
         vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
       ).to.be.revertedWith("ACOVault:: Invalid ACO strike price");
       expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
 
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(96).sub(100));
+      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(95).mul(100000-tolerance).div(100000).sub(100));
       await expect(
         vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
       ).to.be.revertedWith("ACOVault:: Invalid ACO strike price");
@@ -874,7 +874,7 @@ describe("ACOVault", function() {
       validateRangeValue((await token2.balanceOf(await addr2.getAddress())).sub(addr2Bal), accountBalance2);
       validateRangeValue((await token2.balanceOf(await addr3.getAddress())).sub(addr3Bal), accountBalance3);
       validateRangeValue((await token2.balanceOf(await owner.getAddress())).sub(ownerBal), fee1.add(fee3).add(fee2).add(fee12));
-      expect(await vaultStrategy.balanceOf()).to.equal(1);
+      expect(await vaultStrategy.balanceOf()).to.equal(0);
 
       expect(await vault.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await vault.balanceOf(await addr2.getAddress())).to.equal(0);
@@ -893,12 +893,15 @@ describe("ACOVault", function() {
       let depositValue = ethers.utils.bigNumberify("10000000000");
       await vault.connect(addr1).deposit(depositValue);
       await vault.connect(addr3).deposit(depositValue.div(2));
+      let shares1 = await vault.balanceOf(await addr1.getAddress());
+      let shares3 = await vault.balanceOf(await addr3.getAddress());
       await vault.earn();
       await mintr.setBalanceToMint(_gauge.address, ethers.utils.bigNumberify("100000000000000000000"));  
       await vaultStrategy.harvest();
       let acoBal = ethers.utils.bigNumberify("6000000000000000000");
       await controller.buyAco(vault.address, acoBal, await token2.balanceOf(vaultStrategy.address));
       await vault.connect(addr2).deposit(depositValue);
+      let shares2 = await vault.balanceOf(await addr2.getAddress());
       await vault.earn();
       let aco = await ethers.getContractAt("ACOToken", await vault.currentAcoToken());
 
@@ -916,9 +919,82 @@ describe("ACOVault", function() {
         vault.connect(addr3).exerciseAco(aco.address, acoBal)
       ).to.be.revertedWith("ACOVault:: It's not ITM");
 
-      await aggregatorWethToken2.updateAnswer(ethToken2Price.mul(100));
+      [accountBalance1, fee1, acos1, acosAmount1] = await vault.getAccountSituation(await addr1.getAddress(), shares1);
+      [accountBalance2, fee2, acos2, acosAmount2] = await vault.getAccountSituation(await addr2.getAddress(), shares2);
+      [accountBalance3, fee3, acos3, acosAmount3] = await vault.getAccountSituation(await addr3.getAddress(), shares3);
+      expect(acos1.length).to.equal(1);
+      expect(acos2.length).to.equal(0);
+      expect(acos3.length).to.equal(1);
+      expect(accountBalance1.add(fee1)).to.be.below(depositValue);
+      expect(accountBalance2.add(fee2)).to.be.below(depositValue);
+      expect(accountBalance3.add(fee3)).to.be.below(depositValue.div(2));
 
+      await aggregatorWethToken2.updateAnswer(ethToken2Price.mul(100));
+      let balVault = await token2.balanceOf(vault.address);
       await vault.connect(addr3).exerciseAco(aco.address, acoBal);
+      validateAboveMinValue((await token2.balanceOf(vault.address)).sub(balVault), ethToken2Price.mul(5).mul(acoBal).div(ethers.utils.bigNumberify("100000000000000000000")), 7000);
+      
+      [accountBalance1, fee1, acos1, acosAmount1] = await vault.getAccountSituation(await addr1.getAddress(), shares1);
+      [accountBalance2, fee2, acos2, acosAmount2] = await vault.getAccountSituation(await addr2.getAddress(), shares2);
+      [accountBalance3, fee3, acos3, acosAmount3] = await vault.getAccountSituation(await addr3.getAddress(), shares3);
+
+      expect(acos1.length).to.equal(0);
+      expect(acos2.length).to.equal(0);
+      expect(acos3.length).to.equal(0);
+      expect(accountBalance1.add(fee1)).to.be.above(depositValue);
+      expect(accountBalance2.add(fee2)).to.be.below(depositValue);
+      expect(accountBalance3.add(fee3)).to.be.above(depositValue.div(2));
+
+      await vault.earn();
+      await vault.setMinExpiration(1);
+      await vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address);
+      aco = await ethers.getContractAt("ACOToken", await vault.currentAcoToken());
+      await mintr.setBalanceToMint(_gauge.address, ethers.utils.bigNumberify("110000000000000000000"));  
+      await vaultStrategy.harvest();
+      acoBal = ethers.utils.bigNumberify("60000000");
+      await controller.buyAco(vault.address, acoBal, await token2.balanceOf(vaultStrategy.address));
+      
+      [accountBalance1, fee1, acos1, acosAmount1] = await vault.getAccountSituation(await addr1.getAddress(), shares1);
+      [accountBalance2, fee2, acos2, acosAmount2] = await vault.getAccountSituation(await addr2.getAddress(), shares2);
+      [accountBalance3, fee3, acos3, acosAmount3] = await vault.getAccountSituation(await addr3.getAddress(), shares3);
+      expect(acos1.length).to.equal(1);
+      expect(acos2.length).to.equal(1);
+      expect(acos3.length).to.equal(1);
+      expect(accountBalance1.add(fee1)).to.be.above(depositValue);
+      expect(accountBalance2.add(fee2)).to.be.below(depositValue);
+      expect(accountBalance3.add(fee3)).to.be.above(depositValue.div(2));
+
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration]);
+      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(100));
+      balVault = await token2.balanceOf(vault.address);
+      await vault.connect(addr3).exerciseAco(aco.address, acoBal.div(2));
+      validateAboveMinValue((await token2.balanceOf(vault.address)).sub(balVault), token1Token2Price.mul(5).mul(acoBal.div(2)).div(ethers.utils.bigNumberify("10000000000")), 8000);
+      expect(await token1.balanceOf(vault.address)).to.equal(0);
+
+      [accountBalance1, fee1, acos1, acosAmount1] = await vault.getAccountSituation(await addr1.getAddress(), shares1);
+      [accountBalance2, fee2, acos2, acosAmount2] = await vault.getAccountSituation(await addr2.getAddress(), shares2);
+      [accountBalance3, fee3, acos3, acosAmount3] = await vault.getAccountSituation(await addr3.getAddress(), shares3);
+      expect(acos1.length).to.equal(1);
+      expect(acos2.length).to.equal(1);
+      expect(acos3.length).to.equal(1);
+      expect(accountBalance1.add(fee1)).to.be.above(depositValue);
+      expect(accountBalance2.add(fee2)).to.be.above(depositValue);
+      expect(accountBalance3.add(fee3)).to.be.above(depositValue.div(2));
+
+      await vault.connect(addr1).withdraw(shares1);
+      await vault.connect(addr2).withdraw(shares2);
+      await vault.connect(addr3).withdraw(shares3);
+
+      expect(await vault.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await vault.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await vault.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await vault.totalSupply()).to.equal(0);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(acosAmount1[0]);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(acosAmount2[0]);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(acosAmount3[0]);
+      expect(await aco.balanceOf(vault.address)).to.equal(2);
+      expect(await vault.balance()).to.equal(0);
+      expect(await vaultStrategy.balanceOf()).to.equal(0);
     });
     it("Vault skim", async function () {
     });
