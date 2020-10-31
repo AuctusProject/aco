@@ -505,13 +505,13 @@ class SimpleWriteStep2 extends Component {
       <div className="action-button-wrapper">
         {this.canWrite() ?
           (this.props.isConnected ? 
-            <div className="home-btn medium solid-green" onClick={this.onWriteClick}>
+            <div className="home-btn medium solid-blue" onClick={this.onWriteClick}>
               <div>WRITE</div>
             </div> :
-            <div className="home-btn medium solid-green" onClick={this.onConnectClick}>
+            <div className="home-btn medium solid-blue" onClick={this.onConnectClick}>
               <div>CONNECT WALLET</div>
             </div>) :
-          <div className="home-btn medium solid-green disabled">
+          <div className="home-btn medium solid-blue disabled">
             <div>{this.state.loadingSwap ? "Loading..." : this.getButtonMessage()}</div>
           </div>}
       </div>

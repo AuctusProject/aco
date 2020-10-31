@@ -5,6 +5,10 @@
     overflow: auto;
 }
 
+.light-mode .trade-menu{
+    background-color: #dadada;
+}
+
 .trade-menu-pair-balance-info {
     padding: 8px 15px;
 }
@@ -16,7 +20,6 @@
     font-style: normal;
     letter-spacing: 0.45px;
     text-align: left;
-    color: #ffffff;
     padding: 10px 0;
 }
 
@@ -41,7 +44,6 @@
     font-stretch: normal;
     font-style: normal;
     letter-spacing: 0.3px;
-    color: #ffffff;
 }
 
 .trade-menu-pair-symbol {
@@ -60,7 +62,6 @@
     font-style: normal;
     letter-spacing: 0.43px;
     text-align: left;
-    color: #ffffff;
     padding: 8px 15px;
 }
 
@@ -69,12 +70,7 @@
 }
 
 .option-expirations-wrapper {
-    border-bottom: solid 1px #000000;
     margin-bottom: 15px;
-}
-
-.option-expirations-wrapper:last-child {
-    border-bottom: none;
 }
 
 .option-expiration-item {
@@ -91,14 +87,24 @@
     position: relative;
 }
 
+.light-mode .option-expiration-item {
+    color: #333333;
+}
+
 .option-expiration-item {
     cursor: pointer;
 }
 
 .option-expiration-item:hover,
 .option-expiration-item.active {
-    color: white;
+    color: #fff;
     background-color: #242424;
+}
+
+.light-mode .option-expiration-item:hover,
+.light-mode .option-expiration-item.active {
+    color: #333333;
+    background-color: white;
 }
 
 .trade-menu-content {
@@ -146,6 +152,11 @@
 .trade-menu-footer a:hover {
     color: #e6e6e6;
     opacity: 0.75;
+}
+
+.light-mode .trade-menu-footer a,
+.light-mode .trade-menu-footer a:hover {
+    color: #333333;
 }
 
 .trade-menu-footer-media {

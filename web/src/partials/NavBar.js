@@ -5,7 +5,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
-import { etherscanUrl, ellipsisCenterOfUsername, getPairIdFromRoute } from '../util/constants'
+import { etherscanUrl, ellipsisCenterOfUsername, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listPairs } from '../util/acoFactoryMethods'
 
@@ -14,7 +14,8 @@ class NavBar extends Component {
     super(props)
 		this.state = {
       pairs: null,
-      showAdvancedTootlip: false
+      showAdvancedTootlip: false,
+      darkMode: isDarkMode(),
     }
   }
 
@@ -31,6 +32,21 @@ class NavBar extends Component {
     if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
       this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
     }
+    if (this.props.darkMode !== prevProps.darkMode && this.props.darkMode !== this.state.darkMode) {
+      this.setState({darkMode: this.props.darkMode})
+    }
+  }
+
+  onLayoutModeChange = () => {
+    var newDarkMode = !this.state.darkMode
+    var self = this
+    this.setState({darkMode: newDarkMode}, 
+      () => self.props.setLayoutMode(newDarkMode)
+    )
+  }
+
+  onTestCheckChange = () => {
+    this.setState({testCheck: !this.state.testCheck})
   }
 
   isAdvanced = () => {
@@ -90,11 +106,8 @@ class NavBar extends Component {
           <div className="container-fluid">
             <div className="nav-logo logo-link">
               <Link to={`/`}>
-                <img src="/logo.svg" className="aco-logo" alt="" />
+                <img src={this.state.darkMode ? "/logo_white.svg" : "/logo.svg"} className="aco-logo" alt="" />
               </Link>
-              <a className="by-auctus-link" target="_blank" rel="noopener noreferrer" href="https://auctus.org">
-                <img src="/logo_by_auctus.svg" className="by-auctus-logo" alt="" />
-              </a>
             </div>
             <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"></span>
@@ -104,14 +117,53 @@ class NavBar extends Component {
               <ul className="navbar-nav">
                 <PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown>
               </ul>}
+              {!this.isAdvanced() && <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items simple-nav">
+                <div className="nav-item link-nav">
+                  <div className="options-nav-item">Options</div>
+                  <div className="subnav-content">
+                    <div className="container">
+                      <NavLink to={this.getUrlWithPairId("/buy")}>
+                        <div className="subnav-link">
+                          <div className="subnav-link-title">TRADE OPTIONS</div>
+                          <div className="subnav-link-description">Start trading non-custodial otions immediately.</div>
+                        </div>
+                      </NavLink>
+                      <NavLink to={this.getUrlWithPairId("/pools")}>
+                        <div className="subnav-link">
+                          <div className="subnav-link-title">POOLS</div>
+                          <div className="subnav-link-description">Become a liquidity provider and receive premiums by automatically selling covered options.</div>
+                        </div>
+                      </NavLink>
+                      <NavLink to={this.getUrlWithPairId("/docs")}>
+                        <div className="subnav-link">
+                          <div className="subnav-link-title">LEARN ABOUT OPTIONS</div>
+                          <div className="subnav-link-description">Learn the basics of crypto options, explore strategies for trading them.</div>
+                        </div>
+                      </NavLink>
+                      <div className="nav-separator"></div>
+                      <div className="subnav-link">
+                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://auctus.org">ABOUT</a>
+                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
+                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
+                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://discord.gg/9JqeMxs">DISCORD</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="nav-separator"></div>
+                <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/vaults")}>
+                  <div className="link-title">Vaults</div>
+                  <div className="link-subtitle">Automated Strategies</div>
+                </NavLink>
+              </ul>}
               {this.isAdvanced() && 
-              <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items">
+              <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items advanced">
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/trade")}>Trade</NavLink>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/mint")}>Mint</NavLink>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise</NavLink>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/pools")}>Pools</NavLink>
               </ul>}
-              <ul className="navbar-nav nav-modes ml-auto">
+              {!this.isAdvanced() && <ul className="navbar-nav nav-modes ml-auto">
                 <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>
                 <div className="app-mode" onClick={() => this.changeMode()}>{this.isAdvanced() ? "Basic" : "Advanced"}<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
                 {this.state.showAdvancedTootlip && window.innerWidth >= 992 && !this.isAdvanced() &&
@@ -119,6 +171,13 @@ class NavBar extends Component {
                   Go to advanced mode to trade options with limit orders.
                   <div className="action-btn" onClick={() => this.onDismissAdvancedTooltip()}>Dismiss</div>
                 </div>}
+              </ul>}
+              <ul className="navbar-nav ml-auto">
+                <div className="custom-control custom-switch layout-mode">
+                  <input type="checkbox" className="custom-control-input" 
+                      onChange={this.onLayoutModeChange} checked={this.state.darkMode} id="layoutMode"/>
+                  <label className="custom-control-label" htmlFor="layoutMode">{this.state.darkMode ? "Dark" : "Light"} mode</label>
+                </div>
               </ul>
               <ul className="navbar-nav">
                 {username &&

@@ -49,7 +49,7 @@
 }
 
 .home-logo .aco-logo {
-    height: 61px;
+    height: 45px;
     width: auto;
 }
 
@@ -137,7 +137,7 @@
     letter-spacing: 0.25px;
 }
 
-.home-btn.white, .home-btn.green:not(.disabled):hover, .home-btn.black:hover {
+.home-btn.white, .home-btn.blue:not(.disabled):hover, .home-btn.black:hover {
     color: #ffffff;
     border-color: #ffffff;
 }
@@ -147,21 +147,27 @@
     border-color: #1b1b1b;
 }
 
-.home-btn.green, .home-btn.white:hover {
-    color: #a8c708;
-    border-color: #a8c708;
+.home-btn.blue, .home-btn.white:hover {
+    color: #1782fc;
+    border-color: #1782fc;
 }
 
-.home-btn.solid-green {
-    color: #000000;
-    border-color: #a8c708;
-    background-color: #a8c708;
+.home-btn.solid-blue {
+    color: white;
+    border-color: #1782fc;
+    background-color: #1782fc;
 }
 
-.home-btn.solid-white, .home-btn.solid-green:not(.disabled):hover {
+.home-btn.solid-white {
     color: #404040;
     border-color: #ffffff;
     background-color: #ffffff;
+    box-shadow: 6.6px 12.4px 18px 0 rgba(28, 28, 28, 0.18);
+}
+
+.home-btn.solid-blue:not(.disabled):hover {
+    border-color: #0145a7;
+    background-color: #0145a7;
     box-shadow: 6.6px 12.4px 18px 0 rgba(28, 28, 28, 0.18);
 }
 
@@ -405,7 +411,7 @@
 .home-case > div > span {
     font-size: 14px;
     font-weight: 500;
-    color: #a8c708;
+    color: #1782fc;
     text-decoration: none;
     cursor: pointer;
 }
@@ -471,7 +477,7 @@
     width: 350px;
     max-width: 93%;
     font-weight: 500;
-    color: #a8c708;
+    color: #1782fc;
     text-decoration: none;
     cursor: pointer;
     text-align: left;
@@ -488,7 +494,7 @@
 }
 
 #start-trading {
-    background-color: #a8c708;
+    background-color: #1782fc;
     width: 100%;
 }
 
@@ -575,12 +581,16 @@
     padding-bottom: 45px;
 }
 
+.light-mode #available-options {
+    background-color: white;
+}
+
 #available-options .trade-options-list {
     width: 100%;
     height: unset !important;
 }
 
-#available-options .home-title{
+.dark-mode #available-options .home-title{
     color: #ffffff;
 }
 
@@ -621,6 +631,13 @@
     border: solid 1px #ffffff;
     background-color: #ffffff;
     color: #333333;
+}
+
+.light-mode .expiration-option:hover,
+.light-mode .expiration-option.active {
+    border: solid 1px #333333;
+    background-color: #333333;
+    color: white;
 }
 
 .expiration-option.active {
@@ -683,7 +700,7 @@
 #audit .arrow-link {
     font-size: 16px;
     font-weight: 500;
-    color: #a8c708;
+    color: #1782fc;
     text-decoration: none;
     cursor: pointer;
     display: block;

@@ -24,7 +24,10 @@
     font-style: normal;
     line-height: 1;
     letter-spacing: 0.4px;
-    color: #ffffff;
+}
+
+.dark-mode .pair-symbol {
+    color: white;
 }
 
 .pair-price {    
@@ -35,5 +38,4 @@
     line-height: 1;
     letter-spacing: 0.35px;
     text-align: left;
-    color: #cccccc;
 }

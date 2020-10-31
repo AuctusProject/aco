@@ -44,7 +44,7 @@ class OptionChart extends Component {
     return {
       datasets: [{
         fill: false,
-        borderColor: '#a8c708',
+        borderColor: '#1782fc',
         borderWidth: 2,
         lineTension: 0.01,
         showLine: true,
@@ -54,7 +54,7 @@ class OptionChart extends Component {
         hoverRadius: 4,
         hoverBorderWidth: 0,
         data: [],
-        backgroundColor: '#a8c708'
+        backgroundColor: '#1782fc'
       }]
     }
   }

@@ -20,6 +20,10 @@
     background-color: #363636;
 }
 
+.light-mode .option-type-card:hover {
+    background-color: #e6e6e6;
+}
+
 .option-type-card.call:hover {
     border: solid 0.5px #0ec812;    
 }
@@ -36,6 +40,10 @@
     letter-spacing: 0.3px;
     color: #a6a6a6;
     margin-bottom: 32px;
+}
+
+.light-mode .option-type-description {
+    color: #333333;
 }
 
 .learn-more {

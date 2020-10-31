@@ -17,13 +17,11 @@
     font-style: normal;
     letter-spacing: 0.6px;
     text-align: center;
-    color: #e6e6e6;
 }
 
 .simple-buy-tab .input-field input {
     font-size: 16px;
     width: 100%;
-    color: #e6e6e6;
     text-align: center;
 }
 
@@ -74,7 +72,6 @@
     width: 100%;
     height: 100%;
     background: transparent;
-    color: #e6e6e6;
     font-size: 16px;
     font-weight: 300;
     font-stretch: normal;
@@ -151,14 +148,12 @@
 
 .price-value > div:first-child {
     text-align: right;
-    color: #a6a6a6;
     width: 51px;
 }
 
 .price-value > div:last-child {
     font-weight: 500;
     text-align: left;
-    color: #e6e6e6;
     padding-left: 6px;
     letter-spacing: 0.2px;
     width: calc(100% - 51px);

@@ -12,7 +12,14 @@
     color: #e6e6e6;
 }
 
+.light-mode .confirm-card {
+    background-color: white;
+    color: #333333;    
+    border: 1px solid #a6a6a6;
+}
+
 .confirm-card-header {
+    border-radius: 4px 4px 0 0;
     height: 50px;
     background-color: #363636;
     display: flex;
@@ -24,6 +31,16 @@
     font-style: normal;
     letter-spacing: 0.6px;
     text-align: center;
+}
+
+.modal-body .confirm-card-header,
+.modal-body .confirm-card {
+    border-radius: 0;
+    border: 0;
+}
+
+.light-mode .confirm-card-header {
+    background-color: #e6e6e6;
 }
 
 .confirm-card-body {    

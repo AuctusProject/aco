@@ -193,8 +193,7 @@ class Home extends Component {
         <nav className="navbar navbar-expand-lg navbar-dark navbar-home">
           <div className="container">
             <div className="home-logo">
-              <img src="/logo.svg" className="aco-logo" alt="" />
-              <a target="_blank" rel="noopener noreferrer" href="https://auctus.org"><img src="/logo_by_auctus.svg" className="by-auctus-logo" alt="" /></a>
+              <img src="/logo_white.svg" className="aco-logo" alt="" />
             </div>
             <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon"></span>
@@ -223,10 +222,10 @@ class Home extends Component {
             <h1>TRADE ETHEREUM<br/>CALL &amp; PUT OPTIONS</h1>
             <h2>No sign up required. Start trading non-custodial options immediately.</h2>
             <div>
-              <div className="home-btn solid-green mr-0 mr-sm-4" onClick={() => this.onAction("trade")}>
+              <div className="home-btn solid-blue mr-0 mr-sm-4" onClick={() => this.onAction("trade")}>
                 <div><TradeIcon />BUY OPTIONS</div>
               </div>
-              <div className="home-btn green mt-3 mt-sm-0" onClick={() => this.onAction("earn")}>
+              <div className="home-btn blue mt-3 mt-sm-0" onClick={() => this.onAction("earn")}>
                 <div>EARN INCOME</div>
                 <span>(Write options)</span>
               </div>

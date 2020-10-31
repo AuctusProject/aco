@@ -26,6 +26,11 @@
   color: white;
 }
 
+.light-mode .steps-indicator .step-item.current,
+.light-mode .steps-indicator .step-item.done {
+  color: #333333;
+}
+
 .steps-indicator .step-item.done {
   cursor: pointer;
 }
@@ -43,11 +48,20 @@
   background-color: white;
 }
 
+.light-mode .step-item.done .circle {
+  border-color: #333333;
+  background-color: #333333;
+}
+
 .steps-indicator .step-item.current .circle {
   width: 15px;
   height: 15px;
   margin: 0;
   border-color: white;
+}
+
+.light-mode .steps-indicator .step-item.current .circle {
+  border-color: #333333;
 }
 
 .steps-indicator .step-item.current .circle::before {
@@ -58,6 +72,10 @@
   border-radius: 50%;
   display: block;
   margin: 1px;
+}
+
+.light-mode .steps-indicator .step-item.current .circle::before {
+  background: #333333;
 }
 
 .steps-indicator .step-item::after,
@@ -82,6 +100,12 @@
 .steps-indicator .step-item.done::before,
 .steps-indicator .step-item.current::before {
   background: white;
+}
+
+.light-mode .steps-indicator .step-item.done::after,
+.light-mode .steps-indicator .step-item.done::before,
+.light-mode .steps-indicator .step-item.current::before {
+  background: #333333;
 }
 
 .steps-indicator .step-item:first-child::before,

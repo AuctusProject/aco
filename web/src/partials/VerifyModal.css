@@ -1,5 +1,4 @@
 .gas-disclaimer {
-    color: white;
     font-size: 14px;
     display: flex;
     flex-direction: row;
@@ -8,6 +7,10 @@
     border: 1px solid white;
     border-radius: 5px;
     padding: 8px;
+}
+
+.light-mode .gas-disclaimer {
+    border: 1px solid #333333;
 }
 
 .gas-disclaimer div {
