@@ -136,7 +136,7 @@ abstract contract ACOVaultUSDCStrategyCurveBase is Ownable, IACOVaultUSDCStrateg
     }
 
     function _exchangeCurveCoinToUSDC(int128 coinIndex) internal {
-        address coinAddress = curve.coins(coinIndex);
+        address coinAddress = curve.coins(uint256(coinIndex));
         uint256 _balance = IERC20(coinAddress).balanceOf(address(this));
         if (_balance > 0) {
             ACOAssetHelper._setAssetInfinityApprove(coinAddress, address(this), address(curve), _balance);

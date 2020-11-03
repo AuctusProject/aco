@@ -14,7 +14,7 @@ contract ACOVaultUSDCStrategyYCRV is ACOVaultUSDCStrategyCurveBase {
 
     constructor(VaultUSDCStrategyCurveBaseInitData memory initData) ACOVaultUSDCStrategyCurveBase(initData) public {
         ICurveFi4 _curve = ICurveFi4(initData.curve);
-        yusdc = IERC20(_curve.coins(USDC_COIN_INDEX));
+        yusdc = IERC20(_curve.coins(uint256(USDC_COIN_INDEX)));
         token = _curve.underlying_coins(USDC_COIN_INDEX);
         IERC20(token).approve(initData.controller, MAX_UINT);
     }

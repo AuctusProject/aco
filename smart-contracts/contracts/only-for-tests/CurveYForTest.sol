@@ -42,8 +42,8 @@ contract CurveYForTest is ICurveFi4 {
         token = ERC20ForTest(_pool_token);
     }
     
-    function coins(int128 arg0) external view override returns (address) {
-        return i_coins[uint256(arg0)];
+    function coins(uint256 arg0) external view override returns (address) {
+        return i_coins[arg0];
     }
 
     function underlying_coins(int128 arg0) external view override returns (address) {

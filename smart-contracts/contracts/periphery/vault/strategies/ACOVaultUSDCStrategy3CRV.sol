@@ -12,7 +12,7 @@ import './ACOVaultUSDCStrategyCurveBase.sol';
 contract ACOVaultUSDCStrategy3CRV is ACOVaultUSDCStrategyCurveBase {
     constructor(VaultUSDCStrategyCurveBaseInitData memory initData) ACOVaultUSDCStrategyCurveBase(initData) public {
         ICurveFi3 _curve = ICurveFi3(initData.curve);
-        token = _curve.coins(USDC_COIN_INDEX);
+        token = _curve.coins(uint256(USDC_COIN_INDEX));
         IERC20(token).approve(initData.controller, MAX_UINT);
     }
 
