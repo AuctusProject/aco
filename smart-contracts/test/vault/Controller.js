@@ -424,7 +424,7 @@ describe("Controller", function() {
       expect(await token2.balanceOf(vault.address)).to.equal(deposit);
       expect(await _gauge.balanceOf(vaultStrategy.address)).to.equal(0);
 
-      await vault.connect(addr2).earn();
+      await vault.earn();
 
       expect(await token2.balanceOf(vault.address)).to.equal(remain);
       expect(await token2.balanceOf(vaultStrategy.address)).to.equal(0);
@@ -496,7 +496,7 @@ describe("Controller", function() {
       let deposit = ethers.utils.bigNumberify("1000000000000");
       let remain = ethers.utils.bigNumberify("50000000000");
       await vault.connect(owner).deposit(deposit); 
-      await vault.connect(addr2).earn();
+      await vault.earn();
 
       let vaultStrategy2 = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
         _curve.address,

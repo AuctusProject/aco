@@ -35,6 +35,7 @@ contract ACOVault is Ownable, IACOVault {
     event SetMinTimeToExercise(uint256 indexed oldMinTimeToExercise, uint256 indexed newMinTimeToExercise);
     event SetExerciseSlippage(uint256 indexed oldExerciseSlippage, uint256 indexed newExerciseSlippage);
     event SetWithdrawFee(uint256 indexed oldWithdrawFee, uint256 indexed newWithdrawFee);
+    event SetOperator(address indexed operator, bool indexed previousPermission, bool indexed newPermission);
     event RewardAco(address indexed acoToken, uint256 acoTokenAmountIn);
     event ExerciseAco(address indexed acoToken, uint256 acoTokensOut, uint256 tokenIn);
     event Deposit(address indexed account, uint256 shares, uint256 amount);
@@ -62,6 +63,8 @@ contract ACOVault is Ownable, IACOVault {
     uint256 public override exerciseSlippage;
     uint256 public override withdrawFee;
     uint256 public override totalSupply;
+    
+    mapping(address => bool) public operators;
     
     mapping(address => uint256) internal balances;
     mapping(address => AcoData) internal acoData;
@@ -94,6 +97,7 @@ contract ACOVault is Ownable, IACOVault {
             initData.currentAcoToken, 
             initData.acoPool
         );
+        _setOperator(msg.sender, true);
     }
 
     receive() external payable {
@@ -214,11 +218,17 @@ contract ACOVault is Ownable, IACOVault {
         _setWithdrawFee(newWithdrawFee);
     }
     
-    function setAcoToken(address newAcoToken, address newAcoPool) onlyOwner external override {
+    function setOperator(address operator, bool permission) onlyOwner external override {
+        _setOperator(operator, permission);
+    }
+    
+    function setAcoToken(address newAcoToken, address newAcoPool) external override {
+        require(operators[msg.sender], "ACOVault:: Invalid sender");
         _setAcoToken(assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
     }
     
-    function setAcoPool(address newAcoPool) onlyOwner external override {
+    function setAcoPool(address newAcoPool) external override {
+        require(operators[msg.sender], "ACOVault:: Invalid sender");
         (address underlying, 
          address strikeAsset, 
          bool isCall, 
@@ -237,6 +247,7 @@ contract ACOVault is Ownable, IACOVault {
     }
     
     function earn() external override {
+        require(operators[msg.sender], "ACOVault:: Invalid sender");
         controller.earn(available());
     }
 
@@ -890,6 +901,11 @@ contract ACOVault is Ownable, IACOVault {
         require(newWithdrawFee <= 1000, "ACOVault:: Invalid withdraw fee");
         emit SetWithdrawFee(withdrawFee, newWithdrawFee);
         withdrawFee = newWithdrawFee;
+    }
+    
+    function _setOperator(address operator, bool newPermission) internal {
+        emit SetOperator(operator, operators[operator], newPermission);
+        operators[operator] = newPermission;
     }
     
     function _mint(address account, uint256 amount) internal {

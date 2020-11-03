@@ -89,6 +89,7 @@ interface IACOVault is IControlled {
     function setMinTimeToExercise(uint256 newMinTimeToExercise) external;
     function setExerciseSlippage(uint256 newMinTimeToExercise) external;
     function setWithdrawFee(uint256 newWithdrawFee) external;
+    function setOperator(address operator, bool permission) external;
     function setAcoToken(address newAcoToken, address newAcoPool) external;
     function setAcoPool(address newAcoPool) external;
     function balance() external view returns(uint256);

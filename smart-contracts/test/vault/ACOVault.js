@@ -587,7 +587,7 @@ describe("ACOVault", function() {
 
       await expect(
         vault.connect(addr3).setAcoPool(ACOPoolEthToken2Call.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWith("ACOVault:: Invalid sender");
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call2.address);
 
       await expect(
@@ -595,7 +595,8 @@ describe("ACOVault", function() {
       ).to.be.revertedWith("ACOVault:: Invalid ACO pool");
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call2.address);
 
-      await vault.setAcoPool(ACOPoolEthToken2Call.address);
+      await vault.setOperator(await addr3.getAddress(), true);
+      await vault.connect(addr3).setAcoPool(ACOPoolEthToken2Call.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Call.address);
     });
     it("Set ACO token", async function () {
@@ -608,7 +609,7 @@ describe("ACOVault", function() {
 
       await expect(
         vault.connect(addr3).setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWith("ACOVault:: Invalid sender");
       expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
 
@@ -657,9 +658,25 @@ describe("ACOVault", function() {
       expect(await vault.currentAcoToken()).to.equal(ACOEthToken2Put.address);
       expect(await vault.acoPool()).to.equal(ACOPoolEthToken2Put.address);
 
-      await vault.setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address);
+      await vault.setOperator(await addr3.getAddress(), true);
+      await vault.connect(addr3).setAcoToken(ACOToken1Token2Call.address, ACOPoolToken1Token2Call.address);
       expect(await vault.currentAcoToken()).to.equal(ACOToken1Token2Call.address);
       expect(await vault.acoPool()).to.equal(ACOPoolToken1Token2Call.address);
+    });
+    it("Set Operator", async function () {
+      expect(await vault.operators(await owner.getAddress())).to.equal(true);
+
+      await expect(
+        vault.connect(addr1).setOperator(await owner.getAddress(), false)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+      expect(await vault.operators(await owner.getAddress())).to.equal(true);
+
+      expect(await vault.operators(await addr2.getAddress())).to.equal(false);
+      await vault.setOperator(await addr2.getAddress(), true);
+      expect(await vault.operators(await addr2.getAddress())).to.equal(true);
+
+      await vault.setOperator(await addr2.getAddress(), false);
+      expect(await vault.operators(await addr2.getAddress())).to.equal(false);
     });
   });
 
@@ -704,6 +721,11 @@ describe("ACOVault", function() {
       await token2.connect(addr2).approve(vault.address, token2TotalSupply);
       await token2.connect(addr3).approve(vault.address, token2TotalSupply);
 
+      await expect(
+        vault.connect(addr3).earn()
+      ).to.be.revertedWith("ACOVault:: Invalid sender");
+
+      await vault.setOperator(await addr3.getAddress(), true);
       await vault.connect(addr3).earn();
 
       expect(await token2.balanceOf(vault.address)).to.equal(0);
@@ -723,7 +745,7 @@ describe("ACOVault", function() {
       expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
       expect(bal).to.be.above(0);
       
-      await vault.connect(addr2).earn();
+      await vault.earn();
 
       remain = remain.mul(minToKeep).div(100000);
       expect(await token2.balanceOf(vault.address)).to.equal(remain);
