@@ -1,7 +1,6 @@
 import './App.css'
 import React, { Component } from 'react'
 import { Switch, Route, Redirect } from 'react-router-dom'
-import Home from './pages/Home'
 import NavBar from './partials/NavBar'
 import Footer from './partials/Footer'
 import { withRouter } from 'react-router-dom'
@@ -227,20 +226,7 @@ class App extends Component {
                     accountToggle={this.state.accountToggle}
                   /> }
                 />
-                <Route 
-                  path={`/:pair?`}
-                  exact={true}
-                  render={ routeProps => <Home
-                    {...routeProps}
-                    darkMode={darkMode}
-                    onPairSelected={this.onPairSelected} 
-                    selectedPair={this.state.selectedPair}
-                    orderBooks={this.state.orderBooks}
-                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
-                    signIn={this.showSignInModal}
-                  /> }
-                />
-                <Redirect to="/"></Redirect>
+                <Redirect to="/buy"></Redirect>
               </Switch>
               {showFooter && <Footer />}
             </div>
