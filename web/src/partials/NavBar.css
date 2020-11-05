@@ -47,7 +47,7 @@
 
 .logo-link {
   cursor: pointer;
-  margin-right: 200px;
+  margin-right: 80px;
 }
 
 @media (max-width: 1200px) {
@@ -262,6 +262,8 @@ li.dropdown {
 
 .options-nav-item {
   margin-bottom: 10px;
+  display: flex;
+  align-items: center;
 }
 
 .nav-separator {

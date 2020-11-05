@@ -111,8 +111,7 @@ class NavBar extends Component {
     var element = document.body.getElementsByClassName("subnav-content")[0]
     if (element) {
       element.style.display = value
-    }
-    
+    }    
   }
 
   submenuClick = () => {
@@ -144,7 +143,7 @@ class NavBar extends Component {
               <ul className="navbar-nav">
                 <PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown>
               </ul>}
-              {!this.isAdvanced() && <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items simple-nav">
+              {!this.isAdvanced() && <ul className="navbar-nav mt-2 mt-lg-0 navbar-items simple-nav">
                 <div className="nav-item link-nav">
                   <div onClick={this.toggleOptionsSubmenu} className={"options-nav-item " + (this.state.showOptionsSubmenu ? "options-expanded" : "")}>Options&nbsp;<FontAwesomeIcon className="nav-chevron" icon={faChevronDown}/></div>
                   <div className="subnav-content">
@@ -161,12 +160,12 @@ class NavBar extends Component {
                           <div className="subnav-link-description">Become a liquidity provider and receive premiums by automatically selling covered options.</div>
                         </div>
                       </NavLink>
-                      <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/docs")}>
+                      <a onClick={this.submenuClick} target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">
                         <div className="subnav-link">
                           <div className="subnav-link-title">LEARN ABOUT OPTIONS</div>
                           <div className="subnav-link-description">Learn the basics of crypto options, explore strategies for trading them.</div>
                         </div>
-                      </NavLink>
+                      </a>
                       <div className="nav-separator"></div>
                       <div className="subnav-link">
                         <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://auctus.org">ABOUT</a>
