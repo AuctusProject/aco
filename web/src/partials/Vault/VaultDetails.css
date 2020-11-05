@@ -1,4 +1,4 @@
-.accordion .card {    
+.accordion .card {
     margin: 20px 0;
     border-radius: 0.25rem !important;
     border: solid 1px #464646;
@@ -9,6 +9,14 @@
     display: flex;
     flex-direction: row;    
     align-items: center;
+}
+
+.dark-mode .card .card-header {
+    background-color: #353535;
+}
+
+.dark-mode .accordion .card {
+    background-color: #252525;
 }
 
 .vault-name {
@@ -82,6 +90,10 @@
     transform: rotate(0deg);
 }
 
+.card-header.disabled {
+    cursor: default;
+}
+
 .vault-card .input-row {
     justify-content: space-around;
 }
@@ -131,4 +143,21 @@
     letter-spacing: 0.6px;
     text-align: center;
     color: #1782fc;
+}
+
+.light-mode .vault-position .aco-table thead th.value-highlight {
+    background-color: #aaaaaa;
+}
+
+.light-mode .vault-position .aco-table td.value-highlight {
+    background-color: #f2f2f2;
+}
+
+.light-mode .vault-position th:first-child,
+.light-mode .vault-position td:first-child {
+    text-align: left;
+}
+
+.card-body .home-btn {
+    margin: auto;
 }

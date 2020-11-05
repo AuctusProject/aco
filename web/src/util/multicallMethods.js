@@ -10,7 +10,7 @@ function getMulticallContract() {
     return null;
 }
 
-export const aggregate = async (calls) => {
-	const contract = getMulticallContract()
-    return await contract.methods.aggregate(calls).call()
+export const aggregate = (calls) => {
+    const contract = getMulticallContract()
+    return contract.methods.aggregate(calls).call()
 }

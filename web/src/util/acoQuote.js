@@ -16,6 +16,7 @@ export function getBestQuote(option, amount, isBuy) {
                 resolve(zrxQuote)
             }
         })
+        .catch(err => reject(err))
     })
 }
 

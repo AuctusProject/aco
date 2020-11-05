@@ -73,3 +73,35 @@
     font-weight: bold;
     color: #1782fc;
 }
+
+.pair-and-mode-wrapper {
+    display: flex;
+    max-width: 880px;
+    margin: auto;    
+    position: relative;
+}
+
+@media(min-width: 881px) {
+    .pair-and-mode-wrapper .pair-dropdown-wrapper {
+        margin: auto;
+    }
+
+    .pair-and-mode-wrapper .nav-modes {
+        position: absolute;
+        right: 0;
+    }
+}
+
+@media(max-width: 880px) {
+    .pair-and-mode-wrapper .pair-dropdown-wrapper {
+        margin-right: auto;
+    }
+
+    .pair-and-mode-wrapper .pair-dropdown-wrapper .nav-link {
+        padding: 0;
+    }    
+    
+    .pair-and-mode-wrapper .nav-modes {
+        margin-left: auto;
+    }   
+}

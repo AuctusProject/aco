@@ -100,53 +100,59 @@ const poolInfo = {
     },
 }
 
-export async function getCRVAPY() {
-    let web3 = getWeb3()
-    let gaugeController_address = '0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB'
-    let gauge_relative_weight = '0x6207d866000000000000000000000000'
+export function getCRVAPY() {
+    return new Promise(function (resolve, reject) {
+        let web3 = getWeb3()
+        let gaugeController_address = '0x2F50D538606Fa9EDD2B11E2446BEb18C9D5846bB'
+        let gauge_relative_weight = '0x6207d866000000000000000000000000'
 
-    let prices = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,curve-dao-token&vs_currencies=usd')
-    prices = await prices.json()
-    let btcPrice = prices.bitcoin.usd
-    let CRVprice = prices['curve-dao-token'].usd
+        fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,curve-dao-token&vs_currencies=usd').then(prices => {
+            prices.json().then(prices => {
+                let btcPrice = prices.bitcoin.usd
+                let CRVprice = prices['curve-dao-token'].usd
 
-    let poolInfoArr = Object.values(poolInfo)
-    
-    let weightCalls = poolInfoArr.map(poolInfoItem => [gaugeController_address, gauge_relative_weight + poolInfoItem.gauge.slice(2)])
+                let poolInfoArr = Object.values(poolInfo)
+                
+                let weightCalls = poolInfoArr.map(poolInfoItem => [gaugeController_address, gauge_relative_weight + poolInfoItem.gauge.slice(2)])
 
-    let aggCallsWeights = await aggregate(weightCalls)
-    let decodedWeights = aggCallsWeights[1].map((hex, i) => [weightCalls[i][0], web3.eth.abi.decodeParameter('uint256', hex) / 1e18])
+                aggregate(weightCalls).then(aggCallsWeights => {
+                    let decodedWeights = aggCallsWeights[1].map((hex, i) => [weightCalls[i][0], web3.eth.abi.decodeParameter('uint256', hex) / 1e18])
 
-    let ratesCalls = poolInfoArr.map(poolInfoItem => [
-        [poolInfoItem.gauge, "0x180692d0"],
-        [poolInfoItem.gauge, "0x17e28089"],
-        [poolInfoItem.gauge, "0x18160ddd"],
-    ])
-
-    let aggRates = await aggregate(ratesCalls.flat())
-    let decodedRate = aggRates[1].map(hex => web3.eth.abi.decodeParameter('uint256', hex))
-    let gaugeRates = decodedRate.filter((_, i) => i % 3 === 0).map(v => v / 1e18)
-    let workingSupplies = decodedRate.filter((_, i) => i % 3 === 1).map(v => v / 1e18)
-
-    let virtualPriceCalls = poolInfoArr.map(v => [v.swap, "0xbb7b8b80"])
-    let aggVirtualPrices = await aggregate(virtualPriceCalls)
-    let decodedVirtualPrices = aggVirtualPrices[1].map((hex, i) => [virtualPriceCalls[i][0], web3.eth.abi.decodeParameter('uint256', hex) / 1e18])
-    let CRVAPYs = {}
-    let dummy = decodedWeights.map((w, i) => {
-        let pool = poolInfoArr.find(v => v.gauge.toLowerCase() === '0x' + weightCalls[i][1].slice(34).toLowerCase()).name
-        let swap_address = this.poolInfo[pool].swap
-        let virtual_price = decodedVirtualPrices.find(v => v[0].toLowerCase() === swap_address.toLowerCase())[1]
-        let _working_supply = workingSupplies[i]
-        if(['ren', 'sbtc', 'hbtc', 'tbtc'].includes(pool)) {
-            _working_supply *= btcPrice
-        }
-        let rate = (gaugeRates[i] * w[1] * 31536000 / _working_supply * 0.4) / virtual_price
-        let apy = rate * CRVprice * 100
-        if(isNaN(apy))
-            apy = 0
-        poolInfoArr.find(v => v.name === pool).gauge_relative_weight = w[1]
-        CRVAPYs[pool.name] = apy
-        console.log(CRVAPYs)
+                    let ratesCalls = poolInfoArr.map(poolInfoItem => [
+                        [poolInfoItem.gauge, "0x180692d0"],
+                        [poolInfoItem.gauge, "0x17e28089"],
+                        [poolInfoItem.gauge, "0x18160ddd"],
+                    ])        
+                    aggregate(ratesCalls.flat()).then(aggRates => {
+                        let decodedRate = aggRates[1].map(hex => web3.eth.abi.decodeParameter('uint256', hex))
+                        let gaugeRates = decodedRate.filter((_, i) => i % 3 === 0).map(v => v / 1e18)
+                        let workingSupplies = decodedRate.filter((_, i) => i % 3 === 1).map(v => v / 1e18)
+                    
+                        let virtualPriceCalls = poolInfoArr.map(v => [v.swap, "0xbb7b8b80"])
+                        aggregate(virtualPriceCalls).then(aggVirtualPrices => {
+                            let decodedVirtualPrices = aggVirtualPrices[1].map((hex, i) => [virtualPriceCalls[i][0], web3.eth.abi.decodeParameter('uint256', hex) / 1e18])
+                            let CRVAPYs = {}
+                            decodedWeights.map((w, i) => {
+                                let pool = poolInfoArr.find(v => v.gauge.toLowerCase() === '0x' + weightCalls[i][1].slice(34).toLowerCase()).name
+                                let swap_address = poolInfo[pool].swap
+                                let virtual_price = decodedVirtualPrices.find(v => v[0].toLowerCase() === swap_address.toLowerCase())[1]
+                                let _working_supply = workingSupplies[i]
+                                if(['ren', 'sbtc', 'hbtc', 'tbtc'].includes(pool)) {
+                                    _working_supply *= btcPrice
+                                }
+                                let rate = (gaugeRates[i] * w[1] * 31536000 / _working_supply * 0.4) / virtual_price
+                                let apy = rate * CRVprice * 100
+                                if(isNaN(apy))
+                                    apy = 0
+                                poolInfoArr.find(v => v.name === pool).gauge_relative_weight = w[1]
+                                CRVAPYs[pool] = apy
+                                return apy
+                            })
+                            resolve(CRVAPYs);
+                        })
+                    })
+                })
+            })
+        })    
     })
-    return CRVAPYs;
 }

@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 import { etherscanUrl, ellipsisCenterOfUsername, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listPairs } from '../util/acoFactoryMethods'
@@ -16,6 +16,7 @@ class NavBar extends Component {
       pairs: null,
       showAdvancedTootlip: false,
       darkMode: isDarkMode(),
+      showOptionsSubmenu: false
     }
   }
 
@@ -76,6 +77,10 @@ class NavBar extends Component {
       url = "/pools"
     } else if (window.location.pathname.indexOf("pools") > 0) {
       url = "/advanced/pools"
+    } else if (window.location.pathname.indexOf("advanced/vaults") > 0) {
+      url = "/vaults"
+    } else if (window.location.pathname.indexOf("vaults") > 0) {
+      url = "/advanced/vaults"
     }
 
     url = this.getUrlWithPairId(url)
@@ -95,6 +100,28 @@ class NavBar extends Component {
     }
     return baseUrl
   }
+
+  hideSubmenu = () => {
+    var self = this
+    self.setSubmenuDisplayStyle("none")
+    setTimeout(() => self.setSubmenuDisplayStyle(null), 1)
+  }
+
+  setSubmenuDisplayStyle = (value) => {
+    var element = document.body.getElementsByClassName("subnav-content")[0]
+    if (element) {
+      element.style.display = value
+    }
+    
+  }
+
+  submenuClick = () => {
+    this.hideSubmenu()
+  }
+
+  toggleOptionsSubmenu = () => {
+    this.setState({showOptionsSubmenu: !this.state.showOptionsSubmenu})
+  }
  
   render() {
     var username = this.context && this.context.web3 && this.context.web3.selectedAccount
@@ -102,7 +129,7 @@ class NavBar extends Component {
     username = ellipsisCenterOfUsername(username)
     return (
       <div>
-        <nav className="navbar navbar-expand-lg navbar-dark navbar-aco">
+        <nav className={"navbar navbar-expand-lg navbar-aco " + (this.state.darkMode ? "navbar-dark" : "navbar-light")}>
           <div className="container-fluid">
             <div className="nav-logo logo-link">
               <Link to={`/`}>
@@ -119,22 +146,22 @@ class NavBar extends Component {
               </ul>}
               {!this.isAdvanced() && <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items simple-nav">
                 <div className="nav-item link-nav">
-                  <div className="options-nav-item">Options</div>
+                  <div onClick={this.toggleOptionsSubmenu} className={"options-nav-item " + (this.state.showOptionsSubmenu ? "options-expanded" : "")}>Options&nbsp;<FontAwesomeIcon className="nav-chevron" icon={faChevronDown}/></div>
                   <div className="subnav-content">
                     <div className="container">
-                      <NavLink to={this.getUrlWithPairId("/buy")}>
+                      <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/buy")}>
                         <div className="subnav-link">
                           <div className="subnav-link-title">TRADE OPTIONS</div>
                           <div className="subnav-link-description">Start trading non-custodial otions immediately.</div>
                         </div>
                       </NavLink>
-                      <NavLink to={this.getUrlWithPairId("/pools")}>
+                      <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/pools")}>
                         <div className="subnav-link">
                           <div className="subnav-link-title">POOLS</div>
                           <div className="subnav-link-description">Become a liquidity provider and receive premiums by automatically selling covered options.</div>
                         </div>
                       </NavLink>
-                      <NavLink to={this.getUrlWithPairId("/docs")}>
+                      <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/docs")}>
                         <div className="subnav-link">
                           <div className="subnav-link-title">LEARN ABOUT OPTIONS</div>
                           <div className="subnav-link-description">Learn the basics of crypto options, explore strategies for trading them.</div>
@@ -149,6 +176,20 @@ class NavBar extends Component {
                       </div>
                     </div>
                   </div>
+                  {this.state.showOptionsSubmenu && <div className="subnav-content-mobile">
+                    <div className="container">
+                      <NavLink to={this.getUrlWithPairId("/buy")}>
+                        <div className="subnav-link">
+                          <div className="subnav-link-title">TRADE OPTIONS</div>
+                        </div>
+                      </NavLink>
+                      <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/pools")}>
+                        <div className="subnav-link">
+                          <div className="subnav-link-title">POOLS</div>
+                        </div>
+                      </NavLink>
+                    </div>
+                  </div>}
                 </div>
                 <div className="nav-separator"></div>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/vaults")}>
@@ -162,15 +203,6 @@ class NavBar extends Component {
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/mint")}>Mint</NavLink>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise</NavLink>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/pools")}>Pools</NavLink>
-              </ul>}
-              {!this.isAdvanced() && <ul className="navbar-nav nav-modes ml-auto">
-                <div className="app-mode active">{this.isAdvanced() ? "Advanced" : "Basic"}</div>
-                <div className="app-mode" onClick={() => this.changeMode()}>{this.isAdvanced() ? "Basic" : "Advanced"}<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
-                {this.state.showAdvancedTootlip && window.innerWidth >= 992 && !this.isAdvanced() &&
-                <div className="advanced-tooltip">
-                  Go to advanced mode to trade options with limit orders.
-                  <div className="action-btn" onClick={() => this.onDismissAdvancedTooltip()}>Dismiss</div>
-                </div>}
               </ul>}
               <ul className="navbar-nav ml-auto">
                 <div className="custom-control custom-switch layout-mode">

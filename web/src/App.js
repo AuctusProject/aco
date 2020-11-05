@@ -219,7 +219,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/vaults`}
+                  path={[`/vaults`, `/advanced/vaults`]}
                   render={ routeProps => <Vaults
                     {...routeProps}
                     darkMode={darkMode}

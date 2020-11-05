@@ -4,11 +4,16 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { acoVaults } from '../util/constants'
 import VaultDetails from '../partials/Vault/VaultDetails'
+import { getCRVAPY } from '../util/getCRVAPY'
 
 class Vaults extends Component {
   constructor() {
     super()
-    this.state = { allVaults:[], loading: true }
+    this.state = { allVaults:[], loading: true, CRVAPYs: null }
+  }
+
+  componentDidMount = () => {
+    getCRVAPY().then(CRVAPYs => this.setState({CRVAPYs: CRVAPYs}))
   }
 
   render() {
@@ -22,9 +27,9 @@ class Vaults extends Component {
           <div className="vault-asset-description">Get ETH exposure through purchase of ETH call options with stablecoin Yield</div>
         </div>
       </div>
-      <div class="accordion" id="vaultsAccordion">
+      <div className="accordion" id="vaultsAccordion">
         {Object.keys(acoVaults).map(vaultAddress => 
-          <VaultDetails {...this.props} vaultAddress={vaultAddress}></VaultDetails>
+          <VaultDetails key={vaultAddress} {...this.props} CRVAPYs={this.state.CRVAPYs} vaultAddress={vaultAddress}></VaultDetails>
         )}
       </div>
     </div>
