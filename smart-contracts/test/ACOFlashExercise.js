@@ -11,12 +11,17 @@ describe("ACOFlashExercise", function() {
   let token1Name = "TOKEN1";
   let token1Symbol = "TOK1";
   let token1Decimals = 8;
-  let token1TotalSupply = ethers.utils.bigNumberify("10000000000000");
+  let token1TotalSupply = ethers.utils.bigNumberify("1000000000000000");
   let token2;
   let token2Name = "TOKEN2";
   let token2Symbol = "TOK2";
   let token2Decimals = 18;
   let token2TotalSupply = ethers.utils.bigNumberify("100000000000000000000000000");
+  let token3;
+  let token3Name = "TOKEN3";
+  let token3Symbol = "TOK3";
+  let token3Decimals = 6;
+  let token3TotalSupply = ethers.utils.bigNumberify("10000000000000000");
   let buidlerFactory;
   let buidlerEthT1003C;
   let buidlerEthT1003P;
@@ -24,6 +29,14 @@ describe("ACOFlashExercise", function() {
   let buidlerT1T210000P;
   let buidlerT1T210000C;
   let price2;
+  let buidlerT1T39900P;
+  let buidlerT1T38100C;
+  let buidlerEthT3330P;
+  let buidlerEthT3270C;
+  let pricer1;
+  let pricer2;
+  let pricer3;
+  let pricer4;
   let time;
   let flashExercise;
   let uniswapFactory;
@@ -31,9 +44,11 @@ describe("ACOFlashExercise", function() {
   let uniswapRouter;
   let pairToken1Token2;
   let pairToken1weth;
+  let pairToken2Token3;
   let maxExercisedAccounts = 120;
   let token1Liq = ethers.utils.bigNumberify("1000000000");
   let token2Liq = ethers.utils.bigNumberify("90000000000000000000000");
+  let token3Liq = ethers.utils.bigNumberify("90000000000");
   let wethLiq = ethers.utils.bigNumberify("300000000000000000000");
 
   beforeEach(async function () {
@@ -63,6 +78,9 @@ describe("ACOFlashExercise", function() {
     token2 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token2Name, token2Symbol, token2Decimals, token2TotalSupply);
     await token2.deployed();
 
+    token3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token3Name, token3Symbol, token3Decimals, token3TotalSupply);
+    await token3.deployed();
+
     buidlerFactory = await ethers.getContractAt("ACOFactoryV2", buidlerProxy.address);
 
     time = Math.round(new Date().getTime() / 1000) + 86400;
@@ -80,6 +98,22 @@ describe("ACOFlashExercise", function() {
     tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
     buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
+    pricer1 = ethers.utils.bigNumberify("8100000000");
+    tx = await (await buidlerFactory.createAcoToken(token1.address, token3.address, true, pricer1, time, maxExercisedAccounts)).wait();
+    buidlerT1T38100C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
+
+    pricer2 = ethers.utils.bigNumberify("9900000000");
+    tx = await (await buidlerFactory.createAcoToken(token1.address, token3.address, false, pricer2, time, maxExercisedAccounts)).wait();
+    buidlerT1T39900P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
+
+    pricer3 = ethers.utils.bigNumberify("270000000");
+    tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token3.address, true, pricer3, time, maxExercisedAccounts)).wait();
+    buidlerEthT3270C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
+
+    pricer4 = ethers.utils.bigNumberify("330000000");
+    tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token3.address, false, pricer4, time, maxExercisedAccounts)).wait();
+    buidlerEthT3330P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);
+
     uniswapFactory = await (await ethers.getContractFactory("UniswapV2Factory")).deploy(await owner.getAddress());
     await uniswapFactory.deployed();
 
@@ -94,9 +128,11 @@ describe("ACOFlashExercise", function() {
 
     await uniswapFactory.createPair(token1.address, token2.address);
     await uniswapFactory.createPair(token1.address, weth.address);
+    await uniswapFactory.createPair(token2.address, token3.address);
 
     pairToken1Token2 = await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(token1.address, token2.address));
-    pairToken1weth =  await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(token1.address, weth.address));
+    pairToken1weth = await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(token1.address, weth.address));
+    pairToken2Token3 = await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(token2.address, token3.address));
 
     await token1.connect(owner).approve(pairToken1Token2.address, token1TotalSupply);
     await token1.connect(addr1).approve(pairToken1Token2.address, token1TotalSupply);
@@ -110,11 +146,23 @@ describe("ACOFlashExercise", function() {
     await token2.connect(addr1).approve(pairToken1Token2.address, token2TotalSupply);
     await token2.connect(addr2).approve(pairToken1Token2.address, token2TotalSupply);
     await token2.connect(addr3).approve(pairToken1Token2.address, token2TotalSupply);
+    await token2.connect(owner).approve(pairToken2Token3.address, token2TotalSupply);
+    await token2.connect(addr1).approve(pairToken2Token3.address, token2TotalSupply);
+    await token2.connect(addr2).approve(pairToken2Token3.address, token2TotalSupply);
+    await token2.connect(addr3).approve(pairToken2Token3.address, token2TotalSupply);
+    await token3.connect(owner).approve(pairToken2Token3.address, token3TotalSupply);
+    await token3.connect(addr1).approve(pairToken2Token3.address, token3TotalSupply);
+    await token3.connect(addr2).approve(pairToken2Token3.address, token3TotalSupply);
+    await token3.connect(addr3).approve(pairToken2Token3.address, token3TotalSupply);
 
     await token1.connect(owner).transfer(pairToken1Token2.address, token1Liq);
     await token2.connect(owner).transfer(pairToken1Token2.address, token2Liq);
     await pairToken1Token2.connect(owner).mint(await owner.getAddress());
   
+    await token3.connect(owner).transfer(pairToken2Token3.address, token3Liq);
+    await token2.connect(owner).transfer(pairToken2Token3.address, token2Liq);
+    await pairToken2Token3.connect(owner).mint(await owner.getAddress());
+
     await token1.connect(owner).transfer(pairToken1weth.address, token1Liq);
     await weth.connect(owner).deposit({value: wethLiq});
     await weth.connect(owner).transfer(pairToken1weth.address, wethLiq);
@@ -122,6 +170,64 @@ describe("ACOFlashExercise", function() {
   });
 
   describe("Flash exercise transactions", function () {
+    it("Set middle route", async function () {
+      expect((await flashExercise.getMiddleRoute(token1.address, token3.address))[0]).to.equal(false);
+      expect((await flashExercise.getMiddleRoute(token1.address, token3.address))[1].length).to.equal(0);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[0]).to.equal(false);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1].length).to.equal(0);
+
+      await flashExercise.setUniswapMiddleRoute(token1.address, token3.address, [token2.address]);
+      expect((await flashExercise.getMiddleRoute(token1.address, token3.address))[0]).to.equal(false);
+      expect((await flashExercise.getMiddleRoute(token1.address, token3.address))[1].length).to.equal(1);
+      expect((await flashExercise.getMiddleRoute(token1.address, token3.address))[1][0]).to.equal(token2.address);
+      expect((await flashExercise.getMiddleRoute(token3.address, token1.address))[0]).to.equal(true);
+      expect((await flashExercise.getMiddleRoute(token3.address, token1.address))[1].length).to.equal(1);
+      expect((await flashExercise.getMiddleRoute(token3.address, token1.address))[1][0]).to.equal(token2.address);
+
+      await flashExercise.setUniswapMiddleRoute(ethers.constants.AddressZero, token3.address, [token1.address,token2.address]);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[0]).to.equal(false);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1].length).to.equal(2);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1][0]).to.equal(token1.address);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1][1]).to.equal(token2.address);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[0]).to.equal(true);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1].length).to.equal(2);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1][0]).to.equal(token1.address);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1][1]).to.equal(token2.address);
+
+      await expect(
+        flashExercise.connect(addr1).setUniswapMiddleRoute(token1.address, token3.address, [token2.address,weth.address])
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+
+      await expect(
+        flashExercise.setUniswapMiddleRoute(token1.address, token3.address, [token3.address])
+      ).to.be.revertedWith("ACOFlashExercise::_validateUniswapMiddleRoute: Invalid middle route");
+
+      await expect(
+        flashExercise.setUniswapMiddleRoute(token1.address, token3.address, [token2.address,weth.address,token2.address])
+      ).to.be.revertedWith("ACOFlashExercise::_validateUniswapMiddleRoute: Invalid middle route");
+
+      await flashExercise.setUniswapMiddleRoute(token3.address, token1.address, []);
+      expect((await flashExercise.getMiddleRoute(token1.address, token3.address))[0]).to.equal(false);
+      expect((await flashExercise.getMiddleRoute(token1.address, token3.address))[1].length).to.equal(0);
+
+      await flashExercise.setUniswapMiddleRoute(ethers.constants.AddressZero, token3.address, [token2.address]);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[0]).to.equal(false);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1].length).to.equal(1);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1][0]).to.equal(token2.address);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[0]).to.equal(true);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1].length).to.equal(1);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1][0]).to.equal(token2.address);
+
+      await flashExercise.setUniswapMiddleRoute(token3.address, ethers.constants.AddressZero, [token2.address,token1.address]);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[0]).to.equal(true);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1].length).to.equal(2);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1][1]).to.equal(token1.address);
+      expect((await flashExercise.getMiddleRoute(ethers.constants.AddressZero, token3.address))[1][0]).to.equal(token2.address);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[0]).to.equal(false);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1].length).to.equal(2);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1][1]).to.equal(token1.address);
+      expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1][0]).to.equal(token2.address);
+    });
     it("Check flash exercise", async function () {
       let start1Balance = ethers.utils.bigNumberify("10000000000");
       await token1.transfer(await addr1.getAddress(), start1Balance);
@@ -275,7 +381,7 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq).sub(start2Balance.mul(3)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(2)).sub(start2Balance.mul(3)));
       expect(await addr2.getBalance()).to.equal(b1.add(val3.mul(fee).div(100000)));
 
       expect((await buidlerT1T210000P.getBaseExerciseData(amount3))[1]).to.equal(amount3);  
@@ -308,7 +414,7 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2).add(fee2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq).sub(start2Balance.mul(3)).add(exp2));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(2)).sub(start2Balance.mul(3)).add(exp2));
 
       await token1.connect(owner).transfer(pairToken1weth.address, token1Liq);
       await weth.connect(owner).deposit({value: wethLiq.mul(2)});
@@ -345,7 +451,7 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.sub(value1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.sub(value2).add(fee2));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance.sub(value3));
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq).sub(start2Balance.mul(3)).add(exp2));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(2)).sub(start2Balance.mul(3)).add(exp2));
     });
     it("Check flash exercise accounts", async function () {
       let start1Balance = ethers.utils.bigNumberify("10000000000");
@@ -471,7 +577,7 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq).sub(start2Balance.mul(3)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(2)).sub(start2Balance.mul(3)));
       expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
       expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
@@ -509,7 +615,7 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(start2Balance.add(e1.div(2)).add(1));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(start2Balance);
-      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(3)).sub(start2Balance.mul(3)));
+      expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(4)).sub(start2Balance.mul(3)));
       expect(await addr1.getBalance()).to.equal(b1.add(a1).add(1));
       expect(await addr2.getBalance()).to.equal(b2.add(a1).add(1));
       expect(await addr3.getBalance()).to.equal(b3);
@@ -595,17 +701,17 @@ describe("ACOFlashExercise", function() {
 
       await expect(
         flashExercise.connect(owner).flashExercise(buidlerEthT1003P.address, a1.add(a1), 0, 0)
-      ).to.be.revertedWith("ACOFlashExercise::uniswapV2Call: Insufficient collateral amount");
+      ).to.be.revertedWith("ACOFlashExercise::_validateMinimumCollateral: Insufficient collateral amount");
 
       await expect(
         flashExercise.connect(owner).flashExerciseAccounts(buidlerEthT1003P.address, a1.add(a1), 0, [await addr2.getAddress(), await addr1.getAddress()])
-      ).to.be.revertedWith("ACOFlashExercise::uniswapV2Call: Insufficient collateral amount");
+      ).to.be.revertedWith("ACOFlashExercise::_validateMinimumCollateral: Insufficient collateral amount");
 
       await buidlerEthT1003C.connect(owner).approve(flashExercise.address, val3);
 
       await expect(
         flashExercise.connect(owner).flashExercise(buidlerEthT1003C.address, val3, exp1.add(1), 0)
-      ).to.be.revertedWith("ACOFlashExercise::uniswapV2Call: Minimum amount not satisfied");
+      ).to.be.revertedWith("ACOFlashExercise::_validateMinimumCollateral: Minimum amount not satisfied");
 
       await expect(
         flashExercise.connect(owner).flashExerciseAccounts(buidlerEthT1003C.address, val3, exp1, [])
@@ -619,6 +725,270 @@ describe("ACOFlashExercise", function() {
 
       await expect(
         flashExercise.connect(owner).flashExerciseAccounts(buidlerEthT1003C.address, val3, exp1, [await addr2.getAddress(), await addr1.getAddress()])
+      ).to.be.revertedWith("ACOToken::Expired");
+
+      await network.provider.send("evm_increaseTime", [-86400]);
+    });
+    it("Check flash exercise with route", async function () {
+      await token3.connect(addr1).approve(buidlerEthT3330P.address, token3TotalSupply);
+      await token3.connect(addr1).approve(buidlerT1T39900P.address, token3TotalSupply);
+      await token1.connect(addr1).approve(buidlerT1T38100C.address, token1TotalSupply);
+      await buidlerEthT3270C.connect(addr3).approve(flashExercise.address, token2TotalSupply);
+      await buidlerEthT3330P.connect(addr3).approve(flashExercise.address, token2TotalSupply);
+      await buidlerT1T38100C.connect(addr3).approve(flashExercise.address, token2TotalSupply);
+      await buidlerT1T39900P.connect(addr3).approve(flashExercise.address, token2TotalSupply);
+
+      await flashExercise.setUniswapMiddleRoute(token1.address, token3.address, [token2.address]);
+      await flashExercise.setUniswapMiddleRoute(ethers.constants.AddressZero, token3.address, [token1.address,token2.address]);
+      
+      let start1Balance = ethers.utils.bigNumberify("10000000");
+      await token1.transfer(await addr1.getAddress(), start1Balance);
+      let start3Balance = ethers.utils.bigNumberify("1320000000");
+      await token3.transfer(await addr1.getAddress(), start3Balance);
+
+      let valec = ethers.utils.bigNumberify("1000000000000000000");
+      await buidlerEthT3270C.connect(addr1).mintPayable({value: valec}); 
+      let valep = ethers.utils.bigNumberify("330000000");
+      await buidlerEthT3330P.connect(addr1).mint(valep); 
+      let val1c = ethers.utils.bigNumberify("10000000");
+      await buidlerT1T38100C.connect(addr1).mint(val1c); 
+      let val1p = ethers.utils.bigNumberify("990000000");
+      await buidlerT1T39900P.connect(addr1).mint(val1p); 
+
+      await buidlerEthT3270C.connect(addr1).transfer(await addr3.getAddress(), valec);
+      await buidlerEthT3330P.connect(addr1).transfer(await addr3.getAddress(), valec);
+      await buidlerT1T38100C.connect(addr1).transfer(await addr3.getAddress(), val1c);
+      await buidlerT1T39900P.connect(addr1).transfer(await addr3.getAddress(), val1c);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(buidlerT1T38100C.address)).to.equal(val1c);
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token3.balanceOf(buidlerEthT3330P.address)).to.equal(valep);
+      expect(await token3.balanceOf(buidlerT1T39900P.address)).to.equal(val1p);
+      expect(await buidlerEthT3270C.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerEthT3330P.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerT1T38100C.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerT1T39900P.balanceOf(await addr1.getAddress())).to.equal(0); 
+
+      let bf2 = await addr2.getBalance();
+      let bf3 = await addr3.getBalance();
+      let exp1 = await flashExercise.getEstimatedReturn(buidlerEthT3270C.address, valec);
+      await flashExercise.connect(addr3).flashExercise(buidlerEthT3270C.address, valec, exp1, 0);
+
+      expect(await buidlerEthT3270C.totalCollateral()).to.equal(0);  
+      expect(await buidlerEthT3270C.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerEthT3270C.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(await addr3.getBalance()).to.be.above(bf3);
+      expect(await addr3.getBalance()).to.be.below(bf3.add(exp1));
+      expect(await addr2.getBalance()).to.equal(bf2.add(valec.mul(fee).div(100000)));
+
+      let bf1 = await addr1.getBalance();
+      let bf32 = await addr3.getBalance();
+      let exp2 = await flashExercise.getEstimatedReturn(buidlerEthT3330P.address, valec);
+      await flashExercise.connect(addr3).flashExercise(buidlerEthT3330P.address, valec, exp2, 0);
+      expect(await buidlerEthT3330P.totalCollateral()).to.equal(0);  
+      expect(await buidlerEthT3330P.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerEthT3330P.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(exp2);
+      expect(await token3.balanceOf(await addr2.getAddress())).to.equal(pricer4.mul(fee).div(100000));
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(await addr1.getBalance()).to.equal(bf1.add(valec).add(1));
+      expect(await addr3.getBalance()).to.be.below(bf32);
+     
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(0);
+
+      let exp3 = await flashExercise.getEstimatedReturn(buidlerT1T38100C.address, val1c);
+      await flashExercise.connect(addr3).flashExercise(buidlerT1T38100C.address, val1c, exp3, 0);
+      expect(await buidlerT1T38100C.totalCollateral()).to.equal(0);  
+      expect(await buidlerT1T38100C.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerT1T38100C.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(exp3);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(val1c.mul(fee).div(100000));
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1).add(pricer1.div(10).add(1)));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(exp2);
+      expect(await token3.balanceOf(await addr2.getAddress())).to.equal(pricer4.mul(fee).div(100000));
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+    
+      let exp4 = await flashExercise.getEstimatedReturn(buidlerT1T39900P.address, val1c);
+      await flashExercise.connect(addr3).flashExercise(buidlerT1T39900P.address, val1c, exp4, 0);
+      expect(await buidlerT1T39900P.totalCollateral()).to.equal(0);  
+      expect(await buidlerT1T39900P.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerT1T39900P.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(val1c.add(1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(exp3);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(val1c.mul(fee).div(100000));
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1).add(pricer1.div(10).add(1)));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(exp2.add(exp4));
+      expect(await token3.balanceOf(await addr2.getAddress())).to.equal(pricer4.mul(fee).div(100000).add(pricer2.div(10).mul(fee).div(100000)));
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+    
+      await flashExercise.setUniswapMiddleRoute(token3.address, token1.address, [token2.address]);
+      await flashExercise.setUniswapMiddleRoute(token3.address, ethers.constants.AddressZero, [token2.address,token1.address]);
+      
+      await token1.transfer(await addr1.getAddress(), start1Balance);
+      await token3.transfer(await addr1.getAddress(), start3Balance);
+
+      await buidlerEthT3270C.connect(addr1).mintPayable({value: valec}); 
+      await buidlerEthT3330P.connect(addr1).mint(valep); 
+      await buidlerT1T38100C.connect(addr1).mint(val1c); 
+      await buidlerT1T39900P.connect(addr1).mint(val1p); 
+
+      await buidlerEthT3270C.connect(addr1).transfer(await addr3.getAddress(), valec);
+      await buidlerEthT3330P.connect(addr1).transfer(await addr3.getAddress(), valec);
+      await buidlerT1T38100C.connect(addr1).transfer(await addr3.getAddress(), val1c);
+      await buidlerT1T39900P.connect(addr1).transfer(await addr3.getAddress(), val1c);
+
+      bf2 = await addr2.getBalance();
+      bf3 = await addr3.getBalance();
+      let exp11 = await flashExercise.getEstimatedReturn(buidlerEthT3270C.address, valec);
+      await flashExercise.connect(addr3).flashExercise(buidlerEthT3270C.address, valec, exp11, 0);
+
+      expect(await buidlerEthT3270C.totalCollateral()).to.equal(0);  
+      expect(await buidlerEthT3270C.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerEthT3270C.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(val1c.add(1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(exp3);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(val1c.mul(fee).div(100000));
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1).add(pricer1.div(10).add(1)).add(pricer3.add(1)));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(exp2.add(exp4));
+      expect(await token3.balanceOf(await addr2.getAddress())).to.equal(pricer4.mul(fee).div(100000).add(pricer2.div(10).mul(fee).div(100000)));
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(await addr3.getBalance()).to.be.above(bf3);
+      expect(await addr3.getBalance()).to.be.below(bf3.add(exp11));
+      expect(await addr2.getBalance()).to.equal(bf2.add(valec.mul(fee).div(100000)));
+
+      bf1 = await addr1.getBalance();
+      bf32 = await addr3.getBalance();
+      let exp21 = await flashExercise.getEstimatedReturn(buidlerEthT3330P.address, valec);
+      await flashExercise.connect(addr3).flashExercise(buidlerEthT3330P.address, valec, exp21, 0);
+      expect(await buidlerEthT3330P.totalCollateral()).to.equal(0);  
+      expect(await buidlerEthT3330P.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerEthT3330P.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(val1c.add(1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(exp3);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(val1c.mul(fee).div(100000));
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1).add(pricer1.div(10).add(1)).add(pricer3.add(1)));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(exp2.add(exp4).add(exp21));
+      expect(await token3.balanceOf(await addr2.getAddress())).to.equal(pricer4.mul(fee).div(100000).add(pricer2.div(10).mul(fee).div(100000)).add(pricer4.mul(fee).div(100000)));
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(await addr1.getBalance()).to.equal(bf1.add(valec).add(1));
+      expect(await addr3.getBalance()).to.be.below(bf32);
+
+      let exp31 = await flashExercise.getEstimatedReturn(buidlerT1T38100C.address, val1c);
+      await flashExercise.connect(addr3).flashExercise(buidlerT1T38100C.address, val1c, exp31, 0);
+      expect(await buidlerT1T38100C.totalCollateral()).to.equal(0);  
+      expect(await buidlerT1T38100C.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerT1T38100C.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(val1c.add(1));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(exp3.add(exp31));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(val1c.mul(fee).div(100000).add(val1c.mul(fee).div(100000)));
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1).add(pricer1.div(10).add(1)).add(pricer3.add(1)).add(pricer1.div(10).add(1)));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(exp2.add(exp4).add(exp21));
+      expect(await token3.balanceOf(await addr2.getAddress())).to.equal(pricer4.mul(fee).div(100000).add(pricer2.div(10).mul(fee).div(100000)).add(pricer4.mul(fee).div(100000)));
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+    
+      let exp41 = await flashExercise.getEstimatedReturn(buidlerT1T39900P.address, val1c);
+      await flashExercise.connect(addr3).flashExercise(buidlerT1T39900P.address, val1c, exp41, 0);
+      expect(await buidlerT1T39900P.totalCollateral()).to.equal(0);  
+      expect(await buidlerT1T39900P.balanceOf(await addr1.getAddress())).to.equal(0); 
+      expect(await buidlerT1T39900P.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(val1c.add(1).add(val1c.add(1)));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(exp3.add(exp31));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(val1c.mul(fee).div(100000).add(val1c.mul(fee).div(100000)));
+      expect(await token3.balanceOf(await addr1.getAddress())).to.equal(pricer3.add(1).add(pricer1.div(10).add(1)).add(pricer3.add(1)).add(pricer1.div(10).add(1)));
+      expect(await token3.balanceOf(await addr3.getAddress())).to.equal(exp2.add(exp4).add(exp21).add(exp41));
+      expect(await token3.balanceOf(await addr2.getAddress())).to.equal(pricer4.mul(fee).div(100000).add(pricer2.div(10).mul(fee).div(100000)).add(pricer4.mul(fee).div(100000)).add(pricer2.div(10).mul(fee).div(100000)));
+      expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
+      expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+    });
+    it("Check fail to flash exercise with route", async function () {
+      await token1.connect(addr1).approve(buidlerT1T38100C.address, token1TotalSupply);
+
+      let start1Balance = ethers.utils.bigNumberify("10000000");
+      await token1.transfer(await addr1.getAddress(), start1Balance);
+      let start3Balance = ethers.utils.bigNumberify("1320000000");
+      await token3.transfer(await addr1.getAddress(), start3Balance);
+
+      let valec = ethers.utils.bigNumberify("1000000000000000000");
+      await buidlerEthT3270C.connect(addr1).mintPayable({value: valec}); 
+      let val1c = ethers.utils.bigNumberify("10000000");
+      await buidlerT1T38100C.connect(addr1).mint(val1c);  
+
+      await buidlerEthT3270C.connect(addr1).transfer(await addr3.getAddress(), valec);
+      await buidlerT1T38100C.connect(addr1).transfer(await addr3.getAddress(), val1c);
+
+      await expect(
+        flashExercise.connect(addr3).flashExercise(buidlerEthT3270C.address, valec, 0, 0)
+      ).to.be.revertedWith("ACOFlashExercise::_flashExercise: Invalid Uniswap pair");
+
+      await expect(
+        flashExercise.connect(addr3).flashExercise(buidlerT1T38100C.address, val1c, 0, 0)
+      ).to.be.revertedWith("ACOFlashExercise::_flashExercise: Invalid Uniswap pair");
+      
+      await flashExercise.setUniswapMiddleRoute(token1.address, token3.address, [token2.address]);
+      await flashExercise.setUniswapMiddleRoute(ethers.constants.AddressZero, token3.address, [token1.address,token2.address]);
+      
+      let exp1 = await flashExercise.getEstimatedReturn(buidlerEthT3270C.address, valec);
+      let exp2 = await flashExercise.getEstimatedReturn(buidlerT1T38100C.address, val1c);
+      
+      await expect(
+        flashExercise.connect(addr3).flashExercise(buidlerEthT3270C.address, valec, exp1, 0)
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+
+      await expect(
+        flashExercise.connect(addr3).flashExercise(buidlerT1T38100C.address, val1c, exp2, 0)
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+
+      let balLP = await pairToken1weth.balanceOf(await owner.getAddress());
+      await pairToken1weth.connect(owner).transfer(pairToken1weth.address, balLP.mul(98).div(100));
+      await pairToken1weth.connect(owner).burn(await owner.getAddress());
+
+      await expect(
+        flashExercise.connect(addr3).flashExercise(buidlerEthT3270C.address, valec, 0, 0)
+      ).to.be.revertedWith("ACOFlashExercise::_validateMinimumCollateral: Insufficient collateral amount");
+
+      await buidlerT1T38100C.connect(addr3).approve(flashExercise.address, val1c);
+
+      await expect(
+        flashExercise.connect(addr3).flashExercise(buidlerT1T38100C.address, val1c, exp2.add(1), 0)
+      ).to.be.revertedWith("ACOFlashExercise::_validateMinimumCollateral: Minimum amount not satisfied");
+
+      await network.provider.send("evm_increaseTime", [86400]);
+
+      await expect(
+        flashExercise.connect(addr3).flashExercise(buidlerT1T38100C.address, val1c, exp2, 0)
       ).to.be.revertedWith("ACOToken::Expired");
 
       await network.provider.send("evm_increaseTime", [-86400]);
