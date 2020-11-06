@@ -72,7 +72,7 @@ class TradeMenu extends Component {
               <div>© 2020 Auctus</div>
               <div>
                 <a rel="noopener noreferrer" href="mailto:contact@auctus.org"><FontAwesomeIcon icon={faEnvelope} /></a>
-                <a target="_blank" rel="noopener noreferrer" href="https://twitter.com/AcoFinance"><FontAwesomeIcon icon={faTwitter} /></a>
+                <a target="_blank" rel="noopener noreferrer" href="https://twitter.com/AuctusProject"><FontAwesomeIcon icon={faTwitter} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://discord.gg/9JqeMxs"><FontAwesomeIcon icon={faDiscord} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://github.com/AuctusProject/aco"><FontAwesomeIcon icon={faGithub} /></a>
               </div>
