@@ -5,6 +5,8 @@ import PropTypes from 'prop-types'
 import { acoVaults } from '../util/constants'
 import VaultDetails from '../partials/Vault/VaultDetails'
 import { getCRVAPY } from '../util/getCRVAPY'
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 class Vaults extends Component {
   constructor() {
@@ -18,6 +20,7 @@ class Vaults extends Component {
 
   render() {
     return <div className="vaults">
+      <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}/>Vault is in beta. Use at your own risk.</div>
       <div className="vaults-title">VAULTS</div>
       <div className="vaults-subtitle">Automated strategies using options</div>
       <div className="vault-asset">
