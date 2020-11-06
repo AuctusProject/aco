@@ -14,10 +14,8 @@ function getAcoFlashExerciseTokenContract() {
 }
 
 export function hasUniswapPair(acoToken) {
-    return new Promise((resolve) => {
-        const contract = getAcoFlashExerciseTokenContract()
-        contract.methods.getUniswapPair(acoToken).call().then(result => resolve(result !== ethAddress))
-    })    
+    const contract = getAcoFlashExerciseTokenContract()
+    return contract.methods.hasFlashExercise(acoToken).call()
 }
 
 export function flashExercise(from, acoToken, tokenAmount, minimumCollateral, nonce) {

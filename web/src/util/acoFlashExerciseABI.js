@@ -12,6 +12,25 @@ export const acoFlashExerciseABI =
 		"type": "constructor"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -129,11 +148,53 @@ export const acoFlashExerciseABI =
 		"inputs": [
 			{
 				"internalType": "address",
+				"name": "baseAsset",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "quoteAsset",
+				"type": "address"
+			}
+		],
+		"name": "getMiddleRoute",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			},
+			{
+				"internalType": "address[]",
+				"name": "",
+				"type": "address[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
 				"name": "acoToken",
 				"type": "address"
 			}
 		],
-		"name": "getUniswapPair",
+		"name": "hasFlashExercise",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
 		"outputs": [
 			{
 				"internalType": "address",
@@ -142,6 +203,42 @@ export const acoFlashExerciseABI =
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "baseAsset",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "quoteAsset",
+				"type": "address"
+			},
+			{
+				"internalType": "address[]",
+				"name": "uniswapMiddleRoute",
+				"type": "address[]"
+			}
+		],
+		"name": "setUniswapMiddleRoute",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -209,6 +306,24 @@ export const acoFlashExerciseABI =
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "asset",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "destination",
+				"type": "address"
+			}
+		],
+		"name": "withdrawStuckAsset",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
