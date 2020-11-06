@@ -132,7 +132,7 @@
     margin: 0 10px;
 }
 
-.home-btn.disabled {
+.action-btn.disabled {
     opacity: 0.5;
     cursor: default;
 }
