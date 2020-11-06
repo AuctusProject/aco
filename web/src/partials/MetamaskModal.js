@@ -67,7 +67,7 @@ class MetamaskModal extends Component {
                     <FontAwesomeIcon icon={faArrowRight}/>
                   </a>
                 }
-                <div className="accept-terms">By connecting, I accept ACO's <a href="/terms" target="_blank">Terms of Service</a></div>
+                <div className="accept-terms">By connecting, I accept Auctus' <a href="/terms" target="_blank">Terms of Service</a></div>
               </div>
             </div>
           </div>

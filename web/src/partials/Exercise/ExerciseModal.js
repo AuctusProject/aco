@@ -164,7 +164,7 @@ class ExerciseModal extends Component {
     var option = this.props.position.option
     var unlockSymbol =  (this.state.selectedTab === 1 ? this.getPaySymbol() : option.acoTokenInfo.symbol)
     if (needApproval && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to unlock " + unlockSymbol + " for using on ACO"
+      subtitle = "Confirm on Metamask to unlock " + unlockSymbol + " for using on Auctus"
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {

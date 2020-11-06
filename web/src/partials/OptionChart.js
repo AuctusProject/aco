@@ -5,8 +5,8 @@ import { Scatter } from 'react-chartjs-2'
 const axesProprerties = JSON.stringify({
   display: true,
   gridLines: {
-    color: 'rgba(255, 255, 255, 0.1)',
-    zeroLineColor: 'rgba(255, 255, 255, 0.25)'
+    color: '#a6a6a680',
+    zeroLineColor: '#a6a6a680'
   },
   scaleLabel: {
     display: true,
@@ -209,7 +209,6 @@ class OptionChart extends Component {
               tooltipEl.style.fontFamily = 'Roboto';
               tooltipEl.style.fontSize = '11px';
               tooltipEl.style.padding ='2px 2px';
-              tooltipEl.style.backgroundColor = 'black';
               tooltipEl.style.borderRadius = '4px';
             }
           }

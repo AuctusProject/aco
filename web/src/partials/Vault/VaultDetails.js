@@ -178,7 +178,7 @@ class VaultDetails extends Component {
       </div>
       <div className="header-separator"></div>
       {!this.isConnected() ? <div className="card-body">
-        <div className="home-btn medium solid-blue" onClick={this.onConnectClick}>
+        <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
           <div>CONNECT WALLET</div>
         </div>
       </div> :
@@ -207,7 +207,7 @@ class VaultDetails extends Component {
       {this.isConnected() && <div className="card-body">
         <div className="input-row">
           <div className={"input-column " + (this.isInsufficientFundsToDeposit() ? "insufficient-funds-error" : "")}>
-            <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedDepositBalance()) ? this.getFormattedDepositBalance() : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
+            <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedDepositBalance()) ? (this.getFormattedDepositBalance() + " "+ this.state.acoVaultInfo.tokenInfo.symbol) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
             <div className="input-field">
               <DecimalInput tabIndex="-1" onChange={this.onDepositValueChange} value={this.state.depositValue}></DecimalInput>
               <div className="max-btn" onClick={this.onMaxDepositClick}>MAX</div>
@@ -215,7 +215,7 @@ class VaultDetails extends Component {
             <div className={"action-btn "+(this.canDeposit() ? "" : "disabled")} onClick={this.onDepositClick}>DEPOSIT</div>
           </div>
           <div className={"input-column " + (this.isInsufficientFundsToWithdraw() ? "insufficient-funds-error" : "")}>
-            <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedWithdrawBalance()) ? this.getFormattedWithdrawBalance() : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
+            <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedWithdrawBalance()) ? (this.getFormattedWithdrawBalance() + " SHARES") : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
             <div className="input-field">
               <DecimalInput tabIndex="-1" onChange={this.onWithdrawValueChange} value={this.state.withdrawValue}></DecimalInput>
               <div className="max-btn" onClick={this.onMaxWithdrawClick}>MAX</div>

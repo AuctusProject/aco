@@ -160,7 +160,7 @@ class NavBar extends Component {
                           <div className="subnav-link-description">Become a liquidity provider and receive premiums by automatically selling covered options.</div>
                         </div>
                       </NavLink>
-                      <a onClick={this.submenuClick} target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">
+                      <a onClick={this.submenuClick} target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/">
                         <div className="subnav-link">
                           <div className="subnav-link-title">LEARN ABOUT OPTIONS</div>
                           <div className="subnav-link-description">Learn the basics of crypto options, explore strategies for trading them.</div>
@@ -169,8 +169,8 @@ class NavBar extends Component {
                       <div className="nav-separator"></div>
                       <div className="subnav-link">
                         <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://auctus.org">ABOUT</a>
-                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
-                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
+                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/faq">FAQ</a>
+                        <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/">DOCS</a>
                         <a className="nav-item link-nav" target="_blank" rel="noopener noreferrer" href="https://discord.gg/9JqeMxs">DISCORD</a>
                       </div>
                     </div>

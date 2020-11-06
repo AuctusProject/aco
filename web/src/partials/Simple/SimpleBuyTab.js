@@ -285,7 +285,7 @@ class SimpleBuyTab extends Component {
   }
 
   getSummaryDescription = () => {
-    return <>Pay {this.getTotalToBePaidFormatted()} in return for the right to {this.state.selectedOption.isCall ? "sell" : "buy"} {this.state.qtyValue} {this.state.selectedOption.underlyingInfo.symbol} for {getOptionFormattedPrice(this.state.selectedOption)} each until {formatDate(this.state.selectedOption.expiryTime)}.</>
+    return <>Pay {this.getTotalToBePaidFormatted()} in return for the right to {this.state.selectedOption.isCall ? "buy" : "sell"} {this.state.qtyValue} {this.state.selectedOption.underlyingInfo.symbol} for {getOptionFormattedPrice(this.state.selectedOption)} each until {formatDate(this.state.selectedOption.expiryTime)}.</>
   }
 
   sendQuotedTransaction = (nonce) => {
@@ -583,7 +583,7 @@ class SimpleBuyTab extends Component {
           <div className="separator"></div>
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
-            <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatPrice(optionPrice)}</div></div>
+            <div className="price-value"><div className="price-origin">Auctus:</div><div>{this.formatPrice(optionPrice)}</div></div>
             <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.formatPrice(this.state.opynPrice)}</div></div>
             <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
           </div>
@@ -609,13 +609,13 @@ class SimpleBuyTab extends Component {
       <div className="action-button-wrapper">
         {this.canBuy() ?
           (this.props.isConnected ? 
-            <div className="home-btn medium solid-blue" onClick={this.onBuyClick}>
+            <div className="action-btn medium solid-blue" onClick={this.onBuyClick}>
               <div>BUY</div>
             </div> :
-            <div className="home-btn medium solid-blue" onClick={this.onConnectClick}>
+            <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
               <div>CONNECT WALLET</div>
             </div>) :
-          <div className="home-btn medium solid-blue disabled">
+          <div className="action-btn medium solid-blue disabled">
             <div>{this.state.loadingSwap ? "Loading..." : this.getButtonMessage()}</div>
           </div>}
       </div>

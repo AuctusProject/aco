@@ -119,6 +119,10 @@ main {
   cursor: default;
 }
 
+.action-btn.medium {
+  min-width: 180px;
+}
+
 .cancel-btn {
   color: #e5e5e5 !important;
   text-decoration: underline;
@@ -674,9 +678,9 @@ label {
 }
 
 .light-mode .input-field input {
-  color: #333333;
+  color: #333333 !important;
 }
 
 .light-mode .collateral-input input {
-  color: #333333;
+  color: #333333 !important;
 }

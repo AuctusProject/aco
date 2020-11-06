@@ -6,3 +6,11 @@
     align-items: stretch;
     position: relative;
 }
+
+#option-chartjs-tooltip {
+    background-color: black;
+}
+
+.light-mode #option-chartjs-tooltip {
+    background-color: #e2e2e2;
+}

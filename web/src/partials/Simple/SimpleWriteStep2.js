@@ -218,7 +218,7 @@ class SimpleWriteStep2 extends Component {
     var img = null
     var optionsAmount = this.getOptionsAmount()
     if (stepNumber === 1) {
-      subtitle =  "Confirm on Metamask to unlock "+this.getCollaterizeAssetSymbol()+" for writing on ACO" 
+      subtitle =  "Confirm on Metamask to unlock "+this.getCollaterizeAssetSymbol()+" for writing on Auctus" 
       img = <MetamaskLargeIcon/>
     }
     else if (stepNumber === 2) {
@@ -495,7 +495,7 @@ class SimpleWriteStep2 extends Component {
             <div className="similar-prices">
               <div className="ref-label">REF</div>
               <div className="similar-label">(similar options)</div>
-              <div className="price-value"><div className="price-origin">ACO:</div><div>{this.formatPrice(this.getAcoOptionPrice())}</div></div>
+              <div className="price-value"><div className="price-origin">Auctus:</div><div>{this.formatPrice(this.getAcoOptionPrice())}</div></div>
               <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.formatPrice(this.state.opynPrice)}</div></div>
               <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
             </div>
@@ -505,13 +505,13 @@ class SimpleWriteStep2 extends Component {
       <div className="action-button-wrapper">
         {this.canWrite() ?
           (this.props.isConnected ? 
-            <div className="home-btn medium solid-blue" onClick={this.onWriteClick}>
+            <div className="action-btn medium solid-blue" onClick={this.onWriteClick}>
               <div>WRITE</div>
             </div> :
-            <div className="home-btn medium solid-blue" onClick={this.onConnectClick}>
+            <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
               <div>CONNECT WALLET</div>
             </div>) :
-          <div className="home-btn medium solid-blue disabled">
+          <div className="action-btn medium solid-blue disabled">
             <div>{this.state.loadingSwap ? "Loading..." : this.getButtonMessage()}</div>
           </div>}
       </div>

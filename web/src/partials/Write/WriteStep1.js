@@ -39,8 +39,8 @@ class WriteStep1 extends Component {
 
   getTypeInfoUrl = (optionType) => {
     return optionType.id === 1 ?
-    "https://docs.aco.finance/faq#how-to-write-a-call-option" :
-    "https://docs.aco.finance/faq#how-to-write-a-put-option"      
+    "https://docs.auctus.org/faq#how-to-write-a-call-option" :
+    "https://docs.auctus.org/faq#how-to-write-a-put-option"      
   }
 
   render() {
