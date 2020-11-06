@@ -163,5 +163,6 @@
 }
 
 .accordion .card-body .action-btn {
-    margin: auto;
+    margin-left: auto;
+    margin-right: auto;
 }
