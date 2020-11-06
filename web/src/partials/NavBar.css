@@ -336,7 +336,7 @@ li.dropdown {
   border: 1px solid transparent;
   color: #ffffff;
   top: 45px;
-  right: 190px;
+  right: 0;
 }
 
 .advanced-tooltip::after {
