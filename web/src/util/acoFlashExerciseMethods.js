@@ -1,5 +1,5 @@
 import { getWeb3, sendTransactionWithNonce } from './web3Methods'
-import { acoFlashExerciseAddress, ethAddress } from './constants';
+import { acoFlashExerciseAddress } from './constants';
 import { acoFlashExerciseABI } from './acoFlashExerciseABI';
 
 var acoFlashExerciseTokenContract = null

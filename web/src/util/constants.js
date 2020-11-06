@@ -346,5 +346,5 @@ export const booleanToData = (bool) => {
 }
 
 export const isDarkMode = () => {
-    return window.localStorage.getItem('LAYOUT_MODE') === "1"
+    return window.localStorage.getItem('LAYOUT_MODE') !== "0"
 }
