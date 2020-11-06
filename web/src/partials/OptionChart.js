@@ -5,8 +5,8 @@ import { Scatter } from 'react-chartjs-2'
 const axesProprerties = JSON.stringify({
   display: true,
   gridLines: {
-    color: 'rgba(255, 255, 255, 0.1)',
-    zeroLineColor: 'rgba(255, 255, 255, 0.25)'
+    color: '#a6a6a680',
+    zeroLineColor: '#a6a6a680'
   },
   scaleLabel: {
     display: true,
@@ -44,7 +44,7 @@ class OptionChart extends Component {
     return {
       datasets: [{
         fill: false,
-        borderColor: '#a8c708',
+        borderColor: '#1782fc',
         borderWidth: 2,
         lineTension: 0.01,
         showLine: true,
@@ -54,7 +54,7 @@ class OptionChart extends Component {
         hoverRadius: 4,
         hoverBorderWidth: 0,
         data: [],
-        backgroundColor: '#a8c708'
+        backgroundColor: '#1782fc'
       }]
     }
   }
@@ -209,7 +209,6 @@ class OptionChart extends Component {
               tooltipEl.style.fontFamily = 'Roboto';
               tooltipEl.style.fontSize = '11px';
               tooltipEl.style.padding ='2px 2px';
-              tooltipEl.style.backgroundColor = 'black';
               tooltipEl.style.borderRadius = '4px';
             }
           }

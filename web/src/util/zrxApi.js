@@ -32,7 +32,8 @@ export function getSwapQuote(buyToken, sellToken, amount, isBuy) {
             .catch(err => 
                 reject(err)
             );
-        })        
+        })
+        .catch(err => reject(err))        
     })
 }
 

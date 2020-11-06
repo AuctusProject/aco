@@ -33,16 +33,18 @@ class MetamaskModal extends Component {
       this.props.onHide()
     }
     return (
-      <Modal className="metamask-modal" centered={true} size="sm" show={true} onHide={(e) => this.props.onHide()}>
+      <Modal className={"metamask-modal "+ (this.props.darkMode ? "" : "")}  centered={true} size="sm" show={true} onHide={(e) => this.props.onHide()}>
         <Modal.Header closeButton>
         </Modal.Header>
         <Modal.Body>
           <div className="row">
             <div className="col-md-12">
               <div className="metamask-container text-center">
-                <div className="logo-wrapper"><img className="logo-img" src="/logo.svg" alt=""/></div>
+                <div className="logo-wrapper">
+                  <img src={this.props.darkMode ? "/logo_white_sm.svg" : "/logo_sm.svg"} className="logo-img" alt="" />
+                </div>
                 <div className="metamask-modal-title">Connect Wallet</div>
-                <div className="metamask-modal-subtitle">To start using ACO.</div>
+                <div className="metamask-modal-subtitle">To start using Auctus.</div>
                 {hasMetamask &&
                   <>
                     {!this.state.connecting && 
@@ -65,7 +67,7 @@ class MetamaskModal extends Component {
                     <FontAwesomeIcon icon={faArrowRight}/>
                   </a>
                 }
-                <div className="accept-terms">By connecting, I accept ACO's <a href="/terms" target="_blank">Terms of Service</a></div>
+                <div className="accept-terms">By connecting, I accept Auctus' <a href="/terms" target="_blank">Terms of Service</a></div>
               </div>
             </div>
           </div>

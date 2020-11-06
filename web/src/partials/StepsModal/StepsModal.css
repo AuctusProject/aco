@@ -45,6 +45,10 @@
     background-color: white;
 }
 
+.light-mode .steps-modal .start-dot {
+    background-color: #1782fc;
+}
+
 .steps-modal .step-item {
     align-items: center;
     display: flex;
@@ -74,12 +78,21 @@
     color: white;
 }
 
+.light-mode .steps-modal .step-title.step-title-active {
+    color: #333333;
+}
+
 .steps-modal .step-line {
     height: 3px;
     margin: 0;
     position: relative;
     background-color: #5A5A5A;
 }
+
+.light-mode .steps-modal .step-line {
+    background-color: #adadad;
+}
+
 
 .steps-modal .step-line-progress {
     background: white;
@@ -89,12 +102,20 @@
     position: absolute;
 }
 
+.light-mode .steps-modal .step-line-progress {
+    background: #1782fc;
+}
+
 .steps-modal .step-dot {
     color: #5A5A5A;
 }
 
 .steps-modal .step-dot.step-dot-done {
     color: white;
+}
+
+.light-mode .steps-modal .step-dot.step-dot-done {
+    color: #1782fc;
 }
 
 .steps-modal .steps-modal-icon {

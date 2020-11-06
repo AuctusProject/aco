@@ -53,7 +53,9 @@ export const getBestPoolQuote = (isBuying, option, amount) => {
                 }
                 resolve(bestResult)
             })
+            .catch(err => reject(err))
         })
+        .catch(err => reject(err))
     })
 }
 

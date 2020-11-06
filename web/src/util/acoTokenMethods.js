@@ -126,6 +126,11 @@ export function getMaxExercisedAccounts(optionInfo) {
     return acoTokenContract.methods.maxExercisedAccounts().call()
 }
 
+export function getIsCall(acoTokenAddress) {
+    const acoTokenContract = getAcoTokenContract(acoTokenAddress)
+    return acoTokenContract.methods.isCall().call()
+}
+
 export function getTokenAmount(optionInfo, collateralAmount) {
     if (optionInfo.isCall) {
         return collateralAmount;

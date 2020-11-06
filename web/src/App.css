@@ -6,11 +6,27 @@ html {
 body,
 #root,
 main {
-  background-color: #242424 !important;
-  color: #ffffff !important;
   margin: 0;
   padding: 0;
   min-height: 100vh;
+}
+
+.dark-mode {
+  background-color: #242424 !important;
+  color: #ffffff !important;
+  transition: background-color 300ms ease-out, color 300ms ease-out;
+  -webkit-transition: background-color 300ms ease-out, color 300ms ease-out;
+  -moz-transition: background-color 300ms ease-out, color 300ms ease-out;
+  -o-transition: background-color 300ms ease-out, color 300ms ease-out;
+}
+
+.light-mode {
+  background-color: white !important;
+  color: #333333 !important;
+  transition: background-color 300ms ease-out, color 300ms ease-out;
+  -webkit-transition: background-color 300ms ease-out, color 300ms ease-out;
+  -moz-transition: background-color 300ms ease-out, color 300ms ease-out;
+  -o-transition: background-color 300ms ease-out, color 300ms ease-out;
 }
 
 main {
@@ -82,18 +98,29 @@ main {
 }
 
 .action-btn {
-  background-color: #ffffff !important;
-  color: #333333 !important;
+  color: white;
+  border-color: #1782fc;
+  background-color: #1782fc;
+  transition: background-color 300ms ease-out, color 300ms ease-out;
+  -webkit-transition: background-color 300ms ease-out, color 300ms ease-out;
+  -moz-transition: background-color 300ms ease-out, color 300ms ease-out;
+  -o-transition: background-color 300ms ease-out, color 300ms ease-out;
 }
 
 .action-btn:not(:disabled):not(.disabled):hover {
-  background-color: #ffffffdd !important;
+  border-color: #0145a7;
+  background-color: #0145a7;
+  box-shadow: 6.6px 12.4px 18px 0 rgba(28, 28, 28, 0.18);
 }
 
 .action-btn.disabled, .action-btn:disabled {
-  background-color: #ffffff88 !important;
+  background-color: #1782fc88 !important;
   box-shadow: none !important;
   cursor: default;
+}
+
+.action-btn.medium {
+  min-width: 180px;
 }
 
 .cancel-btn {
@@ -102,8 +129,17 @@ main {
   background: unset !important;
 }
 
+.light-mode .cancel-btn {
+  color: #333333 !important;
+}
+
 .cancel-btn:not(:disabled):not(.disabled):hover {
   color: #e5e5e588 !important;
+}
+
+
+.light-mode .cancel-btn:not(:disabled):not(.disabled):hover {
+  color: #33333388 !important;
 }
 
 .cancel-btn.disabled, .cancel-btn:disabled {
@@ -111,20 +147,16 @@ main {
   box-shadow: none !important;
 }
 
+.light-mode .cancel-btn.disabled, 
+.light-mode .cancel-btn:disabled {
+  background-color: #33333388 !important;
+  box-shadow: none !important;
+}
+
 .modal-backdrop {
   min-width: -webkit-fill-available;
   min-height: -webkit-fill-available;
   overflow: hidden;
-}
-
-.blue-title {
-  font-size: 27.5px;
-  font-weight: bold;
-  font-stretch: normal;
-  font-style: normal;
-  letter-spacing: normal;
-  color: #ffffff;
-  margin-bottom: 20px;
 }
 
 .unshown {
@@ -425,8 +457,11 @@ main {
   height: 100%;
   top: 0;
   z-index: 1;
-  color: white;
   font-size: 20px;
+}
+
+.initial-loading img {
+  max-height: 60px;
 }
 
 .page-title {
@@ -436,7 +471,6 @@ main {
   font-style: normal;
   letter-spacing: 0.45px;
   text-align: center;
-  color: #ffffff;
   margin-bottom: 16px;
 }
 
@@ -447,22 +481,15 @@ main {
   font-style: normal;
   letter-spacing: 0.3px;
   text-align: center;
-  color: #ffffff;
   margin-bottom: 12px;
-}
-
-.blue-link {
-  font-weight: normal;
-  font-stretch: normal;
-  font-style: normal;
-  letter-spacing: 0.5px;
-  color: #139bf2;
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 .aco-table {
   background-color: #2b2b2b;
+}
+
+.light-mode .aco-table{
+  background-color: white;
 }
 
 .aco-table thead th{
@@ -479,6 +506,11 @@ main {
   word-break: normal;
 }
 
+.light-mode .aco-table thead th{
+  background-color: #b3b3b3;
+  color: #333333;
+}
+
 .aco-table tbody td {
   height: 48px;
   padding: 0 20px;
@@ -491,6 +523,11 @@ main {
   text-align: center;
   color: #e6e6e6;  
   word-break: normal;
+}
+
+.light-mode .aco-table tbody td {
+  color: #333333;
+  border-bottom: solid 0.2px #e6e6e6;
 }
 
 .aco-table tbody tr.clickable:hover td {
@@ -514,6 +551,11 @@ label {
   background-color: #202020;
 }
 
+.light-mode .modal-content {
+  background-color: white !important;
+  color: #333333 !important;
+}
+
 .aco-modal .modal-header {
   padding: 10px 20px;
   border-bottom: 0;
@@ -530,7 +572,10 @@ label {
   font-style: normal;
   letter-spacing: 0.45px;
   text-align: center;
-  color: #ffffff;
+}
+
+.light-mode .aco-modal .modal-header {
+  background-color: #e6e6e6;
 }
 
 .aco-modal.no-header .modal-header {
@@ -550,6 +595,10 @@ label {
   position: absolute;
 }
 
+.light-mode .aco-modal .modal-header .close {
+  color: #333333;
+}
+
 .aco-modal .modal-body {
   padding: 0;
 }
@@ -565,7 +614,8 @@ label {
 }
 
 .beta-alert {
-  border: solid 0.5px white;
+  border: solid 0.5px;
+  border-color: white;
   padding: 8px;
   margin: 0 auto 20px;
   font-size: 14px;
@@ -574,15 +624,63 @@ label {
   font-style: normal;
   letter-spacing: normal;
   text-align: center;
-  color: white;
   max-width: 390px;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
+.light-mode .beta-alert {
+  border-color: #808080;
+  background-color: #e6e6e6;
+}
+
 .beta-alert svg {
-  color: #a8c708;
   margin-right: 10px;
   font-size: 24px;
+}
+
+.max-btn {
+  border-radius: 2px;
+  background-color: #e6e6e6;
+  font-size: 10px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: 0.25px;
+  height: 20px;
+  line-height: 20px;
+  position: absolute;
+  right: 4px;
+  width: 34px;
+  cursor: pointer;
+  text-align: center;    
+}
+
+.dark-mode .max-btn {
+  color: #333333;
+}
+
+.input-field input {
+  max-width: 100%;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.3px;
+  padding: 0 6px;
+  color: white;
+}
+
+.collateral-input input {
+  color: white;
+}
+
+.light-mode .input-field input {
+  color: #333333 !important;
+}
+
+.light-mode .collateral-input input {
+  color: #333333 !important;
 }

@@ -12,9 +12,9 @@ class Privacy extends Component {
     render() {
         return (
             <div><div className="container privacy-container">
-            <h2 className="privacy-title">ACO’S PRIVACY POLICY</h2>
+            <h2 className="privacy-title">AUCTUS’ PRIVACY POLICY</h2>
             <p>Last updated: April 1, 2020</p>
-            <p>This Privacy Policy (the “<b>Policy</b>”) has been compiled to better serve those who are concerned with how AUCTUS PROJECT INC, a company incorporated under the laws of British Virgin Islands (“<b>Auctus</b>”, “<b>we</b>”, “<b>us</b>”, “<b>our</b>”, the “<b>Company</b>”), uses personal information, inter alia, information that can be used to directly or indirectly identify them (“<b>Personal Data</b>”, “<b>Personal Information</b>”), which they might supply to us when they access or visit <a href="https://aco.finance">https://aco.finance</a> website (the “<b>Website</b>”). "You" refers to you, as a user of the Website.</p>
+            <p>This Privacy Policy (the “<b>Policy</b>”) has been compiled to better serve those who are concerned with how AUCTUS PROJECT INC, a company incorporated under the laws of British Virgin Islands (“<b>Auctus</b>”, “<b>we</b>”, “<b>us</b>”, “<b>our</b>”, the “<b>Company</b>”), uses personal information, inter alia, information that can be used to directly or indirectly identify them (“<b>Personal Data</b>”, “<b>Personal Information</b>”), which they might supply to us when they access or visit <a href="https://app.auctus.org">https://app.auctus.org</a> website (the “<b>Website</b>”). "You" refers to you, as a user of the Website.</p>
             <p>For the reason of the applicable legislation, we inform you that AUCTUS PROJECT INC is the data controller of your Personal Information.</p>
             <h3>1. YOUR CONSENT</h3>
             <p>By using this Website, you consent to our collection and use of your Personal Information as described in this Privacy Policy. The Company’s Privacy Policy applies to individuals and all other users of the Website to ensure we carry out our services on your behalf and carry out the necessary relevant due diligence to reduce fraud, money laundering and terrorism financing. We reserve the right to change this Privacy Policy, along with related procedures, at any time, without providing any personal notice of the changes to you.</p>
@@ -31,7 +31,7 @@ class Privacy extends Component {
 <h3>5. THE PURPOSE OF USING PERSONAL INFORMATION</h3>
 <p>We may use the Personal Information we collect from you for the following purposes:</p>
 <ul>
-    <li>Provision of services to you through the Website or the ACO Platform;</li>
+    <li>Provision of services to you through the Website or the Auctus Platform;</li>
     <li>Verifying that you are the person who you say you are;</li>
     <li>Communicating with you about our our products and services, news, events and other data which might be interesting to you in our opinion;</li>
     <li>Maintenance, delivery and improvement of the Website, products and services provided through it;</li>
@@ -48,7 +48,7 @@ class Privacy extends Component {
 <p>Auctus will not sell or rent your Personal Data to third parties. We are sometimes required to compare the Personal Data you provide to third party databases in order to verify its accuracy and confirm your identity. Auctus reserve the right to share your Personal Data with:</p>
 <ul>
 <li>Auctus banking and brokerage partners, legal, marketing, strategic and financial advisors, on a “need to know” basis; </li>
-<li>Company that develops, operates and maintains the ACO Platform;</li>
+<li>Company that develops, operates and maintains the Auctus Platform;</li>
 <li>Auctus Personal Data processing counter-parties or agents, hired by or cooperating with us, who’s services are required by us from the practical and business point of view;</li>
 <li>Companies that Auctus plan to merge with or be acquired by;</li>
 <li>Third party identification service providers for fraud prevention process, AML, CTF procedures;</li>
@@ -58,7 +58,7 @@ class Privacy extends Component {
 </ul>
 <p>Please note that the above allows us to comply with relevant anti-money laundering and counter terrorism financing (AML) regulations.</p>
 <p>We use Sendgrid (<a href="https://sendgrid.com/" target="_blank" rel="noopener noreferrer">https://sendgrid.com/</a>), developed and operated by the Twilio Inc., a State of California (USA), to store email addresses and automate mailing campaigns. Your e-mail address may be transferred to SendGrid. Please note that the e-mail address on its own does not reasonably allow third parties to identify you.</p>
-<p>We may also transfer your Personal Data to an entity from our group of companies, which develops, operates and maintains the ACO Platform. </p>
+<p>We may also transfer your Personal Data to an entity from our group of companies, which develops, operates and maintains the Auctus Platform. </p>
 <p>You agree that we may, for the purposes set out in article 7 above, permit the transfer of your Personal Data to any jurisdiction, whether or not inside the European Economic Area, and that by accepting these T&Cs you authorize and expressly consent to the processing of your Personal Data by us, our agents and/or our service providers, provided that where your Personal Data is processed by entities other than us, our agents or our service providers, we shall seek your prior written consent in respect of such processing (unless your consent is granted under another provision of this Policy or other agreement entered into between you and the Company).</p>
 <h3>8. THIRD-PARTY LINKS</h3>
 <p>Occasionally, at our discretion, we may include or offer third-party products or services on our Website. These third-party sites have separate and independent privacy policies. We therefore have no responsibility or liability for the content and activities of these linked sites. Nonetheless, we seek to protect the integrity of our Website and welcome any feedback about these sites. Please check these policies before you submit any Personal Data to these websites or use these services. It is also important to note that we allow third-party behavioral tracking. We use Google Analytics and conversion tracking on the Website.</p>

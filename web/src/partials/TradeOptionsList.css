@@ -42,9 +42,17 @@
     background-color: #3C3C3C;;
 }
 
+.light-mode .aco-table thead th.strike-col {
+    background-color: #9a9a9a;
+}
+
 .aco-table tbody td.strike-col {
     background-color: #404040;
     font-weight: 500;
+}
+
+.light-mode .aco-table tbody td.strike-col {
+    background-color: #dadada;
 }
 
 .aco-table thead .option-expiry-title-cell {
@@ -52,12 +60,18 @@
     text-align: center;
 }
 
+.light-mode .aco-table thead .option-expiry-title-cell {
+    background-color: white;
+}
+
 .bid-price {
-    color: #0ec812;
+    color: #0ec812;    
+    font-weight: 500;
 }
 
 .ask-price {
     color: #ed2e2e;
+    font-weight: 500;
 }
 
 .expiration-time {

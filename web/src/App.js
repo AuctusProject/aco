@@ -1,7 +1,6 @@
 import './App.css'
 import React, { Component } from 'react'
 import { Switch, Route, Redirect } from 'react-router-dom'
-import Home from './pages/Home'
 import NavBar from './partials/NavBar'
 import Footer from './partials/Footer'
 import { withRouter } from 'react-router-dom'
@@ -15,11 +14,12 @@ import Writer from './pages/Writer'
 import Exercise from './pages/Exercise'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getNetworkName, CHAIN_ID, getMarketDetails, getCurrentRoute, getPairIdFromRoute } from './util/constants'
+import { getNetworkName, CHAIN_ID, getMarketDetails, getCurrentRoute, getPairIdFromRoute, isDarkMode } from './util/constants'
 import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 import Pools from './pages/Pools'
+import Vaults from './pages/Vaults'
 
 class App extends Component {
   constructor() {
@@ -32,6 +32,7 @@ class App extends Component {
       toggleAdvancedTooltip: false,
       orderBooks:{}
     }
+    this.loadLayoutMode()
   }
 
   componentDidMount = () => {
@@ -115,22 +116,44 @@ class App extends Component {
     }
   }
 
+  setLayoutMode = (isDarkMode) => {
+    if (isDarkMode) {
+      if (!document.body.classList.contains("dark-mode")) {
+        document.body.classList.remove('light-mode')
+        document.body.classList.add('dark-mode')
+      }
+      window.localStorage.setItem('LAYOUT_MODE', '1')
+    }
+    else {
+      if (!document.body.classList.contains("light-mode")) {
+        document.body.classList.remove('dark-mode')
+        document.body.classList.add('light-mode')
+      }
+      window.localStorage.setItem('LAYOUT_MODE', '0')
+    }
+  }
+
+  loadLayoutMode = () => {
+    this.setLayoutMode(isDarkMode())
+  }
+
   render() {
     var showNavbar = window.location.pathname !== "/"
     var showFooter = window.location.pathname.indexOf("trade") < 0
+    var darkMode = isDarkMode()
     return (
       <Web3Provider onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
         <ApiCoingeckoDataProvider>
           {this.state.loading ? 
           <div className="initial-loading">
-            <img src="/logo.png" alt="Auctus Crypto Options" />
+            <img src={darkMode ? "/logo_white.svg" : "/logo.svg"} className="aco-logo" alt="" />
             <div className="mt-3">
               <FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>&nbsp;
-              Loading ACO...
+              Loading Auctus...
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
+            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -145,6 +168,7 @@ class App extends Component {
                   path={`/advanced/mint/:pair?/:tokenAddress?`}
                   render={ routeProps => <Writer 
                     {...routeProps}
+                    darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                   /> }
@@ -153,6 +177,7 @@ class App extends Component {
                   path={`/advanced/exercise/:pair?/`}
                   render={ routeProps => <Exercise 
                     {...routeProps}
+                    darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                   /> }
@@ -161,6 +186,7 @@ class App extends Component {
                   path={`/advanced/trade/:pair?/:tokenAddress?`}
                   render={ routeProps => <Trade 
                     {...routeProps}
+                    darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                     orderBooks={this.state.orderBooks}
@@ -171,6 +197,7 @@ class App extends Component {
                   path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`, '/pools/:pair?/:tokenAddress?']}
                   render={ routeProps => <Simple 
                     {...routeProps}
+                    darkMode={darkMode}
                     signIn={this.showSignInModal}
                     onPairSelected={this.onPairSelected} 
                     onPairsLoaded={this.onPairsLoaded}
@@ -185,27 +212,25 @@ class App extends Component {
                   path={`/advanced/pools/:pair?/:tokenAddress?`}
                   render={ routeProps => <Pools 
                     {...routeProps}
+                    darkMode={darkMode}
                     signIn={this.showSignInModal}
                     accountToggle={this.state.accountToggle}
                   /> }
                 />
                 <Route 
-                  path={`/:pair?`}
-                  exact={true}
-                  render={ routeProps => <Home
+                  path={[`/vaults`, `/advanced/vaults`]}
+                  render={ routeProps => <Vaults
                     {...routeProps}
-                    onPairSelected={this.onPairSelected} 
-                    selectedPair={this.state.selectedPair}
-                    orderBooks={this.state.orderBooks}
-                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
+                    darkMode={darkMode}
                     signIn={this.showSignInModal}
+                    accountToggle={this.state.accountToggle}
                   /> }
                 />
-                <Redirect to="/"></Redirect>
+                <Redirect to="/buy"></Redirect>
               </Switch>
               {showFooter && <Footer />}
             </div>
-            {this.state.showSignIn && <MetamaskModal onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
+            {this.state.showSignIn && <MetamaskModal darkMode={darkMode} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
           </main>}
         </ApiCoingeckoDataProvider>
       </Web3Provider>

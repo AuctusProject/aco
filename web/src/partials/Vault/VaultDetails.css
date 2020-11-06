@@ -1,0 +1,163 @@
+.accordion .card {
+    margin: 20px 0;
+    border-radius: 0.25rem !important;
+    border: solid 1px #464646;
+}
+
+.accordion .card .card-header {
+    background-color: #f7f7f7;    
+    display: flex;
+    flex-direction: row;    
+    align-items: center;
+}
+
+.dark-mode .card .card-header {
+    background-color: #353535;
+}
+
+.dark-mode .accordion .card {
+    background-color: #252525;
+}
+
+.vault-name {
+    width: 230px;
+    text-align: center;
+    font-size: 16px;
+    letter-spacing: 0.4px;
+}
+
+.vault-name img {
+    max-height: 40px;
+    max-width: 40px;
+    margin-right: 12px;
+}
+
+.vault-details { 
+    max-width: calc(100% - 230px);
+    display: flex;
+    flex-direction: row;    
+    justify-content: space-evenly;
+    flex: 1;
+    align-items: center;
+}
+
+.header-separator {
+    width: 1px;
+    height: 67px;
+    background-color: #505050;
+}
+
+.vault-apy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.9px;
+}
+
+.vault-apy-value {
+    font-weight: bold;
+    color: #1782fc;
+}
+
+.vault-option {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    letter-spacing: 0.7px;
+}
+
+.vault-current-option {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+}
+
+.right-arrow {    
+    font-size: 28px;
+}
+
+.vault-chevron {
+    transform: rotate(-180deg);
+    transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+}
+
+.card-header.collapsed .vault-chevron  {
+    transform: rotate(0deg);
+}
+
+.card-header.disabled {
+    cursor: default;
+}
+
+.vault-card .input-row {
+    justify-content: space-around;
+}
+
+.vault-card .input-column {
+    max-width: 305px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.vault-card .input-label {
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.6px;
+}
+
+.vault-card .input-field {
+    width: 100%;
+}
+
+.vault-card .input-field input {
+    width: 100%;
+}
+
+.vault-card .action-btn {
+    margin-top: 12px;
+    border-radius: 2px;
+}
+
+.vault-position {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.vault-position-title {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+}
+
+.vault-position tfoot td {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-align: center;
+    color: #1782fc;
+}
+
+.light-mode .vault-position .aco-table thead th.value-highlight {
+    background-color: #aaaaaa;
+}
+
+.light-mode .vault-position .aco-table td.value-highlight {
+    background-color: #f2f2f2;
+}
+
+.light-mode .vault-position th:first-child,
+.light-mode .vault-position td:first-child {
+    text-align: left;
+}
+
+.card-body .home-btn {
+    margin: auto;
+}

@@ -10,6 +10,10 @@
     border-bottom: 0;
 }
 
+.light-mode .simple-box .nav-tabs {
+    background-color: #e6e6e6;
+}
+
 .simple-box .nav-tabs .nav-link {
     position: relative;
     max-width: 100%;
@@ -22,14 +26,14 @@
 
 .earn-badge {
     border-radius: 5px;
-    background-color: #a8c708;
+    background-color: #1782fc;
     font-size: 14px;
     font-weight: normal;
     font-stretch: normal;
     font-style: normal;
     letter-spacing: 0.35px;
     text-align: center;
-    color: #242424;
+    color: white;
     position: absolute;    
     top: 10px;
     left: calc(50% + 22px);
@@ -54,10 +58,50 @@
     display: flex;
 }
 
+.light-mode .simple-box .nav-tabs .nav-link {
+    color: #333333;
+}
+
+.simple-box .nav-tabs .nav-link:hover,
+.simple-box .nav-tabs .nav-link:focus {
+    border-bottom-color: #1782fc;
+}
+
 .simple-box .nav-tabs .nav-link.active {
-    color: #495057;
     background-color: transparent;
-    border-bottom-color: #fff;
+    border-bottom-color: #1782fc;
     font-weight: bold;
-    color: #ffffff;
+    color: #1782fc;
+}
+
+.pair-and-mode-wrapper {
+    display: flex;
+    max-width: 880px;
+    margin: auto;    
+    position: relative;
+}
+
+@media(min-width: 881px) {
+    .pair-and-mode-wrapper .pair-dropdown-wrapper {
+        margin: auto;
+    }
+
+    .pair-and-mode-wrapper .nav-modes {
+        position: absolute;
+        right: 0;
+    }
+}
+
+@media(max-width: 880px) {
+    .pair-and-mode-wrapper .pair-dropdown-wrapper {
+        margin-right: auto;
+    }
+
+    .pair-and-mode-wrapper .pair-dropdown-wrapper .nav-link {
+        padding: 0;
+    }    
+    
+    .pair-and-mode-wrapper .nav-modes {
+        margin-left: auto;
+    }   
 }

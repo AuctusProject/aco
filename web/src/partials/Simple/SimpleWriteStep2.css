@@ -21,13 +21,9 @@
 
 .collateral-label {
     font-size: 14px;
-    font-weight: 300;
-    font-stretch: normal;
-    font-style: normal;
     line-height: 1;
     letter-spacing: 0.7px;
     text-align: center;
-    color: #e6e6e6;
     margin-right: 10px;
     margin-left: 10px;
 }
@@ -37,7 +33,6 @@
     width: 60px;
     text-align: center;
     background-color: transparent;
-    color: #e6e6e6;
 }
 
 .max-and-balance {
@@ -58,7 +53,6 @@
     font-weight: 300;
     letter-spacing: 0.5px;
     text-align: center;
-    color: #e6e6e6;
 }
 
 .chart-and-summary {
@@ -69,15 +63,6 @@
     width: 380px;
     max-width: calc(100% - 40px);
 }
-
-.chart-and-summary .write-chart-wrapper {
-    width: calc(100% - 370px);
-    margin: 0 10px;
-    align-self: stretch;
-    background-color: #363636;
-    padding: 8px;
-}
-
 
 .chart-and-summary .summary-wrapper {
     width: 100%;
@@ -110,13 +95,16 @@
     min-height: 58px;
 }
 
+.light-mode .summary-wrapper .summary-title-wrapper {
+    background-color: #e6e6e6;
+}
+
 .summary-wrapper .summary-title {
     font-size: 14px;
     font-weight: 300;
     line-height: 1;
     letter-spacing: 0.7px;
     text-align: center;
-    color: #e6e6e6;
     margin-top: auto;
     margin-bottom: auto;
     width: 73px;
@@ -131,6 +119,7 @@
     margin-right: 8px;
 }
 
+
 .summary-wrapper .summary-description {
     font-size: 10px;
     font-weight: 300;
@@ -139,11 +128,15 @@
     line-height: 1.4;
     letter-spacing: 0.5px;
     text-align: left;
-    color: #a8c708;
+    color: #1782fc;
 }
 
 .summary-wrapper .summary-highlight {   
     background-color: #2d2d2d;
+}
+
+.light-mode .summary-wrapper .summary-highlight {
+    background-color: #f2f2f2;
 }
 
 .summary-item {
@@ -158,17 +151,15 @@
 .summary-item.summary-highlight .summary-item-label {
     font-size: 12px;
     font-weight: 500;
-    color: #e6e6e6;
 }
 
 .summary-item .summary-item-label {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 300;
     font-stretch: normal;
     font-style: normal;
     letter-spacing: 0.5px;
     text-align: left;
-    color: #a6a6a6;
 }
 
 .summary-item .summary-item-value {
@@ -181,6 +172,14 @@
     color: #e6e6e6;
     white-space: nowrap;
     padding-left: 5px;
+}
+
+.light-mode .summary-item .summary-item-value {
+    color: #262626;
+}
+
+.light-mode .summary-highlight .summary-item-value {
+    color: #1782fc;
 }
 
 .similar-prices {
@@ -197,6 +196,10 @@
     text-align: center;
     color: #e6e6e6;
     margin-top: 20px;
+}
+
+.light-mode .ref-label {
+    color: #333333;
 }
 
 .similar-label {

@@ -176,7 +176,7 @@ class WriteStep3 extends Component {
     var subtitle = ""
     var img = null
     if (needApprove && stepNumber === 1) {
-      subtitle =  "Confirm on Metamask to unlock "+this.getCollaterizeAssetSymbol()+" for minting on ACO" 
+      subtitle =  "Confirm on Metamask to unlock "+this.getCollaterizeAssetSymbol()+" for minting on Auctus" 
       img = <MetamaskLargeIcon/>
     }
     else if (needApprove && stepNumber === 2) {

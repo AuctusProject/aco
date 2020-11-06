@@ -10,12 +10,14 @@ export const acoPoolFactoryAddress = process.env.REACT_APP_ACO_POOL_FACTORY_ADDR
 export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
 export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
 export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
+export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
 export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
 export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
+export const acoVaults = JSON.parse(process.env.REACT_APP_ACO_VAULTS);
 export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
@@ -341,4 +343,8 @@ export const numberToData = (num) => {
   
 export const booleanToData = (bool) => {
     return "000000000000000000000000000000000000000000000000000000000000000" + (bool ? "1" : "0")
+}
+
+export const isDarkMode = () => {
+    return window.localStorage.getItem('LAYOUT_MODE') === "1"
 }

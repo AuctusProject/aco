@@ -10,18 +10,28 @@ import SimpleWriteTab from '../partials/Simple/SimpleWriteTab'
 import SimpleManageTab from '../partials/Simple/SimpleManageTab'
 import { getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import { faExclamationCircle, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import Pools from './Pools'
 
 class Simple extends Component {
   constructor() {
     super()
-    this.state = { pairs: null, toggleOptionsLoaded: false }
+    this.state = { 
+      pairs: null, 
+      toggleOptionsLoaded: false, 
+      showAdvancedTootlip: false 
+    }
   }
   
   componentDidMount = () => {
     this.props.toggleAdvancedTooltip()
     this.loadAvailableOptions()
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
+      this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
+    }
   }
 
   isConnected = () => {
@@ -56,11 +66,63 @@ class Simple extends Component {
     return baseUrl
   }
 
+  openAdvancedMode = () => {
+    var url = ""
+    if (window.location.pathname.indexOf("buy") > 0) {
+      url = "/advanced/trade"
+    } else if (window.location.pathname.indexOf("write") > 0) {
+      url = "/advanced/mint"
+    } else if (window.location.pathname.indexOf("manage") > 0) {
+      url = "/advanced/exercise"
+    } else if (window.location.pathname.indexOf("pools") > 0) {
+      url = "/advanced/pools"
+    } else if (window.location.pathname.indexOf("vaults") > 0) {
+      url = "/advanced/vaults"
+    }
+
+    url = this.getUrlWithPairId(url)
+    
+    if (this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork) {
+      var win = window.open(url, '_blank');
+      win.focus();
+    }
+    else {
+      this.props.signIn(url, this.context)
+    }
+  }
+
+  getUrlWithPairId = (baseUrl) => {
+    var pairId = getPairIdFromRoute(this.props.location)
+    if (pairId) {
+      return baseUrl + "/" + pairId
+    }
+    return baseUrl
+  }
+
+  onDismissAdvancedTooltip = () => {
+    this.setState({showAdvancedTootlip: false})
+    window.localStorage.setItem('DISMISS_ADVANCED_TOOLTIP', '1')
+  }
+
   render() {
     var filteredOptions = this.getOptionsFromPair()
     return <div className="py-4">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>Exercise is not automatic, please remember manually exercising in-the-money options before expiration.</div>    
-        <ul className="pair-dropdown-wrapper"><PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown></ul>
+        <div className="pair-and-mode-wrapper">
+          <ul className="pair-dropdown-wrapper">
+            <PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown>
+          </ul>
+          <ul className="navbar-nav nav-modes ml-auto">
+            <div className="app-mode active">Basic</div>
+            <div className="app-mode" onClick={() => this.openAdvancedMode()}>Advanced<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
+            {this.state.showAdvancedTootlip && window.innerWidth >= 992 &&
+            <div className="advanced-tooltip">
+              Go to advanced mode to trade options with limit orders.
+              <div className="action-btn" onClick={() => this.onDismissAdvancedTooltip()}>Dismiss</div>
+            </div>}
+          </ul>
+        </div>
+        
         <div className="simple-box">
           <ul className="nav nav-tabs justify-content-center" id="simpleTabs" role="tablist">
             <li className="nav-item">

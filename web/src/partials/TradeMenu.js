@@ -64,14 +64,14 @@ class TradeMenu extends Component {
             <div className="trade-menu-footer-links">
               <NavLink to="/terms">Terms</NavLink>
               <NavLink to="/privacy">Privacy Policy</NavLink>
-              <a target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/faq">FAQ</a>
-              <a target="_blank" rel="noopener noreferrer" href="https://docs.aco.finance/">DOCS</a>
+              <a target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/faq">FAQ</a>
+              <a target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/">DOCS</a>
               <a target="_blank" rel="noopener noreferrer" href="https://defipulse.com">DeFi Pulse</a>
             </div>
             <div className="trade-menu-footer-media">
-              <div>© 2020 ACO</div>
+              <div>© 2020 Auctus</div>
               <div>
-                <a rel="noopener noreferrer" href="mailto:contact@aco.finance"><FontAwesomeIcon icon={faEnvelope} /></a>
+                <a rel="noopener noreferrer" href="mailto:contact@auctus.org"><FontAwesomeIcon icon={faEnvelope} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://twitter.com/AcoFinance"><FontAwesomeIcon icon={faTwitter} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://discord.gg/9JqeMxs"><FontAwesomeIcon icon={faDiscord} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://github.com/AuctusProject/aco"><FontAwesomeIcon icon={faGithub} /></a>
