@@ -158,6 +158,10 @@
     text-align: left;
 }
 
-.card-body .action-btn {
+.accordion .card-body .action-btn {
+    text-align: center;
+}
+
+.accordion .card-body .action-btn {
     margin: auto;
 }
