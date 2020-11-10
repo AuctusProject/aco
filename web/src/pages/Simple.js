@@ -133,9 +133,6 @@ class Simple extends Component {
             <li className="nav-item">
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/manage`)}>Manage</NavLink>
             </li>
-            <li className="nav-item">
-              <NavLink className="nav-link" to={this.getUrlWithPairId(`/pools`)}>Pools</NavLink>
-            </li>
           </ul>
           <div className="tab-content" id="simpleTabsContent">
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("buy") > 0 ? " show active" : "")}>
