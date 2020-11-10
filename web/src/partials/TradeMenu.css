@@ -1,7 +1,7 @@
 .trade-menu {
     background-color: #1a1a1a;
     width: 300px;
-    height: calc(100vh - 62px);
+    height: calc(100vh - 63px);
     overflow: auto;
 }
 
