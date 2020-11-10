@@ -12,6 +12,7 @@ import BigNumber from 'bignumber.js'
 import DepositModal from '../partials/Pool/DepositModal'
 import WithdrawModal from '../partials/Pool/WithdrawModal'
 import Loading from '../partials/Util/Loading'
+import ReactTooltip from 'react-tooltip'
 
 class Pools extends Component {
   constructor() {
@@ -127,8 +128,14 @@ class Pools extends Component {
                   <span className="pool-countdown">Close in <Countdown date={pool.poolStart * 1000} /></span>
                 </div> :
                 (pool.maxExpiration * 1000 > Date.now() ? 
-                  <span className="pool-countdown">Pool end in <Countdown date={pool.maxExpiration * 1000} /></span> :
-                  <div className="action-btn btn-sm"  onClick={this.onWithdrawClick(pool)}>WITHDRAW</div>
+                <div className="deposit-col">
+                  <span className="pool-status" data-tip data-for="pool-status-tooltip">Running</span>
+                  <ReactTooltip className="info-tooltip" id="pool-status-tooltip">
+                    Deposit period ended. Withdraw will be available after {formatDate(pool.maxExpiration)}.
+                  </ReactTooltip>
+                  <span className="pool-countdown">Pool end in <Countdown date={pool.maxExpiration * 1000} /></span>
+                </div> :
+                <div className="action-btn btn-sm"  onClick={this.onWithdrawClick(pool)}>WITHDRAW</div>
                 )
               }
             </div>

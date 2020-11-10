@@ -69,3 +69,23 @@
     margin: auto;
     padding: 0px 16px;
 }
+
+.pool-status {
+    color: #0ec812;
+    text-align: right;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 14px;
+}
+
+.pool-status::before {
+    content: " ";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0ec812;
+    display: block;
+    margin-right: 4px;
+}

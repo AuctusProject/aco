@@ -194,7 +194,7 @@ class App extends Component {
                   /> }
                 />                
                 <Route 
-                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`, '/pools/:pair?/:tokenAddress?']}
+                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
                   render={ routeProps => <Simple 
                     {...routeProps}
                     darkMode={darkMode}
@@ -209,7 +209,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={`/advanced/pools/:pair?/:tokenAddress?`}
+                  path={[`/pools/:pair?/:tokenAddress?`, `/advanced/pools/:pair?/:tokenAddress?`]}
                   render={ routeProps => <Pools 
                     {...routeProps}
                     darkMode={darkMode}
