@@ -10,6 +10,7 @@ describe("ACOPoolFactory", function() {
   let poolFactoryInterface;
   let ACOPool;
   let ACOPoolFactory;
+  let ACOPoolFactoryV2;
   let flashExercise;
   let owner;
   let addr1;
@@ -30,6 +31,7 @@ describe("ACOPoolFactory", function() {
   let defaultStrategy;
   let chiToken;
   let fee = 100;
+  let converterHelper;
 
   beforeEach(async function () {
     [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
@@ -37,7 +39,7 @@ describe("ACOPoolFactory", function() {
     ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
     await ACOPool.deployed();
 
-    let ACOFactory = await (await ethers.getContractFactory("ACOFactory")).deploy();
+    let ACOFactory = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
     await ACOFactory.deployed();
     
     factoryInterface = new ethers.utils.Interface(factoryABI.abi);
@@ -66,6 +68,9 @@ describe("ACOPoolFactory", function() {
     ACOPoolFactory = await (await ethers.getContractFactory("ACOPoolFactory")).deploy();
     await ACOPoolFactory.deployed();
 
+    ACOPoolFactoryV2 = await (await ethers.getContractFactory("ACOPoolFactoryV2")).deploy();
+    await ACOPoolFactoryV2.deployed();
+
     poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
 
     let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, ownerAddr]);
@@ -81,6 +86,9 @@ describe("ACOPoolFactory", function() {
 
     defaultStrategy = await createAcoStrategy1();
     await buidlerACOPoolFactory.setAcoPoolStrategyPermission(defaultStrategy.address, true);
+
+    converterHelper = await (await ethers.getContractFactory("ACOAssetConverterHelper")).deploy(uniswapRouter.address);
+    await converterHelper.deployed();
   });
   
   describe("Proxy Deployment", function () {
@@ -115,6 +123,10 @@ describe("ACOPoolFactory", function() {
 
   describe("ACOPoolFactory transactions", function () {
     it("Check create ACO pool", async function () {
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
       let now = await getCurrentTimestamp();
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result1 = tx.events[tx.events.length - 1].args;
@@ -137,7 +149,11 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerPool.fee()).to.equal(fee);
       expect(await buidlerPool.feeDestination()).to.equal(await owner.getAddress());
     });
-    it("Check fail to create ACO pool", async function () {      
+    it("Check fail to create ACO pool", async function () {  
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+    
       let now = await getCurrentTimestamp();
       await expect(
         buidlerACOPoolFactory.connect(addr1).createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
@@ -189,8 +205,30 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerACOPoolFactory.factoryAdmin()).to.equal(await owner.getAddress());
       await buidlerACOPoolFactory.setFactoryAdmin(await addr1.getAddress());
       expect(await buidlerACOPoolFactory.factoryAdmin()).to.equal(await addr1.getAddress());
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(addr1).setAcoAssetConverterHelper(converterHelper.address);
+
+      expect(await buidlerACOPoolFactory.factoryAdmin()).to.equal(await addr1.getAddress());
+      await buidlerACOPoolFactory.connect(addr1).setFactoryAdmin(await addr2.getAddress());
+      expect(await buidlerACOPoolFactory.factoryAdmin()).to.equal(await addr2.getAddress());
     });
     it("Check fail to set pool factory admin", async function () {
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOPoolFactory::_setFactoryAdmin: Invalid factory admin");
+      expect(await buidlerACOPoolFactory.factoryAdmin()).to.equal(await owner.getAddress());
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setFactoryAdmin(await addr1.getAddress())
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.factoryAdmin()).to.equal(await owner.getAddress());
+      
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
       await expect(
         buidlerACOPoolFactory.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOPoolFactory::_setFactoryAdmin: Invalid factory admin");
@@ -207,6 +245,16 @@ describe("ACOPoolFactory", function() {
 
       await buidlerACOPoolFactory.setAcoPoolImplementation(newACOPool.address);
       expect(await buidlerACOPoolFactory.acoPoolImplementation()).to.equal(newACOPool.address);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
+      let newACOPool2 = await (await ethers.getContractFactory("ACOPool")).deploy();
+      await newACOPool2.deployed();
+      expect(await buidlerACOPoolFactory.acoPoolImplementation()).to.equal(newACOPool.address);
+      await buidlerACOPoolFactory.setAcoPoolImplementation(newACOPool2.address);
+      expect(await buidlerACOPoolFactory.acoPoolImplementation()).to.equal(newACOPool2.address);
     });
     it("Check fail to set ACO pool implementation", async function () {
       await expect(
@@ -218,15 +266,54 @@ describe("ACOPoolFactory", function() {
         buidlerACOPoolFactory.connect(addr1).setAcoPoolImplementation(ACOToken.address)
       ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
       expect(await buidlerACOPoolFactory.acoPoolImplementation()).to.equal(ACOPool.address);
+      
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setAcoPoolImplementation(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOPoolFactory::_setAcoPoolImplementation: Invalid ACO pool implementation");
+      expect(await buidlerACOPoolFactory.acoPoolImplementation()).to.equal(ACOPool.address);
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setAcoPoolImplementation(ACOToken.address)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.acoPoolImplementation()).to.equal(ACOPool.address);
     });
     it("Check set ACO factory", async function () {
-      let newACOFactory = await (await ethers.getContractFactory("ACOFactory")).deploy();
+      let newACOFactory = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
       await newACOFactory.deployed();
 
       await buidlerACOPoolFactory.setAcoFactory(newACOFactory.address);
       expect(await buidlerACOPoolFactory.acoFactory()).to.equal(newACOFactory.address);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
+      let newACOFactory2 = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
+      await newACOFactory2.deployed();
+
+      expect(await buidlerACOPoolFactory.acoFactory()).to.equal(newACOFactory.address);
+      await buidlerACOPoolFactory.setAcoFactory(newACOFactory2.address);
+      expect(await buidlerACOPoolFactory.acoFactory()).to.equal(newACOFactory2.address);
     });
     it("Check fail to set ACO factory", async function () {
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setAcoFactory(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOPoolFactory::_setAcoFactory: Invalid ACO factory");
+      expect(await buidlerACOPoolFactory.acoFactory()).to.equal(buidlerACOFactoryProxy.address);
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setAcoFactory(buidlerACOFactoryProxy.address)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.acoFactory()).to.equal(buidlerACOFactoryProxy.address);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
       await expect(
         buidlerACOPoolFactory.connect(owner).setAcoFactory(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOPoolFactory::_setAcoFactory: Invalid ACO factory");
@@ -240,13 +327,38 @@ describe("ACOPoolFactory", function() {
     it("Check set ACO flash exercise", async function () {
       expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(flashExercise.address);
 
-      newFlashExercise = await (await ethers.getContractFactory("ACOFlashExercise")).deploy(uniswapRouter.address);
+      let newFlashExercise = await (await ethers.getContractFactory("ACOFlashExercise")).deploy(uniswapRouter.address);
       await newFlashExercise.deployed();
       
       await buidlerACOPoolFactory.setAcoFlashExercise(newFlashExercise.address);
       expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(newFlashExercise.address);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
+      let newFlashExercise2 = await (await ethers.getContractFactory("ACOFlashExercise")).deploy(uniswapRouter.address);
+      await newFlashExercise2.deployed();
+      
+      expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(newFlashExercise.address);
+      await buidlerACOPoolFactory.setAcoFlashExercise(newFlashExercise2.address);
+      expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(newFlashExercise2.address);
     });
     it("Check fail to set ACO flash exercise", async function () {
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setAcoFlashExercise(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOPoolFactory::_setAcoFlashExercise: Invalid ACO flash exercise");
+      expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(flashExercise.address);
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setAcoFlashExercise(flashExercise.address)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.acoFlashExercise()).to.equal(flashExercise.address);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
       await expect(
         buidlerACOPoolFactory.connect(owner).setAcoFlashExercise(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOPoolFactory::_setAcoFlashExercise: Invalid ACO flash exercise");
@@ -260,11 +372,22 @@ describe("ACOPoolFactory", function() {
     it("Check set CHI Token", async function () {
       expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
       
-      newChiToken = await (await ethers.getContractFactory("ChiToken")).deploy();
+      let newChiToken = await (await ethers.getContractFactory("ChiToken")).deploy();
       await newChiToken.deployed();
       
       await buidlerACOPoolFactory.setChiToken(newChiToken.address);
       expect(await buidlerACOPoolFactory.chiToken()).to.equal(newChiToken.address);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+      
+      let newChiToken2 = await (await ethers.getContractFactory("ChiToken")).deploy();
+      await newChiToken2.deployed();
+      
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(newChiToken.address);
+      await buidlerACOPoolFactory.setChiToken(newChiToken2.address);
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(newChiToken2.address);
     });
     it("Check fail to set CHI Token", async function () {
       await expect(
@@ -272,8 +395,22 @@ describe("ACOPoolFactory", function() {
       ).to.be.revertedWith("ACOPoolFactory::_setChiToken: Invalid Chi Token");
       expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
 
-      newChiToken = await (await ethers.getContractFactory("ChiToken")).deploy();
+      let newChiToken = await (await ethers.getContractFactory("ChiToken")).deploy();
       await newChiToken.deployed();
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setChiToken(newChiToken.address)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
+      
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+      
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setChiToken(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOPoolFactory::_setChiToken: Invalid Chi Token");
+      expect(await buidlerACOPoolFactory.chiToken()).to.equal(chiToken.address);
 
       await expect(
         buidlerACOPoolFactory.connect(addr1).setChiToken(newChiToken.address)
@@ -290,9 +427,30 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(true);
       await buidlerACOPoolFactory.setAcoPoolPermission(addr1Address, false);
       expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(false);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+      
+      expect(await buidlerACOPoolFactory.poolAdminPermission(ownerAddress)).to.equal(true);
+      expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(false);
+
+      await buidlerACOPoolFactory.setAcoPoolPermission(addr1Address, true);
+      expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(true);
+      await buidlerACOPoolFactory.setAcoPoolPermission(addr1Address, false);
+      expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(false);
     });
     it("Check fail to set ACO pool permission", async function () {
-      let addr1Address = await addr1.getAddress()
+      let addr1Address = await addr1.getAddress();
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setAcoPoolPermission(addr1Address, true)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(false);
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+      
       await expect(
         buidlerACOPoolFactory.connect(addr1).setAcoPoolPermission(addr1Address, true)
       ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
@@ -306,6 +464,16 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerACOPoolFactory.strategyPermitted(newStrategy.address)).to.equal(true);
       await buidlerACOPoolFactory.setAcoPoolStrategyPermission(newStrategy.address, false);
       expect(await buidlerACOPoolFactory.strategyPermitted(newStrategy.address)).to.equal(false);
+      
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+      
+      expect(await buidlerACOPoolFactory.strategyPermitted(newStrategy.address)).to.equal(false);
+      await buidlerACOPoolFactory.setAcoPoolStrategyPermission(newStrategy.address, true);
+      expect(await buidlerACOPoolFactory.strategyPermitted(newStrategy.address)).to.equal(true);
+      await buidlerACOPoolFactory.setAcoPoolStrategyPermission(newStrategy.address, false);
+      expect(await buidlerACOPoolFactory.strategyPermitted(newStrategy.address)).to.equal(false);
     });
     it("Check fail to set ACO pool strategy permission", async function () {
       let addr1Address = await addr1.getAddress()
@@ -313,17 +481,33 @@ describe("ACOPoolFactory", function() {
         buidlerACOPoolFactory.connect(addr1).setAcoPoolPermission(addr1Address, true)
       ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
       expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(false);
+      
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+      
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setAcoPoolPermission(addr1Address, true)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.poolAdminPermission(addr1Address)).to.equal(false);
     });
     it("Check set ACO pool strategy", async function () {
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
       let now = await getCurrentTimestamp();
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
+      let acoPool = await ethers.getContractAt("ACOPool", result.acoPool);
       
       let newStrategy = await createAcoStrategy1();      
       await buidlerACOPoolFactory.setAcoPoolStrategyPermission(newStrategy.address, true);
       expect(await buidlerACOPoolFactory.strategyPermitted(newStrategy.address)).to.equal(true);
 
+      expect(await acoPool.strategy()).to.equal(defaultStrategy.address);
       await buidlerACOPoolFactory.setAcoPoolStrategy(newStrategy.address, [result.acoPool]);
+      expect(await acoPool.strategy()).to.equal(newStrategy.address);
     });
     it("Check fail to set ACO pool strategy", async function () {
       let newStrategy = await createAcoStrategy1();    
@@ -336,8 +520,28 @@ describe("ACOPoolFactory", function() {
       await expect(
         buidlerACOPoolFactory.connect(addr1).setAcoPoolStrategy(newStrategy.address, [])
       ).to.be.revertedWith("ACOPoolFactory::onlyPoolAdmin");
+
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
+      await buidlerACOPoolFactory.setAcoPoolStrategyPermission(newStrategy.address, false);
+
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setAcoPoolStrategy(newStrategy.address, [])
+      ).to.be.revertedWith("ACOPoolFactory::_validateStrategy: Invalid strategy");
+
+      await buidlerACOPoolFactory.setAcoPoolStrategyPermission(newStrategy.address, true);
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setAcoPoolStrategy(newStrategy.address, [])
+      ).to.be.revertedWith("ACOPoolFactory::onlyPoolAdmin");
     });
     it("Check set ACO pool base volatility", async function () {
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
       let now = await getCurrentTimestamp();
      
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
@@ -355,6 +559,10 @@ describe("ACOPoolFactory", function() {
         buidlerACOPoolFactory.setAcoPoolBaseVolatility([100000], [])
       ).to.be.revertedWith("ACOPoolFactory::_setAcoPoolBaseVolatility: Invalid arguments");
 
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
       let now = await getCurrentTimestamp();
       let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
@@ -371,7 +579,33 @@ describe("ACOPoolFactory", function() {
 
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
     });
+    it("Check set ACO asset converter helper", async function () {
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
 
+      let newConverterHelper = await (await ethers.getContractFactory("ACOAssetConverterHelper")).deploy(uniswapRouter.address);
+      await newConverterHelper.deployed();
+      
+      expect(await buidlerACOPoolFactory.assetConverterHelper()).to.equal(converterHelper.address);
+      await buidlerACOPoolFactory.setAcoAssetConverterHelper(newConverterHelper.address);
+      expect(await buidlerACOPoolFactory.assetConverterHelper()).to.equal(newConverterHelper.address);
+    });
+    it("Check fail to set ACO asset converter helper", async function () {
+      await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryV2.address, []);
+      buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
+      await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
+
+      await expect(
+        buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOPoolFactory::_setAcoAssetConverterHelper: Invalid ACO asset converter helper");
+      expect(await buidlerACOPoolFactory.assetConverterHelper()).to.equal(converterHelper.address);
+
+      await expect(
+        buidlerACOPoolFactory.connect(addr1).setAcoAssetConverterHelper(converterHelper.address)
+      ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
+      expect(await buidlerACOPoolFactory.assetConverterHelper()).to.equal(converterHelper.address);
+    });
   });
 });
 

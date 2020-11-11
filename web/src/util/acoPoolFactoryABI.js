@@ -79,6 +79,25 @@ export const acoPoolFactoryABI =
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "previousAcoAssetConverterHelper",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newAcoAssetConverterHelper",
+				"type": "address"
+			}
+		],
+		"name": "SetAcoAssetConverterHelper",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "previousAcoFactory",
 				"type": "address"
 			},
@@ -382,6 +401,19 @@ export const acoPoolFactoryABI =
 	},
 	{
 		"inputs": [],
+		"name": "assetConverterHelper",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "chiToken",
 		"outputs": [
 			{
@@ -535,6 +567,19 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newAcoAssetConverterHelper",
+				"type": "address"
+			}
+		],
+		"name": "setAcoAssetConverterHelper",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{

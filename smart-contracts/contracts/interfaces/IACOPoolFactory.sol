@@ -5,6 +5,7 @@ interface IACOPoolFactory {
     function acoPoolImplementation() external view returns(address);
     function acoFactory() external view returns(address);
     function acoFlashExercise() external view returns(address);
+	function assetConverterHelper() external view returns(address);
     function chiToken() external view returns(address);
     function acoPoolFee() external view returns(uint256);
     function acoPoolFeeDestination() external view returns(address);

@@ -9,6 +9,7 @@ interface IACOPool is IERC20 {
         address acoFlashExercise;
         address acoFactory;
         address chiToken;
+		address assetConverterHelper;
         uint256 fee;
         address feeDestination;
         address underlying;

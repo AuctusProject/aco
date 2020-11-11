@@ -161,6 +161,7 @@ describe("Controller", function() {
     pairWethToken2 = await ethers.getContractAt("UniswapV2Pair", await uniswapFactory.getPair(token2.address, weth.address));
 
     converterHelper = await (await ethers.getContractFactory("ACOAssetConverterHelper")).deploy(uniswapRouter.address);
+    await converterHelper.deployed();
 
     await token2.connect(owner).approve(pairWethToken2.address, token2TotalSupply);
     await token2.connect(addr1).approve(pairWethToken2.address, token2TotalSupply);
@@ -192,14 +193,19 @@ describe("Controller", function() {
 
     let ACOPoolFactoryTemp = await (await ethers.getContractFactory("ACOPoolFactory")).deploy();
     await ACOPoolFactoryTemp.deployed();
+    let ACOPoolFactoryTempV2 = await (await ethers.getContractFactory("ACOPoolFactoryV2")).deploy();
+    await ACOPoolFactoryTempV2.deployed();
     
     let poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
     let poolFactoryInitData = poolFactoryInterface.functions.init.encode([await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, await addr3.getAddress()]);
     let buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOPoolFactoryTemp.address, poolFactoryInitData);
     await buidlerACOPoolFactoryProxy.deployed();
-    ACOPoolFactory = await ethers.getContractAt("ACOPoolFactory", buidlerACOPoolFactoryProxy.address);
+    ACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
 
     await ACOPoolFactory.setAcoPoolStrategyPermission(defaultStrategy.address, true);
+
+    await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryTempV2.address, []);
+    await ACOPoolFactory.setAcoAssetConverterHelper(converterHelper.address);
 
     let current = await getCurrentTimestamp();
     expiration = current + 3 * 86400;
