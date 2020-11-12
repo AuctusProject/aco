@@ -64,7 +64,15 @@ export function sendTransactionWithNonce(gasPrice, gasLimit, from, to, value, da
         };
 
         getWeb3().eth.sendTransaction(transactionObj, function (err, result) {
-            resolve(result);
+            if (err) {
+                reject(err)
+            }
+            else {
+                resolve(result)
+            }
+        })
+        .catch(err => {
+            reject(err)
         })
     })
 }
