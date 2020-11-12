@@ -270,7 +270,57 @@ contract ACOFactoryV2 is ACOFactory {
      * @dev The ACO token basic data.
      */
     mapping(address => ACOTokenData) public acoTokenData;
-	
+
+    /**
+     * @dev Function to create a new ACO token.
+     * It deploys a minimal proxy for the ACO token implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
+     * @return The created ACO token address.
+     */
+    function createAcoToken(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 strikePrice, 
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
+    ) onlyFactoryAdmin external override virtual returns(address) {
+        address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
+        acoTokenData[acoToken] = ACOTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime);
+        emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);
+        return acoToken;
+    }
+}
+
+contract ACOFactoryV3 is ACOFactoryV2 {
+
+    /**
+     * @dev Emitted when the operator address permission has been changed.
+     * @param operator Address of the operator.
+     * @param previousPermission Whether the operator was authorized.
+     * @param newPermission Whether the operator will be authorized.
+     */
+    event SetOperator(address indexed operator, bool indexed previousPermission, bool indexed newPermission);
+
+    /**
+     * @dev A map to register the ACO Factory operators permissions.
+     */
+    mapping(address => bool) public operators;
+
+    /**
+     * @dev Function to set the operator permission.
+     * @param operator Address of the operator.
+     * @param newPermission Whether the operator will be authorized.
+     */
+    function setOperator(address operator, bool newPermission) onlyFactoryAdmin external virtual {
+        _setOperator(operator, newPermission);
+    }
+
 	/**
      * @dev Function to create a new ACO token.
      * It deploys a minimal proxy for the ACO token implementation address. 
@@ -289,10 +339,21 @@ contract ACOFactoryV2 is ACOFactory {
         uint256 strikePrice, 
         uint256 expiryTime,
         uint256 maxExercisedAccounts
-    ) onlyFactoryAdmin external override returns(address) {
+    ) external override returns(address) {
+        require(operators[msg.sender], "ACOFactory::createAcoToken: Only authorized operators");
         address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
         acoTokenData[acoToken] = ACOTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime);
         emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);
         return acoToken;
+    }
+
+    /**
+     * @dev Internal function to set the operator permission.
+     * @param operator Address of the operator.
+     * @param newPermission Whether the operator will be authorized.
+     */
+    function _setOperator(address operator, bool newPermission) internal virtual {
+        emit SetOperator(operator, operators[operator], newPermission);
+        operators[operator] = newPermission;
     }
 }

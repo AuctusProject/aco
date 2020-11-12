@@ -39,7 +39,7 @@ describe("ACOPoolFactory", function() {
     ACOPool = await (await ethers.getContractFactory("ACOPool")).deploy();
     await ACOPool.deployed();
 
-    let ACOFactory = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
+    let ACOFactory = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
     await ACOFactory.deployed();
     
     factoryInterface = new ethers.utils.Interface(factoryABI.abi);
@@ -53,6 +53,8 @@ describe("ACOPoolFactory", function() {
     let factoryInitData = factoryInterface.functions.init.encode([ownerAddr, ACOToken.address, fee, addr2Addr]);
     buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactory.address, factoryInitData);
     await buidlerACOFactoryProxy.deployed();
+    let buidlerFactory = await ethers.getContractAt("ACOFactoryV3", buidlerACOFactoryProxy.address);
+    await buidlerFactory.setOperator(await owner.getAddress(), true);
 
     uniswapFactory = await (await ethers.getContractFactory("UniswapV2Factory")).deploy(await owner.getAddress());
     await uniswapFactory.deployed();
@@ -282,7 +284,7 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerACOPoolFactory.acoPoolImplementation()).to.equal(ACOPool.address);
     });
     it("Check set ACO factory", async function () {
-      let newACOFactory = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
+      let newACOFactory = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
       await newACOFactory.deployed();
 
       await buidlerACOPoolFactory.setAcoFactory(newACOFactory.address);
@@ -292,7 +294,7 @@ describe("ACOPoolFactory", function() {
       buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
       await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
 
-      let newACOFactory2 = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
+      let newACOFactory2 = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
       await newACOFactory2.deployed();
 
       expect(await buidlerACOPoolFactory.acoFactory()).to.equal(newACOFactory.address);
