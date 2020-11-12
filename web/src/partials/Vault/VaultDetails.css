@@ -11,6 +11,13 @@
     align-items: center;
 }
 
+
+@media(max-width:600px) {
+    .accordion .card .card-header {
+        flex-direction: column;
+    }
+}
+
 .dark-mode .card .card-header {
     background-color: #353535;
 }
@@ -24,6 +31,7 @@
     text-align: center;
     font-size: 16px;
     letter-spacing: 0.4px;
+    margin: auto;
 }
 
 .vault-name img {
@@ -39,12 +47,28 @@
     justify-content: space-evenly;
     flex: 1;
     align-items: center;
+    min-width: 340px;
+}
+
+@media (max-width:600px) {
+    .vault-details { 
+        margin-bottom: 8px;
+    }
 }
 
 .header-separator {
     width: 1px;
     height: 67px;
     background-color: #505050;
+}
+
+
+@media (max-width:600px) {
+    .header-separator {
+        width: 100%;
+        height: 1px;
+        margin: 16px 0;
+    }
 }
 
 .vault-apy {
@@ -62,6 +86,12 @@
     color: #1782fc;
 }
 
+@media(max-width:600px) {
+    .vault-apy-value {
+        font-size: 14px;
+    }
+}
+
 .vault-option {
     display: flex;
     flex-direction: column;
@@ -69,12 +99,30 @@
     align-items: center;
     font-size: 14px;
     letter-spacing: 0.7px;
+    
+    max-width: 80%;
 }
 
 .vault-current-option {
     font-size: 11px;
     font-weight: 300;
     letter-spacing: 0.5px;
+    text-align: center;
+    display: flex;
+}
+
+.vault-current-option > span {
+    margin-right: 4px;
+}
+
+@media(max-width:600px) {
+    .vault-current-option {
+        flex-direction: column;
+    }
+
+    .vault-current-option > span {
+        margin-right: 0;
+    }   
 }
 
 .right-arrow {    

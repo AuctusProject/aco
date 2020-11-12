@@ -197,7 +197,7 @@ class VaultDetails extends Component {
         </div>
         <div className="vault-option">
           <div>ETH {this.state.acoVaultInfo ? (this.state.acoVaultInfo.currentAcoTokenInfo.isCall ? "CALL": "PUT") : ""} OPTION</div>
-          {this.state.acoVaultInfo && <div className="vault-current-option">Current option: {this.state.acoVaultInfo.currentAcoTokenInfo.name}</div>}
+          {this.state.acoVaultInfo && <div className="vault-current-option"><span>Current option:</span><span>{this.state.acoVaultInfo.currentAcoTokenInfo.name}</span></div>}
         </div>
       </div>
       <FontAwesomeIcon className="vault-chevron" icon={faChevronDown}/>

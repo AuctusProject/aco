@@ -22,6 +22,7 @@ function getAvailablePools(underlying, strikeAsset, isCall) {
             let filteredPools = pools.filter(p => p.underlying.toLowerCase() === underlying.toLowerCase() && p.strikeAsset.toLowerCase() === strikeAsset.toLowerCase() && p.isCall === isCall)
             resolve(filteredPools)
         })
+        .catch(err => reject(err))
     })
 }
 
@@ -32,7 +33,8 @@ export const getAllAvailablePools = () => {
         }
         else {
             const acoPoolFactoryContract = getAcoPoolFactoryContract()
-            acoPoolFactoryContract.getPastEvents('NewAcoPool', { fromBlock: 0, toBlock: 'latest' }).then((events) => {
+            acoPoolFactoryContract.getPastEvents('NewAcoPool', { fromBlock: 0, toBlock: 'latest' })
+            .then((events) => {
                 var assetsAddresses = []
                 var pools = []
                 for (let i = 0; i < events.length; i++) {
@@ -45,11 +47,14 @@ export const getAllAvailablePools = () => {
                         assetsAddresses.push(eventValues.underlying)
                     }
                 }
-                fillTokensInformations(pools, assetsAddresses).then(pools => {
+                fillTokensInformations(pools, assetsAddresses)
+                .then(pools => {
                     availablePools = pools
                     resolve(availablePools)
                 })
+                .catch(err => reject(err))
             })
+            .catch(err => reject(err))
         }
     })
 }
@@ -99,10 +104,12 @@ function fillTokensInformations(pools, assetsAddresses) {
                 acoPoolStrikeAssetBalancePromise.then(result => {
                     pools[i].strikeAssetBalance = result
                 })
+                .catch(err => reject(err))
             }
             Promise.all(acoPoolPromises).then(() => {
                 resolve(pools)
-            })            
+            })
+            .catch(err => reject(err))
         })
     })
 }
@@ -123,5 +130,6 @@ export const getAvailablePoolsForOption = (option) => {
             }
             resolve(filteredPools)
         })
+        .catch(err => reject(err))
     })
 }

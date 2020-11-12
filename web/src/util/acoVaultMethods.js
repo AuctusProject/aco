@@ -1,4 +1,4 @@
-import { getWeb3, sendTransaction } from './web3Methods'
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
 import { acoVaultABI } from './acoVaultABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { getIsCall } from './acoTokenMethods';
@@ -136,8 +136,8 @@ export const withdraw = (from, acoVaultAddress, shares) => {
     return sendTransaction(null, null, from, acoVaultAddress, null, data)
 }
 
-export const deposit = (from, acoVaultAddress, amount) => {
+export const deposit = (from, acoVaultAddress, amount, nonce) => {
     const acoVaultContract = getAcoVaultContract(acoVaultAddress)
     var data = acoVaultContract.methods.deposit(amount).encodeABI()
-    return sendTransaction(null, null, from, acoVaultAddress, null, data)
+    return sendTransactionWithNonce(null, null, from, acoVaultAddress, null, data, null, nonce)
 }
