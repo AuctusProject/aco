@@ -12,7 +12,7 @@ import '../../interfaces/IACOFactory.sol';
 import '../../interfaces/IACOStrategy.sol';
 import '../../interfaces/IACOToken.sol';
 import '../../interfaces/IACOFlashExercise.sol';
-import '../../interfaces/IUniswapV2Router02.sol';
+import '../../interfaces/IACOAssetConverterHelper.sol';
 import '../../interfaces/IChiToken.sol';
 
 /**
@@ -140,9 +140,9 @@ contract ACOPool is Ownable, ERC20, IACOPool {
     IACOFactory public acoFactory;
 	
 	/**
-	 * @dev Address of the Uniswap V2 router.
+	 * @dev Address of the asset converter helper.
 	 */
-    IUniswapV2Router02 public uniswapRouter;
+    IACOAssetConverterHelper public assetConverterHelper;
 	
 	/**
 	 * @dev Address of the Chi gas token.
@@ -269,6 +269,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         require(initData.acoFactory.isContract(), "ACOPool:: Invalid ACO Factory");
         require(initData.acoFlashExercise.isContract(), "ACOPool:: Invalid ACO flash exercise");
         require(initData.chiToken.isContract(), "ACOPool:: Invalid Chi Token");
+		require(initData.assetConverterHelper.isContract(), "ACOPool:: Invalid asset converter helper");
         require(initData.fee <= 12500, "ACOPool:: The maximum fee allowed is 12.5%");
         require(initData.poolStart > block.timestamp, "ACOPool:: Invalid pool start");
         require(initData.minExpiration > block.timestamp, "ACOPool:: Invalid expiration");
@@ -285,6 +286,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         acoFlashExercise = IACOFlashExercise(initData.acoFlashExercise);
         acoFactory = IACOFactory(initData.acoFactory);
         chiToken = IChiToken(initData.chiToken);
+		assetConverterHelper = IACOAssetConverterHelper(initData.assetConverterHelper);
+		
         fee = initData.fee;
         feeDestination = initData.feeDestination;
         underlying = initData.underlying;
@@ -295,16 +298,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         maxExpiration = initData.maxExpiration;
         isCall = initData.isCall;
         canBuy = initData.canBuy;
-        
-        address _uniswapRouter = IACOFlashExercise(initData.acoFlashExercise).uniswapRouter();
-        uniswapRouter = IUniswapV2Router02(_uniswapRouter);
-        
+		
         _setStrategy(initData.strategy);
         _setBaseVolatility(initData.baseVolatility);
         
         _setAssetsPrecision(initData.underlying, initData.strikeAsset);
         
-        _approveAssetsOnRouter(initData.isCall, initData.canBuy, _uniswapRouter, initData.underlying, initData.strikeAsset);
+        _approveAssetsOnConverterHelper(initData.isCall, initData.canBuy, initData.assetConverterHelper, initData.underlying, initData.strikeAsset);
     }
 
     receive() external payable {
@@ -561,18 +561,15 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         address _underlying = underlying;
         bool _isCall = isCall;
         
-        uint256 underlyingBalance = _getPoolBalanceOf(_underlying);
-        uint256 strikeAssetBalance = _getPoolBalanceOf(_strikeAsset);
-        
         uint256 balanceOut;
         address assetIn;
         address assetOut;
         if (_isCall) {
-            balanceOut = strikeAssetBalance;
+            balanceOut = _getPoolBalanceOf(_strikeAsset);
             assetIn = _underlying;
             assetOut = _strikeAsset;
         } else {
-            balanceOut = underlyingBalance;
+            balanceOut = _getPoolBalanceOf(_underlying);
             assetIn = _strikeAsset;
             assetOut = _underlying;
         }
@@ -586,14 +583,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         } else {
             minToReceive = balanceOut.mul(acceptablePrice).div(underlyingPrecision);
         }
-        _swapAssetsExactAmountOut(assetOut, assetIn, minToReceive, balanceOut);
+        uint256 collateralIn = _swapAssetsExactAmountOut(assetOut, assetIn, minToReceive, balanceOut);
         
-        uint256 collateralIn;
-        if (_isCall) {
-            collateralIn = _getPoolBalanceOf(_underlying).sub(underlyingBalance);
-        } else {
-            collateralIn = _getPoolBalanceOf(_strikeAsset).sub(strikeAssetBalance);
-        }
         emit RestoreCollateral(balanceOut, collateralIn);
     }
     
@@ -938,51 +929,35 @@ contract ACOPool is Ownable, ERC20, IACOPool {
     }
     
     /**
-     * @dev Internal function to swap assets on the Uniswap V2 with an exact amount of an asset to be sold.
+     * @dev Internal function to swap assets on the asset converter helper with an exact amount of an asset to be sold.
      * @param assetOut Address of the asset to be sold.
 	 * @param assetIn Address of the asset to be purchased.
      * @param minAmountIn Minimum amount to be received.
      * @param amountOut The exact amount to be sold.
+	 * @return The amount of asset purchased.
      */
-    function _swapAssetsExactAmountOut(address assetOut, address assetIn, uint256 minAmountIn, uint256 amountOut) internal {
-        address[] memory path = new address[](2);
+    function _swapAssetsExactAmountOut(address assetOut, address assetIn, uint256 minAmountIn, uint256 amountOut) internal returns(uint256) {
+		uint256 etherAmount = 0;
         if (ACOAssetHelper._isEther(assetOut)) {
-            path[0] = acoFlashExercise.weth();
-            path[1] = assetIn;
-            uniswapRouter.swapExactETHForTokens{value: amountOut}(minAmountIn, path, address(this), block.timestamp);
-        } else if (ACOAssetHelper._isEther(assetIn)) {
-            path[0] = assetOut;
-            path[1] = acoFlashExercise.weth();
-            uniswapRouter.swapExactTokensForETH(amountOut, minAmountIn, path, address(this), block.timestamp);
-        } else {
-            path[0] = assetOut;
-            path[1] = assetIn;
-            uniswapRouter.swapExactTokensForTokens(amountOut, minAmountIn, path, address(this), block.timestamp);
+			etherAmount = amountOut;
         }
+        return assetConverterHelper.swapExactAmountOutWithMinAmountToReceive{value: etherAmount}(assetOut, assetIn, amountOut, minAmountIn);
     }
     
     /**
-     * @dev Internal function to swap assets on the Uniswap V2 with an exact amount of an asset to be purchased.
+     * @dev Internal function to swap assets on the asset converter helper with an exact amount of an asset to be purchased.
      * @param assetOut Address of the asset to be sold.
 	 * @param assetIn Address of the asset to be purchased.
      * @param amountIn The exact amount to be purchased.
      * @param maxAmountOut Maximum amount to be paid.
+	 * @return The amount of asset sold.
      */
-    function _swapAssetsExactAmountIn(address assetOut, address assetIn, uint256 amountIn, uint256 maxAmountOut) internal {
-        address[] memory path = new address[](2);
+    function _swapAssetsExactAmountIn(address assetOut, address assetIn, uint256 amountIn, uint256 maxAmountOut) internal returns(uint256) {
+		uint256 etherAmount = 0;
         if (ACOAssetHelper._isEther(assetOut)) {
-            path[0] = acoFlashExercise.weth();
-            path[1] = assetIn;
-            uniswapRouter.swapETHForExactTokens{value: maxAmountOut}(amountIn, path, address(this), block.timestamp);
-        } else if (ACOAssetHelper._isEther(assetIn)) {
-            path[0] = assetOut;
-            path[1] = acoFlashExercise.weth();
-            uniswapRouter.swapTokensForExactETH(amountIn, maxAmountOut, path, address(this), block.timestamp);
-        } else {
-            path[0] = assetOut;
-            path[1] = assetIn;
-            uniswapRouter.swapTokensForExactTokens(amountIn, maxAmountOut, path, address(this), block.timestamp);
+			etherAmount = maxAmountOut;
         }
+        return assetConverterHelper.swapExactAmountInWithMaxAmountToSold{value: etherAmount}(assetOut, assetIn, amountIn, maxAmountOut);
     }
     
     /**
@@ -1016,29 +991,29 @@ contract ACOPool is Ownable, ERC20, IACOPool {
     }
     
     /**
-     * @dev Internal function to infinite authorize the pool assets on the Uniswap V2 router.
+     * @dev Internal function to infinite authorize the pool assets on the asset converter helper.
      * @param _isCall True whether it is a CALL option, otherwise it is PUT.
      * @param _canBuy True whether the pool can also buy ACO tokens, otherwise it only sells.
-     * @param _uniswapRouter Address of the Uniswap V2 router.
+     * @param _assetConverterHelper Address of the asset converter helper.
      * @param _underlying Address of the underlying asset.
      * @param _strikeAsset Address of the strike asset.
      */
-    function _approveAssetsOnRouter(
+    function _approveAssetsOnConverterHelper(
         bool _isCall, 
         bool _canBuy, 
-        address _uniswapRouter,
+        address _assetConverterHelper,
         address _underlying,
         address _strikeAsset
     ) internal {
         if (_isCall) {
             if (!ACOAssetHelper._isEther(_strikeAsset)) {
-                _setAuthorizedSpender(_strikeAsset, _uniswapRouter);
+                _setAuthorizedSpender(_strikeAsset, _assetConverterHelper);
             }
             if (_canBuy && !ACOAssetHelper._isEther(_underlying)) {
-                _setAuthorizedSpender(_underlying, _uniswapRouter);
+                _setAuthorizedSpender(_underlying, _assetConverterHelper);
             }
         } else if (!ACOAssetHelper._isEther(_underlying)) {
-            _setAuthorizedSpender(_underlying, _uniswapRouter);
+            _setAuthorizedSpender(_underlying, _assetConverterHelper);
         }
     }
     

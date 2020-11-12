@@ -398,6 +398,19 @@ export const acoPoolABI =
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "assetConverterHelper",
+		"outputs": [
+			{
+				"internalType": "contract IACOAssetConverterHelper",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -627,6 +640,11 @@ export const acoPoolABI =
 					{
 						"internalType": "address",
 						"name": "chiToken",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "assetConverterHelper",
 						"type": "address"
 					},
 					{
@@ -1215,19 +1233,6 @@ export const acoPoolABI =
 		"outputs": [
 			{
 				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "uniswapRouter",
-		"outputs": [
-			{
-				"internalType": "contract IUniswapV2Router02",
 				"name": "",
 				"type": "address"
 			}

@@ -143,6 +143,7 @@ describe("ACOAssetConverterHelper", function() {
     await pairWethToken3.connect(owner).mint(await owner.getAddress());
 
     converterHelper = await (await ethers.getContractFactory("ACOAssetConverterHelper")).deploy(uniswapRouter.address);
+    await converterHelper.deployed();
   });
 
   afterEach(async function () {

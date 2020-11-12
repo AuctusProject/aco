@@ -38,6 +38,7 @@ describe("ACOPool", function() {
     let weth;
     let uniswapRouter;
     let chiToken;
+    let converterHelper;
 
     let token1Token2Price = ethers.utils.bigNumberify("10000000000");
     let ethToken2Price = ethers.utils.bigNumberify("400000000");
@@ -129,14 +130,21 @@ describe("ACOPool", function() {
 
         let ACOPoolFactoryTemp = await (await ethers.getContractFactory("ACOPoolFactory")).deploy();
         await ACOPoolFactoryTemp.deployed();
+        let ACOPoolFactoryTempV2 = await (await ethers.getContractFactory("ACOPoolFactoryV2")).deploy();
+        await ACOPoolFactoryTempV2.deployed();
         
         let poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
         let poolFactoryInitData = poolFactoryInterface.functions.init.encode([await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, await addr3.getAddress()]);
         let buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOPoolFactoryTemp.address, poolFactoryInitData);
         await buidlerACOPoolFactoryProxy.deployed();
-        ACOPoolFactory = await ethers.getContractAt("ACOPoolFactory", buidlerACOPoolFactoryProxy.address);
+        ACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
 
         await ACOPoolFactory.setAcoPoolStrategyPermission(defaultStrategy.address, true);
+        
+        await buidlerACOPoolFactoryProxy.connect(owner).setImplementation(ACOPoolFactoryTempV2.address, []);
+        converterHelper = await (await ethers.getContractFactory("ACOAssetConverterHelper")).deploy(uniswapRouter.address);
+        await converterHelper.deployed();
+        await ACOPoolFactory.setAcoAssetConverterHelper(converterHelper.address);
 
         await uniswapFactory.createPair(token1.address, token2.address);
         await uniswapFactory.createPair(token2.address, weth.address);
@@ -249,6 +257,7 @@ describe("ACOPool", function() {
                 acoFlashExercise: flashExercise.address,
                 acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
+                assetConverterHelper: converterHelper.address,
                 fee: 100,
                 feeDestination: addr2Addr,
                 underlying: token1.address,
@@ -272,6 +281,7 @@ describe("ACOPool", function() {
             expect(await ACOPool.poolStart()).to.equal(now + 86400);
             expect(await ACOPool.acoFlashExercise()).to.equal(flashExercise.address);
             expect(await ACOPool.acoFactory()).to.equal(ACOFactory.address);
+            expect(await ACOPool.assetConverterHelper()).to.equal(converterHelper.address);
             expect(await ACOPool.minStrikePrice()).to.equal(1);
             expect(await ACOPool.maxStrikePrice()).to.equal(ethers.utils.bigNumberify("10000000000000000000000"));
             expect(await ACOPool.minExpiration()).to.equal(now + 86400);
@@ -291,6 +301,7 @@ describe("ACOPool", function() {
                 acoFlashExercise: flashExercise.address,
                 acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
+                assetConverterHelper: converterHelper.address,
                 fee: 100,
                 feeDestination: addr2Addr,
                 underlying: token1.address,
@@ -352,6 +363,7 @@ describe("ACOPool", function() {
                 acoFlashExercise: flashExercise.address,
                 acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
+                assetConverterHelper: converterHelper.address,
                 fee: 100,
                 feeDestination: addr2Addr,
                 underlying: token1.address,
@@ -391,6 +403,7 @@ describe("ACOPool", function() {
                 acoFlashExercise: flashExercise.address,
                 acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
+                assetConverterHelper: converterHelper.address,
                 fee: 100,
                 feeDestination: addr2Addr,
                 underlying: token1.address,
@@ -432,6 +445,7 @@ describe("ACOPool", function() {
                 acoFlashExercise: flashExercise.address,
                 acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
+                assetConverterHelper: converterHelper.address,
                 fee: 100,
                 feeDestination: addr2Addr,
                 underlying: AddressZero,
@@ -468,6 +482,7 @@ describe("ACOPool", function() {
                 acoFlashExercise: flashExercise.address,
                 acoFactory: ACOFactory.address,
                 chiToken: chiToken.address,
+                assetConverterHelper: converterHelper.address,
                 fee: 100,
                 feeDestination: addr2Addr,
                 underlying: token1.address,

@@ -282,6 +282,7 @@ contract ACOPoolFactory {
             acoFlashExercise,
             acoFactory,
             chiToken,
+			address(0),
             acoPoolFee,
             acoPoolFeeDestination,
             underlying, 
@@ -573,5 +574,90 @@ contract ACOPoolFactory {
         }
         IACOPool(proxy).init(initData);
         return proxy;
+    }
+}
+
+contract ACOPoolFactoryV2 is ACOPoolFactory {
+	
+    /**
+     * @dev Emitted when the ACO fee has been changed.
+     * @param previousAcoAssetConverterHelper Address of the previous ACO asset converter helper.
+     * @param newAcoAssetConverterHelper Address of the new ACO asset converter helper.
+     */
+    event SetAcoAssetConverterHelper(address indexed previousAcoAssetConverterHelper, address indexed newAcoAssetConverterHelper);
+	
+	/**
+     * @dev The ACO asset converter helper.
+     */
+    address public assetConverterHelper;
+	
+	/**
+     * @dev Function to set the ACO asset converter helper address.
+     * Only can be called by the factory admin.
+     * @param newAcoAssetConverterHelper Address of the new ACO asset converter helper.
+     */
+    function setAcoAssetConverterHelper(address newAcoAssetConverterHelper) onlyFactoryAdmin external virtual {
+        _setAcoAssetConverterHelper(newAcoAssetConverterHelper);
+    }
+	
+    /**
+     * @dev Function to create a new ACO pool.
+     * It deploys a minimal proxy for the ACO pool implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall True if the type is CALL, false for PUT.
+     * @param poolStart The UNIX time that the ACO pool can start negotiated ACO tokens.
+     * @param minStrikePrice The minimum strike price for ACO tokens with the strike asset precision.
+     * @param maxStrikePrice The maximum strike price for ACO tokens with the strike asset precision.
+     * @param minExpiration The minimum expiration time for ACO tokens.
+     * @param maxExpiration The maximum expiration time for ACO tokens.
+     * @param canBuy Whether the pool buys ACO tokens otherwise, it only sells.
+     * @param strategy Address of the pool strategy to be used.
+     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
+     * @return The created ACO pool address.
+     */
+    function createAcoPool(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 poolStart,
+        uint256 minStrikePrice,
+        uint256 maxStrikePrice,
+        uint256 minExpiration,
+        uint256 maxExpiration,
+        bool canBuy,
+        address strategy,
+        uint256 baseVolatility
+    ) onlyFactoryAdmin external override returns(address) {
+        _validateStrategy(strategy);
+        return _createAcoPool(IACOPool.InitData(
+            poolStart,
+            acoFlashExercise,
+            acoFactory,
+            chiToken,
+			assetConverterHelper,
+            acoPoolFee,
+            acoPoolFeeDestination,
+            underlying, 
+            strikeAsset,
+            minStrikePrice,
+            maxStrikePrice,
+            minExpiration,
+            maxExpiration,
+            isCall,
+            canBuy,
+            strategy,
+            baseVolatility
+        ));
+    }
+	
+    /**
+     * @dev Internal function to set the ACO asset converter helper address.
+     * @param newAcoAssetConverterHelper Address of the new ACO asset converter helper.
+     */
+    function _setAcoAssetConverterHelper(address newAcoAssetConverterHelper) internal virtual {
+        require(Address.isContract(newAcoAssetConverterHelper), "ACOPoolFactory::_setAcoAssetConverterHelper: Invalid ACO asset converter helper");
+        emit SetAcoAssetConverterHelper(assetConverterHelper, newAcoAssetConverterHelper);
+        assetConverterHelper = newAcoAssetConverterHelper;
     }
 }
