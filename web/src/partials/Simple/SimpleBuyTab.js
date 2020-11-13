@@ -15,7 +15,7 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { allowDeposit, allowance } from '../../util/erc20Methods'
-import { getDeribiData, getOpynQuote } from '../../util/acoApi'
+import { getDeribiData } from '../../util/acoApi'
 import StepsModal from '../StepsModal/StepsModal'
 import VerifyModal from '../VerifyModal'
 import { swap } from '../../util/acoPoolMethods'
@@ -31,8 +31,7 @@ class SimpleBuyTab extends Component {
     super(props)
     this.state = { 
       selectedType: 1, 
-      selectedOption: null, 
-      opynPrice: null, 
+      selectedOption: null,
       deribitPrice: null, 
       qtyValue: "1.00", 
       strikeAssetBalance: null,
@@ -176,23 +175,6 @@ class SimpleBuyTab extends Component {
       })
     } else {
       this.setState({deribitPrice: null})
-    }
-  }
-
-  setOpynPrice = (selectedOption) => {
-    if (selectedOption && !!this.state.qtyValue) {
-      getOpynQuote(selectedOption, true, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString()).then((r) => {
-        if (!!r) {
-          this.setState({opynPrice: parseFloat(fromDecimals(r, selectedOption.strikeAssetInfo.decimals)) / this.state.qtyValue })  
-        } else {
-          this.setState({opynPrice: null})
-        }
-      }).catch((e) => {
-        this.setState({opynPrice: null})
-        console.error(e)
-      })
-    } else {
-      this.setState({opynPrice: null})
     }
   }
 
@@ -453,7 +435,6 @@ class SimpleBuyTab extends Component {
   }
 
   refresh = (selectedOption) => {
-    this.setOpynPrice(selectedOption)
     this.setDeribitPrice(selectedOption)
     this.refreshSwapQuote(selectedOption)
   }
@@ -584,7 +565,6 @@ class SimpleBuyTab extends Component {
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
             <div className="price-value"><div className="price-origin">Auctus:</div><div>{this.formatPrice(optionPrice)}</div></div>
-            <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.formatPrice(this.state.opynPrice)}</div></div>
             <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
           </div>
           <div className="separator"></div>
