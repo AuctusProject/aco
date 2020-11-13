@@ -242,9 +242,9 @@ export function sortByDesc(array, property) {
 
 
 export function sortBy(array, property) {
-    return array.sort((a,b) => {
+    return array ? array.sort((a,b) => {
         return (a[property] === b[property])? 0 : ((a[property] < b[property]) ? -1 : 1);
-    })
+    }) : null
 }
 
 export function sortByFn(array, propertyFn) {

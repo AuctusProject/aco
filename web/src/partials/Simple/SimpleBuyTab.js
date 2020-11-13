@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
@@ -111,12 +111,33 @@ class SimpleBuyTab extends Component {
   }
 
   onStrikeChange = (strikeOption) => {
-    var expirationOptions = this.filterExpirationOptions(strikeOption, this.state.selectedType)
-    this.setState({selectedStrike: strikeOption, expirationOptions: expirationOptions}, this.setSelectedOption)    
+    this.setState({selectedStrike: strikeOption}, this.setSelectedOption)
+  }  
+
+  onExpirationChange = (expirationOption) => {
+    var strikeOptions = this.filterStrikeOptions(expirationOption, this.state.selectedType)
+    this.setState({selectedExpiration: expirationOption, strikeOptions: strikeOptions}, this.setSelectedOption)
   }
 
-  filterExpirationOptions = (strikeOption, type) => {
-    var filteredOptions = this.props.options.filter(o => o.strikePrice === strikeOption.value && o.isCall === (type === 1))
+  filterStrikeOptions = (expirationOption, type) => {
+    var filteredOptions = this.props.options.filter(o => o.expiryTime.toString() === expirationOption.value && o.isCall === (type === 1))
+    var grouppedOptions = groupBy(filteredOptions, "strikePrice")
+    var hasCurrentSelectedStrikePrice = false
+    var strikeOptions = Object.keys(grouppedOptions).map((strikePrice) => {
+      if (this.state.selectedStrike && this.state.selectedStrike.value === strikePrice) {
+        hasCurrentSelectedStrikePrice = true
+      }
+      return { value: strikePrice, name: getOptionFormattedPrice(grouppedOptions[strikePrice][0])}
+    })
+    if (!hasCurrentSelectedStrikePrice) {
+      this.setState({selectedStrike: null})
+    }
+    return sortBy(strikeOptions, "value")
+  }
+
+  filterStrikeAndExpirationOptions = (type) => {
+    var strikeOptions = this.state.strikeOptions
+    var filteredOptions = this.props.options ? this.props.options.filter(o => o.isCall === (type === 1)) : []
     var grouppedOptions = groupBy(filteredOptions, "expiryTime")
     var hasCurrentSelectedExpiration = false
     var expirationOptions = Object.keys(grouppedOptions).map((expiryTime) => {
@@ -126,33 +147,12 @@ class SimpleBuyTab extends Component {
       return { value: expiryTime, name: formatDate(expiryTime, true)}
     })
     if (!hasCurrentSelectedExpiration) {
-      this.setState({selectedExpiration: null})
+      this.setState({selectedExpiration: null, selectedStrike: null}, this.setSelectedOption)
     }
-    return expirationOptions
-  }
-
-  filterStrikeAndExpirationOptions = (type) => {
-    var expirationOptions = this.state.expirationOptions
-    var filteredOptions = this.props.options ? this.props.options.filter(o => o.isCall === (type === 1)) : []
-    var grouppedOptions = groupBy(filteredOptions, "strikePrice")
-    var hasCurrentSelectedStrike = false
-    var strikeOptions = Object.keys(grouppedOptions).map((strikePrice) => {
-      if (this.state.selectedStrike && this.state.selectedStrike.value === strikePrice) {
-        hasCurrentSelectedStrike = true
-      }
-      return { value: strikePrice, name: getOptionFormattedPrice(grouppedOptions[strikePrice][0])}
-    })
-    if (!hasCurrentSelectedStrike) {
-      this.setState({selectedStrike: null, selectedExpiration: null}, this.setSelectedOption)
+    else if (this.state.selectedExpiration) {
+      strikeOptions = this.filterStrikeOptions(this.state.selectedExpiration, type)
     }
-    else if (this.state.selectedStrike) {
-      expirationOptions = this.filterExpirationOptions(this.state.selectedStrike, type)
-    }
-    return [strikeOptions, expirationOptions]
-  }
-
-  onExpirationChange = (expirationOption) => {
-    this.setState({selectedExpiration: expirationOption}, this.setSelectedOption)
+    return [sortBy(strikeOptions, "value"), sortBy(expirationOptions, "value")]
   }
 
   setSelectedOption = () => {
@@ -534,19 +534,20 @@ class SimpleBuyTab extends Component {
             <OptionBadge onClick={() => this.selectType(2)} className={this.state.selectedType === 2 ? "active" : "unselected"} isCall={false}/>
           </div>
         </div>
-        <div className="input-column strike-column">
-          <div className="input-label">Strike</div>
-          <div className="input-field">
-            <SimpleDropdown placeholder="Select strike" selectedOption={this.state.selectedStrike} options={this.state.strikeOptions} onSelectOption={this.onStrikeChange}></SimpleDropdown>
-          </div>
-        </div>
         <div className="input-column expiration-column">
           <div className="input-label">Expiration</div>
           <div className="input-field">
-            {this.state.selectedStrike ? 
-            <SimpleDropdown placeholder="Select expiration" selectedOption={this.state.selectedExpiration} options={this.state.expirationOptions} onSelectOption={this.onExpirationChange}></SimpleDropdown>:
-              <span className="simple-dropdown-placeholder">Select strike first</span>
+            <SimpleDropdown placeholder="Select expiration" selectedOption={this.state.selectedExpiration} options={this.state.expirationOptions} onSelectOption={this.onExpirationChange}></SimpleDropdown>
+          </div>
+        </div>
+        <div className="input-column strike-column">
+          <div className="input-label">Strike</div>
+          <div className="input-field">
+            {this.state.selectedExpiration ? 
+              <SimpleDropdown placeholder="Select strike" selectedOption={this.state.selectedStrike} options={this.state.strikeOptions} onSelectOption={this.onStrikeChange}></SimpleDropdown>:
+              <span className="simple-dropdown-placeholder">Select expiration first</span>
             }
+            
           </div>
         </div>
       </div>
