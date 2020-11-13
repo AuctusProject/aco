@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 library OTCTypes {
     bytes constant internal EIP191_HEADER = "\x19\x01";
-    
+
     bytes32 constant internal DOMAIN_TYPEHASH = keccak256(abi.encodePacked(
         "EIP712Domain(",
             "string name,",
@@ -124,9 +124,9 @@ library OTCTypes {
     }
 
     function hashAskOrder(
-        AskOrder calldata order,
+        AskOrder memory order,
         bytes32 domainSeparator
-    ) external pure returns (bytes32) {
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
             EIP191_HEADER,
             domainSeparator,
@@ -161,9 +161,9 @@ library OTCTypes {
     }
 
     function hashBidOrder(
-        BidOrder calldata order,
+        BidOrder memory order,
         bytes32 domainSeparator
-    ) external pure returns (bytes32) {
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(
             EIP191_HEADER,
             domainSeparator,
@@ -198,10 +198,10 @@ library OTCTypes {
     }
     
     function hashDomain(
-        bytes calldata name,
-        bytes calldata version,
+        bytes memory name,
+        bytes memory version,
         address verifyingContract
-    ) external pure returns (bytes32) {
+    ) internal pure returns (bytes32) {
     return keccak256(abi.encode(
             DOMAIN_TYPEHASH,
             keccak256(name),
