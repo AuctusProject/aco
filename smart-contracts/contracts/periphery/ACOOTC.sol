@@ -11,7 +11,7 @@ import "../interfaces/IACOToken.sol";
 /**
  * @title ACOOTC
  * @dev Contract to trade OTC on ACO tokens. 
- * Inpired on Swap SC by AirSwap, under Apache License, Version 2.0
+ * Inspired on Swap SC by AirSwap, under Apache License, Version 2.0
  * https://github.com/airswap/airswap-protocols/blob/master/source/swap/contracts/Swap.sol
  */
 contract ACOOTC {
@@ -240,7 +240,7 @@ contract ACOOTC {
 			emit RevokeSigner(msg.sender, authorizedSigner);
 		}
 	}
-
+	
     /**
      * @notice Validate signature using an EIP-712 typed data hash
      * @param order OTCTypes.AskOrder Order to validate
@@ -280,7 +280,7 @@ contract ACOOTC {
 	function _isSignerAuthorized(address authorizer, address delegate) internal view returns(bool) {
 		return ((authorizer == delegate) || signerAuthorizations[authorizer][delegate]);
 	}
-  
+
     /**
      * @notice Validate signature using an EIP-712 typed data hash
      * @param orderHash Hashed order to validate

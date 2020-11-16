@@ -8,12 +8,13 @@ library OTCTypes {
         "EIP712Domain(",
             "string name,",
             "string version,",
+            "uint256 chainId,",
             "address verifyingContract",
         ")"
     ));
     
     bytes32 constant internal ASK_ORDER_TYPEHASH = keccak256(abi.encodePacked(
-        "Order(",
+        "AskOrder(",
             "uint256 nonce,",
             "uint256 expiry,",
             "PartyAco signer,",
@@ -21,8 +22,8 @@ library OTCTypes {
             "PartyToken affiliate",
         ")",
         "PartyAco(",
-            "address responsible,"              
-            "uint256 amount,"    
+            "address responsible,",              
+            "uint256 amount,",    
             "address underlying,",
             "address strikeAsset,",
             "bool isCall,",
@@ -30,40 +31,40 @@ library OTCTypes {
             "uint256 expiryTime",
         ")",
         "PartyToken(",
-            "address responsible,"              
-            "uint256 amount,"    
+            "address responsible,",              
+            "uint256 amount,",    
             "address token",
         ")"
     ));
     
     bytes32 constant internal BID_ORDER_TYPEHASH = keccak256(abi.encodePacked(
-        "Order(",
+        "BidOrder(",
             "uint256 nonce,",
             "uint256 expiry,",
             "PartyToken signer,",
             "PartyAco sender,",
             "PartyToken affiliate",
         ")",
-        "PartyToken(",
-            "address responsible,"              
-            "uint256 amount,"    
-            "address token",
-        ")",
         "PartyAco(",
-            "address responsible,"              
-            "uint256 amount,"    
+            "address responsible,",              
+            "uint256 amount,",    
             "address underlying,",
             "address strikeAsset,",
             "bool isCall,",
             "uint256 strikePrice,",
             "uint256 expiryTime",
+        ")",
+        "PartyToken(",
+            "address responsible,",              
+            "uint256 amount,",    
+            "address token",
         ")"
     ));
     
     bytes32 constant internal PARTY_ACO_TYPEHASH = keccak256(abi.encodePacked(
         "PartyAco(",
-            "address responsible,"              
-            "uint256 amount,"    
+            "address responsible,",              
+            "uint256 amount,",    
             "address underlying,",
             "address strikeAsset,",
             "bool isCall,",
@@ -73,9 +74,9 @@ library OTCTypes {
     ));
     
     bytes32 constant internal PARTY_TOKEN_TYPEHASH = keccak256(abi.encodePacked(
-        "PartyAco(",
-            "address responsible,"              
-            "uint256 amount,"    
+        "PartyToken(",
+            "address responsible,",              
+            "uint256 amount,",    
             "address token",
         ")"
     ));
@@ -122,7 +123,7 @@ library OTCTypes {
         bytes32 r;                    
         bytes32 s;                   
     }
-
+    
     function hashAskOrder(
         AskOrder memory order,
         bytes32 domainSeparator
@@ -202,11 +203,16 @@ library OTCTypes {
         bytes memory version,
         address verifyingContract
     ) internal pure returns (bytes32) {
-    return keccak256(abi.encode(
-            DOMAIN_TYPEHASH,
-            keccak256(name),
-            keccak256(version),
-            verifyingContract
-        ));
+        uint256 id;
+        assembly {
+            id := chainid()
+        }
+        return keccak256(abi.encode(
+                DOMAIN_TYPEHASH,
+                keccak256(name),
+                keccak256(version),
+                id,
+                verifyingContract
+            ));
     }
 }
