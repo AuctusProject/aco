@@ -11,12 +11,12 @@ describe("ACOOTC", function() {
   let token1Name = "TOKEN1";
   let token1Symbol = "TOK1";
   let token1Decimals = 8;
-  let token1TotalSupply = ethers.utils.bigNumberify("1000000000000000");
+  let token1TotalSupply = ethers.utils.bigNumberify("100000000000000000000000000");
   let token2;
   let token2Name = "TOKEN2";
   let token2Symbol = "TOK2";
   let token2Decimals = 6;
-  let token2TotalSupply = ethers.utils.bigNumberify("10000000000000000");
+  let token2TotalSupply = ethers.utils.bigNumberify("1000000000000000000000000");
   let buidlerFactory;
   let weth;
   let acoOtc;
@@ -91,6 +91,13 @@ describe("ACOOTC", function() {
     token2 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token2Name, token2Symbol, token2Decimals, token2TotalSupply);
     await token2.deployed();
     
+    await token1.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("100000000000000000"));
+    await token1.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("100000000000000000"));
+    await token1.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("100000000000000000"));
+    await token2.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("1000000000000000"));
+    await token2.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("1000000000000000"));
+    await token2.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("1000000000000000"));
+
     weth = await (await ethers.getContractFactory("WETH9")).deploy();
     await weth.deployed(); 
 
@@ -194,10 +201,748 @@ describe("ACOOTC", function() {
       const typedBidOrder = await getTypedSignedBidOrder(addr1, bidOrder);
       expect(await acoOtc.isValidBidOrder(getNestedBidOrder(typedBidOrder))).to.equal(true);
     });
-    it("Swap ask order", async function () {
-      
+    it("Swap regular ask order", async function () {
+      let expiryTime = 1699999999;
+      let signerAmount = 100000000;
+      let senderAmount = 10000000;
+      let strikePrice = 18000000000;
+      const signer1 = getPartyAco(await addr1.getAddress(),signerAmount,token1.address,token2.address,true,strikePrice,expiryTime);
+      const sender1 = getPartyToken(ethers.constants.AddressZero,senderAmount,token2.address);
+      const emptyAffiliate = getPartyToken(ethers.constants.AddressZero,0,ethers.constants.AddressZero);
+      let nonce = 1;
+      let expiry = Date.now();
+
+      const order1 = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+
+      let bal11 = await token1.balanceOf(await addr1.getAddress());
+      let bal12 = await token1.balanceOf(await addr2.getAddress());
+      let bal21 = await token2.balanceOf(await addr1.getAddress());
+      let bal22 = await token2.balanceOf(await addr2.getAddress());
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr2).approve(acoOtc.address, senderAmount);
+      let signedOrder = await getPersonalSignedAskOrder(addr1, order1);
+      let tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      let result = tx.events[tx.events.length - 1].args;
+      let aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr2).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order1.nonce = nonce;
+      signedOrder = await getTypedSignedAskOrder(addr1, order1);
+      tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
+
+      let affiliateAmount = 1000000;
+      const affiliate1 = getPartyToken(await addr3.getAddress(),affiliateAmount,token2.address);
+      ++nonce;
+      const order2 = getUnsignedOrder(nonce, expiry, signer1, sender1, affiliate1);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      let bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      let bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr2).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order2);
+      tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.sub(senderAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr2).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order2.nonce = nonce;
+      signedOrder = await getTypedSignedAskOrder(addr1, order2);
+      tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.sub(senderAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+
+      ++nonce;
+      const sender2 = getPartyToken(await addr3.getAddress(),senderAmount,token2.address);
+      const affiliate2 = getPartyToken(await addr2.getAddress(),affiliateAmount,token2.address);
+      const order3 = getUnsignedOrder(nonce, expiry, signer1, sender2, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order3);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order3.nonce = nonce;
+      signedOrder = await getTypedSignedAskOrder(addr1, order3);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+
+      ++nonce;
+      const signer2 = getPartyAco(await addr1.getAddress(),signerAmount,ethers.constants.AddressZero,token2.address,true,strikePrice,expiryTime);
+      const order4 = getUnsignedOrder(nonce, expiry, signer2, sender2, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await weth.connect(addr1).deposit({value: signerAmount});
+      await weth.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order4);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await weth.connect(addr1).deposit({value: signerAmount});
+      await weth.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order4.nonce = nonce;
+      signedOrder = await getTypedSignedAskOrder(addr1, order4);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount);
+
+      ++nonce;
+      let collateralAmount = Math.floor(signerAmount * strikePrice / 100000000);
+      const signer3 = getPartyAco(await addr1.getAddress(),signerAmount,token1.address,token2.address,false,strikePrice,expiryTime);
+      const order5 = getUnsignedOrder(nonce, expiry, signer3, sender2, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, collateralAmount + affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order5);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(collateralAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(0);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, collateralAmount + affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order5.nonce = nonce;
+      signedOrder = await getTypedSignedAskOrder(addr1, order5);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(collateralAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(0);
+
+      ++nonce;
+      const signer4 = getPartyAco(await addr1.getAddress(),signerAmount,token1.address,ethers.constants.AddressZero,false,strikePrice,expiryTime);
+      const order6 = getUnsignedOrder(nonce, expiry, signer4, sender2, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await weth.connect(addr1).deposit({value: collateralAmount});
+      await weth.connect(addr1).approve(acoOtc.address, collateralAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order6);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await weth.connect(addr1).deposit({value: collateralAmount});
+      await weth.connect(addr1).approve(acoOtc.address, collateralAmount);
+      await token2.connect(addr1).approve(acoOtc.address, affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order6.nonce = nonce;
+      signedOrder = await getTypedSignedAskOrder(addr1, order6);
+      tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.signerToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount).sub(affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount);
+  });
+    it("Swap ask order with signer permission", async function () { 
+    }); 
+    it("Swap ask order with sender permission", async function () { 
     });
-    it("Swap bid order", async function () {
+    it("Fail to swap ask order", async function () {
+
+    });
+    it("Swap regular bid order", async function () {
+      let expiryTime = 1699999999;
+      let signerAmount = 10000000;
+      let senderAmount = 100000000;
+      let strikePrice = 18000000000;
+      const signer1 = getPartyToken(await addr1.getAddress(),signerAmount,token2.address);
+      const sender1 = getPartyAco(ethers.constants.AddressZero,senderAmount,token1.address,token2.address,true,strikePrice,expiryTime);
+      const emptyAffiliate = getPartyToken(ethers.constants.AddressZero,0,ethers.constants.AddressZero);
+      let nonce = 1;
+      let expiry = Date.now();
+
+      const order1 = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+
+      let bal11 = await token1.balanceOf(await addr1.getAddress());
+      let bal12 = await token1.balanceOf(await addr2.getAddress());
+      let bal21 = await token2.balanceOf(await addr1.getAddress());
+      let bal22 = await token2.balanceOf(await addr2.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token1.connect(addr2).approve(acoOtc.address, senderAmount);
+      let signedOrder = await getPersonalSignedBidOrder(addr1, order1);
+      let tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      let result = tx.events[tx.events.length - 1].args;
+      let aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount);
+      await token1.connect(addr2).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order1.nonce = nonce;
+      signedOrder = await getTypedSignedBidOrder(addr1, order1);
+      tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
+
+      let affiliateAmount = 1000000;
+      const affiliate1 = getPartyToken(await addr3.getAddress(),affiliateAmount,token2.address);
+      ++nonce;
+      const order2 = getUnsignedOrder(nonce, expiry, signer1, sender1, affiliate1);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      let bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      let bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await token1.connect(addr2).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order2);
+      tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(signerAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await token1.connect(addr2).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order2.nonce = nonce;
+      signedOrder = await getTypedSignedBidOrder(addr1, order2);
+      tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(signerAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
+
+      ++nonce;
+      const sender2 = getPartyAco(await addr3.getAddress(),senderAmount,token1.address,token2.address,true,strikePrice,expiryTime);
+      const affiliate2 = getPartyToken(await addr2.getAddress(),affiliateAmount,token2.address);
+      const order3 = getUnsignedOrder(nonce, expiry, signer1, sender2, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await token1.connect(addr3).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order3);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13.sub(senderAmount));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await token1.connect(addr3).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order3.nonce = nonce;
+      signedOrder = await getTypedSignedBidOrder(addr1, order3);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13.sub(senderAmount));
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
+
+      ++nonce;
+      const sender3 = getPartyAco(await addr3.getAddress(),senderAmount,ethers.constants.AddressZero,token2.address,true,strikePrice,expiryTime);
+      const order4 = getUnsignedOrder(nonce, expiry, signer1, sender3, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await weth.connect(addr3).deposit({value: senderAmount});
+      await weth.connect(addr3).approve(acoOtc.address, senderAmount);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order4);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await weth.connect(addr3).deposit({value: senderAmount});
+      await weth.connect(addr3).approve(acoOtc.address, senderAmount);
+      ++nonce;
+      order4.nonce = nonce;
+      signedOrder = await getTypedSignedBidOrder(addr1, order4);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount);
+
+      ++nonce;
+      let collateralAmount = Math.floor(senderAmount * strikePrice / 100000000);
+      const sender4 = getPartyAco(await addr3.getAddress(),senderAmount,token1.address,token2.address,false,strikePrice,expiryTime);
+      const order5 = getUnsignedOrder(nonce, expiry, signer1, sender4, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, collateralAmount);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order5);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(collateralAmount).add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(0);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await token2.connect(addr3).approve(acoOtc.address, collateralAmount);
+      ++nonce;
+      order5.nonce = nonce;
+      signedOrder = await getTypedSignedBidOrder(addr1, order5);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(collateralAmount).add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(0);
+      
+      ++nonce;
+      const sender5 = getPartyAco(await addr3.getAddress(),senderAmount,token1.address,ethers.constants.AddressZero,false,strikePrice,expiryTime);
+      const order6 = getUnsignedOrder(nonce, expiry, signer1, sender5, affiliate2);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await weth.connect(addr3).deposit({value: collateralAmount});
+      await weth.connect(addr3).approve(acoOtc.address, collateralAmount);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order6);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount);
+
+      bal11 = await token1.balanceOf(await addr1.getAddress());
+      bal12 = await token1.balanceOf(await addr2.getAddress());
+      bal13 = await token1.balanceOf(await addr3.getAddress());
+      bal21 = await token2.balanceOf(await addr1.getAddress());
+      bal22 = await token2.balanceOf(await addr2.getAddress());
+      bal23 = await token2.balanceOf(await addr3.getAddress());
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount + affiliateAmount);
+      await weth.connect(addr3).deposit({value: collateralAmount});
+      await weth.connect(addr3).approve(acoOtc.address, collateralAmount);
+      ++nonce;
+      order6.nonce = nonce;
+      signedOrder = await getTypedSignedBidOrder(addr1, order6);
+      tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
+      result = tx.events[tx.events.length - 1].args;
+      aco = await ethers.getContractAt("ACOToken", result.senderToken);
+
+      expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
+      expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
+      expect(await token1.balanceOf(await addr3.getAddress())).to.equal(bal13);
+      expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
+      expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
+      expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
+      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount);
+    });
+    it("Swap bid order with signer permission", async function () { 
+    }); 
+    it("Swap bid order with sender permission", async function () { 
+    });
+    it("Fail to swap bid order", async function () {
 
     });
   });
@@ -324,7 +1069,7 @@ const hashPartyAco = (partyAco) => {
   return ethers.utils.keccak256(
     ethers.utils.defaultAbiCoder.encode(
       ['bytes32', 'address', 'uint256', 'address', 'address', 'bool', 'uint256', 'uint256'],
-      [PARTY_ACO_TYPEHASH(), partyAco.responsible, "0x" + partyAco.amount.toString(16), partyAco.underlying, partyAco.strikeAsset, partyAco.isCall ? "0x1" : "0x0", "0x" + partyAco.strikePrice.toString(16), "0x" + partyAco.expiryTime.toString(16)]
+      [PARTY_ACO_TYPEHASH(), partyAco.responsible, "0x" + partyAco.amount.toString(16), partyAco.underlying, partyAco.strikeAsset, partyAco.isCall, "0x" + partyAco.strikePrice.toString(16), "0x" + partyAco.expiryTime.toString(16)]
     )
   );
 };

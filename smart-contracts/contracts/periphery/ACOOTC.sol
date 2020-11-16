@@ -82,6 +82,13 @@ contract ACOOTC {
 	}
 
 	/**
+	 * @notice Receive ETH from WETH contract
+	 */
+	receive() external payable {
+        require(msg.sender == address(weth), "ACOOTC:: Only WETH");
+    }
+
+	/**
 	 * @notice Atomic Token Swap for an Ask Order
 	 * @param order OTCTypes.AskOrder Order to settle
 	 */
@@ -100,7 +107,7 @@ contract ACOOTC {
 		require(order.signature.v == uint8(0) || isValidAskOrder(order), "ACOOTC:: Signature invalid");
 
 		ACOAssetHelper._callTransferFromERC20(order.sender.token, finalSender, order.signer.responsible, order.sender.amount);
-		
+
 		address _aco = _transferAco(order.signer.responsible, finalSender, order.signer);
 
 		// Transfer token from signer to affiliate if specified.
@@ -402,11 +409,11 @@ contract ACOOTC {
 		}
 		// Ensure the collateral amount is not zero.
 		require(collateralAmount > 0, "ACOOTC:: Collateral amount is too low");
-		
+
 		if (ACOAssetHelper._isEther(collateral)) {
 			IWETH _weth = weth;
 			ACOAssetHelper._callTransferFromERC20(address(_weth), from, address(this), collateralAmount);
-			_weth.deposit{value: collateralAmount}();
+			_weth.withdraw(collateralAmount);
 		} else {
 			ACOAssetHelper._callTransferFromERC20(collateral, from, address(this), collateralAmount);
 		}
