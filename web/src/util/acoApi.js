@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { apiUrl } from './constants';
+import { apiUrl, removeOptionsToIgnore } from './constants';
 
 var apiTokenList = null
 export function getTokensList() {
@@ -11,7 +11,7 @@ export function getTokensList() {
         Axios.get(apiUrl + "tokens")
         .then(res => {
             if (res && res.data) {
-                apiTokenList = res.data
+                apiTokenList = removeOptionsToIgnore(res.data)
             }
             resolve(apiTokenList)
         })

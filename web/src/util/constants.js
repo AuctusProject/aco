@@ -242,9 +242,9 @@ export function sortByDesc(array, property) {
 
 
 export function sortBy(array, property) {
-    return array.sort((a,b) => {
+    return array ? array.sort((a,b) => {
         return (a[property] === b[property])? 0 : ((a[property] < b[property]) ? -1 : 1);
-    })
+    }) : null
 }
 
 export function sortByFn(array, propertyFn) {
@@ -347,4 +347,12 @@ export const booleanToData = (bool) => {
 
 export const isDarkMode = () => {
     return window.localStorage.getItem('LAYOUT_MODE') !== "0"
+}
+
+export const removeOptionsToIgnore = (options) => {
+    var optionsToIgnore = [
+        "0xf7902f8db0ee97f9e9b07933ba2724d64f267110",
+        "0xde757d935f43781c7079a41a162d8560a800ec13"
+    ]
+    return options.filter(o => !optionsToIgnore.includes(o.acoToken.toLowerCase()))
 }

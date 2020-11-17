@@ -15,7 +15,7 @@ import DoneLargeIcon from '../Util/DoneLargeIcon'
 import { allowDeposit, allowance } from '../../util/erc20Methods'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { write } from '../../util/acoWriteMethods'
-import { getDeribiData, getOpynQuote } from '../../util/acoApi'
+import { getDeribiData } from '../../util/acoApi'
 import VerifyModal from '../VerifyModal'
 
 class SimpleWriteStep2 extends Component {
@@ -319,7 +319,6 @@ class SimpleWriteStep2 extends Component {
   }
 
   refresh = () => {
-    this.setOpynPrice()
     this.setDeribitPrice()
     this.refreshSwapQuote()    
   }
@@ -338,24 +337,6 @@ class SimpleWriteStep2 extends Component {
       })
     } else {
       this.setState({deribitPrice: null})
-    }
-  }
-
-  setOpynPrice = () => {
-    var selectedOption = this.props.option
-    var optionsAmount = this.getOptionsAmount()
-    if (selectedOption && optionsAmount && parseFloat(optionsAmount) > 0) {
-      getOpynQuote(selectedOption, true, toDecimals(optionsAmount, selectedOption.acoTokenInfo.decimals).toString()).then((r) => {
-        if (!!r) {
-          this.setState({opynPrice: parseFloat(fromDecimals(r, selectedOption.strikeAssetInfo.decimals)) / parseFloat(optionsAmount) })  
-        } else {
-          this.setState({opynPrice: null})
-        }
-      }).catch((e) => {
-        this.setState({opynPrice: null})
-      })
-    } else {
-      this.setState({opynPrice: null})
     }
   }
   
@@ -496,7 +477,6 @@ class SimpleWriteStep2 extends Component {
               <div className="ref-label">REF</div>
               <div className="similar-label">(similar options)</div>
               <div className="price-value"><div className="price-origin">Auctus:</div><div>{this.formatPrice(this.getAcoOptionPrice())}</div></div>
-              <div className="price-value"><div className="price-origin">Opyn:</div><div>{this.formatPrice(this.state.opynPrice)}</div></div>
               <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { getWeb3 } from './web3Methods'
-import { acoFactoryAddress, ONE_SECOND, sortByDesc, sortByFn } from './constants';
+import { acoFactoryAddress, ONE_SECOND, removeOptionsToIgnore, sortByDesc, sortByFn } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
@@ -37,7 +37,7 @@ function getAllAvailableOptions() {
                     }
                 }
                 fillTokensInformations(acoOptions, assetsAddresses).then(options => {
-                    availableOptions = acoOptions
+                    availableOptions = removeOptionsToIgnore(acoOptions)
                     resolve(options)
                 })
             })
