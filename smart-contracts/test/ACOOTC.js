@@ -819,6 +819,10 @@ describe("ACOOTC", function() {
       await expect(
         acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
       ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
+
+      await expect(
+        acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
     });
     it("Swap regular bid order", async function () {
       let expiryTime = 1699999999;
@@ -1432,6 +1436,10 @@ describe("ACOOTC", function() {
 
       await expect(
         acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
+
+      await expect(
+        acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))
       ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
     });
   });
