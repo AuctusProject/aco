@@ -680,7 +680,145 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
     });
     it("Fail to swap ask order", async function () {
+      let expiryTime = 1699999999;
+      let signerAmount = 100000000;
+      let senderAmount = 10000000;
+      let strikePrice = 18000000000;
+      const signer1 = getPartyAco(await addr1.getAddress(),signerAmount,token1.address,token2.address,true,strikePrice,expiryTime);
+      const sender1 = getPartyToken(ethers.constants.AddressZero,senderAmount,token2.address);
+      const emptyAffiliate = getPartyToken(ethers.constants.AddressZero,0,ethers.constants.AddressZero);
+      let nonce = 1;
+      
+      let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);
+      let expiry = parseInt(block.timestamp, 16);
+      let order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      let signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order expired");
 
+      expiry = Date.now();
+      await acoOtc.connect(addr1).cancelUpTo(2);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Nonce too low");
+
+      nonce = 3;
+      await acoOtc.connect(addr1).cancel([3]);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
+
+      nonce = 4;
+      let affiliate = getPartyToken(await addr1.getAddress(),100000,token2.address);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, affiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Self transfer");
+
+      let sender = getPartyToken(await addr3.getAddress(),senderAmount,token2.address);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Sender unauthorized");
+
+      sender = getPartyToken(await addr1.getAddress(),senderAmount,token2.address);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr1).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Self transfer");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr1).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Self transfer");
+
+      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x0",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      order = {...order,signature:emptySignature};
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(order))
+      ).to.be.revertedWith("ACOOTC:: Signer unauthorized");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr2, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signer unauthorized");
+      
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      signedOrder.signature.v = signedOrder.signature.v+1;
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getTypedSignedAskOrder(addr1, order);
+      signedOrder.signature.v = signedOrder.signature.v+1;
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr2, order);
+      signedOrder.signature.signatory = await addr1.getAddress();
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getTypedSignedAskOrder(addr2, order);
+      signedOrder.signature.signatory = await addr1.getAddress();
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+
+      await token2.connect(addr2).approve(acoOtc.address, senderAmount);
+      
+      let signer = getPartyAco(await addr1.getAddress(),0,token1.address,token2.address,true,strikePrice,expiryTime);
+      order = getUnsignedOrder(nonce, expiry, signer, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Collateral amount is too low");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount);
+
+      affiliate = getPartyToken(await addr3.getAddress(),100000,token1.address);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, affiliate);
+      signedOrder = await getPersonalSignedAskOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+
+      await token1.connect(addr1).approve(acoOtc.address, signerAmount + 100000);
+
+      await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder));
+
+      await expect(
+        acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
     });
     it("Swap regular bid order", async function () {
       let expiryTime = 1699999999;
@@ -1156,7 +1294,145 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
     });
     it("Fail to swap bid order", async function () {
+      let expiryTime = 1699999999;
+      let signerAmount = 10000000;
+      let senderAmount = 100000000;
+      let strikePrice = 18000000000;
+      const signer1 = getPartyToken(await addr1.getAddress(),signerAmount,token2.address);
+      const sender1 = getPartyAco(ethers.constants.AddressZero,senderAmount,token1.address,token2.address,true,strikePrice,expiryTime);
+      const emptyAffiliate = getPartyToken(ethers.constants.AddressZero,0,ethers.constants.AddressZero);
+      let nonce = 1;
+      
+      let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);
+      let expiry = parseInt(block.timestamp, 16);
+      let order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      let signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order expired");
 
+      expiry = Date.now(); 
+      await acoOtc.connect(addr1).cancelUpTo(2);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Nonce too low");
+
+      nonce = 3;
+      await acoOtc.connect(addr1).cancel([3]);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
+
+      nonce = 4;
+      let affiliate = getPartyToken(await addr1.getAddress(),100000,token2.address);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, affiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Self transfer");
+
+      let sender = getPartyAco(await addr3.getAddress(),senderAmount,token1.address,token2.address,true,strikePrice,expiryTime);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Sender unauthorized");
+
+      sender = getPartyAco(await addr1.getAddress(),senderAmount,token1.address,token2.address,true,strikePrice,expiryTime);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr1).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Self transfer");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr1).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Self transfer");
+
+      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x0",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      order = {...order,signature:emptySignature};
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(order))
+      ).to.be.revertedWith("ACOOTC:: Signer unauthorized");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr2, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signer unauthorized");
+      
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      signedOrder.signature.v = signedOrder.signature.v+1;
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getTypedSignedBidOrder(addr1, order);
+      signedOrder.signature.v = signedOrder.signature.v+1;
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr2, order);
+      signedOrder.signature.signatory = await addr1.getAddress();
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getTypedSignedBidOrder(addr2, order);
+      signedOrder.signature.signatory = await addr1.getAddress();
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Signature invalid");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+
+      await token1.connect(addr2).approve(acoOtc.address, senderAmount);
+      
+      sender = getPartyAco(await addr2.getAddress(),0,token1.address,token2.address,true,strikePrice,expiryTime);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Collateral amount is too low");
+
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+
+      await token2.connect(addr1).approve(acoOtc.address, signerAmount);
+
+      affiliate = getPartyToken(await addr3.getAddress(),100000,token1.address);
+      order = getUnsignedOrder(nonce, expiry, signer1, sender1, affiliate);
+      signedOrder = await getPersonalSignedBidOrder(addr1, order);
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+
+      await token1.connect(addr1).approve(acoOtc.address, 100000);
+
+      await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder));
+
+      await expect(
+        acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
+      ).to.be.revertedWith("ACOOTC:: Order taken or cancelled");
     });
   });
 });
