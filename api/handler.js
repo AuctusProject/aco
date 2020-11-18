@@ -11,7 +11,11 @@ const setError = (statusCode, error) => {
     }).finally(() => {
       resolve({ 
         statusCode: statusCode || 501,
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Credentials": true,
+          'Content-Type': 'text/plain' 
+        },
         body: message
       });
     });
@@ -55,6 +59,21 @@ module.exports.opynQuote = (event, context, callback) => {
 
 module.exports.assets = (event, context, callback) => {
   internalInterface.assets(event.queryStringParameters).then((response) => {
+    callback(null, successCallback(response));
+  }).catch((err) => setError(null, err).then(error => callback(null, error)));
+};
+
+module.exports.getOrder = (event, context, callback) => {
+  const orderId = event.pathParameters.orderId ? event.pathParameters.orderId : "";
+  internalInterface.getOrder(orderId).then((response) => {
+    callback(null, successCallback(response));
+  }).catch((err) => setError(null, err).then(error => callback(null, error)));
+};
+
+module.exports.createOrder = (event, context, callback) => {
+  const orderId = event.pathParameters.orderId ? event.pathParameters.orderId : "";
+  const body = (event.body ? JSON.parse(event.body) : null);
+  internalInterface.createOrder(orderId, body).then((response) => {
     callback(null, successCallback(response));
   }).catch((err) => setError(null, err).then(error => callback(null, error)));
 };
