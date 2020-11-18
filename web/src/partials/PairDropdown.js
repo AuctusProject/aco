@@ -32,7 +32,10 @@ class PairDropdown extends Component {
       this.selectPair(pairs[0])
     }
     else {
-      this.selectPair(pairs[0])
+      var defaultIndex = this.props.pairs.findIndex((el) => el.id === "ETH_USDC")
+      if (defaultIndex === -1)
+        defaultIndex = 0
+      this.selectPair(pairs[defaultIndex])
     }
   }
 
