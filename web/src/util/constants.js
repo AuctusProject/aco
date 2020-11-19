@@ -11,6 +11,7 @@ export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_
 export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
 export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
 export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS; 
+export const acoOtcAddress = process.env.REACT_APP_ACO_OTC_ADDRESS; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
