@@ -355,5 +355,5 @@ export const removeOptionsToIgnore = (options) => {
         "0xf7902f8db0ee97f9e9b07933ba2724d64f267110",
         "0xde757d935f43781c7079a41a162d8560a800ec13"
     ]
-    return options.filter(o => !optionsToIgnore.includes(o.acoToken.toLowerCase()))
+    return options.filter(o => o.creator !== acoOtcAddress && !optionsToIgnore.includes(o.acoToken.toLowerCase()))
 }
