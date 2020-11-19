@@ -4,13 +4,14 @@ const internalInterface = require('./internalInterface.js');
 const email = require('./email.js');
 
 const setError = (statusCode, error) => {
-  let message = ((error instanceof Error) ? error.stack : error);
+  let message = (error.message ? error.message : "") + ((error instanceof Error) ? error.stack : typeof(error) === "string" ? error : "");
+  const status = statusCode ? statusCode : error.status ? error.status : 500;
   return new Promise((resolve, reject) => {
     email.sendEmail(message).catch((err) => {
       message = "sendEmail error!!! " + message + " --- " + err;
     }).finally(() => {
       resolve({ 
-        statusCode: statusCode || 501,
+        statusCode: status,
         headers: { 
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Credentials": true,
@@ -64,14 +65,14 @@ module.exports.assets = (event, context, callback) => {
 };
 
 module.exports.getOrder = (event, context, callback) => {
-  const orderId = event.pathParameters.orderId ? event.pathParameters.orderId : "";
+  const orderId = event.pathParameters ? event.pathParameters.orderId : "";
   internalInterface.getOrder(orderId).then((response) => {
     callback(null, successCallback(response));
   }).catch((err) => setError(null, err).then(error => callback(null, error)));
 };
 
 module.exports.createOrder = (event, context, callback) => {
-  const orderId = event.pathParameters.orderId ? event.pathParameters.orderId : "";
+  const orderId = event.pathParameters ? event.pathParameters.orderId : "";
   const body = (event.body ? JSON.parse(event.body) : null);
   internalInterface.createOrder(orderId, body).then((response) => {
     callback(null, successCallback(response));

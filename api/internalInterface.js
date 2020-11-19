@@ -13,7 +13,16 @@ const callApi = (pathUrl, method, body = null) => {
       } else {
         resolve(null);
       }
-    }).catch((err) => reject("internal api " + method + " " + pathUrl + " " + err));
+    }).catch((err) => {
+      const status = (err.response ? err.response.status : null);
+      let message;
+      if (status == 400 || status == 403 || status == 404) {
+        message = (err.response.data ? err.response.data.message : "");
+      } else {
+        message = "internal api " + method + " " + pathUrl + " " + err;
+      }
+      reject({status: status, message: message})
+    });
   });
 };
 

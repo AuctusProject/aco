@@ -58,8 +58,13 @@ export function getAcoPools() {
 export function getOtcOrder(orderId) {
     return new Promise(function(resolve,reject){
         Axios.get(apiUrl + "order/" + encodeURIComponent(orderId))
-        .then((res) => resolve(res))
-        .catch(err => reject(err));
+        .then((res) => {
+            if (res && res.data) {
+                resolve(res.data);
+            } else {
+                resolve(null);
+            }
+        }).catch(err => reject(err));
     })
 }
 
@@ -67,8 +72,13 @@ export function createOtcOrder(isAskOrder, signedOrder) {
     return new Promise(function(resolve,reject){
         const orderId = generateUUID()
         Axios.post(apiUrl + "order/" + encodeURIComponent(orderId), {isAskOrder:isAskOrder,order:signedOrder})
-        .then((res) => resolve(res))
-        .catch(err => reject(err));
+        .then((res) => {
+            if (res && res.data) {
+                resolve(res.data);
+            } else {
+                resolve(null);
+            }
+        }).catch(err => reject(err));
     })
 }
 
