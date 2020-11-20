@@ -63,6 +63,6 @@ functions:
     timeout: 30
     events:
       - http:
-          path: /order/{orderId}
+          path: /order
           method: post
           cors: true

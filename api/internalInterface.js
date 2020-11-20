@@ -38,9 +38,9 @@ module.exports.getOrder = (id) => {
   });
 };
 
-module.exports.createOrder = (id, body) => {   
+module.exports.createOrder = (body) => {   
   return new Promise((resolve, reject) => { 
-    callApi("otc/" + encodeURIComponent(id), "POST", body).then((response) => resolve(response)).catch((err) => reject(err));
+    callApi("otc", "POST", body).then((response) => resolve(response)).catch((err) => reject(err));
   });
 };
 

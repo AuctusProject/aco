@@ -72,9 +72,8 @@ module.exports.getOrder = (event, context, callback) => {
 };
 
 module.exports.createOrder = (event, context, callback) => {
-  const orderId = event.pathParameters ? event.pathParameters.orderId : "";
   const body = (event.body ? JSON.parse(event.body) : null);
-  internalInterface.createOrder(orderId, body).then((response) => {
+  internalInterface.createOrder(body).then((response) => {
     callback(null, successCallback(response));
   }).catch((err) => setError(null, err).then(error => callback(null, error)));
 };
