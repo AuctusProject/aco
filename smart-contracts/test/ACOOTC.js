@@ -20,7 +20,6 @@ describe("ACOOTC", function() {
   let buidlerFactory;
   let weth;
   let acoOtc;
-  let maxExercisedAccounts = 120;
 
   const getPersonalSignedAskOrder = async (wallet, order) => {
     const orderHashHex = getAskOrderHash(order, acoOtc.address);
@@ -224,6 +223,7 @@ describe("ACOOTC", function() {
       let tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       let result = tx.events[tx.events.length - 1].args;
       let aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -245,6 +245,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -272,6 +273,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -301,6 +303,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -333,6 +336,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -362,6 +366,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -394,6 +399,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -425,6 +431,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -457,6 +464,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -487,6 +495,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -521,6 +530,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -553,6 +563,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -596,6 +607,7 @@ describe("ACOOTC", function() {
       let tx = await (await acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(order))).wait();
       let result = tx.events[tx.events.length - 1].args;
       let aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -620,6 +632,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(owner).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -665,6 +678,7 @@ describe("ACOOTC", function() {
       let tx = await (await acoOtc.connect(addr3).swapAskOrder(getNestedAskOrder(signedOrder))).wait();
       let result = tx.events[tx.events.length - 1].args;
       let aco = await ethers.getContractAt("ACOToken", result.signerToken);
+      expect(await buidlerFactory.creators(result.signerToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11.sub(signerAmount));
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -847,6 +861,7 @@ describe("ACOOTC", function() {
       let tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       let result = tx.events[tx.events.length - 1].args;
       let aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
@@ -869,6 +884,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
@@ -896,6 +912,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
@@ -924,6 +941,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
@@ -955,6 +973,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -983,6 +1002,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1014,6 +1034,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1044,6 +1065,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1076,6 +1098,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1106,6 +1129,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1139,6 +1163,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1170,6 +1195,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1213,6 +1239,7 @@ describe("ACOOTC", function() {
       let tx = await (await acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(order))).wait();
       let result = tx.events[tx.events.length - 1].args;
       let aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
@@ -1238,6 +1265,7 @@ describe("ACOOTC", function() {
       tx = await (await acoOtc.connect(owner).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       result = tx.events[tx.events.length - 1].args;
       aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12);
@@ -1283,6 +1311,7 @@ describe("ACOOTC", function() {
       let tx = await (await acoOtc.connect(addr3).swapBidOrder(getNestedBidOrder(signedOrder))).wait();
       let result = tx.events[tx.events.length - 1].args;
       let aco = await ethers.getContractAt("ACOToken", result.senderToken);
+      expect(await buidlerFactory.creators(result.senderToken)).to.equal(acoOtc.address);
 
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(bal11);
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
