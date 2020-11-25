@@ -67,7 +67,10 @@ export function getDeribiData(optionData) {
             resolve(null)
         } else {
             var expiry = new Date(optionData.expiryTime * 1000)
-            var deribitName = optionData.underlyingInfo.symbol + "-" + expiry.getDate() + 
+            var underlyingSymbol = 
+                optionData.underlyingInfo.symbol !== "TBTC" && optionData.underlyingInfo.symbol !== "WBTC" ?
+                optionData.underlyingInfo.symbol : "BTC"
+            var deribitName = underlyingSymbol + "-" + expiry.getDate() + 
                 expiry.toLocaleString('en-us', {month: 'short'}).toUpperCase() + (expiry.getFullYear() % 100) + "-" +
                 (BigInt(optionData.strikePrice) / BigInt(10 ** optionData.strikeAssetInfo.decimals)).toString(10) + "-" + 
                 (optionData.isCall ? "C" : "P")

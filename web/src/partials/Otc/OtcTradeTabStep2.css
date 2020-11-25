@@ -1,0 +1,25 @@
+.selected-option-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.selected-option-name {
+    margin-left: 4px;
+    margin-right: 4px;
+}
+
+.selected-option-modify {
+    color: #1782fc;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.label-column {
+    display: flex;
+    align-items: flex-end;
+}
+
+.label-text {
+    line-height: 35px;
+}
