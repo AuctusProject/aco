@@ -97,10 +97,10 @@ class OptionChart extends Component {
       chart.datasets[0].data.sort((a,b) => a.x > b.x ? 1 : -1)
       const xAxes = JSON.parse(axesProprerties)
       xAxes.scaleLabel.labelString = "Price"
-      xAxes.gridLines.borderDash = [step/2, step/2]
+      xAxes.gridLines.borderDash = [5, 5]
       const yAxes = JSON.parse(axesProprerties)
       yAxes.scaleLabel.labelString = "Profit / Loss"
-      yAxes.gridLines.borderDash = [step/2, step/2]
+      yAxes.gridLines.borderDash = [5, 5]
       this.setState({chart: chart, xAxes: xAxes, yAxes: yAxes})
     }
     else {

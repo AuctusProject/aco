@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { apiUrl } from './constants';
+import { apiUrl, removeOptionsToIgnore } from './constants';
 
 var apiTokenList = null
 export function getTokensList() {
@@ -11,7 +11,7 @@ export function getTokensList() {
         Axios.get(apiUrl + "tokens")
         .then(res => {
             if (res && res.data) {
-                apiTokenList = res.data
+                apiTokenList = removeOptionsToIgnore(res.data)
             }
             resolve(apiTokenList)
         })
@@ -52,6 +52,32 @@ export function getAcoPools() {
             resolve(acoPools)
         })
         .catch(err => reject(err));
+    })
+}
+
+export function getOtcOrder(orderId) {
+    return new Promise(function(resolve,reject){
+        Axios.get(apiUrl + "order/" + encodeURIComponent(orderId))
+        .then((res) => {
+            if (res && res.data) {
+                resolve(res.data);
+            } else {
+                resolve(null);
+            }
+        }).catch(err => reject(err));
+    })
+}
+
+export function createOtcOrder(isAskOrder, signedOrder) {
+    return new Promise(function(resolve,reject){
+        Axios.post(apiUrl + "order", {isAskOrder:isAskOrder,order:signedOrder})
+        .then((res) => {
+            if (res && res.data) {
+                resolve(res.data);
+            } else {
+                resolve(null);
+            }
+        }).catch(err => reject(err));
     })
 }
 

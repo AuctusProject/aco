@@ -308,9 +308,27 @@ contract ACOFactoryV3 is ACOFactoryV2 {
     event SetOperator(address indexed operator, bool indexed previousPermission, bool indexed newPermission);
 
     /**
+     * @dev Emitted when a new ACO token has been created.
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall True if the type is CALL, false for PUT.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param acoToken Address of the new ACO token created.
+     * @param acoTokenImplementation Address of the ACO token implementation used on creation.
+     * @param creator Address of the ACO creator.
+     */
+    event NewAcoTokenData(address indexed underlying, address indexed strikeAsset, bool indexed isCall, uint256 strikePrice, uint256 expiryTime, address acoToken, address acoTokenImplementation, address creator);
+    
+    /**
      * @dev A map to register the ACO Factory operators permissions.
      */
     mapping(address => bool) public operators;
+    
+    /**
+     * @dev A map to register the ACO creator.
+     */
+    mapping(address => address) public creators;
 
     /**
      * @dev Function to set the operator permission.
@@ -343,7 +361,8 @@ contract ACOFactoryV3 is ACOFactoryV2 {
         require(operators[msg.sender], "ACOFactory::createAcoToken: Only authorized operators");
         address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
         acoTokenData[acoToken] = ACOTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime);
-        emit NewAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation);
+        creators[acoToken] = msg.sender;
+        emit NewAcoTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation, msg.sender);
         return acoToken;
     }
 

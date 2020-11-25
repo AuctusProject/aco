@@ -11,6 +11,7 @@ export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_
 export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
 export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
 export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS; 
+export const acoOtcAddress = process.env.REACT_APP_ACO_OTC_ADDRESS; 
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
@@ -242,9 +243,9 @@ export function sortByDesc(array, property) {
 
 
 export function sortBy(array, property) {
-    return array.sort((a,b) => {
+    return array ? array.sort((a,b) => {
         return (a[property] === b[property])? 0 : ((a[property] < b[property]) ? -1 : 1);
-    })
+    }) : null
 }
 
 export function sortByFn(array, propertyFn) {
@@ -347,4 +348,13 @@ export const booleanToData = (bool) => {
 
 export const isDarkMode = () => {
     return window.localStorage.getItem('LAYOUT_MODE') !== "0"
+}
+
+export const removeOptionsToIgnore = (options) => {
+    const optionsToIgnore = [
+        "0xf7902f8db0ee97f9e9b07933ba2724d64f267110",
+        "0xde757d935f43781c7079a41a162d8560a800ec13"
+    ]
+    const otc = acoOtcAddress.toLowerCase()
+    return options.filter(o => o.creator !== otc && !optionsToIgnore.includes(o.acoToken.toLowerCase()))
 }

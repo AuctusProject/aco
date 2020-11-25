@@ -49,4 +49,20 @@ functions:
       - http:
           path: /assets
           method: get
+          cors: true      
+  getOrder:
+    handler: handler.getOrder
+    timeout: 30
+    events:
+      - http:
+          path: /order/{orderId}
+          method: get
+          cors: true       
+  createOrder:
+    handler: handler.createOrder
+    timeout: 30
+    events:
+      - http:
+          path: /order
+          method: post
           cors: true
