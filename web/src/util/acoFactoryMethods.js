@@ -23,25 +23,37 @@ function getAllAvailableOptions() {
         }
         else {
             const acoFactoryContract = getAcoFactoryContract()
-            acoFactoryContract.getPastEvents('NewAcoToken', { fromBlock: 0, toBlock: 'latest' }).then((events) => {
-                var assetsAddresses = []
-                var acoOptions = []
-                for (let i = 0; i < events.length; i++) {
-                    const eventValues = events[i].returnValues;
-                    acoOptions.push(eventValues)
-                    if (!assetsAddresses.includes(eventValues.strikeAsset)) {
-                        assetsAddresses.push(eventValues.strikeAsset)
-                    }
-                    if (!assetsAddresses.includes(eventValues.underlying)) {
-                        assetsAddresses.push(eventValues.underlying)
-                    }
-                }
-                fillTokensInformations(acoOptions, assetsAddresses).then(options => {
-                    availableOptions = removeOptionsToIgnore(acoOptions)
-                    resolve(options)
-                })
-            })
+            Promise.all([
+                acoFactoryContract.getPastEvents('NewAcoToken', { fromBlock: 0, toBlock: 'latest' }),
+                acoFactoryContract.getPastEvents('NewAcoTokenData', { fromBlock: 0, toBlock: 'latest' })
+            ]).then((events) => {
+                Promise.all([parseAcoCreationEvent(events[0]),parseAcoCreationEvent(events[1])]).then((result) => {
+                    availableOptions = [].concat(result[0], result[1])
+                    resolve(availableOptions)
+                }).catch((err) => reject(err))
+            }).catch((err) => reject(err))
         }
+    })
+}
+
+function parseAcoCreationEvent(events) {
+    return new Promise((resolve, reject) => {
+        var assetsAddresses = []
+        var acoOptions = []
+        for (let i = 0; i < events.length; i++) {
+            const eventValues = events[i].returnValues;
+            acoOptions.push(eventValues)
+            if (!assetsAddresses.includes(eventValues.strikeAsset)) {
+                assetsAddresses.push(eventValues.strikeAsset)
+            }
+            if (!assetsAddresses.includes(eventValues.underlying)) {
+                assetsAddresses.push(eventValues.underlying)
+            }
+        }
+        acoOptions = removeOptionsToIgnore(acoOptions)
+        fillTokensInformations(acoOptions, assetsAddresses).then(options => {
+            resolve(options)
+        }).catch((err) => reject(err))
     })
 }
 
