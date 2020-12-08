@@ -228,7 +228,7 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={[`/otc/trade/:tradeId?`, `/otc/manage`]}
+                  path={[`/otc/trade/:orderId?`, `/otc/manage`]}
                   render={ routeProps => <Otc
                     {...routeProps}
                     darkMode={darkMode}

@@ -4,8 +4,11 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { getAcoAssets } from '../../util/acoApi'
 import Modal from 'react-bootstrap/Modal'
+import ReactTooltip from 'react-tooltip'
+import { getByAddress } from '../../util/constants'
 
 class AssetInput extends Component {
   constructor(props) {
@@ -20,20 +23,33 @@ class AssetInput extends Component {
   }
 
   componentDidMount = () => {
-    getAcoAssets().then(assets => {
-      var filteredAssets = this.filterAssets(assets)
-      this.setState({assets:assets, filteredAssets: filteredAssets})
-    })
+    if (!this.props.disabled) {
+      getAcoAssets().then(assets => {
+        this.filterAssets(assets)
+      })
+    }
     this.setState({selectedAsset: this.props.selectedAsset})
   }
 
   filterAssets = (assets) => {
     var filter = this.state.filter ? this.state.filter.toLowerCase() : ""
-    return assets.filter(a => 
+    var filteredAssets = assets.filter(a => 
       (this.isNullOrEmpty(filter) || 
       a.symbol.toLowerCase().includes(filter) || 
       a.address.toLowerCase() === filter)
     )
+
+    if (filteredAssets === null || filteredAssets.length === 0) {
+      getByAddress(this.state.filter).then(asset => {
+        if (asset) {
+          filteredAssets.push(asset)
+        }
+        this.setState({assets:assets, filteredAssets: filteredAssets})
+      })
+    }
+    else {
+      this.setState({assets:assets, filteredAssets: filteredAssets})
+    }
   }
 
   isNullOrEmpty = (value) => {
@@ -45,13 +61,14 @@ class AssetInput extends Component {
   }
 
   onShowModal = () => {
-    this.setState({showModal:true})
+    if (!this.props.disabled) {
+      this.setState({showModal:true})
+    }
   }
 
   onFilterChange = (e) => {
     this.setState({filter: e.target.value}, () => {
-      var filteredAssets = this.filterAssets(this.state.assets)      
-      this.setState({filteredAssets: filteredAssets})
+      this.filterAssets(this.state.assets)
     })
   }
 
@@ -62,12 +79,12 @@ class AssetInput extends Component {
 
   getAssetIcon = (asset) => {
     var iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[asset.symbol]
-    return <img src={iconUrl}></img>
+    return <img alt="" src={iconUrl}></img>
   }
 
   render() {
     return (
-      <div className="asset-input">
+      <div className={"asset-input " + (!this.props.disabled ? "clickable" : "")}>
         <div className="" onClick={this.onShowModal}>
           {this.state.selectedAsset ? 
             <div className="selected-asset">
@@ -77,29 +94,34 @@ class AssetInput extends Component {
             <div>Select a token</div>
           }
         </div>
-        <Modal className="asset-input-modal" centered={true} size="sm" show={this.state.showModal} onHide={this.onHideModal}>
+        <Modal className="asset-input-modal aco-modal" centered={true} size="sm" show={this.state.showModal} onHide={this.onHideModal}>
           <Modal.Header closeButton>
+            Select a token <FontAwesomeIcon data-tip data-for="asset-input-tooltip" icon={faInfoCircle}></FontAwesomeIcon>
+            <ReactTooltip className="asset-input-tooltip" id="asset-input-tooltip">
+              Find a token by searching for its name or symbol or by pasting its address below.
+            </ReactTooltip>
           </Modal.Header>
           <Modal.Body>
-            <div className="row">
-              <div className="col-md-12">
-                Select a token
-              </div>
-              <div className="col-md-12">
-                <div className="search-input-wrapper">
-                  <input onChange={this.onFilterChange} value={this.state.filter} placeholder="Search symbol or paste address"></input>
-                  <FontAwesomeIcon icon={faSearch}/>
+            <div className="container">
+              <div className="row">
+                <div className="col-md-12">
+                  <div className="search-input-wrapper">
+                    <input onChange={this.onFilterChange} value={this.state.filter} placeholder="Search symbol or paste address"></input>
+                    <FontAwesomeIcon icon={faSearch}/>
+                  </div>
+                </div>
+                <div className="col-md-12">
+                  <div className="token-name-title">Token Name</div>
                 </div>
               </div>
-              <div className="col-md-12">
-                <div>Token Name</div>
+              <div className="row overflow-auto">
+                {this.state.filteredAssets.map(asset => (
+                  <div key={asset.address} className="col-md-12 asset-option" onClick={this.onAssetSelect(asset)}>
+                    {this.getAssetIcon(asset)}
+                    {asset.symbol}
+                  </div>
+                ))}
               </div>
-              {this.state.filteredAssets.map(asset => (
-                <div className="col-md-12 asset-option" onClick={this.onAssetSelect(asset)}>
-                  {this.getAssetIcon(asset)}
-                  {asset.symbol}
-                </div>
-              ))}
             </div>
           </Modal.Body>
         </Modal>

@@ -1,5 +1,5 @@
 import Web3Utils from 'web3-utils'
-import { balanceOf } from './erc20Methods';
+import { balanceOf, getERC20AssetInfo } from './erc20Methods';
 import { checkEthBalanceOf } from './web3Methods';
 
 export const zero = new Web3Utils.BN(0);
@@ -26,6 +26,8 @@ export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
 export const swapQuoteBuySize = "1000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
+export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS;
+export const wethAddress = process.env.REACT_APP_WETH_ADDRESS;
 export const ethTransactionTolerance = 0.01;
 export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
@@ -43,6 +45,36 @@ export const OPTION_TYPES = {
         name: "PUT"
     }
 }
+
+export const OTC_ACTION_OPTIONS = [{
+    value: 1,
+    name: "Buy"
+},
+{
+    value: 2,
+    name: "Sell"
+}]
+
+export const OTC_EXPIRATION_OPTIONS = [{
+    value: 1,
+    name: "Minute"
+},
+{
+    value: 2,
+    name: "Hour"
+},
+{
+    value: 3,
+    name: "Day"
+},
+{
+    value: 4,
+    name: "Week"
+},
+{
+    value: 5,
+    name: "Month"
+}]
 
 export const PositionsLayoutMode = {
     Basic: 0,
@@ -256,17 +288,20 @@ export function sortByFn(array, propertyFn) {
 
 export const getTimeToExpiry = (expiryTimeInSeconds) => {
     let timeInSeconds = getSecondsToExpiry(expiryTimeInSeconds)
+    if (timeInSeconds < 0) {
+        return {days: 0, hours: 0, minutes: 0}
+    }
     let seconds = timeInSeconds;
-    const days = Math.floor(seconds / (3600 * 24));
-    seconds -= days * 3600 * 24;
-    const hours = Math.floor(seconds / 3600);
-    seconds -= hours * 3600;
-    const minutes = Math.floor(seconds / 60);
+    const days = Math.floor(seconds / (3600 * 24))
+    seconds -= days * 3600 * 24
+    const hours = Math.floor(seconds / 3600)
+    seconds -= hours * 3600
+    const minutes = Math.floor(seconds / 60)
     return {
         days,
         hours,
         minutes
-    };
+    }
 }
 
 export const getSecondsToExpiry = (expiryTimeInSeconds) => {
@@ -357,4 +392,21 @@ export const removeOptionsToIgnore = (options) => {
     ]
     const otc = acoOtcAddress.toLowerCase()
     return options.filter(o => o.creator !== otc && !optionsToIgnore.includes(o.acoToken.toLowerCase()))
+}
+
+export const getByAddress = (address) => {
+    return new Promise((resolve, reject) => {
+        var filter = address ? address.toLowerCase() : ""
+        if (Web3Utils.isAddress(filter)) {
+            getERC20AssetInfo(filter)
+                .then(assetInfo => {
+                    assetInfo.foundByAddress = true
+                    resolve(assetInfo)
+                })
+                .catch(() => resolve(null))
+        }
+        else {
+            resolve(null)
+        }
+    })
 }

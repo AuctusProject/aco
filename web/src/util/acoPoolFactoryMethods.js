@@ -19,7 +19,10 @@ var availablePools = null
 function getAvailablePools(underlying, strikeAsset, isCall) {
     return new Promise((resolve, reject) => {
         getAllAvailablePools().then(pools => {
-            let filteredPools = pools.filter(p => p.underlying.toLowerCase() === underlying.toLowerCase() && p.strikeAsset.toLowerCase() === strikeAsset.toLowerCase() && p.isCall === isCall)
+            let filteredPools = []
+            if (pools) {
+                filteredPools = pools.filter(p => p.underlying.toLowerCase() === underlying.toLowerCase() && p.strikeAsset.toLowerCase() === strikeAsset.toLowerCase() && p.isCall === isCall)
+            }
             resolve(filteredPools)
         })
         .catch(err => reject(err))
@@ -33,28 +36,33 @@ export const getAllAvailablePools = () => {
         }
         else {
             const acoPoolFactoryContract = getAcoPoolFactoryContract()
-            acoPoolFactoryContract.getPastEvents('NewAcoPool', { fromBlock: 0, toBlock: 'latest' })
-            .then((events) => {
-                var assetsAddresses = []
-                var pools = []
-                for (let i = 0; i < events.length; i++) {
-                    const eventValues = events[i].returnValues;
-                    pools.push(eventValues)
-                    if (!assetsAddresses.includes(eventValues.strikeAsset)) {
-                        assetsAddresses.push(eventValues.strikeAsset)
+            if (acoPoolFactoryContract) {
+                acoPoolFactoryContract.getPastEvents('NewAcoPool', { fromBlock: 0, toBlock: 'latest' })
+                .then((events) => {
+                    var assetsAddresses = []
+                    var pools = []
+                    for (let i = 0; i < events.length; i++) {
+                        const eventValues = events[i].returnValues;
+                        pools.push(eventValues)
+                        if (!assetsAddresses.includes(eventValues.strikeAsset)) {
+                            assetsAddresses.push(eventValues.strikeAsset)
+                        }
+                        if (!assetsAddresses.includes(eventValues.underlying)) {
+                            assetsAddresses.push(eventValues.underlying)
+                        }
                     }
-                    if (!assetsAddresses.includes(eventValues.underlying)) {
-                        assetsAddresses.push(eventValues.underlying)
-                    }
-                }
-                fillTokensInformations(pools, assetsAddresses)
-                .then(pools => {
-                    availablePools = pools
-                    resolve(availablePools)
+                    fillTokensInformations(pools, assetsAddresses)
+                    .then(pools => {
+                        availablePools = pools
+                        resolve(availablePools)
+                    })
+                    .catch(err => reject(err))
                 })
                 .catch(err => reject(err))
-            })
-            .catch(err => reject(err))
+            }
+            else {
+                resolve(null)
+            }
         }
     })
 }

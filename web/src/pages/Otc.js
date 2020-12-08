@@ -5,8 +5,7 @@ import PropTypes from 'prop-types'
 import OtcTradeTab from '../partials/Otc/OtcTradeTab'
 import OtcManageTab from '../partials/Otc/OtcManageTab'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faExclamationCircle, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
-import PairDropdown from '../partials/PairDropdown'
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 
 class Simple extends Component {
   constructor() {
@@ -29,17 +28,17 @@ class Simple extends Component {
     return <div className="py-4">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>OTC is in beta. Use at your own risk.</div>
         <div className="pair-and-mode-wrapper">
-          <ul className="pair-dropdown-wrapper">
+          <div className="pair-dropdown-wrapper">
             OTC
-          </ul>
-          <ul className="navbar-nav nav-modes ml-auto">
+          </div>
+          <div className="navbar-nav nav-modes ml-auto">
             Activity
-          </ul>
+          </div>
         </div>        
         <div className="simple-box">
           <ul className="nav nav-tabs justify-content-center" id="simpleTabs" role="tablist">
             <li className="nav-item">
-              <NavLink className="nav-link" to="/otc/trade">Buy</NavLink>
+              <NavLink className="nav-link" to="/otc/trade">New Trade</NavLink>
             </li>
             <li className="nav-item">
               <NavLink className="nav-link" to="/otc/manage">Manage</NavLink>

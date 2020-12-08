@@ -68,6 +68,10 @@ main {
   max-width: 100%;
 }
 
+.nowrap {  
+  white-space: nowrap;
+}
+
 .width100 {
   width: 100%;
 }

@@ -35,6 +35,9 @@ class OtcTradeTabStep1 extends Component {
   }
 
   onExpirationChange = (value) => {
+    if (value) {
+      value.setUTCHours(8)
+    }
     this.setState({expirationDate: value})
   }
 
@@ -73,18 +76,27 @@ class OtcTradeTabStep1 extends Component {
     this.props.setStep(2)
   }
 
+  getMinDate = () => {
+    var date = new Date()
+    date.setUTCHours(8,0,0,0)
+    if (date < new Date()) {
+      date.setDate(date.getDate() + 1)
+    }
+    return date
+  }
+
   render() {
-    var minDate = new Date()
+    var minDate = this.getMinDate()
     var maxDate = new Date().setFullYear(new Date().getFullYear() + 1)
-    return <div className="otc-trade-tab">
+    return <div>
       <div className="trade-title">
-        Start a trade
+        Start a Trade
       </div>
       <div className="trade-subtitle">
         Select the terms for the option you would like to trade
       </div>
       <div className="inputs-wrapper">
-        <div className="input-column">
+        <div className="input-column underlying-column">
           <div className="input-label">Underlying</div>
           <div className="input-field">
             <AssetInput selectedAsset={this.state.selectedUnderlying} onAssetSelected={this.onAssetSelected}></AssetInput>
@@ -118,6 +130,11 @@ class OtcTradeTabStep1 extends Component {
         <div className="action-btn medium solid-blue disabled">
           <div>{this.getButtonMessage()}</div>
         </div>}
+      </div>
+      <div className="otc-steps-indicator">
+          <div className="active-step"></div>
+          <div></div>
+          <div></div>
       </div>
     </div>
   }

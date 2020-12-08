@@ -4,66 +4,61 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import OtcTradeTabStep2 from './OtcTradeTabStep2'
 import OtcTradeTabStep1 from './OtcTradeTabStep1'
+import { getOtcOrder } from '../../util/acoApi'
+import OtcTradeTabStep3 from './OtcTradeTabStep3'
 
 class OtcTradeTab extends Component {
   constructor(props) {
     super(props)
     this.state = { 
+      otcOrder: null,
       selectedOption: null,
       step: 1
     }
   }
 
   componentDidMount = () => {
-  }
-
-  selectType = (type) => {
-    this.setState({ selectedType: type })
-  }
-
-  onExpirationChange = (value) => {
-    this.setState({expirationDate: value})
-  }
-
-  onStrikeChange = (value) => {
-    this.setState({strikeValue: value})
-  }
-
-  getButtonMessage = () => {
-    if (!this.state.selectedUnderlying) {
-      return "Select underlying"
+    if (this.props.match.params.orderId) {
+      this.loadOtcOrder()
     }
-    if (!this.state.expirationDate) {
-      return "Select expiration"
+  }
+  
+  componentDidUpdate = (prevProps) => {    
+    if (!this.props.match.params.orderId && this.state.otcOrder) {
+      this.setState({otcOrder: null, selectedOption: null, step: 1})
     }
-    if (!this.state.strikeValue) {
-      return "Select strike"
+    else if (this.props.match.params.orderId && this.props.match.params.orderId !== prevProps.match.params.orderId) {
+      this.loadOtcOrder()
     }
-    return null
   }
 
-  canProceed = () => {
-    return (this.getButtonMessage() === null) 
+  loadOtcOrder = () => {
+    if (this.state.otcOrder === null || this.props.match.params.orderId !== this.state.otcOrder.orderId){
+      this.setState({step: 3})
+      getOtcOrder(this.props.match.params.orderId).then(result => {
+        this.setState({otcOrder: result})
+      })
+    }
   }
 
-  onAssetSelected = (selectedAsset) => {
-    this.setState({selectedUnderlying: selectedAsset})
-  }
-
-  setStep = (value) => {
-    this.setState({step: value})
+  setStep = (value, otcOrder) => {
+    this.setState({step: value, otcOrder: otcOrder})
   }
 
   setSelectedOption = (selectedOption) => {
     this.setState({selectedOption: selectedOption})
   }
 
+  startNewTrade = () => {
+    this.props.history.push('/otc/trade')
+    this.setState({otcOrder: null, selectedOption: null, step: 1})
+  }
+
   render() {
-    var minDate = new Date()
-    var maxDate = new Date().setFullYear(new Date().getFullYear() + 1)
     return <div className="otc-trade-tab">
-      {this.state.step === 1 && <OtcTradeTabStep1 selectedOption={this.state.selectedOption} setSelectedOption={this.setSelectedOption} setStep={this.setStep}></OtcTradeTabStep1>}
-      {this.state.step === 2 && <OtcTradeTabStep2 selectedOption={this.state.selectedOption} setStep={this.setStep}></OtcTradeTabStep2>}
+      {this.state.step === 1 && <OtcTradeTabStep1 {...this.props} selectedOption={this.state.selectedOption} setSelectedOption={this.setSelectedOption} setStep={this.setStep}></OtcTradeTabStep1>}
+      {this.state.step === 2 && <OtcTradeTabStep2 {...this.props} selectedOption={this.state.selectedOption} setStep={this.setStep}></OtcTradeTabStep2>}
+      {this.state.step === 3 && <OtcTradeTabStep3 {...this.props} otcOrder={this.state.otcOrder} startNewTrade={this.startNewTrade}></OtcTradeTabStep3>}
     </div>
   }
 }

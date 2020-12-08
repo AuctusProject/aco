@@ -3,51 +3,51 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
-import OptionBadge from '../OptionBadge'
-import ReactDatePicker from 'react-datepicker'
-import "react-datepicker/dist/react-datepicker.css";
-import AssetInput from '../Util/AssetInput'
 import SimpleDropdown from '../SimpleDropdown'
-
-var ACTION_OPTIONS = [{
-  value:1,
-  name:"Buy"
-},
-{
-  value:2,
-  name:"Sell"
-}]
-var EXPIRATION_OPTIONS = [{
-  value:1,
-  name:"Minute"
-},
-{
-  value:2,
-  name:"Hour"
-},
-{
-  value:3,
-  name:"Day"
-},
-{
-  value:4,
-  name:"Week"
-},
-{
-  value:5,
-  name:"Month"
-}]
+import { formatWithPrecision, getBalanceOfAsset, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, toDecimals, usdcAddress } from '../../util/constants'
+import CreateOrderModal from './CreateOrderModal'
+import { faUserCircle, faClock } from '@fortawesome/free-regular-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 class OtcTradeTabStep2 extends Component {
   constructor(props) {
     super(props)
-    this.state = { 
-      actionType: ACTION_OPTIONS[0], 
+    this.state = {
+      actionType: OTC_ACTION_OPTIONS[0],
       optionQty: "",
       usdcValue: "",
       counterpartyAddress: "",
       expirationValue: "",
-      expirationUnit: EXPIRATION_OPTIONS[0]
+      expirationUnit: OTC_EXPIRATION_OPTIONS[0]
+    }
+  }
+
+  componentDidMount = () => {
+    this.loadAssetsBalances()
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.accountToggle !== prevProps.accountToggle) {
+      this.loadAssetsBalances()
+    }
+  } 
+
+  loadAssetsBalances = () => {
+    var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
+    var underlyingAddress = this.getUnderlyingAddress()
+    if (userAddress && underlyingAddress) {
+      getBalanceOfAsset(underlyingAddress, userAddress).then(underlyingBalance => {
+        this.setState({underlyingBalance: underlyingBalance})
+      })
+      getBalanceOfAsset(usdcAddress, userAddress).then(usdcBalance => {
+        this.setState({usdcBalance: usdcBalance})
+      })
+    }
+  }
+
+  getUnderlyingAddress = () => {
+    if (this.state.selectedOption && this.state.selectedOption.selectedUnderlying) {
+      return this.state.selectedOption.selectedUnderlying
     }
   }
 
@@ -56,23 +56,23 @@ class OtcTradeTabStep2 extends Component {
   }
 
   onOptionQtyChange = (value) => {
-    this.setState({optionQty: value})
+    this.setState({ optionQty: value })
   }
 
   onUsdcValueChange = (value) => {
-    this.setState({usdcValue: value})
+    this.setState({ usdcValue: value })
   }
 
-  onCounterpartyAddressChange = (value) => {
-    this.setState({counterpartyAddress: value})
+  onCounterpartyAddressChange = (event) => {
+    this.setState({ counterpartyAddress: event.target.value })
   }
 
   onExpirationValueChange = (value) => {
-    this.setState({expirationValue: value})
+    this.setState({ expirationValue: value })
   }
 
   onExpirationUnitChange = (value) => {
-    this.setState({expirationUnit: value})
+    this.setState({ expirationUnit: value })
   }
 
   getButtonMessage = () => {
@@ -88,17 +88,84 @@ class OtcTradeTabStep2 extends Component {
     return null
   }
 
+  canProceed = () => {
+    return (this.getButtonMessage() === null)
+  }
+
+  onCreateClick = () => {
+    var isAsk = this.state.actionType === OTC_ACTION_OPTIONS[1]
+    var orderData = {
+      isAsk: isAsk,
+      selectedOption: this.props.selectedOption,
+      optionQty: toDecimals(this.state.optionQty, this.props.selectedOption.selectedUnderlying.decimals),
+      usdcValue: toDecimals(this.state.usdcValue, 6),
+      expiry: this.getExpiry(),
+      counterpartyAddress: this.state.counterpartyAddress
+    }
+    this.setState({ createOrderModal: orderData })
+  }
+
+  onConnectClick = () => {
+    this.props.signIn(null, this.context)
+  }
+
+  getExpiry = () => {
+    var now = Date.now()
+    if (this.state.expirationUnit.value === 1) {
+      now = now + (this.state.expirationValue * ONE_MINUTE)
+    }
+    else if (this.state.expirationUnit.value === 2) {
+      now = now + (this.state.expirationValue * 60 * ONE_MINUTE)
+    }
+    else if (this.state.expirationUnit.value === 3) {
+      now = now + (this.state.expirationValue * 24 * 60 * ONE_MINUTE)
+    }
+    else if (this.state.expirationUnit.value === 4) {
+      now = now + (this.state.expirationValue * 7 * 24 * 60 * ONE_MINUTE)
+    }
+    else if (this.state.expirationUnit.value === 5) {
+      now = now + (this.state.expirationValue * 30 * 24 * 60 * ONE_MINUTE)
+    }
+    return Math.ceil(now / 1000)
+  }
+
+  onModifyClick = () => {
+    this.props.setStep(1)
+  }
+
+  getPremiumPerOption = () => {
+    if (this.state.optionQty && this.state.usdcValue && this.state.optionQty > 0 && this.state.usdcValue > 0) {
+      var premiumPerOption = this.state.usdcValue / this.state.optionQty
+      return "(" + formatWithPrecision(premiumPerOption, 2) + "/option)"
+    }
+    return null
+  }
+
+  getUSDCToCollaterize = () => {
+    return this.state.optionQty * this.props.selectedOption.strikeValue
+  }
+
+  onCreated = (result) => {
+    this.props.setStep(3, result)
+    this.props.history.push('/otc/trade/' + result.orderId)
+    this.onCreateOrderHide()
+  }
+
+  onCreateOrderHide = () => {
+    this.setState({ createOrderModal: null })
+  }
+
   getOptionName = () => {
     var selectedOption = this.props.selectedOption
-    return "ACO " + 
-    selectedOption.selectedUnderlying.symbol +
-    "-" +
-    selectedOption.strikeValue + 
-    "USDC-" +
-    (selectedOption.selectedType === "1" ? "C" : "P") +
-    "-" +
-    this.getFormattedDate()
-  }  
+    return "ACO " +
+      selectedOption.selectedUnderlying.symbol +
+      "-" +
+      selectedOption.strikeValue +
+      "USDC-" +
+      (selectedOption.selectedType === 1 ? "C" : "P") +
+      "-" +
+      this.getFormattedDate()
+  }
 
   getFormattedDate = () => {
     var expirationDate = new Date(this.props.selectedOption.expirationDate)
@@ -108,28 +175,10 @@ class OtcTradeTabStep2 extends Component {
     return day + month + year + "-0800UTC"
   }
 
-  canProceed = () => {
-    return (this.getButtonMessage() === null) 
-  }
-
-  onAssetSelected = (selectedAsset) => {
-    this.setState({selectedUnderlying: selectedAsset})
-  }
-
-  onNextClick = () => {
-    
-  }
-
-  onModifyClick = () => {
-    this.props.setStep(1)
-  }
-
   render() {
-    var minDate = new Date()
-    var maxDate = new Date().setFullYear(new Date().getFullYear() + 1)
-    return <div className="otc-trade-tab">
+    return <div>
       <div className="trade-title">
-        Start a trade
+        Start a Trade
       </div>
       <div className="trade-subtitle">
         Select the quantity, price and expiration for your trade
@@ -139,54 +188,83 @@ class OtcTradeTabStep2 extends Component {
         <div className="selected-option-name">{this.getOptionName()}</div>
         <div className="selected-option-modify" onClick={this.onModifyClick}>MODIFY</div>
       </div>
-      <div className="inputs-wrapper">
+      <div className="inputs-wrapper action-row">
         <div className="input-column">
           <div className="input-label">Action (You'll)</div>
           <div className="input-field">
-            <SimpleDropdown selectedOption={this.state.actionType} options={ACTION_OPTIONS} onSelectOption={this.selectActionType}></SimpleDropdown>
+            <SimpleDropdown selectedOption={this.state.actionType} options={OTC_ACTION_OPTIONS} onSelectOption={this.selectActionType}></SimpleDropdown>
           </div>
         </div>
-        <div className="input-column expiration-column">
+        <div className="input-column">
           <div className="input-label">Quantity</div>
           <div className="input-field">
-            <DecimalInput tabIndex="-1" placeholder="" onChange={this.onOptionQtyChange} value={this.state.optionQty}></DecimalInput>
+            <DecimalInput placeholder="0.00" onChange={this.onOptionQtyChange} value={this.state.optionQty}></DecimalInput>
           </div>
         </div>
         <div className="label-column">
           <div className="label-text">
-            with
+            {this.state.actionType === 1 ? "with" : "for"}
           </div>
         </div>
-        <div className="input-column strike-column">
+        <div className="input-column">
           <div className="input-label"></div>
           <div className="input-field">
-            <DecimalInput tabIndex="-1" placeholder="" onChange={this.onUsdcValueChange} value={this.state.usdcValue}></DecimalInput>
+            <DecimalInput placeholder="0.00" onChange={this.onUsdcValueChange} value={this.state.usdcValue}></DecimalInput>
           </div>
         </div>
         <div className="label-column">
           <div className="label-text">
-          USDC
+            USDC
           </div>
         </div>
       </div>
-      <div className="inputs-wrapper">
-        <div>
-          <input onChange={this.onCounterpartyAddressChange} value={this.state.counterpartyAddress} placeholder="Counterparty wallet (Recommended)"></input>
+      <div className="inputs-wrapper counterparty-expiry-row">
+        <div className="counterparty-expiry">
+          <FontAwesomeIcon icon={faUserCircle}></FontAwesomeIcon>
+          <div className="input-field counterparty-input">
+            <input onChange={this.onCounterpartyAddressChange} value={this.state.counterpartyAddress} placeholder="Counterparty wallet (Recommended)"></input>
+          </div>
         </div>
-        <div>
-          <input onChange={this.onExpirationValueChange} value={this.state.expirationValue}></input>
-          <SimpleDropdown selectedOption={this.state.expirationUnit} options={EXPIRATION_OPTIONS} onSelectOption={this.onExpirationUnitChange}></SimpleDropdown>
+        <div className="counterparty-expiry">
+          <FontAwesomeIcon icon={faClock}></FontAwesomeIcon>
+          <div className="nowrap">Expires in</div>
+          <div className="input-field expiry-input">
+            <DecimalInput placeholder="" onChange={this.onExpirationValueChange} value={this.state.expirationValue}></DecimalInput>
+          </div>
+          <SimpleDropdown isPlural={this.state.expirationValue > 1} selectedOption={this.state.expirationUnit} options={OTC_EXPIRATION_OPTIONS} onSelectOption={this.onExpirationUnitChange}></SimpleDropdown>
         </div>
+      </div>
+      <div className="collateral-and-premium-info">
+        {this.state.actionType === OTC_ACTION_OPTIONS[0] ? <div>
+          Total premium to be paid: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}
+        </div> :
+          <>{this.props.selectedOption.selectedType === 1 ?
+            <div>{this.props.selectedOption.selectedUnderlying.symbol} to collaterize: {this.state.optionQty ? this.state.optionQty : "-"}</div> :
+            <div>USDC to collaterize: {this.getUSDCToCollaterize() ? this.getUSDCToCollaterize() : "-"}</div>
+          }
+            <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}</div>
+          </>}
       </div>
       <div className="action-button-wrapper">
         {this.canProceed() ?
-        <div className="action-btn medium solid-blue" onClick={this.onNextClick}>
-          <div>NEXT</div>
-        </div> :
-        <div className="action-btn medium solid-blue disabled">
-          <div>{this.getButtonMessage()}</div>
-        </div>}
+          (this.props.isConnected ? 
+            <div className="action-btn medium solid-blue" onClick={this.onCreateClick}>
+              <div>CREATE TRADE</div>
+            </div> :
+            <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
+              <div>CONNECT WALLET</div>
+            </div>)
+          :
+          <div className="action-btn medium solid-blue disabled">
+            <div>{this.getButtonMessage()}</div>
+          </div>}
       </div>
+      <div className="otc-steps-indicator">
+        <div></div>
+        <div className="active-step"></div>
+        <div></div>
+      </div>
+      {this.state.createOrderModal && <CreateOrderModal createOrderData={this.state.createOrderModal} onHide={this.onCreateOrderHide} />}
     </div>
   }
 }

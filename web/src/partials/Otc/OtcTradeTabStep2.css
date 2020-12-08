@@ -2,6 +2,7 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
+    margin-bottom: 15px;
 }
 
 .selected-option-name {
@@ -15,11 +16,92 @@
     cursor: pointer;
 }
 
+.otc-trade-tab .action-row .input-column {
+    width: 175px;
+    min-width: 175px;
+    max-width: 175px;
+}
+
 .label-column {
     display: flex;
     align-items: flex-end;
+    margin: 0 10px;
 }
 
 .label-text {
     line-height: 35px;
+}
+
+.counterparty-expiry-row { 
+    display: flex;
+    flex-direction: row;
+    margin: 12px 0;
+}
+
+.counterparty-expiry {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    border-radius: 8px;
+    background-color: #333333;
+    margin: 6px 10px;
+    padding: 16px;
+}
+
+.light-mode .counterparty-expiry {
+    background-color: #f2f2f2;
+}
+
+.counterparty-expiry:first-child,
+.counterparty-expiry:first-child .input-field {
+    width: 100%;
+}
+
+.counterparty-expiry svg{
+    font-size: 26px;
+    color: #1782fc;
+    margin-right: 6px;
+}
+
+.counterparty-expiry .input-field {
+    width: unset;
+    border: none;
+    border-bottom: 1px solid #909090;
+    margin: 0 6px;
+}
+
+.counterparty-expiry .input-field input{
+    padding: 0;
+    font-size: 14px;
+}
+
+.counterparty-input {
+    flex: 1;
+}
+
+.counterparty-expiry .input-field.expiry-input {
+    width: 40px;
+}
+
+.counterparty-expiry li.dropdown,
+.counterparty-expiry .nav-link {
+    padding: 0;
+}
+
+.counterparty-expiry .simple-dropdown {
+    width: 70px
+}
+
+.collateral-and-premium-info {
+    font-size: 14px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: center;
+}
+
+.light-mode .collateral-and-premium-info {
+    color: #262626;
 }

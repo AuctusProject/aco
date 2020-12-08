@@ -160,6 +160,12 @@ class NavBar extends Component {
                           <div className="subnav-link-description">Become a liquidity provider and receive premiums by automatically selling covered options.</div>
                         </div>
                       </NavLink>
+                      <NavLink onClick={this.submenuClick} to={"/otc/trade"}>
+                        <div className="subnav-link">
+                          <div className="subnav-link-title">OTC</div>
+                          <div className="subnav-link-description">Trade options on any token with a customized strike price, expiration and counterparty.</div>
+                        </div>
+                      </NavLink>
                       <a onClick={this.submenuClick} target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/">
                         <div className="subnav-link">
                           <div className="subnav-link-title">LEARN ABOUT OPTIONS</div>
@@ -185,6 +191,11 @@ class NavBar extends Component {
                       <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/pools")}>
                         <div className="subnav-link">
                           <div className="subnav-link-title">POOLS</div>
+                        </div>
+                      </NavLink>
+                      <NavLink onClick={this.submenuClick} to={"/otc/trade"}>
+                        <div className="subnav-link">
+                          <div className="subnav-link-title">OTC</div>
                         </div>
                       </NavLink>
                     </div>

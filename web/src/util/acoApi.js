@@ -37,6 +37,21 @@ export function getAcoAssets() {
     })
 }
 
+export function getAcoAsset(address) {
+    return new Promise(function(resolve,reject){
+        getAcoAssets().then(acoAssets => {
+            for (var i = 0; i < acoAssets.length; ++i) {
+                if (acoAssets[i].address.toLowerCase() === address.toLowerCase()) {
+                    resolve(acoAssets[i])
+                    return;
+                }
+            }
+            resolve(null)
+        })
+        .catch(err => reject(err));
+    })
+}
+
 var acoPools = null
 export function getAcoPools() {
     return new Promise(function(resolve,reject){

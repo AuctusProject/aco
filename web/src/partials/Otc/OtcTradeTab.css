@@ -1,6 +1,6 @@
 .otc-trade-tab {
     padding: 20px 10px;
-    max-width: 720px;
+    max-width: 760px;
     width: 100%;
     margin: auto;
     text-align: center;
@@ -11,8 +11,11 @@
     font-weight: bold;
     letter-spacing: 0.9px;
     text-align: center;
-    color: #262626;
     margin-top: 15px;
+}
+
+.light-mode .trade-title {
+    color: #262626;
 }
 
 .trade-subtitle {
@@ -20,10 +23,13 @@
     font-weight: normal;
     letter-spacing: 0.35px;
     text-align: center;
-    color: #666666;
-    margin-bottom: 35px;
+    margin-bottom: 25px;
+    color: #b2b2b2;
 }
 
+.light-mode .trade-subtitle {
+    color: #666666;    
+}
 
 .otc-trade-tab .inputs-wrapper {
     display: flex;
@@ -32,7 +38,7 @@
 
 .otc-trade-tab .input-label {
     font-size: 12px;
-    font-weight: 300;
+    font-weight: bold;
     font-stretch: normal;
     font-style: normal;
     letter-spacing: 0.6px;
@@ -46,7 +52,7 @@
 }
 
 .otc-trade-tab .input-field input::placeholder {
-    color: #4c4c4c;
+    color: #808080;
     opacity: 1;
 }
 
@@ -74,7 +80,8 @@
 }
 
 .otc-trade-tab .input-column.strike-column,
-.otc-trade-tab .input-column.expiration-column {
+.otc-trade-tab .input-column.expiration-column,
+.otc-trade-tab .input-column.underlying-column {
     width: 175px;
     min-width: 175px;
     max-width: 175px;
@@ -92,4 +99,31 @@
         min-width: unset;
         max-width: unset;
     }
+}
+
+.otc-steps-indicator {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.otc-steps-indicator {
+    margin-top: 20px;
+}
+
+.otc-steps-indicator div {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: #cbcbcb;
+    margin: 6px;
+}
+
+.otc-steps-indicator div.active-step {
+    background-color: #1782fc
+}
+
+.selected-option-label {
+    font-weight: bold;
 }
