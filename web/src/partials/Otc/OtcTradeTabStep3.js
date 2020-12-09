@@ -288,8 +288,12 @@ class OtcTradeTabStep3 extends Component {
   }
 
   isCounterpartyWallet = () => {
-    return isEther(this.props.otcOrder.order.sender.responsible) || 
+    return this.isPublicCounterparty() || 
       this.props.otcOrder.order.sender.responsible.toLowerCase() === this.context.web3.selectedAccount.toLowerCase()
+  }
+
+  isPublicCounterparty = () => {
+    return isEther(this.props.otcOrder.order.sender.responsible)
   }
 
   getButtonMessage = () => {
@@ -405,7 +409,7 @@ class OtcTradeTabStep3 extends Component {
                 </>}
             </div>
             <div className="counterparty-row">
-              Counterparty Address: {this.props.otcOrder.order.sender.responsible}
+              Counterparty Address: {this.isPublicCounterparty() ? "Public Order" : this.props.otcOrder.order.sender.responsible}
             </div>
             {this.canTakeOrder() && <div className="url-input-action-buttons">
               <div className="url-input input-group">
@@ -494,7 +498,7 @@ class OtcTradeTabStep3 extends Component {
                   </>}
               </div>
               <div className="counterparty-row">
-                Counterparty Address: {this.props.otcOrder.order.sender.responsible}
+              Counterparty Address: {this.isPublicCounterparty() ? "Public Order" : this.props.otcOrder.order.sender.responsible}
               </div>
               <div className="expiry-countdown-row">
                 {this.getTimeToExpiryOrder()}

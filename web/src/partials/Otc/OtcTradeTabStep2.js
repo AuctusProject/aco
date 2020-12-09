@@ -18,7 +18,7 @@ class OtcTradeTabStep2 extends Component {
       optionQty: "",
       usdcValue: "",
       counterpartyAddress: "",
-      expirationValue: "",
+      expirationValue: "10",
       expirationUnit: OTC_EXPIRATION_OPTIONS[0]
     }
   }
@@ -186,7 +186,7 @@ class OtcTradeTabStep2 extends Component {
   }
 
   getAmountToPay = () => {
-    if (!this.state.actionType === OTC_ACTION_OPTIONS[1]) 
+    if (this.state.actionType === OTC_ACTION_OPTIONS[0]) 
       return toDecimals(this.state.usdcValue, 6)
     else if (this.props.selectedOption.selectedType === 1)
       return toDecimals(this.state.optionQty, this.props.selectedOption.selectedUnderlying.decimals)

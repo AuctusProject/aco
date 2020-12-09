@@ -6,6 +6,7 @@ import OtcTradeTab from '../partials/Otc/OtcTradeTab'
 import SimpleManageTab from '../partials/Simple/SimpleManageTab'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
+import OtcOrdersModal from '../partials/Otc/OtcOrdersModal'
 
 class Simple extends Component {
   constructor() {
@@ -24,6 +25,14 @@ class Simple extends Component {
     return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
   }
 
+  showOrders = () => {
+    this.setState({showOrdersModal: true})
+  }
+
+  hideOrdersModal = () => {
+    this.setState({showOrdersModal: false})
+  }
+
   render() {
     return <div className="py-4">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>OTC is in beta. Use at your own risk.</div>
@@ -31,8 +40,8 @@ class Simple extends Component {
           <div className="pair-dropdown-wrapper">
             OTC
           </div>
-          <div className="navbar-nav nav-modes ml-auto">
-            Activity
+          <div className="navbar-nav nav-modes ml-auto" onClick={this.showOrders}>
+            Orders
           </div>
         </div>        
         <div className="simple-box">
@@ -53,6 +62,7 @@ class Simple extends Component {
             </div>
           </div>
         </div>
+        {this.state.showOrdersModal && <OtcOrdersModal onHide={this.hideOrdersModal}></OtcOrdersModal>}
       </div>
   }
 }

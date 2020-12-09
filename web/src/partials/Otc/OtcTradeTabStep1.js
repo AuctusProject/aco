@@ -112,13 +112,14 @@ class OtcTradeTabStep1 extends Component {
         <div className="input-column expiration-column">
           <div className="input-label">Expiration</div>
           <div className="input-field">
-            <ReactDatePicker minDate={minDate} maxDate={maxDate} selected={this.state.expirationDate} onChange={this.onExpirationChange} />
+            <ReactDatePicker dateFormat="yyyy/MM/dd" minDate={minDate} maxDate={maxDate} selected={this.state.expirationDate} onChange={this.onExpirationChange} />
           </div>
         </div>
         <div className="input-column strike-column">
           <div className="input-label">Strike</div>
           <div className="input-field">
             <DecimalInput tabIndex="-1" placeholder="" onChange={this.onStrikeChange} value={this.state.strikeValue}></DecimalInput>
+            <div className="coin-symbol">USDC</div>
           </div>
         </div>
       </div>
