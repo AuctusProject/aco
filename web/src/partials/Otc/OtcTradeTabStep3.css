@@ -32,6 +32,10 @@
     margin-top: 28px;
 }
 
+.otc-value-row.insufficient-funds > div:first-child {
+    color: #de001e;
+}
+
 .counterparty-row {
     color: #1782fc;
     font-size: 12px;
@@ -60,9 +64,9 @@
     color: #262626;
 }
 
-.trade-expired .trade-title,
-.trade-expired .trade-subtitle,
-.trade-expired .expiry-countdown-row {
+.order-unavailable .trade-title,
+.order-unavailable .trade-subtitle,
+.order-unavailable .expiry-countdown-row {
     color: #de001e
 }
 
@@ -107,4 +111,23 @@
 
 .light-mode .trade-summary-row .summary-description {
     color: #1a1a1a;
+}
+
+.url-input-action-buttons {
+    max-width: 600px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.btn-link.cancel-link {
+    color: #808080;
+}
+
+.button-tooltip {
+    text-transform: none;
+}
+
+.otc-trade-step3 .input-field {
+    border: solid 1px #4c4c4c60;
 }

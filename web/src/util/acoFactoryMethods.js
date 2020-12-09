@@ -1,5 +1,5 @@
 import { getWeb3 } from './web3Methods'
-import { acoFactoryAddress, ONE_SECOND, removeOptionsToIgnore, sortByDesc, sortByFn } from './constants';
+import { acoFactoryAddress, getOtcOptions, ONE_SECOND, removeOptionsToIgnore, removeOtcOptions, sortByDesc, sortByFn } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
@@ -33,6 +33,28 @@ function getAllAvailableOptions() {
                 }).catch((err) => reject(err))
             }).catch((err) => reject(err))
         }
+    })
+}
+
+function getAllAvailableOptionsWithoutOtc() {
+    return new Promise((resolve, reject) => {
+        getAllAvailableOptions()
+        .then(allOptions => {
+            var optionsWithoutOtc = removeOtcOptions(allOptions)
+            resolve(optionsWithoutOtc)
+        })
+        .catch((err) => reject(err))
+    })
+}
+
+function getOtcAvailableOptions() {
+    return new Promise((resolve, reject) => {
+        getAllAvailableOptions()
+        .then(allOptions => {
+            var otcOptions = getOtcOptions(allOptions)
+            resolve(otcOptions)
+        })
+        .catch((err) => reject(err))
     })
 }
 
@@ -94,7 +116,7 @@ function fillTokensInformations(options, assetsAddresses) {
 
 export const listPairs = () => {
     return new Promise((resolve, reject) => {
-        getAllAvailableOptions().then(options => {
+        getAllAvailableOptionsWithoutOtc().then(options => {
             var pairs = getPairsFromOptions(options)
             resolve(pairs)
         })
@@ -126,14 +148,15 @@ export const getOptionsFromPair = (options, selectedPair) => {
         o.strikeAssetInfo.symbol === selectedPair.strikeAssetSymbol) : []
 }
 
-export const listOptions = (pair, optionType = null, removeExpired = false) => {
+export const listOptions = (pair, optionType = null, removeExpired = false, otcOptions = false) => {
     return new Promise((resolve, reject) => {
-        getAllAvailableOptions().then(availableOptions => {
+        var optionsMethod = !otcOptions ? getAllAvailableOptionsWithoutOtc : getOtcAvailableOptions
+        optionsMethod().then(availableOptions => {
             var options = []
             for (let i = 0; i < availableOptions.length; i++) {
                 const option = availableOptions[i];
-                if (option.underlyingInfo.symbol === pair.underlyingSymbol && 
-                    option.strikeAssetInfo.symbol === pair.strikeAssetSymbol && 
+                if ((!pair || (option.underlyingInfo.symbol === pair.underlyingSymbol && 
+                    option.strikeAssetInfo.symbol === pair.strikeAssetSymbol)) && 
                     (!optionType || (optionType === 1 ? option.isCall : !option.isCall)) && 
                     (!removeExpired || ((option.expiryTime * ONE_SECOND) > new Date().getTime()))) {
                     options.push(option)
@@ -177,9 +200,9 @@ export const getOptionPairIdFromAddress = (optionAddress) => {
     })
 }
 
-export function getOptionsPositions(pair, userAccount) {
+export function getOptionsPositions(pair, userAccount, otcPositions) {
     return new Promise((resolve, reject) => {
-        listOptions(pair).then(options => {
+        listOptions(pair, null, false, otcPositions).then(options => {
             var positions = []
             for (let i = 0; i < options.length; i++) {
                 getPositionForOption(options[i], userAccount).then(position => {
@@ -198,9 +221,9 @@ export function getOptionsPositions(pair, userAccount) {
     })
 }
 
-export function listPositionsForExercise(pair, userAccount) {
+export function listPositionsForExercise(pair, userAccount, otcPositions) {
     return new Promise((resolve, reject) => {
-        listOptions(pair, null, true).then(options => {
+        listOptions(pair, null, true, otcPositions).then(options => {
             var positions = []
             for (let i = 0; i < options.length; i++) {
                 getPositionForOption(options[i], userAccount).then(position => {

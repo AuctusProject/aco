@@ -2,9 +2,10 @@ import './OtcTradeTabStep2.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatWithPrecision, getBalanceOfAsset, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, toDecimals, usdcAddress } from '../../util/constants'
+import { formatWithPrecision, getBalanceOfAsset, isEther, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
 import CreateOrderModal from './CreateOrderModal'
 import { faUserCircle, faClock } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -33,11 +34,17 @@ class OtcTradeTabStep2 extends Component {
   } 
 
   loadAssetsBalances = () => {
+    this.setState({wethBalance: null, assetToPayBalance: null, signerAssetToPayBalance: null})
     var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
     var underlyingAddress = this.getUnderlyingAddress()
     if (userAddress && underlyingAddress) {
+      if (isEther(underlyingAddress)) {
+        getBalanceOfAsset(wethAddress, userAddress).then(wethBalance => {
+          this.setState({ wethBalance: wethBalance })
+        })
+      }
       getBalanceOfAsset(underlyingAddress, userAddress).then(underlyingBalance => {
-        this.setState({underlyingBalance: underlyingBalance})
+        this.setState({ underlyingBalance: underlyingBalance })
       })
       getBalanceOfAsset(usdcAddress, userAddress).then(usdcBalance => {
         this.setState({usdcBalance: usdcBalance})
@@ -46,8 +53,8 @@ class OtcTradeTabStep2 extends Component {
   }
 
   getUnderlyingAddress = () => {
-    if (this.state.selectedOption && this.state.selectedOption.selectedUnderlying) {
-      return this.state.selectedOption.selectedUnderlying
+    if (this.props.selectedOption && this.props.selectedOption.selectedUnderlying) {
+      return this.props.selectedOption.selectedUnderlying.address
     }
   }
 
@@ -84,6 +91,9 @@ class OtcTradeTabStep2 extends Component {
     }
     if (!this.state.expirationValue) {
       return "Select expiration"
+    }
+    if (!this.hasBalanceToCreate()) {
+      return "Insufficient funds"
     }
     return null
   }
@@ -175,6 +185,37 @@ class OtcTradeTabStep2 extends Component {
     return day + month + year + "-0800UTC"
   }
 
+  getAmountToPay = () => {
+    if (!this.state.actionType === OTC_ACTION_OPTIONS[1]) 
+      return toDecimals(this.state.usdcValue, 6)
+    else if (this.props.selectedOption.selectedType === 1)
+      return toDecimals(this.state.optionQty, this.props.selectedOption.selectedUnderlying.decimals)
+    else
+      return toDecimals(this.getUSDCToCollaterize(), 6)
+  }
+
+  getAssetToPay = () => {
+    if (this.state.actionType === OTC_ACTION_OPTIONS[1] && this.props.selectedOption.selectedType === 1)
+      return this.props.selectedOption.selectedUnderlying.address
+    else
+      return usdcAddress
+  }
+
+  hasBalanceToCreate = () => {
+    var amountToPay = this.getAmountToPay()
+    var assetToPay = this.getAssetToPay()
+    if (assetToPay.toLowerCase() === usdcAddress.toLowerCase()) {
+      return new Web3Utils.BN(this.state.usdcBalance).gte(new Web3Utils.BN(amountToPay))
+    }
+    else if (isEther(assetToPay)) {
+      return new Web3Utils.BN(this.state.wethBalance).gte(new Web3Utils.BN(amountToPay)) ||
+      new Web3Utils.BN(this.state.underlyingBalance).gte(new Web3Utils.BN(amountToPay))
+    }
+    else {
+      return new Web3Utils.BN(this.state.underlyingBalance).gte(new Web3Utils.BN(amountToPay))
+    }
+  }
+
   render() {
     return <div>
       <div className="trade-title">
@@ -264,7 +305,7 @@ class OtcTradeTabStep2 extends Component {
         <div className="active-step"></div>
         <div></div>
       </div>
-      {this.state.createOrderModal && <CreateOrderModal createOrderData={this.state.createOrderModal} onHide={this.onCreateOrderHide} />}
+      {this.state.createOrderModal && <CreateOrderModal createOrderData={this.state.createOrderModal} onHide={this.onCreateOrderHide} onCreated={this.onCreated} />}
     </div>
   }
 }

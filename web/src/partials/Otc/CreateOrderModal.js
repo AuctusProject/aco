@@ -8,7 +8,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { acoOtcAddress, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, toDecimals, usdcAddress, wethAddress, zero } from '../../util/constants'
+import { acoOtcAddress, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, saveToLocalOrders, toDecimals, usdcAddress, wethAddress, zero } from '../../util/constants'
 import { allowance, allowDeposit } from '../../util/erc20Methods'
 import { signOrder } from '../../util/acoOtcMethods'
 import { createOtcOrder } from '../../util/acoApi'
@@ -118,7 +118,7 @@ class CreateOrderModal extends Component {
   getAsset = () => {
     var isCall = this.props.createOrderData.selectedOption.selectedType === 1
     if (this.props.createOrderData.isAsk && isCall) {
-      return isEther(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  wethAddress : this.createOrderData.selectedOption.selectedUnderlying.address
+      return isEther(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  wethAddress : this.props.createOrderData.selectedOption.selectedUnderlying.address
     }
     else {
       return usdcAddress
@@ -173,7 +173,8 @@ class CreateOrderModal extends Component {
         this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
         createOtcOrder(this.props.createOrderData.isAsk, signedOrder)
         .then(result => {
-          if (result) {
+          if (result) {            
+            saveToLocalOrders(result)
             this.props.onCreated(result)
           }
           else {

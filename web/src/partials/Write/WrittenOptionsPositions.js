@@ -33,9 +33,9 @@ class WrittenOptionsPositions extends Component {
   }
 
   componentDidMount = () => {
-      if (this.props.selectedPair && this.context.web3.selectedAccount) {
+      if ((this.props.selectedPair || this.props.isOtcPositions) && this.context.web3.selectedAccount) {
           this.props.updated()
-          getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+          getOptionsPositions(this.props.selectedPair, this.context.web3.selectedAccount, this.props.isOtcPositions).then(positions => {
             if (this.props.loadedPositions) {
               this.props.loadedPositions(positions)
             }
@@ -59,32 +59,34 @@ class WrittenOptionsPositions extends Component {
   }
 
   onRedeemClick = (position) => () => {
-    var stepNumber = 0
-    this.setStepsModalInfo(++stepNumber)
-    redeem(this.context.web3.selectedAccount, position.option)
-      .then(result => {
-        if (result) {
-          this.setStepsModalInfo(++stepNumber)
-          checkTransactionIsMined(result)
-            .then(result => {
-              if (result) {
-                this.setStepsModalInfo(++stepNumber)
-              }
-              else {
+    if (this.isExpired(position)) {
+      var stepNumber = 0
+      this.setStepsModalInfo(++stepNumber)
+      redeem(this.context.web3.selectedAccount, position.option)
+        .then(result => {
+          if (result) {
+            this.setStepsModalInfo(++stepNumber)
+            checkTransactionIsMined(result)
+              .then(result => {
+                if (result) {
+                  this.setStepsModalInfo(++stepNumber)
+                }
+                else {
+                  this.setStepsModalInfo(-1)
+                }
+              })
+              .catch(() => {
                 this.setStepsModalInfo(-1)
-              }
-            })
-            .catch(() => {
-              this.setStepsModalInfo(-1)
-            })
-        }
-        else {
+              })
+          }
+          else {
+            this.setStepsModalInfo(-1)
+          }
+        })
+        .catch(() => {
           this.setStepsModalInfo(-1)
-        }
-      })
-      .catch(() => {
-        this.setStepsModalInfo(-1)
-      })
+        })
+    }
   }
 
   setStepsModalInfo = (stepNumber) => {
@@ -140,8 +142,9 @@ class WrittenOptionsPositions extends Component {
         <thead>
           <tr>
             <th>TYPE</th>
+            {this.props.isOtcPositions && <th>UNDERLYING</th>}
+            <th>STRIKE</th>
             <th>EXPIRATION</th>
-            <th>STRIKE PRICE</th>
             <th>TOTAL MINTED</th>
             {this.props.mode === PositionsLayoutMode.Advanced && <th>WALLET BALANCE</th>}
             {this.props.mode === PositionsLayoutMode.Advanced && <th>OPEN POSITION</th>}
@@ -153,14 +156,15 @@ class WrittenOptionsPositions extends Component {
           {(!this.state.positions || this.state.positions.length === 0) && 
               <tr>
                 {!this.state.positions && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>Loading...</td>}
-                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
+                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>{this.props.selectedPair && ` for ${this.props.selectedPair.underlyingSymbol}${this.props.selectedPair.strikeAssetSymbol}`}</td>}
               </tr>
           }
           {this.state.positions.map(position =>
             <tr key={position.option.acoToken}>
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>
-              <td>{formatDate(position.option.expiryTime, true)}</td>
+              {this.props.isOtcPositions && <td>{position.option.underlyingInfo.symbol}</td>}
               <td>{getOptionFormattedPrice(position.option)}</td>
+              <td>{formatDate(position.option.expiryTime, true)}</td>
               <td>{getOptionTokenAmountFormatedValue(position.currentCollateralizedTokens, position.option)}</td>
               {this.props.mode === PositionsLayoutMode.Advanced && <td>{getOptionTokenAmountFormatedValue(position.balance, position.option)}</td>}
               {this.props.mode === PositionsLayoutMode.Advanced && <td>{getNumberWithSignal(getFormattedOpenPositionAmount(position))}</td>}
@@ -168,10 +172,10 @@ class WrittenOptionsPositions extends Component {
               {this.props.mode === PositionsLayoutMode.Advanced && <><br />({getOptionCollateralFormatedValue(position.assignableCollateral, position.option)}/{getOptionCollateralFormatedValue(position.unassignableCollateral, position.option)})</>}
               </td>
               <td>
-                {!this.isExpired(position) && 
+                {!this.props.isOtcPositions && !this.isExpired(position) && 
                 <div className={"grid-btn action-btn" + (this.isBurnable(position) ? "" : " disabled")} title={(this.isBurnable(position) ? "" : "You don't have any options to burn")} onClick={this.onBurnClick(position)}>Reduce Position</div>}
-                {this.isExpired(position) && 
-                <div className="grid-btn action-btn" onClick={this.onRedeemClick(position)}>Redeem Collateral</div>}
+                {(this.props.isOtcPositions || this.isExpired(position)) && 
+                <div className={"grid-btn action-btn" + (this.isExpired(position) ? "" : " disabled")} title={(this.isExpired(position) ? "" : "You can only redeem you collateral back after expiration.")} onClick={this.onRedeemClick(position)}>Redeem Collateral</div>}
               </td>
             </tr>)}
         </tbody>

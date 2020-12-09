@@ -96,7 +96,7 @@ class TakeOrderModal extends Component {
         })
     }
     else {
-      this.sendCreateOrderTransaction(stepNumber + 2, nonce, needApproval, needWrap)
+      this.sendTakeTradeTransaction(stepNumber + 2, nonce, needApproval, needWrap)
     }
   }
 
@@ -127,7 +127,7 @@ class TakeOrderModal extends Component {
   getAssetSymbol = () => {
     var isCall = this.props.orderData.isCall
     if (!this.props.orderData.isAskOrder && isCall) {
-      return isEther(this.props.orderData.underlying.address) ?  "WETH" : this.props.underlying.symbol
+      return isEther(this.props.orderData.underlying.address) ?  "WETH" : this.props.orderData.underlying.symbol
     }
     else {
       return "USDC"
@@ -165,7 +165,7 @@ class TakeOrderModal extends Component {
   sendTakeTradeTransaction = (stepNumber, nonce, needApproval, needWrap) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
     let swapMethod = this.props.orderData.isAskOrder ? swapAskOrder : swapBidOrder
-    swapMethod(this.context.web3.selectedAccount, this.props.orderData.signature, nonce)
+    swapMethod(this.context.web3.selectedAccount, this.props.orderData.order, nonce)
     .then(result => {
       if (result) {
         this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
@@ -199,7 +199,7 @@ class TakeOrderModal extends Component {
       title = "Unlock token"
     }
     else {
-      title = "Sign"
+      title = "Swap"
     }
     
     var subtitle = ""
@@ -222,15 +222,15 @@ class TakeOrderModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 5) {
-      subtitle = "Confirm on Metamask to sign the OTC order."
+      subtitle = "Confirm on Metamask to execute OTC order."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 6) {
-      subtitle = "Saving OTC order..."
+      subtitle = "Executing OTC order..."
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 7) {
-      subtitle = "You have successfully create your OTC order."
+      subtitle = "You have successfully executed the OTC order."
       img = <DoneLargeIcon />
     }
     else if (stepNumber === -1) {
@@ -246,7 +246,7 @@ class TakeOrderModal extends Component {
     if (needApproval) {
       steps.push({ title: "Unlock", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false })
     }
-    steps.push({ title: "Sign", progress: stepNumber > 6 ? 100 : 0, active: stepNumber >= 5 ? true : false })
+    steps.push({ title: "Swap", progress: stepNumber > 6 ? 100 : 0, active: stepNumber >= 5 ? true : false })
     this.setState({
       stepsModalInfo: {
         title: title,
@@ -254,9 +254,14 @@ class TakeOrderModal extends Component {
         steps: steps,
         img: img,
         isDone: (stepNumber === 7 || stepNumber === -1),
-        onDoneButtonClick: this.onHideStepsModal
+        onDoneButtonClick: (stepNumber === 7 ? this.onDone : this.onHideStepsModal)
       }
     })
+  }
+
+  onDone = () => {
+    this.setState({ stepsModalInfo: null })
+    this.props.onHide(true)
   }
 
   onHideStepsModal = () => {

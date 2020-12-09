@@ -41,6 +41,11 @@ export function isValidBidOrder(signedOrder) {
   return contract.methods.isValidBidOrder(signedOrder).call()
 }
 
+export function signerNonceStatus(from, nonce) {
+  const contract = getAcoOtcContract()
+  return contract.methods.signerNonceStatus(from, nonce).call()
+}
+
 export function signOrder(from, isAsk, option, optionAmount, usdcValue, expiry, counterpartyAddress) {
   return new Promise(function (resolve, reject) { 
     const otcContract = acoOtcAddress;

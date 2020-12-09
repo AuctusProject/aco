@@ -4,11 +4,12 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faInfoCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 import { getAcoAssets } from '../../util/acoApi'
 import Modal from 'react-bootstrap/Modal'
 import ReactTooltip from 'react-tooltip'
 import { getByAddress } from '../../util/constants'
+import TokenImportedModal from './TokenImportedModal'
 
 class AssetInput extends Component {
   constructor(props) {
@@ -16,6 +17,7 @@ class AssetInput extends Component {
     this.state = {
       selectedAsset: null,
       showModal: false,
+      showTokenImportedModal: false,
       filter: "",
       assets: [],
       filteredAssets: []
@@ -29,6 +31,9 @@ class AssetInput extends Component {
       })
     }
     this.setState({selectedAsset: this.props.selectedAsset})
+    if (this.props.showTokenImportedModal) {
+      this.setState({showTokenImportedModal: true})
+    }
   }
 
   filterAssets = (assets) => {
@@ -73,13 +78,26 @@ class AssetInput extends Component {
   }
 
   onAssetSelect = (asset) => () => {
-    this.setState({selectedAsset: asset, showModal:false})
+    this.setState({selectedAsset: asset, showModal:false, showTokenImportedModal: asset !== null})
     this.props.onAssetSelected(asset)
   }
 
   getAssetIcon = (asset) => {
     var iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[asset.symbol]
-    return <img alt="" src={iconUrl}></img>
+    if (iconUrl) {
+      return <img alt="" src={iconUrl}></img>
+    }
+    else {
+      return <FontAwesomeIcon icon={faQuestionCircle}></FontAwesomeIcon>
+    }
+  }
+
+  onCancel = () => {
+    this.onAssetSelect(null)()
+  }
+
+  onConfirm = () => {
+    this.setState({showTokenImportedModal: false})
   }
 
   render() {
@@ -125,6 +143,7 @@ class AssetInput extends Component {
             </div>
           </Modal.Body>
         </Modal>
+        {this.state.selectedAsset && this.state.selectedAsset.foundByAddress && this.state.showTokenImportedModal && <TokenImportedModal selectedAsset={this.state.selectedAsset} assetIcon={this.getAssetIcon(this.state.selectedAsset)} onConfirm={this.onConfirm} onCancel={this.onCancel}></TokenImportedModal>}
       </div>
     )
   }

@@ -34,6 +34,7 @@ export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
 export const DEFAULT_SLIPPAGE = 0.05
+export const OTC_ORDER_STATUS_AVAILABLE = "0x00"
 
 export const OPTION_TYPES = {
     1: {
@@ -247,7 +248,6 @@ export function formatWithPrecision(number, significantDigits = 4) {
     }
 }
 
-
 export function getNumberWithSignal(number) {
     if(number > 0){
         return "+" + number;
@@ -390,8 +390,15 @@ export const removeOptionsToIgnore = (options) => {
         "0xf7902f8db0ee97f9e9b07933ba2724d64f267110",
         "0xde757d935f43781c7079a41a162d8560a800ec13"
     ]
-    const otc = acoOtcAddress.toLowerCase()
-    return options.filter(o => o.creator !== otc && !optionsToIgnore.includes(o.acoToken.toLowerCase()))
+    return options.filter(o => !optionsToIgnore.includes(o.acoToken.toLowerCase()))
+}
+
+export const removeOtcOptions = (options) => {
+    return options.filter(o => !o.creator || (o.creator.toLowerCase() !== acoOtcAddress.toLowerCase()))
+}
+
+export const getOtcOptions = (options) => {
+    return options.filter(o => o.creator && (o.creator.toLowerCase() === acoOtcAddress.toLowerCase()))
 }
 
 export const getByAddress = (address) => {
@@ -409,4 +416,20 @@ export const getByAddress = (address) => {
             resolve(null)
         }
     })
+}
+
+export const saveToLocalOrders = (order) => {
+    var localOrders = getLocalOrders()
+    localOrders.push(order)
+    window.localStorage.setItem('OTC_ORDERS', JSON.stringify(localOrders))
+}
+
+export const getLocalOrders = () => {
+    var localOrders = window.localStorage.getItem('OTC_ORDERS')
+    if (!localOrders) {
+        return []
+    }
+    else {
+        return JSON.parse(localOrders)
+    }
 }

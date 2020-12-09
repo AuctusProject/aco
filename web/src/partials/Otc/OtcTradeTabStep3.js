@@ -2,19 +2,23 @@ import './OtcTradeTabStep3.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
+import Web3Utils from 'web3-utils'
 import Loading from '../Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClone } from '@fortawesome/free-regular-svg-icons'
-import { formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, ONE_SECOND, toDecimals, usdcAddress } from '../../util/constants'
+import { formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isEther, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
 import { getAcoAsset } from '../../util/acoApi'
 import CancelOrderModal from './CancelOrderModal'
 import AssetInput from '../Util/AssetInput'
 import TakeOrderModal from './TakeOrderModal'
+import { signerNonceStatus } from '../../util/acoOtcMethods'
+import ReactTooltip from 'react-tooltip'
 
 class OtcTradeTabStep3 extends Component {
   constructor(props) {
     super(props)
     this.state = {
+      isOrderAvailable: null
     }
   }
 
@@ -32,21 +36,60 @@ class OtcTradeTabStep3 extends Component {
   }
 
   loadAssetsBalances = () => {
+    this.setState({wethBalance: null, assetToPayBalance: null, signerAssetToPayBalance: null})
     var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
-    var underlyingAddress = this.getUnderlyingAddress()
-    if (userAddress && underlyingAddress) {
-      getBalanceOfAsset(underlyingAddress, userAddress).then(underlyingBalance => {
-        this.setState({underlyingBalance: underlyingBalance})
+    if (userAddress && this.state.optionInfo) {
+      var assetToPay = this.getAssetToPay()
+      var signerAssetToPay = this.getSignerAssetToPay()
+      if (isEther(assetToPay)) {
+        getBalanceOfAsset(wethAddress, userAddress).then(wethBalance => {
+          this.setState({ wethBalance: wethBalance })
+        })
+      }
+      getBalanceOfAsset(assetToPay, userAddress).then(assetToPayBalance => {
+        this.setState({ assetToPayBalance: assetToPayBalance })
       })
-      getBalanceOfAsset(usdcAddress, userAddress).then(usdcBalance => {
-        this.setState({usdcBalance: usdcBalance})
+      getBalanceOfAsset(isEther(signerAssetToPay) ? wethAddress : signerAssetToPay, this.props.otcOrder.order.signer.responsible).then(wethBalance => {
+        this.setState({ signerAssetToPayBalance: wethBalance })
       })
     }
   }
 
+  getAmountToPay = () => {
+    if (this.props.otcOrder.isAskOrder) 
+      return toDecimals(this.state.usdcValue, 6)
+    else if (this.state.optionInfo.isCall)
+      return this.state.optionInfo.amount
+    else
+      return this.getUSDCToCollaterize()
+  }
+
+  getAssetToPay = () => {
+    if (!this.props.otcOrder.isAskOrder && this.state.optionInfo.isCall)
+      return this.state.assetInfo.address
+    else
+      return usdcAddress
+  }
+
+  getSignerAmountToPay = () => {
+    if (!this.props.otcOrder.isAskOrder) 
+      return this.state.usdcValue
+    else if (this.state.optionInfo.isCall)
+      return this.state.optionInfo.amount
+    else
+      return this.getUSDCToCollaterize()
+  }
+
+  getSignerAssetToPay = () => {
+    if (this.props.otcOrder.isAskOrder && this.state.optionInfo.isCall)
+      return this.state.assetInfo.address
+    else
+      return usdcAddress
+  }
+
   getUnderlyingAddress = () => {
-    if (this.state.selectedOption && this.state.selectedOption.selectedUnderlying) {
-      return this.state.selectedOption.selectedUnderlying
+    if (this.state.optionInfo && this.state.optionInfo.underlying) {
+      return this.state.optionInfo.underlying
     }
     return null;
   }
@@ -69,9 +112,18 @@ class OtcTradeTabStep3 extends Component {
 
         var optionQty = fromDecimals(optionInfo.amount, acoAsset.decimals, 4, 0)
         var usdcValue = fromDecimals(usdcInfo.amount, 6, 4, 0)
-        this.setState({ optionInfo: optionInfo, assetInfo: acoAsset, optionName: optionName, optionQty: optionQty, usdcValue: usdcValue })
+        this.setState({ optionInfo: optionInfo, assetInfo: acoAsset, optionName: optionName, optionQty: optionQty, usdcValue: usdcValue },
+          () => this.loadAssetsBalances())
       })
+      this.refreshOrderAvailableStatus()
     }
+  }
+
+  refreshOrderAvailableStatus = () => {
+    this.setState({ isOrderAvailable: null })
+    signerNonceStatus(this.props.otcOrder.order.signer.responsible, this.props.otcOrder.order.nonce).then(nonceStatus => {
+      this.setState({ isOrderAvailable: nonceStatus === OTC_ORDER_STATUS_AVAILABLE })
+    })
   }
 
   getOrderUnderlyingInfo = (underlyingAddress) => {
@@ -124,10 +176,17 @@ class OtcTradeTabStep3 extends Component {
   }
 
   getUSDCToCollaterize = () => {
-    return this.state.optionQty * fromDecimals(this.state.optionInfo.strikePrice, 6)
+    return fromDecimals(new Web3Utils.BN(this.state.optionInfo.amount).mul(new Web3Utils.BN(this.state.optionInfo.strikePrice)), 6, 0, 0)
+  }
+
+  getUSDCToCollaterizeFormatted = () => {
+    return fromDecimals(this.getUSDCToCollaterize(), this.state.acoAsset.decimals)
   }
 
   getTimeToExpiryOrder = () => {
+    if (!this.state.isOrderAvailable) {
+      return ""
+    }
     if (this.isExpired()) {
       return "Trade Expired"
     }
@@ -147,6 +206,10 @@ class OtcTradeTabStep3 extends Component {
     return false
   }
 
+  canTakeOrder = () => {
+    return !this.isExpired() && this.state.isOrderAvailable
+  }
+
   onCancelClick = () => {
     var orderData = {
       nonce: this.props.otcOrder.order.nonce
@@ -154,12 +217,18 @@ class OtcTradeTabStep3 extends Component {
     this.setState({ cancelOrderData: orderData })
   }
 
-  onCancelOrderHide = () => {
+  onCancelOrderHide = (completed) => {
+    if (completed) {
+      this.refreshOrderAvailableStatus()
+    }
     this.setState({ cancelOrderData: null })
   }
 
-  onTakeOrderHide = () => {
+  onTakeOrderHide = (completed) => {
     this.setState({ takeOrderData: null })
+    if (completed) {
+      this.props.history.push('/otc/manage/')
+    }
   }
 
   getSummaryDescription = () => {
@@ -182,29 +251,87 @@ class OtcTradeTabStep3 extends Component {
   getStrikePriceOption = () => {
     return fromDecimals(this.state.optionInfo.strikePrice, 6, 6, 0)
   }
-  
+
   onConnectClick = () => {
     this.props.signIn(null, this.context)
   }
 
   onTakeTradeClick = () => {
-    var orderData = {
-      isAskOrder: this.props.otcOrder.isAskOrder,
-      underlying: this.state.assetInfo,
-      isCall: this.props.optionInfo.isCall,
-      optionQty: toDecimals(this.state.optionQty, this.state.assetInfo.decimals),
-      usdcValue: toDecimals(this.state.usdcValue, 6),
-      strikeValue: this.state.optionInfo.strikePrice,
-      signature: this.props.otcOrder.signature
+    if (this.canTakeOrder() && !this.getButtonMessage()) {
+      var orderData = {
+        isAskOrder: this.props.otcOrder.isAskOrder,
+        underlying: this.state.assetInfo,
+        isCall: this.state.optionInfo.isCall,
+        optionQty: this.state.optionInfo.amount,
+        usdcValue: toDecimals(this.state.usdcValue, 6),
+        strikeValue: this.state.optionInfo.strikePrice,
+        order: this.props.otcOrder.order
+      }
+      this.setState({ takeOrderData: orderData })
     }
-    this.setState({ takeOrderData: orderData })
+  }
+
+  onAssetSelected = (selectedAsset) => {
+    this.props.startNewTrade()
+  }
+
+  hasBalanceToTake = () => {
+    var amountToPay = this.getAmountToPay()
+    var assetToPay = this.getAssetToPay()
+    return ((isEther(assetToPay) && new Web3Utils.BN(this.state.wethBalance).gte(new Web3Utils.BN(amountToPay))) ||
+      new Web3Utils.BN(this.state.assetToPayBalance).gte(new Web3Utils.BN(amountToPay)))
+  }
+
+  signerHasBalanceToMake = () => {
+    var amountToPay = this.getSignerAmountToPay()
+    return new Web3Utils.BN(this.state.signerAssetToPayBalance).gte(new Web3Utils.BN(amountToPay))
+  }
+
+  isCounterpartyWallet = () => {
+    return isEther(this.props.otcOrder.order.sender.responsible) || 
+      this.props.otcOrder.order.sender.responsible.toLowerCase() === this.context.web3.selectedAccount.toLowerCase()
+  }
+
+  getButtonMessage = () => {
+    if (!this.hasBalanceToTake()) {
+      return "Insufficient funds"
+    }
+    if (!this.signerHasBalanceToMake()) {
+      return "Signer has insufficient funds"
+    }
+    if (!this.isCounterpartyWallet()) {
+      return "Invalid wallet"
+    }
+    return null
+  }
+
+  getErrorMessage = () => {
+    if (!this.hasBalanceToTake()) {
+      return "You wallet does not have sufficient funds."
+    }
+    if (!this.signerHasBalanceToMake()) {
+      return "Your counterparty wallet does not have sufficient funds."
+    }
+    if (!this.isCounterpartyWallet()) {
+      return `Only address ${this.props.otcOrder.order.sender.responsible} can take this trade.`
+    }
+    return null
   }
 
   render() {
-    return <div className={(this.isExpired() ? "trade-expired" : "")}>
-      {(!this.props.otcOrder || !this.state.optionInfo) ? <Loading></Loading> :
+    return <div className={"otc-trade-step3 " + (!this.canTakeOrder() ? "order-unavailable" : "")}>
+      {(!this.props.otcOrder || !this.state.optionInfo || this.state.isOrderAvailable === null ||
+        !this.state.assetToPayBalance || !this.state.signerAssetToPayBalance) ? <Loading></Loading> :
         <>
-          {this.isExpired() ? <>
+          {!this.state.isOrderAvailable ? <>
+            <div className="trade-title">
+              Trade Not Available
+            </div>
+            <div className="trade-subtitle">
+              Order was cancelled or already taken
+            </div>
+          </> :
+          this.isExpired() ? <>
             <div className="trade-title">
               Trade Expired
           </div>
@@ -215,10 +342,10 @@ class OtcTradeTabStep3 extends Component {
             (this.isOwnOrder() ? <>
               <div className="trade-title">
                 Ready To Share
-          </div>
+            </div>
               <div className="trade-subtitle">
                 Share the link below to complete your trade
-          </div>
+            </div>
             </>
               :
               <>
@@ -272,7 +399,7 @@ class OtcTradeTabStep3 extends Component {
                 <>
                   {this.state.optionInfo.isCall ?
                     <div>{this.state.assetInfo.symbol} to collaterize: {this.state.optionQty}</div> :
-                    <div>USDC to collaterize: {this.getUSDCToCollaterize()}</div>
+                    <div>USDC to collaterize: {this.getUSDCToCollaterizeFormatted()}</div>
                   }
                   <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}</div>
                 </>}
@@ -280,24 +407,26 @@ class OtcTradeTabStep3 extends Component {
             <div className="counterparty-row">
               Counterparty Address: {this.props.otcOrder.order.sender.responsible}
             </div>
-            {!this.isExpired() && <div className="url-input input-group">
-              <input ref={input => this.urlInput = input} value={window.location.href} readOnly onClick={this.copyToClipboard} type="text" className="form-control" />
-              <div className="input-group-append">
-                <div onClick={this.copyToClipboard} className="action-btn solid-blue"><FontAwesomeIcon icon={faClone}></FontAwesomeIcon></div>
+            {this.canTakeOrder() && <div className="url-input-action-buttons">
+              <div className="url-input input-group">
+                <input ref={input => this.urlInput = input} value={window.location.href} readOnly onClick={this.copyToClipboard} type="text" className="form-control" />
+                <div className="input-group-append">
+                  <div onClick={this.copyToClipboard} className="action-btn solid-blue"><FontAwesomeIcon icon={faClone}></FontAwesomeIcon></div>
+                </div>
               </div>
-            </div>}
-            {!this.isExpired() && <div className="action-button-wrapper cancel-new-actions">
-              <div className="btn-link clickable" onClick={this.onCancelClick}>
-                <div>CANCEL THIS TRADE</div>
-              </div>
-              <div className="btn-link clickable" onClick={this.onNewTradeClick}>
-                <div>START A NEW TRADE</div>
+              <div className="action-button-wrapper cancel-new-actions">
+                <div className="btn-link clickable cancel-link" onClick={this.onCancelClick}>
+                  <div>CANCEL THIS TRADE</div>
+                </div>
+                <div className="btn-link clickable" onClick={this.onNewTradeClick}>
+                  <div>START A NEW TRADE</div>
+                </div>
               </div>
             </div>}
             <div className="expiry-countdown-row">
               {this.getTimeToExpiryOrder()}
             </div>
-            {this.isExpired() &&
+            {!this.canTakeOrder() &&
               <div className="action-button-wrapper">
                 <div className="action-btn medium solid-blue" onClick={this.onNewTradeClick}>
                   <div>CREATE NEW TRADE</div>
@@ -330,7 +459,7 @@ class OtcTradeTabStep3 extends Component {
                 <div className="input-column">
                   <div className="input-label">Underlying</div>
                   <div className="input-field">
-                    <AssetInput disabled={true} selectedAsset={this.state.assetInfo}></AssetInput>
+                    <AssetInput onAssetSelected={this.onAssetSelected} disabled={true} showTokenImportedModal={this.canTakeOrder()} selectedAsset={this.state.assetInfo}></AssetInput>
                   </div>
                 </div>
                 <div className="input-column">
@@ -352,7 +481,7 @@ class OtcTradeTabStep3 extends Component {
                   </div>
                 </div>
               </div>
-              <div className="otc-value-row">
+              <div className={"otc-value-row " + (!this.hasBalanceToTake() ? "insufficient-funds" : "")}>
                 {this.props.otcOrder.isAskOrder ? <div>
                   Total premium to be paid: {this.state.usdcValue} USDC {this.getPremiumPerOption()}
                 </div> :
@@ -370,23 +499,20 @@ class OtcTradeTabStep3 extends Component {
               <div className="expiry-countdown-row">
                 {this.getTimeToExpiryOrder()}
               </div>
-              {this.isExpired() ?
-                <div className="action-button-wrapper">
+              <div className="action-button-wrapper">{!this.canTakeOrder() ?
                   <div className="action-btn medium solid-blue" onClick={this.onNewTradeClick}>
                     <div>CREATE NEW TRADE</div>
-                  </div>
-                </div> : 
-                (this.props.isConnected ? 
-                  <div className="action-btn medium solid-blue" onClick={this.onTakeTradeClick}>
-                    <div>TAKE TRADE</div>
+                  </div>:
+                (this.props.isConnected ?
+                  <div className={"action-btn medium solid-blue "+(this.getButtonMessage()?"disabled":"")}  data-tip data-for="button-tooltip" onClick={this.onTakeTradeClick}>
+                    <div>{this.getButtonMessage() ? this.getButtonMessage() : "TAKE TRADE"}</div>
+                    {this.getErrorMessage() && <ReactTooltip className="button-tooltip" id="button-tooltip">
+                      {this.getErrorMessage()}
+                    </ReactTooltip>}
                   </div> :
                   <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
                     <div>CONNECT WALLET</div>
                   </div>)}
-              <div className="otc-steps-indicator">
-                <div></div>
-                <div></div>
-                <div className="active-step"></div>
               </div>
             </>}
         </>}

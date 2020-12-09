@@ -84,19 +84,19 @@ class CancelOrderModal extends Component {
         steps: steps,
         img: img,
         isDone: (stepNumber === 3 || stepNumber === -1),
-        onDoneButtonClick: this.onHideStepsModal
+        onDoneButtonClick: this.onHideStepsModal(stepNumber === 3)
       }
     })
   }
 
-  onHideStepsModal = () => {
+  onHideStepsModal = (completed) => () => {
     this.setState({ stepsModalInfo: null })
-    this.props.onHide()
+    this.props.onHide(completed)
   }
 
   render() {
     return (<>
-      {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
+      {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal(false)}></StepsModal>}
       </>
     )
   }

@@ -66,7 +66,7 @@ class SimpleManageTab extends Component {
       {this.context.web3.selectedAccount && <> 
         {this.state.writtenPositions && this.state.writtenPositions.length === 0 && 
         this.state.exercisePositions && this.state.exercisePositions.length === 0 && <>
-          <div className="page-subtitle">No open positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>
+          <div className="page-subtitle">No open positions{this.props.selectedPair && ` for ${this.props.selectedPair.underlyingSymbol}${this.props.selectedPair.strikeAssetSymbol}`}</div>
         </>}
         <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedWrittenPositions} onBurnPositionSelect={this.onBurnPositionSelect}  refresh={this.state.refreshWrite} updated={() => this.setState({refreshWrite: false})}></WrittenOptionsPositions>
         {this.state.exercisePositions && this.state.exercisePositions.length > 0 && <div className="page-title">MANAGE LONG OPTIONS POSITIONS</div>}

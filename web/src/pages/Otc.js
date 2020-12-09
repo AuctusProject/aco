@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter, NavLink } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import OtcTradeTab from '../partials/Otc/OtcTradeTab'
-import OtcManageTab from '../partials/Otc/OtcManageTab'
+import SimpleManageTab from '../partials/Simple/SimpleManageTab'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 
@@ -49,7 +49,7 @@ class Simple extends Component {
               <OtcTradeTab {...this.props} isConnected={this.isConnected()}/>
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("otc/manage") > 0 ? " show active" : "")}>
-              <OtcManageTab {...this.props} isConnected={this.isConnected()}/>
+              <SimpleManageTab {...this.props} isConnected={this.isConnected()} isOtcPositions={true}/>
             </div>
           </div>
         </div>

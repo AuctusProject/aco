@@ -4,9 +4,17 @@
     width: 100%;
 }
 
-.asset-input .selected-asset img {
+.selected-asset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.selected-asset img,
+.selected-asset svg {
     width: 22px;
     height: 22px;
+    font-size: 22px;
     margin-right: 4px;
 }
 
@@ -25,9 +33,11 @@
     background-color: #e6e6e6;
 }
 
-.asset-option img {
+.asset-option img,
+.asset-option svg {
     height: 24px;
     width: 24px;
+    font-size: 24px; 
     margin-right: 6px;
     border-radius: 50%;
 }
