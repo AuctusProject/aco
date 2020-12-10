@@ -14,16 +14,23 @@
 }
 
 .otc-order {
-    padding: 8px 0;
+    padding: 10px;
     cursor: pointer;
+    border-bottom: 1px solid #80808080;
+}
+
+.otc-order:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
 }
 
 .otc-order:hover {
-    background-color: #333333;
+    background-color: #33333380;
 }
 
 .light-mode .otc-order:hover {
-    background-color: #e6e6e6;
+    background-color: #e6e6e680;
 }
 
 .no-orders-message {
