@@ -276,6 +276,9 @@ class OtcTradeTabStep3 extends Component {
   }
 
   hasBalanceToTake = () => {
+    if (!this.props.isConnected) {
+      return true
+    }
     var amountToPay = this.getAmountToPay()
     var assetToPay = this.getAssetToPay()
     return ((isEther(assetToPay) && new Web3Utils.BN(this.state.wethBalance).gte(new Web3Utils.BN(amountToPay))) ||
@@ -325,7 +328,7 @@ class OtcTradeTabStep3 extends Component {
   render() {
     return <div className={"otc-trade-step3 " + (!this.canTakeOrder() ? "order-unavailable" : "")}>
       {(!this.props.otcOrder || !this.state.optionInfo || this.state.isOrderAvailable === null ||
-        !this.state.assetToPayBalance || !this.state.signerAssetToPayBalance) ? <Loading></Loading> :
+        (this.props.isConnected && (!this.state.assetToPayBalance || !this.state.signerAssetToPayBalance))) ? <Loading></Loading> :
         <>
           {!this.state.isOrderAvailable ? <>
             <div className="trade-title">

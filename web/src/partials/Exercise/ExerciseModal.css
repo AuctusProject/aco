@@ -116,6 +116,10 @@
     width: 34px;
 }
 
+.light-mode .coin-symbol {
+    color: #808080;
+}
+
 .amount-to-receive {
     display: flex;
     flex-direction: column;

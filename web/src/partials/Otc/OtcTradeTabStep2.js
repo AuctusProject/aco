@@ -92,7 +92,7 @@ class OtcTradeTabStep2 extends Component {
     if (!this.state.expirationValue) {
       return "Select expiration"
     }
-    if (!this.hasBalanceToCreate()) {
+    if (this.props.isConnected && !this.hasBalanceToCreate()) {
       return "Insufficient funds"
     }
     return null
