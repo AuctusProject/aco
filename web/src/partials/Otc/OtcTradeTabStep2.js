@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatWithPrecision, getBalanceOfAsset, isEther, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
+import { formatWithPrecision, getBalanceOfAsset, isEther, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, saveToLocalOrders, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
 import CreateOrderModal from './CreateOrderModal'
 import { faUserCircle, faClock } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -156,6 +156,7 @@ class OtcTradeTabStep2 extends Component {
   }
 
   onCreated = (result) => {
+    saveToLocalOrders({...result, ...{optionName: this.getOptionName(), option: this.props.selectedOption}})
     this.props.setStep(3, result)
     this.props.history.push('/otc/trade/' + result.orderId)
     this.onCreateOrderHide()

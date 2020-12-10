@@ -180,7 +180,7 @@ class OtcTradeTabStep3 extends Component {
   }
 
   getUSDCToCollaterizeFormatted = () => {
-    return fromDecimals(this.getUSDCToCollaterize(), this.state.acoAsset.decimals)
+    return fromDecimals(this.getUSDCToCollaterize(), this.state.assetInfo.decimals)
   }
 
   getTimeToExpiryOrder = () => {

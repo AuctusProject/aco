@@ -138,14 +138,14 @@ class TakeOrderModal extends Component {
     if (!this.props.orderData.isAskOrder) {
       var isCall = this.props.orderData.isCall
       if (isCall) {
-        return this.props.orderData.optionQty
+        return new Web3Utils.BN(this.props.orderData.optionQty)
       }
       else {
         return new Web3Utils.BN(fromDecimals(toDecimals(this.props.orderData.strikeValue, 6).mul(this.props.orderData.optionQty), this.props.orderData.underlying.decimals, 0, 0))
       }
     }
     else {
-      return this.props.orderData.usdcValue
+      return new Web3Utils.BN(this.props.orderData.usdcValue)
     }
   }
 

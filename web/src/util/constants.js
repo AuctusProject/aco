@@ -421,11 +421,11 @@ export const getByAddress = (address) => {
 export const saveToLocalOrders = (order) => {
     var localOrders = getLocalOrders()
     localOrders.push(order)
-    window.localStorage.setItem('OTC_ORDERS', JSON.stringify(localOrders))
+    window.localStorage.setItem('OTC_LOCAL_ORDERS', JSON.stringify(localOrders))
 }
 
 export const getLocalOrders = () => {
-    var localOrders = window.localStorage.getItem('OTC_ORDERS')
+    var localOrders = window.localStorage.getItem('OTC_LOCAL_ORDERS')
     if (!localOrders) {
         return []
     }
