@@ -7,6 +7,7 @@ import SimpleManageTab from '../partials/Simple/SimpleManageTab'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import OtcOrdersModal from '../partials/Otc/OtcOrdersModal'
+import { getLocalOrders } from '../util/constants'
 
 class Simple extends Component {
   constructor() {
@@ -33,15 +34,23 @@ class Simple extends Component {
     this.setState({showOrdersModal: false})
   }
 
+  getOrdersCount = () => {
+    var account =  this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.selectedAccount.toLowerCase()
+    return getLocalOrders().filter(o => o.order.signer.responsible.toLowerCase() === account).length
+  }
+
   render() {
     return <div className="py-4">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>OTC is in beta. Use at your own risk.</div>
         <div className="pair-and-mode-wrapper">
-          <div className="pair-dropdown-wrapper">
+          <div className="pair-dropdown-wrapper otc-title">
             OTC
           </div>
-          <div className="navbar-nav nav-modes ml-auto" onClick={this.showOrders}>
-            Orders
+          <div className="navbar-nav nav-modes ml-auto clickable" onClick={this.showOrders}>
+            <div className="orders-btn">
+              Orders
+              <div className="orders-count-badge">{this.getOrdersCount()}</div>
+            </div>
           </div>
         </div>        
         <div className="simple-box">
