@@ -32,10 +32,6 @@
     margin-top: 28px;
 }
 
-.otc-value-row.insufficient-funds > div:first-child {
-    color: #de001e;
-}
-
 .counterparty-row {
     color: #1782fc;
     font-size: 12px;
@@ -66,7 +62,9 @@
 
 .order-unavailable .trade-title,
 .order-unavailable .trade-subtitle,
-.order-unavailable .expiry-countdown-row {
+.order-unavailable .expiry-countdown-row,
+.invalid-counterparty,
+.otc-value-row.insufficient-funds > div:first-child {
     color: #de001e
 }
 

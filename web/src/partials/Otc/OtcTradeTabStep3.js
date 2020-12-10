@@ -176,11 +176,11 @@ class OtcTradeTabStep3 extends Component {
   }
 
   getUSDCToCollaterize = () => {
-    return fromDecimals(new Web3Utils.BN(this.state.optionInfo.amount).mul(new Web3Utils.BN(this.state.optionInfo.strikePrice)), 6, 0, 0)
+    return fromDecimals(new Web3Utils.BN(this.state.optionInfo.amount).mul(new Web3Utils.BN(this.state.optionInfo.strikePrice)), this.state.assetInfo.decimals, 0, 0)
   }
 
   getUSDCToCollaterizeFormatted = () => {
-    return fromDecimals(this.getUSDCToCollaterize(), this.state.assetInfo.decimals)
+    return fromDecimals(this.getUSDCToCollaterize(), 6)
   }
 
   getTimeToExpiryOrder = () => {
@@ -240,7 +240,7 @@ class OtcTradeTabStep3 extends Component {
     else {
       summary = `Receive ${premium} in return for assuming the obligation`
     }
-    summary += ` to ${this.state.optionInfo.isCall ? "sell" : "buy"} ${this.state.optionQty} ${this.state.assetInfo.symbol} for ${this.getStrikePriceOption()} USDC each until ${this.getExpirationOption()}.`
+    summary += ` to ${this.state.optionInfo.isCall ? "buy" : "sell"} ${this.state.optionQty} ${this.state.assetInfo.symbol} for ${this.getStrikePriceOption()} USDC each until ${this.getExpirationOption()}.`
     return summary
   }
 
@@ -495,13 +495,13 @@ class OtcTradeTabStep3 extends Component {
                   <>
                     {this.state.optionInfo.isCall ?
                       <div>{this.state.assetInfo.symbol} to collaterize: {this.state.optionQty}</div> :
-                      <div>USDC to collaterize: {this.getUSDCToCollaterize()}</div>
+                      <div>USDC to collaterize: {this.getUSDCToCollaterizeFormatted()}</div>
                     }
                     <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}</div>
                   </>}
               </div>
-              <div className="counterparty-row">
-              Counterparty Address: {this.isPublicCounterparty() ? "Public Order" : this.props.otcOrder.order.sender.responsible}
+              <div className={"counterparty-row "+ (!this.isCounterpartyWallet() ? "invalid-counterparty" : "")}>
+                Counterparty Address: {this.isPublicCounterparty() ? "Public Order" : this.props.otcOrder.order.sender.responsible}
               </div>
               <div className="expiry-countdown-row">
                 {this.getTimeToExpiryOrder()}
