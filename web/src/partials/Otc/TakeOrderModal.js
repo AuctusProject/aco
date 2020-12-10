@@ -141,7 +141,7 @@ class TakeOrderModal extends Component {
         return new Web3Utils.BN(this.props.orderData.optionQty)
       }
       else {
-        return new Web3Utils.BN(fromDecimals(toDecimals(this.props.orderData.strikeValue, 6).mul(this.props.orderData.optionQty), this.props.orderData.underlying.decimals, 0, 0))
+        return new Web3Utils.BN(fromDecimals(new Web3Utils.BN(this.props.orderData.strikeValue).mul(new Web3Utils.BN(this.props.orderData.optionQty)), this.props.orderData.underlying.decimals, 0, 0))
       }
     }
     else {

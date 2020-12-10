@@ -105,7 +105,7 @@ class AssetInput extends Component {
       <div className={"asset-input " + (!this.props.disabled ? "clickable" : "")}>
         <div className="" onClick={this.onShowModal}>
           {this.state.selectedAsset ? 
-            <div className="selected-asset">
+            <div className="selected-asset nowrap">
               {this.getAssetIcon(this.state.selectedAsset)}
               {this.state.selectedAsset.symbol}
             </div> : 
