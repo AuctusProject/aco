@@ -91,7 +91,7 @@
 }
 
 .asset-input-modal .modal-content {
-    height: 440px;
+    height: 463px;
     max-height: 100vh;
     position: absolute;
 }
@@ -99,4 +99,5 @@
 .asset-input-modal .overflow-auto {
     overflow: auto;
     max-height: calc(100vh - 105px);
+    height: 360px;
 }
