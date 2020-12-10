@@ -235,12 +235,12 @@ class OtcTradeTabStep3 extends Component {
     var premium = this.state.usdcValue + " USDC"
     var summary = ""
     if (this.props.otcOrder.isAskOrder) {
-      summary = `Pay ${premium} for the right`
+      summary = `Pay ${premium} for the right to ${this.state.optionInfo.isCall ? "buy" : "sell"} `
     }
     else {
-      summary = `Receive ${premium} in return for assuming the obligation`
+      summary = `Receive ${premium} in return for assuming the obligation to ${this.state.optionInfo.isCall ? "sell" : "buy"} `
     }
-    summary += ` to ${this.state.optionInfo.isCall ? "buy" : "sell"} ${this.state.optionQty} ${this.state.assetInfo.symbol} for ${this.getStrikePriceOption()} USDC each until ${this.getExpirationOption()}.`
+    summary += `${this.state.optionQty} ${this.state.assetInfo.symbol} for ${this.getStrikePriceOption()} USDC each until ${this.getExpirationOption()}.`
     return summary
   }
 
