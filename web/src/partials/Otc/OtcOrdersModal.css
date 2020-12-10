@@ -1,0 +1,40 @@
+.otc-orders-modal.aco-modal .modal-dialog {
+    width: 600px;
+}
+
+.order-summary {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.order-summary .right-arrow {
+    margin: 0 10px;
+    line-height: 1;
+}
+
+.otc-order {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #80808080;
+}
+
+.otc-order:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
+}
+
+.otc-order:hover {
+    background-color: #33333380;
+}
+
+.light-mode .otc-order:hover {
+    background-color: #e6e6e680;
+}
+
+.no-orders-message {
+    text-align: center;
+    padding: 20px;
+    margin: auto;
+}

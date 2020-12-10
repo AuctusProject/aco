@@ -364,7 +364,6 @@ li.dropdown {
 .layout-mode {
   padding: 6px 0;
   margin-right: 8px;
-  cursor: pointer;
 }
 
 .layout-mode label {
@@ -455,7 +454,7 @@ li.dropdown {
 }
 
 .subnav-content .container .subnav-link .subnav-link-description {
-  max-width: 170px;
+  max-width: 160px;
   text-align: left;
   font-size: 12px;
   font-weight: 300;

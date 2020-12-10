@@ -1,5 +1,6 @@
 import Web3Utils from 'web3-utils'
 import Web3 from 'web3'
+import { wethAddress } from './constants'
 
 var _web3 = null
 export function getWeb3() {
@@ -31,6 +32,10 @@ export function checkEthBalanceOf(address) {
     })
 }
 
+export function wrapEth(from, value, nonce) {
+    return sendTransactionWithNonce(null, null, from, wethAddress, value, null, null, nonce)
+}
+
 export function getNextNonce(from) {
     return new Promise(function (resolve, reject) {
         getWeb3().eth.getTransactionCount(from, (err, result) => {
@@ -45,7 +50,9 @@ export function getNextNonce(from) {
 export function sendTransaction(gasPrice, gasLimit, from, to, value, data, chainId) {
     return new Promise(function (resolve, reject) {
         getNextNonce(from).then(result => {
-            sendTransactionWithNonce(gasPrice, gasLimit, from, to, value, data, chainId, result).then(result => resolve(result))
+            sendTransactionWithNonce(gasPrice, gasLimit, from, to, value, data, chainId, result)
+            .then(result => resolve(result))
+            .catch(err => reject(err))
         })
     })
 }
@@ -74,6 +81,32 @@ export function sendTransactionWithNonce(gasPrice, gasLimit, from, to, value, da
         .catch(err => {
             reject(err)
         })
+    })
+}
+
+export function signTypedData(from, data){
+    return new Promise(function (resolve, reject) { 
+        const _web3 = getWeb3();
+        _web3.eth.currentProvider.sendAsync({
+            method: 'eth_signTypedData_v4',
+            params: [from, data],
+            from,
+        }, (err, result) => {
+            if (err) {
+                reject(err)
+                return
+            }
+            if (result.error) {
+                reject(result.error)
+            }
+
+            let signature = JSON.stringify(result.result);
+            signature = result.result.substring(2);
+            const r = '0x' + signature.slice(0, 64);
+            const s = '0x' + signature.slice(64, 128);
+            const v = parseInt('0x' + signature.slice(128, 130), 16);
+            resolve({v: v, r: r, s: s})
+        });
     })
 }
 

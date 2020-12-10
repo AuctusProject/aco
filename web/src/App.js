@@ -20,6 +20,7 @@ import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 import Pools from './pages/Pools'
 import Vaults from './pages/Vaults'
+import Otc from './pages/Otc'
 
 class App extends Component {
   constructor() {
@@ -139,7 +140,7 @@ class App extends Component {
 
   render() {
     var showNavbar = window.location.pathname !== "/"
-    var showFooter = window.location.pathname.indexOf("trade") < 0
+    var showFooter = window.location.pathname.indexOf("advanced/trade") < 0
     var darkMode = isDarkMode()
     return (
       <Web3Provider onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
@@ -220,6 +221,15 @@ class App extends Component {
                 <Route 
                   path={[`/vaults`, `/advanced/vaults`]}
                   render={ routeProps => <Vaults
+                    {...routeProps}
+                    darkMode={darkMode}
+                    signIn={this.showSignInModal}
+                    accountToggle={this.state.accountToggle}
+                  /> }
+                />
+                <Route 
+                  path={[`/otc/trade/:orderId?`, `/otc/manage`]}
+                  render={ routeProps => <Otc
                     {...routeProps}
                     darkMode={darkMode}
                     signIn={this.showSignInModal}

@@ -58,6 +58,8 @@ describe("ACOFlashExercise", function() {
     await ACOFactory.deployed();
     let ACOFactoryV2 = await (await ethers.getContractFactory("ACOFactoryV2")).deploy();
     await ACOFactoryV2.deployed();
+    let ACOFactoryV3 = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
+    await ACOFactoryV3.deployed();
     
     let factoryInterface = new ethers.utils.Interface(factoryABI.abi);
 
@@ -71,6 +73,7 @@ describe("ACOFlashExercise", function() {
     await buidlerProxy.deployed();
 
     await buidlerProxy.connect(owner).setImplementation(ACOFactoryV2.address, []);
+    await buidlerProxy.connect(owner).setImplementation(ACOFactoryV3.address, []);
 
     token1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token1Name, token1Symbol, token1Decimals, token1TotalSupply);
     await token1.deployed();
@@ -81,7 +84,8 @@ describe("ACOFlashExercise", function() {
     token3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token3Name, token3Symbol, token3Decimals, token3TotalSupply);
     await token3.deployed();
 
-    buidlerFactory = await ethers.getContractAt("ACOFactoryV2", buidlerProxy.address);
+    buidlerFactory = await ethers.getContractAt("ACOFactoryV3", buidlerProxy.address);
+    await buidlerFactory.setOperator(await owner.getAddress(), true);
 
     time = Math.round(new Date().getTime() / 1000) + 86400;
     price1 = ethers.utils.bigNumberify("3000000");

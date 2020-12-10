@@ -1,0 +1,155 @@
+.token-imported-modal .modal-content {
+    padding: 15px;
+}
+
+.token-imported-title {
+    font-size: 18px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.45px;
+    color: #1782fc;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.token-imported-title svg {
+    margin-right: 4px;
+    font-size: 14px;
+}
+
+.check-token-msg {
+    font-size: 14px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: center;
+}
+
+.light-mode .check-token-msg {
+    color: black;
+}
+
+.erc20-msg {
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+    margin-top: 14px;
+    margin-bottom: 14px;
+    color: #d2d2d2;
+}
+
+.light-mode .erc20-msg {
+    color: #666666;
+}
+
+.token-imported-modal ul {
+    margin-block-start: 0;
+    margin-block-end: 0;
+    margin-inline-start: 0;
+    margin-inline-end: 0;
+    padding-inline-start: 16px;
+}
+
+.token-imported-modal ul li {
+    font-family: Roboto;
+    font-size: 12px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.5;
+    letter-spacing: 0.3px;
+    text-align: left;
+    margin-bottom: 8px;
+}
+
+.light-mode .token-imported-modal ul li {
+    color: #1a1a1a;
+}
+
+.token-imported-modal .selected-asset {
+    border-radius: 8px;
+    background-color: #333333;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+}
+
+.light-mode .token-imported-modal .selected-asset {
+    background-color: #e2e2e2;
+}
+
+.token-imported-modal .selected-asset img {    
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.token-imported-modal .selected-asset .asset-name {
+    font-size: 14px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.7px;
+    text-align: left;
+    color: #e6e6e6;
+}
+
+.token-imported-modal .selected-asset .asset-address {
+    font-size: 12px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.6px;
+    text-align: left;
+    color: #b2b2b2;
+    display: flex;
+}
+
+.light-mode .token-imported-modal .selected-asset .asset-name,
+.light-mode .token-imported-modal .selected-asset .asset-address {    
+    color: #666666;
+}
+
+.token-imported-modal .selected-asset .asset-address span {
+    max-width: calc(100% - 124px);
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 4px;
+}
+
+.token-imported-modal .selected-asset .name-address-col {
+    width: calc(100% - 32px);
+}
+
+.token-imported-modal .form-check {
+    margin-top: 18px;
+}
+
+.token-imported-modal .form-check-label {
+    font-size: 12px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+}
+
+.light-mode .token-imported-modal .form-check-label {
+    color: #000000;
+}
+
+.token-imported-modal .done-button-wrapper {
+    text-align: center;
+}

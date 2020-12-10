@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { apiUrl, removeOptionsToIgnore } from './constants';
+import { apiUrl, removeOptionsToIgnore, removeOtcOptions } from './constants';
 
 var apiTokenList = null
 export function getTokensList() {
@@ -12,6 +12,7 @@ export function getTokensList() {
         .then(res => {
             if (res && res.data) {
                 apiTokenList = removeOptionsToIgnore(res.data)
+                apiTokenList = removeOtcOptions(apiTokenList)
             }
             resolve(apiTokenList)
         })
@@ -37,6 +38,21 @@ export function getAcoAssets() {
     })
 }
 
+export function getAcoAsset(address) {
+    return new Promise(function(resolve,reject){
+        getAcoAssets().then(acoAssets => {
+            for (var i = 0; i < acoAssets.length; ++i) {
+                if (acoAssets[i].address.toLowerCase() === address.toLowerCase()) {
+                    resolve(acoAssets[i])
+                    return;
+                }
+            }
+            resolve(null)
+        })
+        .catch(err => reject(err));
+    })
+}
+
 var acoPools = null
 export function getAcoPools() {
     return new Promise(function(resolve,reject){
@@ -52,6 +68,32 @@ export function getAcoPools() {
             resolve(acoPools)
         })
         .catch(err => reject(err));
+    })
+}
+
+export function getOtcOrder(orderId) {
+    return new Promise(function(resolve,reject){
+        Axios.get(apiUrl + "order/" + encodeURIComponent(orderId))
+        .then((res) => {
+            if (res && res.data) {
+                resolve(res.data);
+            } else {
+                resolve(null);
+            }
+        }).catch(err => reject(err));
+    })
+}
+
+export function createOtcOrder(isAskOrder, signedOrder) {
+    return new Promise(function(resolve,reject){
+        Axios.post(apiUrl + "order", {isAskOrder:isAskOrder,order:signedOrder})
+        .then((res) => {
+            if (res && res.data) {
+                resolve(res.data);
+            } else {
+                resolve(null);
+            }
+        }).catch(err => reject(err));
     })
 }
 

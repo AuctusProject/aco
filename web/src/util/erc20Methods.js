@@ -18,6 +18,7 @@ export const getERC20AssetInfo = (assetAddress) => {
             Promise.all(promises).then(result => {
                 resolve({address: assetAddress, name: result[0], symbol: result[1], decimals: result[2]})
             })
+            .catch(err => reject(err))
         }
     })
 }

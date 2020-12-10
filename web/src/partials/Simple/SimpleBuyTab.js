@@ -588,17 +588,18 @@ class SimpleBuyTab extends Component {
         </div>
       </div>
       <div className="action-button-wrapper">
-        {this.canBuy() ?
-          (this.props.isConnected ? 
+        {!this.props.isConnected ? 
+          <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
+            <div>CONNECT WALLET</div>
+          </div> :
+          (this.canBuy() ?
             <div className="action-btn medium solid-blue" onClick={this.onBuyClick}>
               <div>BUY</div>
             </div> :
-            <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
-              <div>CONNECT WALLET</div>
-            </div>) :
-          <div className="action-btn medium solid-blue disabled">
-            <div>{this.state.loadingSwap ? "Loading..." : this.getButtonMessage()}</div>
-          </div>}
+            <div className="action-btn medium solid-blue disabled">
+              <div>{this.state.loadingSwap ? "Loading..." : this.getButtonMessage()}</div>
+            </div>)
+        }
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
       {this.state.verifyModalInfo && <VerifyModal {...this.state.verifyModalInfo} />}

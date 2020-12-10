@@ -1,0 +1,33 @@
+.otc-title {
+    font-size: 26px;
+}
+
+.orders-count-badge {
+    border-radius: 5px;
+    background-color: #1782fc;
+    font-size: 14px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: center;
+    color: white;
+    position: absolute;
+    top: 0px;
+    right: -12px;
+    padding: 0px 4px;
+    min-width: 24px;
+}
+
+.orders-btn {    
+    color: #d2d2d2;
+    border-color: #d2d2d2;
+    padding: 2px 16px;
+    border: 1px solid;
+    border-radius: 4px;
+}
+
+.light-mode .orders-btn { 
+    color: #808080;
+    border-color: #808080;
+}

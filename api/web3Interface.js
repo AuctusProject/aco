@@ -1,14 +1,13 @@
 const Axios = require('axios');
 
 const fromBlock = "0x" + parseInt(process.env.FROM_BLOCK).toString(16);
-let web3Id = 0;
 
 const callEthereum = (method, methodData, secondParam = "latest") => {
   return new Promise((resolve, reject) => {
     Axios.post("https://" + process.env.CHAIN + ".infura.io/v3/" + process.env.INFURA_ID, 
       {
         "jsonrpc":"2.0",
-        "id": ++web3Id,
+        "id": Date.now(),
         "method": method,
         "params": ((secondParam !== null && secondParam !== undefined) ? [methodData, secondParam] : [methodData])
       }, 
@@ -116,16 +115,38 @@ const getDecimals = (token) => {
   });
 };
 
-const listAcoTokens = () => {   
+const getTransaction = (transactionHash) => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_getTransactionReceipt", transactionHash, null).then((result) => {
+      if (result && result.blockNumber) {
+        resolve(result);
+      } else {
+        resolve(null);
+      }
+    }).catch((err) => reject(err));
+  });
+};
+
+const listAcoTokens = () => {      
   return new Promise((resolve, reject) => { 
-    return callEthereum("eth_getLogs", {"address": [process.env.ACO_FACTORY], "fromBlock": fromBlock, "topics": ["0x830ecf50af8281b7fc6c07ca94ed228468437e79a01755686fbb541d37103cb2"]}, null).then((result) => {
-      const response = [];
+    Promise.all([
+      getAcoTokensByEvent("0x830ecf50af8281b7fc6c07ca94ed228468437e79a01755686fbb541d37103cb2"),
+      getAcoTokensByEvent("0xd0e563bacc44116780b4c1d100d239178b84de4445ff3c7db2def6a02b746350")
+    ]).then((result) => {
+      resolve([].concat(result[0], result[1]));
+    }).catch((err) => reject(err));
+  });
+};
+
+const getAcoTokensByEvent = async (eventTopic) => {
+  return new Promise((resolve, reject) => { 
+    callEthereum("eth_getLogs", {"address": [process.env.ACO_FACTORY], "fromBlock": fromBlock, "topics": [eventTopic]}, null).then((result) => {
+      const acos = [];
       if (result) {
         const size = 64;
-        const now = Math.ceil((new Date()).getTime() / 1000);
+        const now = Math.ceil(Date.now() / 1000);
         for (let k = 0; k < result.length; ++k) {
           let event = {};
-          let expired = false;
           let pureData = result[k].data.substring(2);
           let numChunks = Math.ceil(pureData.length / size);
           for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
@@ -133,22 +154,19 @@ const listAcoTokens = () => {
             else if (i === 1) event.expiryTime = parseInt(pureData.substring(o, o + size), 16);
             else if (i === 2) event.acoToken = ("0x" + pureData.substring(o + 24, o + size));
             else if (i === 3) event.acoTokenImplementation = ("0x" + pureData.substring(o + 24, o + size));
-            if (event.expiryTime <= now) {
-              expired = true;
-              break;
-            }
+            else if (i === 4) event.creator = ("0x" + pureData.substring(o + 24, o + size));
           }
-          if (!expired) {
+          if (event.expiryTime > now) {
             event.underlying = ("0x" + result[k].topics[1].substring(26));
             event.strikeAsset = ("0x" + result[k].topics[2].substring(26));
             event.isCall = (parseInt(result[k].topics[3], 16) === 1);
-            response.push(event);
+            acos.push(event);
           }
         }
       }
-      resolve(response);
+      resolve(acos);
     }).catch((err) => reject(err));
-  });
+  })
 };
 
 const listAcoPools = () => {   

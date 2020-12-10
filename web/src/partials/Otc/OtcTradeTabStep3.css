@@ -1,0 +1,131 @@
+.url-input,
+.url-input input {
+    height: 50px;    
+    box-shadow: none !important;
+    border: none;
+}
+
+.url-input {
+    border-radius: 4px;
+    background-color: #eff4fe;
+}
+
+.dark-mode .url-input,
+.dark-mode .url-input input {
+    background-color: #333333;
+    color: white
+}
+
+.url-input .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;    
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.otc-value-row {
+    color: #1782fc;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.8px;
+    margin-top: 28px;
+}
+
+.counterparty-row {
+    color: #1782fc;
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.6px;    
+    margin-bottom: 20px;
+}
+
+.action-button-wrapper.cancel-new-actions {
+    justify-content: space-between;
+    margin: 12px 10px;
+}
+
+.expiry-countdown-row {
+    font-size: 14px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: center;
+}
+
+.light-mode .expiry-countdown-row {
+    color: #262626;
+}
+
+.order-unavailable .trade-title,
+.order-unavailable .trade-subtitle,
+.order-unavailable .expiry-countdown-row,
+.invalid-counterparty,
+.otc-value-row.insufficient-funds > div:first-child {
+    color: #de001e
+}
+
+.otc-trade-tab .summary-row .input-column .input-field {
+    width: unset;
+    min-width: 75px;
+    padding: 0 8px;
+}
+
+.otc-trade-tab .inputs-wrapper.summary-row {
+    justify-content: center;
+}
+
+.trade-summary-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.trade-summary-row .summary-label {
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.35px;
+    text-align: center;
+    padding: 12px;
+}
+
+.light-mode .trade-summary-row .summary-label {
+    color: #1b1b1b;
+}
+
+.trade-summary-row .summary-description {
+    font-size: 14px;
+    letter-spacing: 0.35px;
+    text-align: left;
+    max-width: 460px;
+    padding-left: 12px;
+    border-left: 1px solid #bfbfbf80;
+}
+
+.light-mode .trade-summary-row .summary-description {
+    color: #1a1a1a;
+}
+
+.url-input-action-buttons {
+    max-width: 600px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.btn-link.cancel-link {
+    color: #808080;
+}
+
+.button-tooltip {
+    text-transform: none;
+}
+
+.otc-trade-step3 .input-field {
+    border: solid 1px #4c4c4c60;
+}

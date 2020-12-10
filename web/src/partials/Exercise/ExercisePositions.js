@@ -27,9 +27,9 @@ class ExercisePositions extends Component {
   }
 
   componentDidMount = () => {
-    if (this.props.selectedPair && this.context.web3.selectedAccount) {
+    if ((this.props.isOtcPositions || this.props.selectedPair) && this.context.web3.selectedAccount) {
       this.props.updated()
-      listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount).then(positions => {
+      listPositionsForExercise(this.props.selectedPair, this.context.web3.selectedAccount, this.props.isOtcPositions).then(positions => {
         if (this.props.loadedPositions) {
           this.props.loadedPositions(positions)
         }
@@ -53,10 +53,10 @@ class ExercisePositions extends Component {
   }
 
   checkApiPrice = (position) => {
-    var price = this.context.ticker && this.context.ticker[this.props.selectedPair.underlyingSymbol]
+    var price = this.context.ticker && this.props.selectedPair && this.context.ticker[this.props.selectedPair.underlyingSymbol]
     var option = position.option
     var formattedStrikePrice = fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals)
-    if ((formattedStrikePrice > price && option.isCall) || (formattedStrikePrice < price && !option.isCall)) {
+    if (price && ((formattedStrikePrice > price && option.isCall) || (formattedStrikePrice < price && !option.isCall))) {
       var baseText = "The API is indicating that currently <b>{UNDERLYING_SYMBOL} is {API_PRICE}</b>, are you sure you want to {ACTION_NAME} <b>{UNDERLYING_SYMBOL} for {STRIKE_PRICE}</b>?"
       var html = baseText.replace("{API_PRICE}", "$"+price)
       .replace("{ACTION_NAME}", (option.isCall ? "purchase" : "sell"))
@@ -92,6 +92,7 @@ class ExercisePositions extends Component {
           <thead>
             <tr>
               <th>TYPE</th>
+              {this.props.isOtcPositions && <th>UNDERLYING</th>}
               {this.props.mode === PositionsLayoutMode.Advanced && <th>SYMBOL</th>}
               <th>STRIKE</th>
               <th>EXPIRATION</th>
@@ -103,18 +104,19 @@ class ExercisePositions extends Component {
             {(!this.state.positions || this.state.positions.length === 0) && 
               <tr>
                 {!this.state.positions && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>Loading...</td>}
-                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>No positions for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</td>}
+                {this.state.positions && this.state.positions.length === 0 && <td colSpan={this.props.mode === PositionsLayoutMode.Advanced ? "6" : "5"}>No positions{this.props.selectedPair && ` for ${this.props.selectedPair.underlyingSymbol}${this.props.selectedPair.strikeAssetSymbol}`}</td>}
               </tr>
             }
             {this.state.positions && this.state.positions.map(position => 
             <tr key={position.option.acoToken}>
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>
+              {this.props.isOtcPositions && <td>{position.option.underlyingInfo.symbol}</td>}
               {this.props.mode === PositionsLayoutMode.Advanced && <td>{position.option.acoTokenInfo.symbol}</td>}
               <td>{getOptionFormattedPrice(position.option)}</td>
-              <td>{formatDate(position.option.expiryTime)}</td>
+              <td>{formatDate(position.option.expiryTime, true)}</td>
               <td>{getFormattedOpenPositionAmount(position)}</td>
-              <td className="exercise-actions-cell">
-                {this.props.mode === PositionsLayoutMode.Basic && <div className="action-btn mr-2" onClick={this.onSellClick(position)}>SELL EARLY</div>}
+              <td className={!this.props.isOtcPositions ? "exercise-actions-cell" : ""}>
+                {!this.props.isOtcPositions && this.props.mode === PositionsLayoutMode.Basic && <div className="action-btn mr-2" onClick={this.onSellClick(position)}>SELL EARLY</div>}
                 <div className="action-btn" onClick={this.onExerciseClick(position)}>EXERCISE</div>
               </td>
             </tr>)}

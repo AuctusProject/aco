@@ -1,0 +1,103 @@
+.asset-input {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.selected-asset {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.selected-asset img,
+.selected-asset svg {
+    width: 22px;
+    height: 22px;
+    font-size: 22px;
+    margin-right: 4px;
+}
+
+.asset-option {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.asset-option:hover {
+    background-color: #333333;
+}
+
+.light-mode .asset-option:hover {
+    background-color: #e6e6e6;
+}
+
+.asset-option img,
+.asset-option svg {
+    height: 24px;
+    width: 24px;
+    font-size: 24px; 
+    margin-right: 6px;
+    border-radius: 50%;
+}
+
+.asset-option:last-child {
+    border-bottom-left-radius: 0.3rem;
+    border-bottom-right-radius: 0.3rem;
+}
+
+.search-input-wrapper {
+    border-bottom: 1px solid;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.search-input-wrapper input {
+    width: calc(100% - 20px);
+    background: transparent;
+    border: none;
+    color: white;
+}
+
+.search-input-wrapper input::placeholder {
+    color: #808080;
+    opacity: 1;
+}
+
+.light-mode .search-input-wrapper input {
+    color: #333333 !important;
+}
+
+.token-name-title {
+    font-size: 12px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.6px;
+}
+
+.light-mode .token-name-title {
+    color: #262626;
+}
+
+.asset-input-tooltip {
+    width: 300px;
+}
+
+.asset-input-modal .modal-header svg {
+    margin-left: 4px;
+    font-size: 14px;
+}
+
+.asset-input-modal .modal-content {
+    height: 463px;
+    max-height: 100vh;
+    position: absolute;
+}
+
+.asset-input-modal .overflow-auto {
+    overflow: auto;
+    max-height: calc(100vh - 105px);
+    height: 360px;
+}
