@@ -154,9 +154,22 @@ class OtcTradeTabStep3 extends Component {
   }
 
   copyToClipboard = (e) => {
-    this.urlInput.select()
-    document.execCommand('copy')
-    e.target.focus()
+    var tempInput = document.createElement("textarea");
+    tempInput.style = "position: absolute; left: -1000px; top: -1000px; opacity: 0";
+    tempInput.value = this.getCopyValue();
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    document.execCommand("copy");
+    document.body.removeChild(tempInput);
+  }
+
+  getCopyValue = () => {
+    var text = "Auctus OTC - Take This Trade!"
+    text += "\n"
+    text += this.getSummaryDescription()
+    text += "\n"
+    text += window.location.href
+    return text
   }
 
   getFormattedDate = (optionInfo) => {
@@ -416,7 +429,7 @@ class OtcTradeTabStep3 extends Component {
             </div>
             {this.canTakeOrder() && <div className="url-input-action-buttons">
               <div className="url-input input-group">
-                <input ref={input => this.urlInput = input} value={window.location.href} readOnly onClick={this.copyToClipboard} type="text" className="form-control" />
+                <input value={window.location.href} readOnly onClick={this.copyToClipboard} type="text" className="form-control" />
                 <div className="input-group-append">
                   <div onClick={this.copyToClipboard} className="action-btn solid-blue"><FontAwesomeIcon icon={faClone}></FontAwesomeIcon></div>
                 </div>
