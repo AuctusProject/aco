@@ -33,7 +33,7 @@ class OtcTradeTab extends Component {
   }
 
   loadOtcOrder = () => {
-    if (this.state.otcOrder === null || this.props.match.params.orderId !== this.state.otcOrder.orderId){
+    if (!this.state.otcOrder || this.props.match.params.orderId !== this.state.otcOrder.orderId){
       this.setState({step: 3})
       getOtcOrder(this.props.match.params.orderId).then(result => {
         this.setState({otcOrder: result})
