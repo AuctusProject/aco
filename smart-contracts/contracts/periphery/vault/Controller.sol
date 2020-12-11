@@ -82,11 +82,11 @@ contract Controller is Ownable, IController {
         }
     }
 
-    function buyAco(address vault, uint256 acoAmount, uint256 rewardAmount) external {
+    function buyAco(address vault, address acoPool, uint256 acoAmount, uint256 rewardAmount) external {
         require(operators[msg.sender], "Controller:: Invalid sender");
         require(strategiesOfVault[vault] != address(0), "Controller:: Invalid vault");
         ACOAssetHelper._callTransferFromERC20(IACOVault(vault).token(), strategiesOfVault[vault], vault, rewardAmount);
-        IACOVault(vault).setReward(acoAmount, rewardAmount);
+        IACOVault(vault).setReward(acoPool, acoAmount, rewardAmount);
     }
     
     function sendFee(uint256 amount) public override {

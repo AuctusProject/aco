@@ -44,4 +44,5 @@ interface IACOToken is IERC20 {
     function exerciseFrom(address account, uint256 tokenAmount, uint256 salt) external payable returns(uint256);
     function exerciseAccounts(uint256 tokenAmount, address[] calldata accounts) external payable returns(uint256);
     function exerciseAccountsFrom(address account, uint256 tokenAmount, address[] calldata accounts) external payable returns(uint256);
+    function transferCollateral(address recipient, uint256 tokenCollateralizedAmount) external;
 }
