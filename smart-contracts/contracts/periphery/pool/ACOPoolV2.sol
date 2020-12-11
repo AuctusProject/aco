@@ -294,13 +294,13 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param initData The initialize data.
      */
     function init(InitData calldata initData) external override {
-		require(underlying == address(0) && strikeAsset == address(0), "ACOPool::init: Already initialized");
+		require(underlying == address(0) && strikeAsset == address(0), "Already initialized");
         
-        require(initData.acoFactory.isContract(), "ACOPool:: Invalid ACO Factory");
-        require(initData.chiToken.isContract(), "ACOPool:: Invalid Chi Token");
-        require(initData.underlying != initData.strikeAsset, "ACOPool:: Same assets");
-        require(ACOAssetHelper._isEther(initData.underlying) || initData.underlying.isContract(), "ACOPool:: Invalid underlying");
-        require(ACOAssetHelper._isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "ACOPool:: Invalid strike asset");
+        require(initData.acoFactory.isContract(), "Invalid ACO Factory");
+        require(initData.chiToken.isContract(), "Invalid Chi Token");
+        require(initData.underlying != initData.strikeAsset, "Same assets");
+        require(ACOAssetHelper._isEther(initData.underlying) || initData.underlying.isContract(), "Invalid underlying");
+        require(ACOAssetHelper._isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "Invalid strike asset");
         
         super.init();
 
@@ -569,7 +569,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      */
     function withdrawStuckToken(address token, address destination) external override {
         onlyFactory();
-        require(token != underlying && token != strikeAsset && !acoData[token].initialized, "ACOPool:: Invalid token");
+        require(token != underlying && token != strikeAsset && !acoData[token].initialized, "Invalid token");
         uint256 _balance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (_balance > 0) {
             ACOAssetHelper._transferAsset(token, destination, _balance);
@@ -736,7 +736,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
             assetIn = _strikeAsset;
             assetOut = _underlying;
         }
-        require(balanceOut > 0, "ACOPool:: No balance");
+        require(balanceOut > 0, "No balance");
         
 		uint256 etherAmount = 0;
         if (ACOAssetHelper._isEther(assetOut)) {
@@ -754,8 +754,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @return shares The amount of pool tokens minted.
      */
 	function _deposit(uint256 collateralAmount, address to) internal returns(uint256 shares) {
-        require(collateralAmount > 0, "ACOPool:: Invalid amount");
-        require(to != address(0) && to != address(this), "ACOPool:: Invalid to");
+        require(collateralAmount > 0, "Invalid amount");
+        require(to != address(0) && to != address(this), "Invalid to");
 		
 		(,,uint256 collateralBalance) = _getTotalCollateralBalance(true);
 		
@@ -863,7 +863,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	) {
-        require(shares > 0, "ACOPool:: Invalid shares");
+        require(shares > 0, "Invalid shares");
         
 		redeemACOTokens();
 		
@@ -871,16 +871,16 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         _callBurn(account, shares);
         
 		(uint256 underlyingBalance, uint256 strikeAssetBalance, uint256 collateralBalance) = _getTotalCollateralBalance(false);
-		require(collateralBalance > 0, "ACOPool:: No collateral");
+		require(collateralBalance > 0, "No collateral balance");
 		
 		uint256 collateralAmount = shares.mul(collateralBalance).div(_totalSupply);
 		
         if (underlying == collateral()) {
-			require(collateralAmount <= underlyingBalance, "ACOPool:: No collateral available");
+			require(collateralAmount <= underlyingBalance, "No collateral available");
 			underlyingWithdrawn = collateralAmount;
 			strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
         } else {
-			require(collateralAmount <= strikeAssetBalance, "ACOPool:: No collateral available");
+			require(collateralAmount <= strikeAssetBalance, "No collateral available");
 			strikeAssetWithdrawn = collateralAmount;
 			underlyingWithdrawn = underlyingBalance.mul(shares).div(_totalSupply);
 		}
@@ -906,7 +906,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        require(shares > 0, "ACOPool:: Invalid shares");
+        require(shares > 0, "Invalid shares");
         
 		redeemACOTokens();
 		
@@ -998,8 +998,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         address to, 
         uint256 deadline
     ) internal {
-        require(block.timestamp <= deadline, "ACOPool:: Swap deadline");
-        require(to != address(0) && to != acoToken && to != address(this), "ACOPool:: Invalid destination");
+        require(block.timestamp <= deadline, "Swap deadline");
+        require(to != address(0) && to != acoToken && to != address(this), "Invalid destination");
         
         (uint256 swapPrice, uint256 protocolFee, uint256 underlyingPrice, uint256 volatility, uint256 collateralAmount) = _quote(acoToken, tokenAmount);
         
@@ -1029,17 +1029,17 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         uint256 volatility, 
         uint256 collateralAmount
     ) {
-        require(tokenAmount > 0, "ACOPool:: Invalid token amount");
+        require(tokenAmount > 0, "Invalid token amount");
         
         (address _underlying, address _strikeAsset, bool _isCall, uint256 strikePrice, uint256 expiryTime) = acoFactory.acoTokenData(acoToken);
         
-		require(_acoBasicDataIsValid(acoToken, _underlying, _strikeAsset, _isCall), "ACOPool:: Invalid ACO token");
-		require(_acoExpirationIsValid(expiryTime), "ACOPool:: Invalid ACO token expiration");
+		require(_acoBasicDataIsValid(acoToken, _underlying, _strikeAsset, _isCall), "Invalid ACO token");
+		require(_acoExpirationIsValid(expiryTime), "Invalid ACO token expiration");
 		
 		underlyingPrice = assetConverter.getPrice(_underlying, _strikeAsset);
-		require(_acoStrikePriceIsValid(strikePrice, underlyingPrice), "ACOPool:: Invalid ACO token strike price");
+		require(_acoStrikePriceIsValid(strikePrice, underlyingPrice), "Invalid ACO token strike price");
 
-        require(expiryTime > block.timestamp, "ACOPool:: ACO token expired");
+        require(expiryTime > block.timestamp, "ACO token expired");
         (swapPrice, protocolFee, volatility, collateralAmount) = _internalQuote(acoToken, tokenAmount, strikePrice, expiryTime, underlyingPrice);
     }
 	
@@ -1077,7 +1077,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
             protocolFee = swapPrice.mul(fee).div(PERCENTAGE_PRECISION);
 			swapPrice = swapPrice.add(protocolFee);
         }
-        require(swapPrice > 0, "ACOPool:: Invalid quote");
+        require(swapPrice > 0, "Invalid quote");
     }
 
 	/**
@@ -1097,9 +1097,9 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         } else {
             collateralAvailable = _getPoolBalanceOf(strikeAsset);
             collateralAmount = IACOToken(acoToken).getCollateralAmount(tokenAmount);
-            require(collateralAmount > 0, "ACOPool:: Token amount is too small");
+            require(collateralAmount > 0, "Token amount is too small");
         }
-        require(collateralAmount <= collateralAvailable, "ACOPool:: Insufficient liquidity");
+        require(collateralAmount <= collateralAvailable, "Insufficient liquidity");
     }
 
 	/**
@@ -1151,7 +1151,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
         uint256 swapPrice,
         uint256 protocolFee
     ) internal {
-        require(swapPrice <= maxPayment, "ACOPool:: Swap restriction");
+        require(swapPrice <= maxPayment, "Swap restriction");
         
         ACOAssetHelper._callTransferFromERC20(strikeAsset, msg.sender, address(this), swapPrice);
 
@@ -1408,7 +1408,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newStrategy Address of the new strategy address.
      */
 	function _setStrategy(address newStrategy) internal {
-        require(newStrategy.isContract(), "ACOPool:: Invalid strategy");
+        require(newStrategy.isContract(), "Invalid strategy");
         emit SetStrategy(address(strategy), newStrategy);
         strategy = IACOPoolStrategy(newStrategy);
     }
@@ -1418,7 +1418,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newBaseVolatility Value of the new base volatility.
      */
     function _setBaseVolatility(uint256 newBaseVolatility) internal {
-        require(newBaseVolatility > 0, "ACOPool:: Invalid base volatility");
+        require(newBaseVolatility > 0, "Invalid base volatility");
         emit SetBaseVolatility(baseVolatility, newBaseVolatility);
         baseVolatility = newBaseVolatility;
     }
@@ -1428,8 +1428,8 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newAssetConverter Address of the new asset converter.
      */
     function _setAssetConverter(address newAssetConverter) internal {
-        require(newAssetConverter.isContract(), "ACOPool:: Invalid asset converter");
-		require(IACOAssetConverterHelper(newAssetConverter).getPrice(underlying, strikeAsset) > 0, "ACOPool:: No price");
+        require(newAssetConverter.isContract(), "Invalid asset converter");
+		require(IACOAssetConverterHelper(newAssetConverter).getPrice(underlying, strikeAsset) > 0, "No price");
 		
 		_approveAssetsOnConverterHelper(isCall, newAssetConverter, underlying, strikeAsset);
 		
@@ -1442,7 +1442,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newTolerancePriceAbove Value of the new above price tolerance.
      */
     function _setTolerancePriceAbove(uint256 newTolerancePriceAbove) internal {
-        require(newTolerancePriceAbove < PERCENTAGE_PRECISION, "ACOPool:: Invalid tolerance");
+        require(newTolerancePriceAbove < PERCENTAGE_PRECISION, "Invalid tolerance");
         emit SetTolerancePriceAbove(tolerancePriceAbove, newTolerancePriceAbove);
         tolerancePriceAbove = newTolerancePriceAbove;
     }
@@ -1452,7 +1452,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newTolerancePriceBelow Value of the new below price tolerance.
      */
     function _setTolerancePriceBelow(uint256 newTolerancePriceBelow) internal {
-        require(newTolerancePriceBelow < PERCENTAGE_PRECISION, "ACOPool:: Invalid tolerance");
+        require(newTolerancePriceBelow < PERCENTAGE_PRECISION, "Invalid tolerance");
         emit SetTolerancePriceBelow(tolerancePriceBelow, newTolerancePriceBelow);
         tolerancePriceBelow = newTolerancePriceBelow;
     }
@@ -1462,7 +1462,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newMinExpiration Value of the new minimum expiration.
      */
     function _setMinExpiration(uint256 newMinExpiration) internal {
-        require(newMinExpiration <= maxExpiration, "ACOPool:: Invalid min expiration");
+        require(newMinExpiration <= maxExpiration, "Invalid min expiration");
         emit SetMinExpiration(minExpiration, newMinExpiration);
         minExpiration = newMinExpiration;
     }
@@ -1472,7 +1472,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newMaxExpiration Value of the new maximum expiration.
      */
     function _setMaxExpiration(uint256 newMaxExpiration) internal {
-        require(newMaxExpiration >= minExpiration, "ACOPool:: Invalid max expiration");
+        require(newMaxExpiration >= minExpiration, "Invalid max expiration");
         emit SetMaxExpiration(maxExpiration, newMaxExpiration);
         maxExpiration = newMaxExpiration;
     }
@@ -1482,7 +1482,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newFeeDestination Value of the new fee destination.
      */
     function _setFeeDestination(address newFeeDestination) internal {
-        require(newFeeDestination != address(0), "ACOPool:: Invalid fee destination");
+        require(newFeeDestination != address(0), "Invalid fee destination");
         emit SetFeeDestination(feeDestination, newFeeDestination);
         feeDestination = newFeeDestination;
     }
@@ -1492,7 +1492,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newFee Value of the new protocol fee.
      */
     function _setFee(uint256 newFee) internal {
-        require(newFee <= 12500, "ACOPool:: Invalid fee");
+        require(newFee <= 12500, "Invalid fee");
         emit SetFee(fee, newFee);
         fee = newFee;
     }
@@ -1502,7 +1502,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newWithdrawOpenPositionPenalty Value of the new penalty percentage on withdrawing open positions.
      */
     function _setWithdrawOpenPositionPenalty(uint256 newWithdrawOpenPositionPenalty) internal {
-        require(newWithdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "ACOPool:: Invalid penalty");
+        require(newWithdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "Invalid penalty");
         emit SetWithdrawOpenPositionPenalty(withdrawOpenPositionPenalty, newWithdrawOpenPositionPenalty);
         withdrawOpenPositionPenalty = newWithdrawOpenPositionPenalty;
     }
@@ -1512,7 +1512,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @param newUnderlyingPriceAdjustPercentage Value of the new underlying price percentage adjust.
      */
 	function _setUnderlyingPriceAdjustPercentage(uint256 newUnderlyingPriceAdjustPercentage) internal {
-        require(newUnderlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "ACOPool:: Invalid underlying price adjust");
+        require(newUnderlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "Invalid underlying price adjust");
         emit SetUnderlyingPriceAdjustPercentage(underlyingPriceAdjustPercentage, newUnderlyingPriceAdjustPercentage);
         underlyingPriceAdjustPercentage = newUnderlyingPriceAdjustPercentage;
     }
@@ -1531,7 +1531,7 @@ contract ACOPool is Ownable, ERC20, IACOPool {
      * @dev Internal function to check whether the transaction sender is the pool factory.
      */
     function onlyFactory() internal view {
-        require(owner() == msg.sender, "ACOPool:: Only pool factory");
+        require(owner() == msg.sender, "Only pool factory");
     }
 	
 	/**
