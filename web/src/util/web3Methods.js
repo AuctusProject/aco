@@ -1,11 +1,16 @@
 import Web3Utils from 'web3-utils'
 import Web3 from 'web3'
-import { wethAddress } from './constants'
+import { wethAddress, wssInfuraAddress } from './constants'
 
 var _web3 = null
 export function getWeb3() {
     if (_web3 == null && window.web3 && window.web3.currentProvider) {
         _web3 = new Web3(window.web3.currentProvider)
+    }
+    else {
+        _web3 = new Web3(
+            new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
+        )
     }
     return _web3
 }

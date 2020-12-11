@@ -35,7 +35,7 @@ class Web3Provider extends Component {
         selectedAccount: this.state.accounts && this.state.accounts[0],
         networkId: this.state.networkId,
         validNetwork: this.state.networkId === CHAIN_ID,
-        hasMetamask: !!getWeb3()
+        hasMetamask: window.web3 && window.web3.currentProvider
       }
     }
   }
@@ -137,7 +137,8 @@ class Web3Provider extends Component {
     return new Promise(function(resolve,reject){
       try {
         var metamaskAccountsAvailable = window.localStorage.getItem('METAMASK_ACCOUNTS_AVAILABLE')
-        if (metamaskAccountsAvailable && metamaskAccountsAvailable !== '1') {
+        if (!window.web3 || !window.web3.currentProvider ||
+         (metamaskAccountsAvailable && metamaskAccountsAvailable !== '1')) {
           resolve([])
         }
         else {

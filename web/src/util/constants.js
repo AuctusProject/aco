@@ -23,6 +23,7 @@ export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
+export const wssInfuraAddress = process.env.REACT_APP_INFURA_WSS;
 export const swapQuoteBuySize = "1000";
 export const acoFeePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
