@@ -8,7 +8,7 @@ export function getWeb3() {
         _web3 = new Web3(window.web3.currentProvider)
     }
     else {
-        _web3 = new Web3(
+        return new Web3(
             new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
         )
     }
