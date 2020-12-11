@@ -542,6 +542,7 @@ contract ACOToken is ERC20 {
      */
     function transferCollateral(address recipient, uint256 tokenCollateralizedAmount) external {
         require(recipient != address(0), "ACOToken::transferCollateral: Invalid recipient");
+        require(tokenCollateralizedAmount > 0, "ACOToken::transferCollateral: Invalid amount");
 
         TokenCollateralized storage senderData = tokenData[msg.sender];
         senderData.amount = senderData.amount.sub(tokenCollateralizedAmount);

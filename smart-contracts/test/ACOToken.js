@@ -1,4 +1,5 @@
 const { expect } = require("chai");
+const { AddressZero } = require("ethers/constants");
 const factoryABI = require("../artifacts/ACOFactory.json");
 
 describe("ACOToken", function() {
@@ -549,6 +550,201 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(amount1);
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount2);
+
+      await network.provider.send("evm_increaseTime", [-86400]);
+    });
+    it("Check transfer collateral", async function () {
+      let val1 = ethers.utils.bigNumberify("4975000000000000000");
+      let val2 = ethers.utils.bigNumberify("999000000000000000");
+      let val3 = ethers.utils.bigNumberify("70000000000000000");
+      await buidlerEthT1003C.connect(addr1).mintPayable({value: val1});    
+      
+      expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(1);
+      await buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), val2);
+      expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
+      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
+      expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2));
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(val1.sub(val2));
+      expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr2.getAddress())).to.equal(val2);
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.assignableCollateral(await addr2.getAddress())).to.equal(val2);
+      expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(2);
+
+      await buidlerEthT1003C.connect(addr2).transferCollateral(await addr3.getAddress(), val2);
+      expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
+      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
+      expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2));
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(val1.sub(val2));
+      expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr3.getAddress())).to.equal(val2);
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(val2);
+      expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(2);
+
+      await buidlerEthT1003C.connect(addr3).transferCollateral(await addr1.getAddress(), val3);
+      expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
+      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
+      expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2).add(val3));
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(val1.sub(val2).add(val3));
+      expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr3.getAddress())).to.equal(val2.sub(val3));
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(val2.sub(val3));
+      expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(2);
+
+      await buidlerEthT1003C.connect(addr3).transferCollateral(await addr3.getAddress(), val2.sub(val3));
+      expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
+      expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
+      expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2).add(val3));
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr1.getAddress())).to.equal(val1.sub(val2).add(val3));
+      expect(await buidlerEthT1003C.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr3.getAddress())).to.equal(val2.sub(val3));
+      expect(await buidlerEthT1003C.unassignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(val2.sub(val3));
+      expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(2);
+
+      await token2.transfer(await addr1.getAddress(), ethers.utils.bigNumberify("10000000000000000000000"));
+
+      let precision = ethers.utils.bigNumberify("100000000");
+      let value1 = ethers.utils.bigNumberify("5000000000000000000000");
+      let value2 = ethers.utils.bigNumberify("190000000000000000000");
+      let value3 = ethers.utils.bigNumberify("110000000000000000000");
+      let amount1 = value1.mul(precision).div(price2);
+      let amount2 = value2.mul(precision).div(price2);
+      let amount3 = value3.mul(precision).div(price2);
+      await token2.connect(addr1).approve(buidlerT1T210000P.address, value1);
+      await buidlerT1T210000P.connect(addr1).mint(value1);    
+      
+      expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(1);
+      await buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), amount2);
+      expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
+      expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
+      expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2));
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(value1.sub(value2));
+      expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.currentCollateral(await addr2.getAddress())).to.equal(value2);
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.assignableCollateral(await addr2.getAddress())).to.equal(value2);
+      expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
+
+      await buidlerT1T210000P.connect(addr2).transferCollateral(await addr3.getAddress(), amount2);
+      expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
+      expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
+      expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2));
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(value1.sub(value2));
+      expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.currentCollateral(await addr3.getAddress())).to.equal(value2);
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(value2);
+      expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
+
+      await buidlerT1T210000P.connect(addr3).transferCollateral(await addr1.getAddress(), amount3);
+      expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
+      expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
+      expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2).add(value3));
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(value1.sub(value2).add(value3));
+      expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.currentCollateral(await addr3.getAddress())).to.equal(value2.sub(value3));
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(value2.sub(value3));
+      expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
+      
+      await buidlerT1T210000P.connect(addr3).transferCollateral(await addr3.getAddress(), amount2.sub(amount3));
+      expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
+      expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
+      expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2).add(value3));
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr1.getAddress())).to.equal(value1.sub(value2).add(value3));
+      expect(await buidlerT1T210000P.assignableCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.currentCollateral(await addr3.getAddress())).to.equal(value2.sub(value3));
+      expect(await buidlerT1T210000P.unassignableCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(value2.sub(value3));
+      expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
+    });
+    it("Check fail to transfer collateral", async function () {
+      await token2.transfer(await addr1.getAddress(), ethers.utils.bigNumberify("10000000000000000000000"));
+      
+      await expect(
+        buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), 1)
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+
+      await expect(
+        buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), 1)
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+
+      let amount1 = ethers.utils.bigNumberify("2000000000000000000");
+      await buidlerEthT1003C.connect(addr1).mintPayable({value: amount1});
+      let precision2 = ethers.utils.bigNumberify("100000000");
+      let value2 = ethers.utils.bigNumberify("5000000000000000000000");
+      let amount2 = value2.mul(precision2).div(price2);
+      await token2.connect(addr1).approve(buidlerT1T210000P.address, value2);
+      await buidlerT1T210000P.connect(addr1).mint(value2);  
+
+      await expect(
+        buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), amount1.add(1))
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+
+      await expect(
+        buidlerEthT1003C.connect(addr1).transferCollateral(AddressZero, amount1)
+      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid recipient");
+
+      await expect(
+        buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), 0)
+      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid amount");
+
+      await expect(
+        buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), amount2.add(1))
+      ).to.be.revertedWith("SafeMath: subtraction overflow");
+
+      await expect(
+        buidlerT1T210000P.connect(addr1).transferCollateral(AddressZero, amount2)
+      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid recipient");
+
+      await expect(
+        buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), 0)
+      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid amount");
+
+      await network.provider.send("evm_increaseTime", [86400]);
+
+      await buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), amount1);
+
+      expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await buidlerEthT1003C.currentCollateral(await addr2.getAddress())).to.equal(amount1);
+      expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(1);
+      expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value2);
+      expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(1);
 
       await network.provider.send("evm_increaseTime", [-86400]);
     });

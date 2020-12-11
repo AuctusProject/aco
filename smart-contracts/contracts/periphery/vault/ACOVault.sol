@@ -11,7 +11,7 @@ import '../../interfaces/IACOFlashExercise.sol';
 import '../../interfaces/IACOFactory.sol';
 import '../../interfaces/IACOAssetConverterHelper.sol';
 import '../../interfaces/IACOToken.sol';
-import '../../interfaces/IACOPoolV2.sol';
+import '../../interfaces/IACOPool2.sol';
 
 
 contract ACOVault is Ownable, IACOVault {
@@ -39,7 +39,7 @@ contract ACOVault is Ownable, IACOVault {
     event Deposit(address indexed account, uint256 shares, uint256 amount);
     event Withdraw(address indexed account, uint256 shares, uint256 amount, uint256 fee);
 
-    IACOPoolFactory public immutable override acoPoolFactory;
+    IACOPoolFactory2 public immutable override acoPoolFactory;
     IACOFactory public immutable override acoFactory;
     address public immutable override token;
     
@@ -74,7 +74,7 @@ contract ACOVault is Ownable, IACOVault {
         require(initData.acoFactory.isContract(), "ACOVault:: Invalid ACO factory");
         require(initData.token.isContract(), "ACOVault:: Invalid token");
         
-        acoPoolFactory = IACOPoolFactory(initData.acoPoolFactory);
+        acoPoolFactory = IACOPoolFactory2(initData.acoPoolFactory);
         acoFactory = IACOFactory(initData.acoFactory);
         token = initData.token;
         _setAssetConverter(initData.assetConverter);
@@ -317,7 +317,7 @@ contract ACOVault is Ownable, IACOVault {
 		
 		(address poolUnderlying, address poolStrikeAsset,) = acoPoolFactory.acoPoolBasicData(acoPool);
 		require(poolUnderlying != poolStrikeAsset, "ACOVault:: Invalid pool");
-		IACOPool _pool = IACOPool(acoPool);
+		IACOPool2 _pool = IACOPool2(acoPool);
 		require(_pool.canSwap(_currentAcoToken), "ACOVault:: Pool cannot swap");
 		
         address _token = token;

@@ -2,13 +2,13 @@ pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
 import "../../libs/Address.sol";
-import "../../interfaces/IACOPoolV2.sol";
+import "../../interfaces/IACOPool2.sol";
 
 /**
  * @title ACOPoolFactory
  * @dev The contract is the implementation for the ACOProxy.
  */
-contract ACOPoolFactory {
+contract ACOPoolFactory2 {
     
     /**
      * @dev Struct to store the ACO pool basic data.
@@ -271,7 +271,7 @@ contract ACOPoolFactory {
         uint256 baseVolatility
     ) onlyFactoryAdmin external virtual returns(address) {
         _validateStrategy(strategy);
-        return _createAcoPool(IACOPool.InitData(
+        return _createAcoPool(IACOPool2.InitData(
             acoFactory,
             chiToken,
             underlying, 
@@ -409,7 +409,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setBaseVolatilityOnAcoPool(uint256[] calldata baseVolatilities, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setBaseVolatility.selector, baseVolatilities, acoPools);
+        _setAcoPoolUint256Data(IACOPool2.setBaseVolatility.selector, baseVolatilities, acoPools);
     }
 	
 	/**
@@ -419,7 +419,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setWithdrawOpenPositionPenaltyOnAcoPool(uint256[] calldata withdrawOpenPositionPenalties, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setWithdrawOpenPositionPenalty.selector, withdrawOpenPositionPenalties, acoPools);
+        _setAcoPoolUint256Data(IACOPool2.setWithdrawOpenPositionPenalty.selector, withdrawOpenPositionPenalties, acoPools);
     }
 	
 	/**
@@ -429,7 +429,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setUnderlyingPriceAdjustPercentageOnAcoPool(uint256[] calldata underlyingPriceAdjustPercentages, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setUnderlyingPriceAdjustPercentage.selector, underlyingPriceAdjustPercentages, acoPools);
+        _setAcoPoolUint256Data(IACOPool2.setUnderlyingPriceAdjustPercentage.selector, underlyingPriceAdjustPercentages, acoPools);
     }
 	
 	/**
@@ -439,7 +439,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setTolerancePriceBelowOnAcoPool(uint256[] calldata tolerancePricesBelow, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setTolerancePriceBelow.selector, tolerancePricesBelow, acoPools);
+        _setAcoPoolUint256Data(IACOPool2.setTolerancePriceBelow.selector, tolerancePricesBelow, acoPools);
     }
 	
 	/**
@@ -449,7 +449,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setTolerancePriceAboveOnAcoPool(uint256[] calldata tolerancePricesAbove, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setTolerancePriceAbove.selector, tolerancePricesAbove, acoPools);
+        _setAcoPoolUint256Data(IACOPool2.setTolerancePriceAbove.selector, tolerancePricesAbove, acoPools);
     }
 
 	/**
@@ -459,7 +459,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setMinExpirationOnAcoPool(uint256[] calldata minExpirations, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setMinExpiration.selector, minExpirations, acoPools);
+        _setAcoPoolUint256Data(IACOPool2.setMinExpiration.selector, minExpirations, acoPools);
     }
 	
 	/**
@@ -468,8 +468,8 @@ contract ACOPoolFactory {
      * @param maxExpirations Array of the maximum expirations to be set.
      * @param acoPools Array of ACO pools addresses.
      */
-    function setMaxExpirationAboveOnAcoPool(uint256[] calldata maxExpirations, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setMaxExpiration.selector, maxExpirations, acoPools);
+    function setMaxExpirationOnAcoPool(uint256[] calldata maxExpirations, address[] calldata acoPools) onlyPoolAdmin external virtual {
+        _setAcoPoolUint256Data(IACOPool2.setMaxExpiration.selector, maxExpirations, acoPools);
     }
 	
 	/**
@@ -479,7 +479,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setFeeOnAcoPool(uint256[] calldata fees, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolUint256Data(IACOPool.setFee.selector, fees, acoPools);
+        _setAcoPoolUint256Data(IACOPool2.setFee.selector, fees, acoPools);
     }
 	
 	/**
@@ -489,7 +489,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setFeeDestinationOnAcoPool(address[] calldata feeDestinations, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolAddressData(IACOPool.setFeeDestination.selector, feeDestinations, acoPools);
+        _setAcoPoolAddressData(IACOPool2.setFeeDestination.selector, feeDestinations, acoPools);
     }
 	
 	/**
@@ -499,7 +499,7 @@ contract ACOPoolFactory {
      * @param acoPools Array of ACO pools addresses.
      */
     function setAssetConverterOnAcoPool(address[] calldata assetConverters, address[] calldata acoPools) onlyPoolAdmin external virtual {
-        _setAcoPoolAddressData(IACOPool.setAssetConverter.selector, assetConverters, acoPools);
+        _setAcoPoolAddressData(IACOPool2.setAssetConverter.selector, assetConverters, acoPools);
     }
 	
 	/**
@@ -647,7 +647,7 @@ contract ACOPoolFactory {
     function _setStrategyOnAcoPool(address strategy, address[] memory acoPools) internal virtual {
         _validateStrategy(strategy);
         for (uint256 i = 0; i < acoPools.length; ++i) {
-            IACOPool(acoPools[i]).setStrategy(strategy);
+            IACOPool2(acoPools[i]).setStrategy(strategy);
         }
     }
 	
@@ -659,7 +659,7 @@ contract ACOPoolFactory {
      */
     function _setValidAcoCreatorOnAcoPool(address acoCreator, bool permission, address[] memory acoPools) internal virtual {
         for (uint256 i = 0; i < acoPools.length; ++i) {
-            IACOPool(acoPools[i]).setValidAcoCreator(acoCreator, permission);
+            IACOPool2(acoPools[i]).setValidAcoCreator(acoCreator, permission);
         }
     }
 	
@@ -671,7 +671,7 @@ contract ACOPoolFactory {
      */
     function _withdrawStuckAssetOnAcoPool(address asset, address destination, address[] memory acoPools) internal virtual {
         for (uint256 i = 0; i < acoPools.length; ++i) {
-            IACOPool(acoPools[i]).withdrawStuckToken(asset, destination);
+            IACOPool2(acoPools[i]).withdrawStuckToken(asset, destination);
         }
     }
     
@@ -708,7 +708,7 @@ contract ACOPoolFactory {
      * @param initData Data to initialize o ACO Pool.
      * @return Address of the new minimal proxy deployed for the ACO pool.
      */
-    function _createAcoPool(IACOPool.InitData memory initData) internal virtual returns(address) {
+    function _createAcoPool(IACOPool2.InitData memory initData) internal virtual returns(address) {
         address acoPool  = _deployAcoPool(initData);
         acoPoolBasicData[acoPool] = ACOPoolBasicData(initData.underlying, initData.strikeAsset, initData.isCall);
         emit NewAcoPool(
@@ -726,7 +726,7 @@ contract ACOPoolFactory {
      * @param initData Data to initialize o ACO Pool.
      * @return Address of the new minimal proxy deployed for the ACO pool.
      */
-    function _deployAcoPool(IACOPool.InitData memory initData) internal virtual returns(address) {
+    function _deployAcoPool(IACOPool2.InitData memory initData) internal virtual returns(address) {
         bytes20 implentationBytes = bytes20(acoPoolImplementation);
         address proxy;
         assembly {
@@ -736,7 +736,7 @@ contract ACOPoolFactory {
             mstore(add(clone, 0x28), 0x5af43d82803e903d91602b57fd5bf30000000000000000000000000000000000)
             proxy := create(0, clone, 0x37)
         }
-        IACOPool(proxy).init(initData);
+        IACOPool2(proxy).init(initData);
         return proxy;
     }
 }

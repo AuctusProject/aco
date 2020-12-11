@@ -2,7 +2,7 @@ pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
 import './IController.sol';
-import './IACOPoolFactoryV2.sol';
+import './IACOPoolFactory2.sol';
 import './IACOFlashExercise.sol';
 import './IACOFactory.sol';
 import './IACOAssetConverterHelper.sol';
@@ -18,7 +18,6 @@ interface IACOVault is IControlled {
         address acoFlashExercise;
         uint256 minPercentageToKeep;
         address currentAcoToken;
-        address acoPool;
         uint256 tolerancePriceAbove;
         uint256 tolerancePriceBelow;
         uint256 minExpiration;
@@ -55,7 +54,7 @@ interface IACOVault is IControlled {
     function decimals() external view returns(uint8);
     function totalSupply() external view returns(uint256);
     function balanceOf(address account) external view returns(uint256);
-    function acoPoolFactory() external view returns(IACOPoolFactory);
+    function acoPoolFactory() external view returns(IACOPoolFactory2);
     function acoFactory() external view returns(IACOFactory);
     function controller() external view returns(IController);
     function assetConverter() external view returns(IACOAssetConverterHelper);

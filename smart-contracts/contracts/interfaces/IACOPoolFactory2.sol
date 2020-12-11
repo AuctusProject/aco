@@ -1,6 +1,6 @@
 pragma solidity ^0.6.6;
 
-interface IACOPoolFactory {
+interface IACOPoolFactory2 {
     function factoryAdmin() external view returns(address);
     function acoPoolImplementation() external view returns(address);
     function acoFactory() external view returns(address);

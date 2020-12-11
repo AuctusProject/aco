@@ -11,13 +11,13 @@ import '../../interfaces/IACOAssetConverterHelper.sol';
 import '../../interfaces/IACOToken.sol';
 import '../../interfaces/IChiToken.sol';
 import '../../interfaces/IACOPoolStrategy.sol';
-import '../../interfaces/IACOPoolV2.sol';
+import '../../interfaces/IACOPool2.sol';
 
 /**
- * @title ACOPool
+ * @title ACOPool2
  * @dev A pool contract to trade ACO tokens.
  */
-contract ACOPool is Ownable, ERC20, IACOPool {
+contract ACOPool2 is Ownable, ERC20, IACOPool2 {
     using Address for address;
     
     uint256 internal constant PERCENTAGE_PRECISION = 100000;

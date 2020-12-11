@@ -3,7 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import './IERC20.sol';
 
-interface IACOPool is IERC20 {
+interface IACOPool2 is IERC20 {
 
     struct InitData {
         address acoFactory;
