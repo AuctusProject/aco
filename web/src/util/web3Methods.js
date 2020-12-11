@@ -4,15 +4,18 @@ import { wethAddress, wssInfuraAddress } from './constants'
 
 var _web3 = null
 export function getWeb3() {
-    if (_web3 == null && window.web3 && window.web3.currentProvider) {
+    if (_web3 !== null) {
+        return _web3
+    }
+    else if (window.web3 && window.web3.currentProvider) {
         _web3 = new Web3(window.web3.currentProvider)
+        return _web3
     }
     else {
         return new Web3(
             new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
         )
     }
-    return _web3
 }
 
 export function connectMetamask() {
