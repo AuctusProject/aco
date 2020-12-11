@@ -3,6 +3,7 @@ import Web3 from 'web3'
 import { wethAddress, wssInfuraAddress } from './constants'
 
 var _web3 = null
+var _web3Fallback = null
 export function getWeb3() {
     if (_web3 !== null) {
         return _web3
@@ -12,9 +13,12 @@ export function getWeb3() {
         return _web3
     }
     else {
-        return new Web3(
-            new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
-        )
+        if (_web3Fallback === null) {
+            _web3Fallback = new Web3(
+                new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
+            )
+        }
+        return _web3Fallback
     }
 }
 
