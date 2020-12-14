@@ -962,7 +962,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		
 		(uint256 collateralLocked, uint256 collateralOnOpenPosition) = _poolOpenPositionCollateralBalance(underlyingPrice, isDeposit);
 		
-		collateralBalance = collateralBalance.add(collateralLocked);
+        collateralBalance = collateralBalance.add(collateralLocked);
 		if (collateralBalance > collateralOnOpenPosition) {
 			collateralBalance = collateralBalance.sub(collateralOnOpenPosition);
 		} else {
@@ -1200,7 +1200,6 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
                 underlyingPrice,
                 _underlyingPrecision,
                 _acoFactory,
-                isDeposit,
                 _collateralIsUnderlying
             );
 
@@ -1218,7 +1217,6 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	 * @param underlyingPrice The current underlying price.
 	 * @param _underlyingPrecision The underlying precision.
 	 * @param _acoFactory The ACO factory.
-	 * @param isDeposit TRUE whether it is a deposit operation, otherwise FALSE for a withdraw.
 	 * @param _collateralIsUnderlying TRUE whether the collateral is the underlying, otherwise FALSE for the strike asset as collateral.
 	 * @return collateralLocked Amount of collateral locked
      * collateralOnOpenPosition the collateral on open positions calculated using the options current price.
@@ -1228,7 +1226,6 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         uint256 underlyingPrice,
         uint256 _underlyingPrecision,
         IACOFactory _acoFactory,
-        bool isDeposit,
         bool _collateralIsUnderlying
     ) internal view returns(
         uint256 collateralLocked, 
@@ -1247,7 +1244,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         if (_expiryTime > block.timestamp) {
             (uint256 price,) = _strategyQuote(_strikePrice, _expiryTime, underlyingPrice, 0, 1);
             if (_collateralIsUnderlying) {
-                uint256 priceAdjusted = _getUnderlyingPriceAdjusted(underlyingPrice, isDeposit); 
+                uint256 priceAdjusted = _getUnderlyingPriceAdjusted(underlyingPrice, false); 
                 collateralOnOpenPosition = price.mul(tokenAmount).div(priceAdjusted);
             } else {
                 collateralOnOpenPosition = price.mul(tokenAmount).div(_underlyingPrecision);
