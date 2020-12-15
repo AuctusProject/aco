@@ -569,7 +569,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      */
     function withdrawStuckToken(address token, address destination) external override {
         onlyFactory();
-        require(token != underlying && token != strikeAsset && !acoData[token].initialized, "Invalid token");
+        require(token != underlying && token != strikeAsset && !acoData[token].open, "Invalid token");
         uint256 _balance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (_balance > 0) {
             ACOAssetHelper._transferAsset(token, destination, _balance);
@@ -1160,13 +1160,13 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		if (ACOAssetHelper._isEther(_collateral)) {
 			tokenAmount = IACOToken(acoToken).mintPayable{value: collateralAmount}();
 		} else {
-			if (!data.initialized) {
+			if (!data.open) {
 				_setAuthorizedSpender(_collateral, acoToken);    
 			}
 			tokenAmount = IACOToken(acoToken).mint(collateralAmount);
 		}
 
-		if (!data.initialized) {
+		if (!data.open) {
 			acoData[acoToken] = AcoData(true, swapPrice.sub(protocolFee), collateralAmount, 0, acoTokens.length, openAcos.length);
             acoTokens.push(acoToken);    
             openAcos.push(acoToken);   
@@ -1270,7 +1270,9 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 			acos[i] = acoToken;
 			acosAmount[i] = tokens.mul(shares).div(_totalSupply);
 			
-			IACOToken(acoToken).transferCollateral(msg.sender, acosAmount[i]);
+            if (acosAmount[i] > 0) {
+			    IACOToken(acoToken).transferCollateralOwnership(msg.sender, acosAmount[i]);
+            }
 		}
 	}
 	
@@ -1311,12 +1313,14 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      */
 	function _redeemACOToken(address acoToken) internal {
 		AcoData storage data = acoData[acoToken];
-		if (data.initialized && IACOToken(acoToken).expiryTime() <= block.timestamp) {
+		if (data.open && IACOToken(acoToken).expiryTime() <= block.timestamp) {
 			
+            data.open = false;
+
             if (IACOToken(acoToken).currentCollateralizedTokens(address(this)) > 0) {	
 			    data.collateralRedeemed = IACOToken(acoToken).redeem();
             }
-			
+            
 			_removeFromOpenAcos(data);
 			
 			emit ACORedeem(acoToken, data.valueSold, data.collateralLocked, data.collateralRedeemed);

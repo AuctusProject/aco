@@ -25,7 +25,7 @@ interface IACOPool2 is IERC20 {
     }
 
 	struct AcoData {
-        bool initialized;
+        bool open;
         uint256 valueSold;
         uint256 collateralLocked;
         uint256 collateralRedeemed;

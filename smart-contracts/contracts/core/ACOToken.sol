@@ -58,7 +58,7 @@ contract ACOToken is ERC20 {
      * @param to Address of the account to get the collateralized tokens.
      * @param tokenCollateralizedAmount Amount of collateralized tokens transferred.
      */
-    event TransferCollateral(address indexed from, address indexed to, uint256 tokenCollateralizedAmount);
+    event TransferCollateralOwnership(address indexed from, address indexed to, uint256 tokenCollateralizedAmount);
 
     /**
      * @dev The ERC20 token address for the underlying asset (0x0 for Ethereum). 
@@ -540,9 +540,9 @@ contract ACOToken is ERC20 {
      * @param recipient Address of the destination.
      * @param tokenCollateralizedAmount Amount of collateralized tokens to be transferred.
      */
-    function transferCollateral(address recipient, uint256 tokenCollateralizedAmount) external {
-        require(recipient != address(0), "ACOToken::transferCollateral: Invalid recipient");
-        require(tokenCollateralizedAmount > 0, "ACOToken::transferCollateral: Invalid amount");
+    function transferCollateralOwnership(address recipient, uint256 tokenCollateralizedAmount) external {
+        require(recipient != address(0), "ACOToken::transferCollateralOwnership: Invalid recipient");
+        require(tokenCollateralizedAmount > 0, "ACOToken::transferCollateralOwnership: Invalid amount");
 
         TokenCollateralized storage senderData = tokenData[msg.sender];
         senderData.amount = senderData.amount.sub(tokenCollateralizedAmount);
@@ -557,7 +557,7 @@ contract ACOToken is ERC20 {
             _collateralOwners.push(recipient);
         }
 
-        emit TransferCollateral(msg.sender, recipient, tokenCollateralizedAmount);
+        emit TransferCollateralOwnership(msg.sender, recipient, tokenCollateralizedAmount);
     }
     
     /**
