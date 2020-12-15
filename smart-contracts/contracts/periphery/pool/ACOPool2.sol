@@ -802,6 +802,8 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 			uint256 strikeAssetBalance = _getPoolBalanceOf(strikeAsset);
 		
 			uint256 _totalSupply = totalSupply();	
+            acos = new address[](openAcos.length);
+            acosAmount = new uint256[](openAcos.length);
 			for (uint256 i = 0; i < openAcos.length; ++i) {
 				address acoToken = openAcos[i];
 				uint256 tokens = IACOToken(acoToken).currentCollateralizedTokens(address(this));
@@ -837,7 +839,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 				uint256 _totalSupply = totalSupply();
 				uint256 collateralAmount = shares.mul(collateralBalance).div(_totalSupply);
 				
-				if (underlying == collateral()) {
+				if (isCall) {
 					if (collateralAmount <= underlyingBalance) {
 						underlyingWithdrawn = collateralAmount;
 						strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
@@ -875,7 +877,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		
 		uint256 collateralAmount = shares.mul(collateralBalance).div(_totalSupply);
 		
-        if (underlying == collateral()) {
+        if (isCall) {
 			require(collateralAmount <= underlyingBalance, "No collateral available");
 			underlyingWithdrawn = collateralAmount;
 			strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
@@ -946,7 +948,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		
 		uint256 underlyingPrice = assetConverter.getPrice(underlying, strikeAsset);
 		
-		if (underlying == collateral()) {
+		if (isCall) {
 			collateralBalance = underlyingBalance;
 			if (isDeposit && strikeAssetBalance > 0) {
 				uint256 priceAdjusted = _getUnderlyingPriceAdjusted(underlyingPrice, false); 
@@ -1263,7 +1265,10 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         address[] memory acos, 
         uint256[] memory acosAmount
     ) {
-		for (uint256 i = 0; i < openAcos.length; ++i) {
+        uint256 size = openAcos.length;
+        acos = new address[](size);
+        acosAmount = new uint256[](size);
+		for (uint256 i = 0; i < size; ++i) {
 			address acoToken = openAcos[i];
 			uint256 tokens = IACOToken(acoToken).currentCollateralizedTokens(address(this));
 			
