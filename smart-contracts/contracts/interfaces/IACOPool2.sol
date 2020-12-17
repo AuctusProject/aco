@@ -45,6 +45,7 @@ interface IACOPool2 is IERC20 {
 		uint256 underlyingPrice, 
 		uint256 volatility
 	);
+	function getDepositShares(uint256 collateralAmount) external view returns(uint256 shares);
 	function getWithdrawNoLockedData(address account, uint256 shares) external view returns(
 		uint256 underlyingWithdrawn, 
 		uint256 strikeAssetWithdrawn, 
@@ -70,23 +71,23 @@ interface IACOPool2 is IERC20 {
 	function setBaseVolatility(uint256 newBaseVolatility) external;
 	function setValidAcoCreator(address newAcoCreator, bool newPermission) external;
     function withdrawStuckToken(address token, address destination) external;
-    function deposit(uint256 collateralAmount, address to) external payable returns(uint256 acoPoolTokenAmount);
-	function depositWithGasToken(uint256 collateralAmount, address to) external payable returns(uint256 acoPoolTokenAmount);
-	function withdrawNoLocked(address account, uint256 shares) external returns (
+    function deposit(uint256 collateralAmount, uint256 minShares, address to) external payable returns(uint256 acoPoolTokenAmount);
+	function depositWithGasToken(uint256 collateralAmount, uint256 minShares, address to) external payable returns(uint256 acoPoolTokenAmount);
+	function withdrawNoLocked(uint256 shares, uint256 minCollateral, address account) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	);
-	function withdrawNoLockedWithGasToken(address account, uint256 shares) external returns (
+	function withdrawNoLockedWithGasToken(uint256 shares, uint256 minCollateral, address account) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	);
-    function withdrawWithLocked(address account, uint256 shares) external returns (
+    function withdrawWithLocked(uint256 shares, address account) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	);
-	function withdrawWithLockedWithGasToken(address account, uint256 shares) external returns (
+	function withdrawWithLockedWithGasToken(uint256 shares, address account) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,

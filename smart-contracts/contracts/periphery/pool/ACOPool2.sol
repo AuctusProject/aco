@@ -38,15 +38,19 @@ import '../../interfaces/IACOPool2.sol';
  *------------------------------------------------------------------------------------------*
  * E11  | _deposit                            | Invalid destination address                 *
  *------------------------------------------------------------------------------------------*
+ * E12  | _deposit                            | The minimum shares were not satisfied       *
+ *------------------------------------------------------------------------------------------*
  * E20  | _withdrawWithLocked                 | Invalid shares amount                       *
  *------------------------------------------------------------------------------------------*
  * E30  | _withdrawNoLocked                   | Invalid shares amount                       *
  *------------------------------------------------------------------------------------------*
  * E31  | _withdrawNoLocked                   | Collateral balance is not sufficient        *
  *------------------------------------------------------------------------------------------*
- * E32  | _withdrawNoLocked                   | Collateral balance is not sufficient        *
+ * E32  | _withdrawNoLocked                   | The minimum collateral was not satisfied    *
  *------------------------------------------------------------------------------------------*
  * E33  | _withdrawNoLocked                   | Collateral balance is not sufficient        *
+ *------------------------------------------------------------------------------------------*
+ * E34  | _withdrawNoLocked                   | Collateral balance is not sufficient        *
  *------------------------------------------------------------------------------------------*
  * E40  | _swap                               | Swap deadline reached                       *
  *------------------------------------------------------------------------------------------*
@@ -507,6 +511,15 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         (swapPrice, protocolFee, underlyingPrice, volatility,) = _quote(acoToken, tokenAmount);
     }
 	
+    /**
+     * @dev Function to get the shares for a collateral amount on deposit.
+     * @param collateralAmount Amount of collateral to be deposited.
+     * @return The shares to be received on the deposit.
+     */
+	function getDepositShares(uint256 collateralAmount) external view override returns(uint256) {
+        return _getDepositShares(collateralAmount);
+    }
+
 	/**
      * @dev Function to get the withdrawal data for an account considering that there is NO locked collateral on the operation.
      * @param account Address of the account.
@@ -690,85 +703,89 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	/**
      * @dev Function to deposit on the pool.
      * @param collateralAmount Amount of collateral to be deposited.
+     * @param minShares The minimum amount of shares acceptable.
      * @param to Address of the destination of the pool token.
      * @return The amount of pool tokens minted.
      */
-	function deposit(uint256 collateralAmount, address to) external payable override returns(uint256) {
-        return _deposit(collateralAmount, to);
+	function deposit(uint256 collateralAmount, uint256 minShares, address to) external payable override returns(uint256) {
+        return _deposit(collateralAmount, minShares, to);
     }
 	
 	/**
      * @dev Function to deposit on the pool using Chi gas token to saving gas.
      * @param collateralAmount Amount of collateral to be deposited.
+     * @param minShares The minimum amount of shares acceptable.
      * @param to Address of the destination of the pool token.
      * @return The amount of pool tokens minted.
      */
-	function depositWithGasToken(uint256 collateralAmount, address to) discountCHI external payable override returns(uint256) {
-        return _deposit(collateralAmount, to);
+	function depositWithGasToken(uint256 collateralAmount, uint256 minShares, address to) discountCHI external payable override returns(uint256) {
+        return _deposit(collateralAmount, minShares, to);
     }
 
 	/**
      * @dev Function to withdraw from the pool with NO locked collateral.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param minCollateral The minimum collateral amount acceptable on the withdrawal.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw.
      */
-	function withdrawNoLocked(address account, uint256 shares) external override returns (
+	function withdrawNoLocked(uint256 shares, uint256 minCollateral, address account) external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(shares, minCollateral, account);
     }
 	
 	/**
      * @dev Function to withdraw from the pool with NO locked collateral using Chi gas token to save gas.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param minCollateral The minimum collateral amount acceptable on the withdrawal.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw.
      */
-	function withdrawNoLockedWithGasToken(address account, uint256 shares) discountCHI external override returns (
+	function withdrawNoLockedWithGasToken(uint256 shares, uint256 minCollateral, address account) discountCHI external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(shares, minCollateral, account);
     }
 	
 	/**
      * @dev Function to withdraw from the pool and transferring the locked collateral and the obligation to redeem it on the expiration.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-    function withdrawWithLocked(address account, uint256 shares) external override returns (
+    function withdrawWithLocked(uint256 shares, address account) external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(shares, account);
     }
 	
 	/**
      * @dev Function to withdraw from the pool and transferring the locked collateral and the obligation to redeem it on the expiration using Chi gas token to save gas.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function withdrawWithLockedWithGasToken(address account, uint256 shares) discountCHI external override returns (
+	function withdrawWithLockedWithGasToken(uint256 shares, address account) discountCHI external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(shares, account);
     }
 	
 	/**
@@ -861,10 +878,11 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	/**
      * @dev Internal function to deposit on the pool.
      * @param collateralAmount Amount of collateral to be deposited.
+     * @param minShares The minimum amount of shares acceptable.
      * @param to Address of the destination of the pool token.
      * @return shares The amount of pool tokens minted.
      */
-	function _deposit(uint256 collateralAmount, address to) internal returns(uint256 shares) {
+	function _deposit(uint256 collateralAmount, uint256 minShares, address to) internal returns(uint256 shares) {
         require(collateralAmount > 0, "E10");
         require(to != address(0) && to != address(this), "E11");
 		
@@ -876,14 +894,15 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
             collateralBalance = collateralBalance.sub(msg.value);
 		}
         
-        ACOAssetHelper._receiveAsset(_collateral, collateralAmount);
-		
         if (collateralBalance == 0) {
             shares = collateralAmount;
         } else {
             shares = collateralAmount.mul(totalSupply()).div(collateralBalance);
         }
-       
+        require(shares >= minShares, "E12");
+
+        ACOAssetHelper._receiveAsset(_collateral, collateralAmount);
+
         super._mintAction(to, shares);
         
         emit Deposit(to, shares, collateralAmount);
@@ -923,6 +942,22 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 			underlyingWithdrawn = underlyingBalance.mul(shares).div(_totalSupply);
 			strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
 		}
+    }
+
+    /**
+     * @dev Internal function to get the shares for a collateral amount on deposit.
+     * @param collateralAmount Amount of collateral to be deposited.
+     * @return The shares to be received on the deposit.
+     */
+	function _getDepositShares(uint256 collateralAmount) internal view returns(uint256) {
+        (,,uint256 collateralBalance, uint256 collateralOnOpenPosition,) = _getTotalCollateralBalance(true);
+		collateralBalance = collateralBalance.sub(collateralOnOpenPosition);
+
+        if (collateralBalance == 0) {
+            return collateralAmount;
+        } else {
+            return collateralAmount.mul(totalSupply()).div(collateralBalance);
+        }
     }
 	
 	/**
@@ -968,12 +1003,13 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 
 	/**
      * @dev Internal function to withdraw from the pool with NO locked collateral.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param minCollateral The minimum collateral amount acceptable on the withdrawal.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw.
      */
-    function _withdrawNoLocked(address account, uint256 shares) internal returns (
+    function _withdrawNoLocked(uint256 shares, uint256 minCollateral, address account) internal returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	) {
@@ -991,13 +1027,14 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		require(collateralBalance > collateralOnOpenPosition, "E31");
 
 		uint256 collateralAmount = shares.mul(collateralBalance.sub(collateralOnOpenPosition)).div(_totalSupply);
-		
+		require(collateralAmount >= minCollateral, "E32");
+
         if (isCall) {
-			require(collateralAmount <= underlyingBalance, "E32");
+			require(collateralAmount <= underlyingBalance, "E33");
 			underlyingWithdrawn = collateralAmount;
 			strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
         } else {
-			require(collateralAmount <= strikeAssetBalance, "E33");
+			require(collateralAmount <= strikeAssetBalance, "E34");
 			strikeAssetWithdrawn = collateralAmount;
 			underlyingWithdrawn = underlyingBalance.mul(shares).div(_totalSupply);
 		}
@@ -1010,14 +1047,14 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	
 	/**
      * @dev Internal function to withdraw from the pool and transferring the locked collateral and the obligation to redeem it on the expiration.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function _withdrawWithLocked(address account, uint256 shares) internal returns (
+	function _withdrawWithLocked(uint256 shares, address account) internal returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
