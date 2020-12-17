@@ -479,7 +479,7 @@ main {
 }
 
 .page-subtitle {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 300;
   font-stretch: normal;
   font-style: normal;
@@ -519,7 +519,7 @@ main {
   height: 48px;
   padding: 0 15px;
   border-bottom: solid 0.2px #454545;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 300;
   font-stretch: normal;
   font-style: normal;

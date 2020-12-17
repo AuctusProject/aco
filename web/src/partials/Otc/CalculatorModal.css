@@ -1,0 +1,12 @@
+.calculated-price {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.input-hint {
+    margin-top: 4px
+}
+
+.calculator-modal input {
+    text-align: center;
+}

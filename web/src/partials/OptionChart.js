@@ -1,6 +1,6 @@
 import './OptionChart.css'
 import React, { Component } from 'react'
-import { Scatter } from 'react-chartjs-2'
+import { Chart, Scatter } from 'react-chartjs-2'
 
 const axesProprerties = JSON.stringify({
   display: true,
@@ -19,7 +19,7 @@ const axesProprerties = JSON.stringify({
     fontFamily: "Roboto",
     fontColor: "#a6a6a6",
     lineHeight: 1.1,
-    fontSize: 11
+    fontSize: 12
   }
 })
 
@@ -106,6 +106,26 @@ class OptionChart extends Component {
     else {
       this.setState({chart: this.getBaseChart(), xAxes: {}, yAxes: {}})
     }
+    Chart.pluginService.register({
+      afterDraw: function(chart, easing) {
+        if (chart.tooltip._active && chart.tooltip._active.length) {
+          const activePoint = chart.controller.tooltip._active[0];
+          const ctx = chart.ctx;
+          const x = activePoint.tooltipPosition().x;
+          const topY = chart.scales['y-axis-1'].top;
+          const bottomY = chart.scales['y-axis-1'].bottom;
+
+          ctx.save();
+          ctx.beginPath();
+          ctx.moveTo(x, topY);
+          ctx.lineTo(x, bottomY);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = '#a6a6a6';
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+    });
   }
 
   componentDidUpdate = (prevProps) => {
@@ -167,7 +187,7 @@ class OptionChart extends Component {
           },
           tooltips: {
             enabled: false,
-						mode: 'index',
+						mode: 'x-axis',
 						position: 'nearest',
             custom: (tooltip) => {
 			        let tooltipEl = document.getElementById('option-chartjs-tooltip');
@@ -207,7 +227,7 @@ class OptionChart extends Component {
               tooltipEl.style.left = left + 'px';
               tooltipEl.style.top = this.chartReference.current.chartInstance.canvas.offsetTop + tooltip.caretY + 'px';
               tooltipEl.style.fontFamily = 'Roboto';
-              tooltipEl.style.fontSize = '11px';
+              tooltipEl.style.fontSize = '12px';
               tooltipEl.style.padding ='2px 2px';
               tooltipEl.style.borderRadius = '4px';
             }

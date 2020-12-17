@@ -40,7 +40,7 @@ class Simple extends Component {
   }
 
   render() {
-    return <div className="py-4">
+    return <div className="py-4 otc-content">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>OTC is in beta. Use at your own risk.</div>
         <div className="pair-and-mode-wrapper">
           <div className="pair-dropdown-wrapper otc-title">

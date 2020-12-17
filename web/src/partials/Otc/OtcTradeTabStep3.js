@@ -6,13 +6,14 @@ import Web3Utils from 'web3-utils'
 import Loading from '../Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClone } from '@fortawesome/free-regular-svg-icons'
-import { formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isEther, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
+import { ellipsisCenterOfText, etherscanUrl, formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isEther, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
 import { getAcoAsset } from '../../util/acoApi'
 import CancelOrderModal from './CancelOrderModal'
 import AssetInput from '../Util/AssetInput'
 import TakeOrderModal from './TakeOrderModal'
 import { signerNonceStatus } from '../../util/acoOtcMethods'
 import ReactTooltip from 'react-tooltip'
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 
 class OtcTradeTabStep3 extends Component {
   constructor(props) {
@@ -460,7 +461,7 @@ class OtcTradeTabStep3 extends Component {
           </> :
             <>
               <div className="trade-summary-row">
-                <div className="summary-label">SUMMARY</div>
+                <div className="summary-label nowrap">SUMMARY</div>
                 <div className="summary-description">{this.getSummaryDescription()}</div>
               </div>
               <div className="inputs-wrapper summary-row">
@@ -481,6 +482,10 @@ class OtcTradeTabStep3 extends Component {
                   <div className="input-field">
                     <AssetInput onAssetSelected={this.onAssetSelected} disabled={true} showTokenImportedModal={this.canTakeOrder()} selectedAsset={this.state.assetInfo}></AssetInput>
                   </div>
+                  {this.state.assetInfo.foundByAddress && <a className="address-hint" rel="noopener noreferrer" href={etherscanUrl + this.state.assetInfo.address} target="_blank">
+                    <div className="truncate">{ellipsisCenterOfText(this.state.assetInfo.address)}</div>
+                    <FontAwesomeIcon icon={faExternalLinkAlt}></FontAwesomeIcon>
+                  </a>}
                 </div>
                 <div className="input-column">
                   <div className="input-label">Type</div>

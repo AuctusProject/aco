@@ -97,11 +97,11 @@ export function getNetworkName(chainId) {
     return "mainnet"
 }
 
-export const ellipsisCenterOfUsername = (username) => {
-    if (username && username.length > 10) {
-      return username.substring(0, 6) + "..." + username.substring(username.length - 4, username.length)
+export const ellipsisCenterOfText = (text) => {
+    if (text && text.length > 10) {
+      return text.substring(0, 6) + "..." + text.substring(text.length - 4, text.length)
     }
-    return username
+    return text
 }
 
 export const formatDate = (expiryTime, shortDate= false) => {

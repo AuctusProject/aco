@@ -14,7 +14,7 @@
     color: white;
     position: absolute;
     top: 0px;
-    right: -12px;
+    right: 4px;
     padding: 0px 4px;
     min-width: 24px;
 }
@@ -30,4 +30,14 @@
 .light-mode .orders-btn { 
     color: #808080;
     border-color: #808080;
+}
+
+@media(min-width: 881px) {
+    .otc-content .pair-and-mode-wrapper .nav-modes {
+        right: 16px;
+    }
+
+    .orders-count-badge {
+        right: -12px;
+    }
 }

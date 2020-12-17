@@ -15,23 +15,34 @@ class DecimalInput extends Component {
       value = this.props.value
     }
     this.setState({value: value})
+    
+    if (this.props.setFocus) {
+      this.focus()
+    }
   }
 
   componentDidUpdate = (prevProps) => {
     if (this.props.value !== prevProps.value) {
       this.componentDidMount()
     }
+    if (this.props.setFocus && this.props.setFocus !== prevProps.setFocus) {
+      this.focus()
+    }
   }
 
   onValueChange = (event) => {
     if (event.target.value) {
       var regex = this.getRegex()
-      if( regex.test(event.target.value) ) {
+      if (regex.test(event.target.value) ) {
         this.setState({value: event.target.value})
       }
     }
     else {
       this.setState({value: ""})
+    }
+
+    if (this.props.notifyOnChange) {
+      this.props.onChange(event.target.value ? event.target.value : "")
     }
   }
 
@@ -41,6 +52,7 @@ class DecimalInput extends Component {
 
   focus = () => {
     this.decimalInputRef.select()
+    this.props.onFocus()
   }
 
   onBlur = () => {

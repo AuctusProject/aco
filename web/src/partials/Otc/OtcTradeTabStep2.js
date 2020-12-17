@@ -9,6 +9,8 @@ import { formatWithPrecision, getBalanceOfAsset, isEther, ONE_MINUTE, OTC_ACTION
 import CreateOrderModal from './CreateOrderModal'
 import { faUserCircle, faClock } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faCalculator } from '@fortawesome/free-solid-svg-icons'
+import CalculatorModal from './CalculatorModal'
 
 class OtcTradeTabStep2 extends Component {
   constructor(props) {
@@ -217,6 +219,28 @@ class OtcTradeTabStep2 extends Component {
     }
   }
 
+  onCalcClick = () => {
+    this.setState({
+      calcModal: {
+        selectedOption: this.props.selectedOption
+      }
+    })
+  }
+
+  onCalcModalHide = (priceData) => {
+    var usdcValue = this.state.usdcValue
+    if (priceData) {
+      if (this.state.optionQty > 0) {
+        usdcValue = this.state.optionQty * priceData
+      }
+      else {
+        usdcValue = priceData
+      }
+      usdcValue = usdcValue.toFixed(2)
+    }
+    this.setState({calcModal: null, usdcValue: usdcValue})
+  }
+
   render() {
     return <div>
       <div className="trade-title">
@@ -252,6 +276,7 @@ class OtcTradeTabStep2 extends Component {
           <div className="input-label"></div>
           <div className="input-field">
             <DecimalInput placeholder="0.00" onChange={this.onUsdcValueChange} value={this.state.usdcValue}></DecimalInput>
+            <div className="calc-icon" onClick={this.onCalcClick}><FontAwesomeIcon icon={faCalculator}></FontAwesomeIcon></div>
           </div>
         </div>
         <div className="label-column">
@@ -307,6 +332,7 @@ class OtcTradeTabStep2 extends Component {
         <div></div>
       </div>
       {this.state.createOrderModal && <CreateOrderModal createOrderData={this.state.createOrderModal} onHide={this.onCreateOrderHide} onCreated={this.onCreated} />}
+      {this.state.calcModal && <CalculatorModal calcModal={this.state.calcModal} onHide={this.onCalcModalHide}/>}
     </div>
   }
 }
