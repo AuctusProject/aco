@@ -553,14 +553,14 @@ describe("ACOToken", function() {
 
       await network.provider.send("evm_increaseTime", [-86400]);
     });
-    it("Check transfer collateral", async function () {
+    it("Check transfer collateral ownership", async function () {
       let val1 = ethers.utils.bigNumberify("4975000000000000000");
       let val2 = ethers.utils.bigNumberify("999000000000000000");
       let val3 = ethers.utils.bigNumberify("70000000000000000");
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1});    
       
       expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(1);
-      await buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), val2);
+      await buidlerEthT1003C.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), val2);
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2));
@@ -572,7 +572,7 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003C.assignableCollateral(await addr2.getAddress())).to.equal(val2);
       expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(2);
 
-      await buidlerEthT1003C.connect(addr2).transferCollateral(await addr3.getAddress(), val2);
+      await buidlerEthT1003C.connect(addr2).transferCollateralOwnership(await addr3.getAddress(), val2);
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2));
@@ -588,7 +588,7 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(val2);
       expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(2);
 
-      await buidlerEthT1003C.connect(addr3).transferCollateral(await addr1.getAddress(), val3);
+      await buidlerEthT1003C.connect(addr3).transferCollateralOwnership(await addr1.getAddress(), val3);
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2).add(val3));
@@ -604,7 +604,7 @@ describe("ACOToken", function() {
       expect(await buidlerEthT1003C.assignableCollateral(await addr3.getAddress())).to.equal(val2.sub(val3));
       expect(await buidlerEthT1003C.numberOfAccountsWithCollateral()).to.equal(2);
 
-      await buidlerEthT1003C.connect(addr3).transferCollateral(await addr3.getAddress(), val2.sub(val3));
+      await buidlerEthT1003C.connect(addr3).transferCollateralOwnership(await addr3.getAddress(), val2.sub(val3));
       expect(await buidlerEthT1003C.totalCollateral()).to.equal(val1);  
       expect(await buidlerEthT1003C.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(val1.sub(val2).add(val3));
@@ -633,7 +633,7 @@ describe("ACOToken", function() {
       await buidlerT1T210000P.connect(addr1).mint(value1);    
       
       expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(1);
-      await buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), amount2);
+      await buidlerT1T210000P.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), amount2);
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2));
@@ -645,7 +645,7 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.assignableCollateral(await addr2.getAddress())).to.equal(value2);
       expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
 
-      await buidlerT1T210000P.connect(addr2).transferCollateral(await addr3.getAddress(), amount2);
+      await buidlerT1T210000P.connect(addr2).transferCollateralOwnership(await addr3.getAddress(), amount2);
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2));
@@ -661,7 +661,7 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(value2);
       expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
 
-      await buidlerT1T210000P.connect(addr3).transferCollateral(await addr1.getAddress(), amount3);
+      await buidlerT1T210000P.connect(addr3).transferCollateralOwnership(await addr1.getAddress(), amount3);
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2).add(value3));
@@ -677,7 +677,7 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(value2.sub(value3));
       expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
       
-      await buidlerT1T210000P.connect(addr3).transferCollateral(await addr3.getAddress(), amount2.sub(amount3));
+      await buidlerT1T210000P.connect(addr3).transferCollateralOwnership(await addr3.getAddress(), amount2.sub(amount3));
       expect(await buidlerT1T210000P.totalCollateral()).to.equal(value1);  
       expect(await buidlerT1T210000P.balanceOf(await addr1.getAddress())).to.equal(amount1);
       expect(await buidlerT1T210000P.currentCollateral(await addr1.getAddress())).to.equal(value1.sub(value2).add(value3));
@@ -693,15 +693,15 @@ describe("ACOToken", function() {
       expect(await buidlerT1T210000P.assignableCollateral(await addr3.getAddress())).to.equal(value2.sub(value3));
       expect(await buidlerT1T210000P.numberOfAccountsWithCollateral()).to.equal(2);
     });
-    it("Check fail to transfer collateral", async function () {
+    it("Check fail to transfer collateral ownership", async function () {
       await token2.transfer(await addr1.getAddress(), ethers.utils.bigNumberify("10000000000000000000000"));
       
       await expect(
-        buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), 1)
+        buidlerEthT1003C.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), 1)
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), 1)
+        buidlerT1T210000P.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), 1)
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       let amount1 = ethers.utils.bigNumberify("2000000000000000000");
@@ -713,32 +713,32 @@ describe("ACOToken", function() {
       await buidlerT1T210000P.connect(addr1).mint(value2);  
 
       await expect(
-        buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), amount1.add(1))
+        buidlerEthT1003C.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), amount1.add(1))
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        buidlerEthT1003C.connect(addr1).transferCollateral(AddressZero, amount1)
-      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid recipient");
+        buidlerEthT1003C.connect(addr1).transferCollateralOwnership(AddressZero, amount1)
+      ).to.be.revertedWith("ACOToken::transferCollateralOwnership: Invalid recipient");
 
       await expect(
-        buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), 0)
-      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid amount");
+        buidlerEthT1003C.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), 0)
+      ).to.be.revertedWith("ACOToken::transferCollateralOwnership: Invalid amount");
 
       await expect(
-        buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), amount2.add(1))
+        buidlerT1T210000P.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), amount2.add(1))
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        buidlerT1T210000P.connect(addr1).transferCollateral(AddressZero, amount2)
-      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid recipient");
+        buidlerT1T210000P.connect(addr1).transferCollateralOwnership(AddressZero, amount2)
+      ).to.be.revertedWith("ACOToken::transferCollateralOwnership: Invalid recipient");
 
       await expect(
-        buidlerT1T210000P.connect(addr1).transferCollateral(await addr2.getAddress(), 0)
-      ).to.be.revertedWith("ACOToken::transferCollateral: Invalid amount");
+        buidlerT1T210000P.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), 0)
+      ).to.be.revertedWith("ACOToken::transferCollateralOwnership: Invalid amount");
 
       await network.provider.send("evm_increaseTime", [86400]);
 
-      await buidlerEthT1003C.connect(addr1).transferCollateral(await addr2.getAddress(), amount1);
+      await buidlerEthT1003C.connect(addr1).transferCollateralOwnership(await addr2.getAddress(), amount1);
 
       expect(await buidlerEthT1003C.currentCollateral(await addr1.getAddress())).to.equal(0);
       expect(await buidlerEthT1003C.currentCollateral(await addr2.getAddress())).to.equal(amount1);

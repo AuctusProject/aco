@@ -16,6 +16,7 @@ interface IACOPool2 is IERC20 {
         address feeDestination;
         uint256 withdrawOpenPositionPenalty;
         uint256 underlyingPriceAdjustPercentage;
+		uint256 maximumOpenAco;
         uint256 tolerancePriceBelow;
         uint256 tolerancePriceAbove; 
         uint256 minExpiration;
@@ -64,6 +65,7 @@ interface IACOPool2 is IERC20 {
     function setFeeDestination(address newFeeDestination) external;
 	function setWithdrawOpenPositionPenalty(uint256 newWithdrawOpenPositionPenalty) external;
 	function setUnderlyingPriceAdjustPercentage(uint256 newUnderlyingPriceAdjustPercentage) external;
+	function setMaximumOpenAco(uint256 newMaximumOpenAco) external;
 	function setStrategy(address newStrategy) external;
 	function setBaseVolatility(uint256 newBaseVolatility) external;
 	function setValidAcoCreator(address newAcoCreator, bool newPermission) external;
