@@ -868,19 +868,16 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         require(collateralAmount > 0, "E10");
         require(to != address(0) && to != address(this), "E11");
 		
-		(,,uint256 collateralBalance,) = _getTotalCollateralBalance(true);
-		
+		(,,uint256 collateralBalance, uint256 collateralOnOpenPosition,) = _getTotalCollateralBalance(true);
+		collateralBalance = collateralBalance.sub(collateralOnOpenPosition);
+
 		address _collateral = collateral();
-        ACOAssetHelper._receiveAsset(_collateral, collateralAmount);
-		
 		if (ACOAssetHelper._isEther(_collateral)) {
-			if (collateralBalance > msg.value) {
-				collateralBalance = collateralBalance.sub(msg.value);
-			} else {
-				collateralBalance = 0;
-			}
+            collateralBalance = collateralBalance.sub(msg.value);
 		}
         
+        ACOAssetHelper._receiveAsset(_collateral, collateralAmount);
+		
         if (collateralBalance == 0) {
             shares = collateralAmount;
         } else {
@@ -946,12 +943,13 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 			(uint256 underlyingBalance, 
              uint256 strikeAssetBalance, 
              uint256 collateralBalance, 
+             uint256 collateralOnOpenPosition,
              uint256 collateralLockedRedeemable) = _getTotalCollateralBalance(false);
 
-			if (collateralBalance > 0) {
+			if (collateralBalance > collateralOnOpenPosition) {
 				
 				uint256 _totalSupply = totalSupply();
-				uint256 collateralAmount = shares.mul(collateralBalance).div(_totalSupply);
+				uint256 collateralAmount = shares.mul(collateralBalance.sub(collateralOnOpenPosition)).div(_totalSupply);
 				
 				if (isCall) {
 					if (collateralAmount <= underlyingBalance.add(collateralLockedRedeemable)) {
@@ -986,10 +984,13 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         uint256 _totalSupply = totalSupply();
         _callBurn(account, shares);
         
-		(uint256 underlyingBalance, uint256 strikeAssetBalance, uint256 collateralBalance,) = _getTotalCollateralBalance(false);
-		require(collateralBalance > 0, "E31");
-		
-		uint256 collateralAmount = shares.mul(collateralBalance).div(_totalSupply);
+		(uint256 underlyingBalance, 
+         uint256 strikeAssetBalance, 
+         uint256 collateralBalance,
+         uint256 collateralOnOpenPosition,) = _getTotalCollateralBalance(false);
+		require(collateralBalance > collateralOnOpenPosition, "E31");
+
+		uint256 collateralAmount = shares.mul(collateralBalance.sub(collateralOnOpenPosition)).div(_totalSupply);
 		
         if (isCall) {
 			require(collateralAmount <= underlyingBalance, "E32");
@@ -1051,12 +1052,14 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @return underlyingBalance The pool underlying balance
      * strikeAssetBalance the pool strike asset balance 
      * collateralBalance the pool collateral balance considering the available, locked collateral and the open position
+     * collateralOnOpenPosition the pool collateral on open positions calculated using the options current price
      * collateralLockedRedeemable the pool collateral locked that already can be redeem.
      */
 	function _getTotalCollateralBalance(bool isDeposit) internal view returns(
         uint256 underlyingBalance, 
         uint256 strikeAssetBalance, 
         uint256 collateralBalance,
+        uint256 collateralOnOpenPosition,
         uint256 collateralLockedRedeemable
     ) {
 		underlyingBalance = _getPoolBalanceOf(underlying);
@@ -1079,15 +1082,9 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		}
 		
         uint256 collateralLocked;
-        uint256 collateralOnOpenPosition;
 		(collateralLocked, collateralOnOpenPosition, collateralLockedRedeemable) = _poolOpenPositionCollateralBalance(underlyingPrice, isDeposit);
 		
         collateralBalance = collateralBalance.add(collateralLocked);
-		if (collateralBalance > collateralOnOpenPosition) {
-			collateralBalance = collateralBalance.sub(collateralOnOpenPosition);
-		} else {
-			collateralBalance = 0;
-		}
 	}
 	
 	/**
@@ -1679,34 +1676,17 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	/**
      * @dev Internal function to get the token name.
      * The token name is assembled with the token data:
-     * ACO POOL UNDERLYING_SYMBOL-STRIKE_ASSET_SYMBOL-TYPE-STRIKE-RANGE_PERCENTAGE_ON_CURRENT_PRICE
+     * ACO POOL WRITE UNDERLYING_SYMBOL-STRIKE_ASSET_SYMBOL-TYPE
      * @return The token name.
      */
 	function _name() internal view returns(string memory) {
-        string memory strikePriceFormatted;
-        if (tolerancePriceBelow != 0 && tolerancePriceAbove != 0) {
-            strikePriceFormatted = string(abi.encodePacked(
-			">=", 
-			ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.sub(tolerancePriceBelow), 5),
-			"%&<=", 
-			ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.add(tolerancePriceAbove), 5),
-			"%-CURRENT-PRICE"));
-        } else if (tolerancePriceBelow != 0) {
-            strikePriceFormatted = string(abi.encodePacked("<", ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.sub(tolerancePriceBelow), 5), "%-CURRENT-PRICE"));
-        } else if (tolerancePriceAbove != 0) {
-            strikePriceFormatted = string(abi.encodePacked(">", ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.add(tolerancePriceAbove), 5), "%-CURRENT-PRICE"));
-        } else {
-			strikePriceFormatted = string(abi.encodePacked("ALL"));
-		}
         return string(abi.encodePacked(
-            "ACO POOL ",
+            "ACO POOL WRITE ",
             ACOAssetHelper._getAssetSymbol(underlying),
             "-",
             ACOAssetHelper._getAssetSymbol(strikeAsset),
             "-",
-            ACONameFormatter.formatType(isCall),
-            "-STRIKE-",
-            strikePriceFormatted
+            ACONameFormatter.formatType(isCall)
         ));
     }
 }
