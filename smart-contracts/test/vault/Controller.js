@@ -113,13 +113,13 @@ describe("Controller", function() {
   }
 
   beforeEach(async function () {
-    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, addr9, addr10, addr11, addr12, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, addr9, addr10, addr11, addr12, addr13, addr14, addr15, ...addrs] = await ethers.getSigners();
     
     if (!started) {
       let baseTx = {to: await owner.getAddress(), value: ethers.utils.bigNumberify("4500000000000000000000")};
-      await addr10.sendTransaction(baseTx);
-      await addr11.sendTransaction(baseTx);
-      await addr12.sendTransaction(baseTx);
+      await addr13.sendTransaction(baseTx);
+      await addr14.sendTransaction(baseTx);
+      await addr15.sendTransaction(baseTx);
       started = true;
     }
 
