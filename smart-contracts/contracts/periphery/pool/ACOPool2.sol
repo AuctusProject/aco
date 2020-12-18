@@ -521,37 +521,35 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
     }
 
 	/**
-     * @dev Function to get the withdrawal data for an account considering that there is NO locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Function to get the withdrawal data for a shares amount considering that there is NO locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * isPossible TRUE whether it is possible to withdraw from that way (NO locked) or FALSE otherwise.
      */
-	function getWithdrawNoLockedData(address account, uint256 shares) external view override returns(
+	function getWithdrawNoLockedData(uint256 shares) external view override returns(
         uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		bool isPossible
     ) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, isPossible) = _getWithdrawNoLockedData(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, isPossible) = _getWithdrawNoLockedData(shares);
     }
 	
 	/**
-     * @dev Function to get the withdrawal data for an account considering that there is locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Function to get the withdrawal data for a shares amount considering that there is locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function getWithdrawWithLocked(address account, uint256 shares) external view override returns(
+	function getWithdrawWithLocked(uint256 shares) external view override returns(
         uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
     ) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _getWithdrawWithLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _getWithdrawWithLocked(shares);
     }
 
 	/**
@@ -909,26 +907,25 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
     }
 	
 	/**
-     * @dev Internal function to get the withdrawal data for an account considering that there is locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Internal function to get the withdrawal data for a shares amount considering that there is locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function _getWithdrawWithLocked(address account, uint256 shares) internal view returns (
+	function _getWithdrawWithLocked(uint256 shares) internal view returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        if (shares > 0 && balanceOf(account) >= shares) {
+        uint256 _totalSupply = totalSupply();	
+        if (shares > 0 && shares <= _totalSupply) {
         
 			uint256 underlyingBalance = _getPoolBalanceOf(underlying);
 			uint256 strikeAssetBalance = _getPoolBalanceOf(strikeAsset);
 		
-			uint256 _totalSupply = totalSupply();	
             acos = new address[](openAcos.length);
             acosAmount = new uint256[](openAcos.length);
 			for (uint256 i = 0; i < openAcos.length; ++i) {
@@ -961,19 +958,19 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
     }
 	
 	/**
-     * @dev Internal function to get the withdrawal data for an account considering that there is NO locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Internal function to get the withdrawal data for a shares amount considering that there is NO locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * isPossible TRUE whether it is possible to withdraw from that way (NO locked) or FALSE otherwise.
      */
-	function _getWithdrawNoLockedData(address account, uint256 shares) internal view returns (
+	function _getWithdrawNoLockedData(uint256 shares) internal view returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		bool isPossible
 	) {
-		if (shares > 0 && balanceOf(account) >= shares) {
+        uint256 _totalSupply = totalSupply();
+		if (shares > 0 && shares <= _totalSupply) {
 			
 			(uint256 underlyingBalance, 
              uint256 strikeAssetBalance, 
@@ -983,7 +980,6 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 
 			if (collateralBalance > collateralOnOpenPosition) {
 				
-				uint256 _totalSupply = totalSupply();
 				uint256 collateralAmount = shares.mul(collateralBalance.sub(collateralOnOpenPosition)).div(_totalSupply);
 				
 				if (isCall) {

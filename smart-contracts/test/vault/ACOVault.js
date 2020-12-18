@@ -306,19 +306,19 @@ describe("ACOVault", function() {
     await ACOPoolFactory.connect(owner).setValidAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolEthToken2Call.address,ACOPoolEthToken2Put.address,ACOPoolToken1Token2Call.address,ACOPoolToken1Token2Put.address]);
 
     let d1 = ethers.utils.bigNumberify("50000000000000000000");
-    await ACOPoolEthToken2Call.connect(owner).deposit(d1, await owner.getAddress(), {value: d1});
+    await ACOPoolEthToken2Call.connect(owner).deposit(d1, 1, await owner.getAddress(), {value: d1});
 
     await token1.connect(owner).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
     let d2 = ethers.utils.bigNumberify("1000000000000");
-    await ACOPoolToken1Token2Call.connect(owner).deposit(d2, await owner.getAddress());
+    await ACOPoolToken1Token2Call.connect(owner).deposit(d2, 1, await owner.getAddress());
     
     await token2.connect(owner).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
     let d3 = ethers.utils.bigNumberify("1000000000000");
-    await ACOPoolEthToken2Put.connect(owner).deposit(d3, await owner.getAddress());
+    await ACOPoolEthToken2Put.connect(owner).deposit(d3, 1, await owner.getAddress());
     
     await token2.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
     let d4 = ethers.utils.bigNumberify("1000000000000");
-    await ACOPoolToken1Token2Put.connect(owner).deposit(d4, await owner.getAddress());
+    await ACOPoolToken1Token2Put.connect(owner).deposit(d4, 1, await owner.getAddress());
 
     await jumpUntilStart(start);
 

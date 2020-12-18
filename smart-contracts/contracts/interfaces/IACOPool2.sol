@@ -46,12 +46,12 @@ interface IACOPool2 is IERC20 {
 		uint256 volatility
 	);
 	function getDepositShares(uint256 collateralAmount) external view returns(uint256 shares);
-	function getWithdrawNoLockedData(address account, uint256 shares) external view returns(
+	function getWithdrawNoLockedData(uint256 shares) external view returns(
 		uint256 underlyingWithdrawn, 
 		uint256 strikeAssetWithdrawn, 
 		bool isPossible
 	);
-	function getWithdrawWithLocked(address account, uint256 shares) external view returns(
+	function getWithdrawWithLocked(uint256 shares) external view returns(
 		uint256 underlyingWithdrawn, 
 		uint256 strikeAssetWithdrawn, 
 		address[] memory acos, 

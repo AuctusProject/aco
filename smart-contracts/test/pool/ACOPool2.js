@@ -3,7 +3,6 @@ const poolFactoryABI = require("../../artifacts/ACOPoolFactory2.json");
 const factoryABI = require("../../artifacts/ACOFactory.json");
 const { createAcoPoolStrategy } = require("./ACOPoolStrategy.js");
 const { AddressZero } = require("ethers/constants");
-const { getCurrentTimestamp } = require("./ACOPool");
 
 let started = false;
 
@@ -1370,7 +1369,7 @@ describe("ACOPool2", function() {
       let bo2 = await token2.balanceOf(await owner.getAddress());
       let ba1 = await token1.balanceOf(await addr1.getAddress());
       let ba2 = await token2.balanceOf(await addr1.getAddress());
-      let w1 = await ACOPoolToken1Token2Call.getWithdrawNoLockedData(await addr1.getAddress(), val1);
+      let w1 = await ACOPoolToken1Token2Call.getWithdrawNoLockedData(val1);
 
       await expect(
         ACOPoolToken1Token2Call.withdrawNoLocked(val1, w1.underlyingWithdrawn.add(100), await addr1.getAddress())
@@ -1393,7 +1392,7 @@ describe("ACOPool2", function() {
 
       ba1 = await token1.balanceOf(await addr2.getAddress());
       ba2 = await token2.balanceOf(await addr2.getAddress());
-      let w2 = await ACOPoolToken1Token2Call.getWithdrawWithLocked(await addr2.getAddress(), val2);
+      let w2 = await ACOPoolToken1Token2Call.getWithdrawWithLocked(val2);
       await ACOPoolToken1Token2Call.connect(addr2).withdrawWithLocked(val2, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(0);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -1468,7 +1467,7 @@ describe("ACOPool2", function() {
       ba1 = await token1.balanceOf(await addr2.getAddress());
       ba2 = await token2.balanceOf(await addr2.getAddress());
       let bal = await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress());
-      let w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(await addr2.getAddress(), bal);
+      let w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(bal);
 
       await expect(
         ACOPoolToken1Token2Put.connect(addr2).withdrawNoLocked(bal, w1.strikeAssetWithdrawn.add(1000), await addr2.getAddress())
@@ -1492,7 +1491,7 @@ describe("ACOPool2", function() {
       ba1 = await token1.balanceOf(await addr1.getAddress());
       ba2 = await token2.balanceOf(await addr1.getAddress());
       bal = await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress());
-      w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(await addr1.getAddress(), val1.div(2));
+      w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(val1.div(2));
 
       await expect(
         ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(val1.div(2), w1.strikeAssetWithdrawn.add(1000), await addr1.getAddress())
@@ -1518,7 +1517,7 @@ describe("ACOPool2", function() {
       ba2 = await token2.balanceOf(await addr2.getAddress());
       let ba31 = await token1.balanceOf(await addr3.getAddress());
       let ba32 = await token2.balanceOf(await addr3.getAddress());
-      w1 = await ACOPoolToken1Token2Put.getWithdrawWithLocked(await addr2.getAddress(), bal);
+      w1 = await ACOPoolToken1Token2Put.getWithdrawWithLocked(bal);
       await ACOPoolToken1Token2Put.connect(addr3).withdrawWithLocked(bal, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress())).to.equal(0);
@@ -1565,7 +1564,7 @@ describe("ACOPool2", function() {
       let ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr1.getAddress(),"latest"]));
       let p2 = await token2.balanceOf(ACOPoolEthToken2Call.address);
       let p1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]));
-      let w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(await addr1.getAddress(), val1);
+      let w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(val1);
 
       await expect(
         ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(val1, w1.underlyingWithdrawn.add(ethers.utils.bigNumberify("2500000000000")), await addr1.getAddress())
@@ -1600,7 +1599,7 @@ describe("ACOPool2", function() {
       ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr2.getAddress(),"latest"]));
       let ba32 = await token2.balanceOf(await addr3.getAddress());
       let ba31 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr3.getAddress(),"latest"]));
-      w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(await addr2.getAddress(), bal);
+      w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(bal);
       await ACOPoolEthToken2Call.connect(addr3).withdrawWithLockedWithGasToken(bal, await addr2.getAddress());
       let col = val1.div(4).mul(bal).div(bal.add(val1));
 
@@ -1631,8 +1630,8 @@ describe("ACOPool2", function() {
       ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr1.getAddress(),"latest"]));
       ba32 = await token2.balanceOf(await addr3.getAddress());
       ba31 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr3.getAddress(),"latest"]));
-      w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(await addr1.getAddress(), val1);
-      let w2 = await ACOPoolEthToken2Call.getWithdrawNoLockedData(await addr1.getAddress(), val1);
+      w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(val1);
+      let w2 = await ACOPoolEthToken2Call.getWithdrawNoLockedData(val1);
       expect(w1.underlyingWithdrawn).to.equal(w2.underlyingWithdrawn);
       expect(w1.strikeAssetWithdrawn).to.equal(w2.strikeAssetWithdrawn);
       expect(w1[3][0]).to.equal(0);
@@ -1695,7 +1694,7 @@ describe("ACOPool2", function() {
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       let ba2 = await token2.balanceOf(await addr1.getAddress());
-      let w1 = await ACOPoolEthToken2Put.getWithdrawNoLockedData(await addr1.getAddress(), val1);
+      let w1 = await ACOPoolEthToken2Put.getWithdrawNoLockedData(val1);
 
       await expect(
         ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(val1, w1.strikeAssetWithdrawn.add(1000), await addr1.getAddress())
@@ -1712,7 +1711,7 @@ describe("ACOPool2", function() {
       expect(await ACOEthToken2Put2.currentCollateral(await addr1.getAddress())).to.equal(0);
 
       ba2 = await token2.balanceOf(await addr2.getAddress());
-      w1 = await ACOPoolEthToken2Put.getWithdrawWithLocked(await addr2.getAddress(), val2.div(2));
+      w1 = await ACOPoolEthToken2Put.getWithdrawWithLocked(val2.div(2));
       await ACOPoolEthToken2Put.connect(addr2).withdrawWithLocked(val2.div(2), await addr2.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(val2.div(2));
       expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(val2.div(2));
@@ -1731,7 +1730,7 @@ describe("ACOPool2", function() {
       ba2 = await token2.balanceOf(await addr2.getAddress());
       let p2 = await token2.balanceOf(ACOPoolEthToken2Put.address);
       let ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr2.getAddress(),"latest"]));
-      w1 = await ACOPoolEthToken2Put.getWithdrawNoLockedData(await addr2.getAddress(), val2.div(2));
+      w1 = await ACOPoolEthToken2Put.getWithdrawNoLockedData(val2.div(2));
       expect(w1.strikeAssetWithdrawn).to.equal(p2.add(acoEthToken2PutPrice2.div(2)));
       
       await expect(
@@ -1764,3 +1763,8 @@ describe("ACOPool2", function() {
     });
   });
 });
+
+const getCurrentTimestamp = async () => {
+  let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);
+  return parseInt(block.timestamp, 16);
+};

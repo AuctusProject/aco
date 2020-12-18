@@ -215,12 +215,12 @@ describe("Controller", function() {
 
     let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, 30000, 30000, 0, expiration, defaultStrategy.address, ethToken2BaseVolatility)).wait();
     let result10 = tx10.events[tx10.events.length - 1].args;
-    ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool", result10.acoPool);
+    ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool2", result10.acoPool);
 
     await ACOPoolFactory.connect(owner).setValidAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolEthToken2Call.address]);
 
     let d1 = ethers.utils.bigNumberify("50000000000000000000");
-    await ACOPoolEthToken2Call.connect(owner).deposit(d1, await owner.getAddress(), {value: d1});
+    await ACOPoolEthToken2Call.connect(owner).deposit(d1, 1, await owner.getAddress(), {value: d1});
 
     await jumpUntilStart(start);
 
