@@ -5,7 +5,7 @@ import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
-import { etherscanUrl, ellipsisCenterOfUsername, getPairIdFromRoute, isDarkMode } from '../util/constants'
+import { etherscanUrl, ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listPairs } from '../util/acoFactoryMethods'
 
@@ -125,7 +125,7 @@ class NavBar extends Component {
   render() {
     var username = this.context && this.context.web3 && this.context.web3.selectedAccount
     var validNetwork = this.context && this.context.web3 && this.context.web3.validNetwork
-    username = ellipsisCenterOfUsername(username)
+    username = ellipsisCenterOfText(username)
     return (
       <div>
         <nav className={"navbar navbar-expand-lg navbar-aco " + (this.state.darkMode ? "navbar-dark" : "navbar-light")}>

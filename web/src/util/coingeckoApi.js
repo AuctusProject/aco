@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { coingeckoApiUrl } from './constants';
+import { coingeckoApiUrl, isEther } from './constants';
 
 export function getCoingeckoPrice(ids) {
     return new Promise(function(resolve,reject){
@@ -8,5 +8,42 @@ export function getCoingeckoPrice(ids) {
             resolve(res.data)
         })
         .catch(err => reject(err));
+    })
+}
+
+export function getCoingeckoInfoFromAddress(address) {
+    return new Promise(function(resolve,reject){
+        Axios.get(coingeckoApiUrl + "coins/ethereum/contract/"+address)
+        .then(res => {
+            resolve(res.data)
+        })
+        .catch(err => reject(err));
+    })
+}
+
+export function getCoingeckoUsdPriceFromAddress(address) {
+    return new Promise(function(resolve,reject){
+        if (isEther(address)) {
+            getCoingeckoPrice("ethereum").then(data => {
+                if (data && data.ethereum && data.ethereum.usd) {
+                    resolve(data.ethereum.usd)
+                }
+                else {
+                    resolve(null)
+                }                
+            })
+            .catch(err => reject(err));
+        }
+        else {
+            getCoingeckoInfoFromAddress(address).then(data => {
+                if (data && data.market_data && data.market_data.current_price && data.market_data.current_price.usd) {
+                    resolve(data.market_data.current_price.usd)
+                }
+                else {
+                    resolve(null)
+                }
+            })
+            .catch(err => reject(err));
+        }
     })
 }

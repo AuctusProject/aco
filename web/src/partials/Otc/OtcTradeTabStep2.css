@@ -105,3 +105,15 @@
 .light-mode .collateral-and-premium-info {
     color: #262626;
 }
+
+.calc-icon {
+    font-size: 21px;
+    color: #e6e6e6;
+    position: absolute;
+    right: 5px;
+    cursor: pointer;
+}
+
+.light-mode .calc-icon {
+    color: #808080;
+}

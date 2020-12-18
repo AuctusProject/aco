@@ -49,7 +49,7 @@
 }
 
 .max-and-balance .balance {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 300;
     letter-spacing: 0.5px;
     text-align: center;
@@ -121,7 +121,7 @@
 
 
 .summary-wrapper .summary-description {
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 300;
     font-stretch: normal;
     font-style: normal;
@@ -154,7 +154,7 @@
 }
 
 .summary-item .summary-item-label {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 300;
     font-stretch: normal;
     font-style: normal;

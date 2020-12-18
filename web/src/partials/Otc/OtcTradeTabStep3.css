@@ -129,3 +129,19 @@
 .otc-trade-step3 .input-field {
     border: solid 1px #4c4c4c60;
 }
+
+.address-hint {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    color: #1782fc !important;
+    font-size: 14px;
+    margin-top: 8px;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.address-hint svg {
+    margin-left: 4px;
+}
