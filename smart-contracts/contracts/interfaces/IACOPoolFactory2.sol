@@ -10,6 +10,7 @@ interface IACOPoolFactory2 {
     function acoPoolFeeDestination() external view returns(address);
 	function acoPoolUnderlyingPriceAdjustPercentage() external view returns(uint256);
 	function acoPoolWithdrawOpenPositionPenalty() external view returns(uint256);
+    function acoPoolMaximumOpenAco() external view returns(uint256);
     function poolAdminPermission(address account) external view returns(bool);
     function strategyPermitted(address strategy) external view returns(bool);
     function acoPoolBasicData(address acoPool) external view returns(address underlying, address strikeAsset, bool isCall);

@@ -16,6 +16,98 @@ import '../../interfaces/IACOPool2.sol';
 /**
  * @title ACOPool2
  * @dev A pool contract to trade ACO tokens.
+ * 
+ * The SC errors are defined as code to shrunk the SC bytes size and work around the EIP170.
+ * The codes are explained in the table below:
+ ********************************************************************************************
+ * CODE | FUNCTION                            | DESCRIPTION						            *
+ *------------------------------------------------------------------------------------------*
+ * E00  | init                                | SC is already initialized                   *
+ *------------------------------------------------------------------------------------------*
+ * E01  | init                                | Invalid ACO Factory address                 *
+ *------------------------------------------------------------------------------------------*
+ * E02  | init                                | Invalid Chi Token address                   *
+ *------------------------------------------------------------------------------------------*
+ * E03  | init                                | Underlying and strike asset are the same    *
+ *------------------------------------------------------------------------------------------*
+ * E04  | init                                | Invalid underlying address                  *
+ *------------------------------------------------------------------------------------------*
+ * E05  | init                                | Invalid strike asset address                *
+ *------------------------------------------------------------------------------------------*
+ * E10  | _deposit                            | Invalid collateral amount                   *
+ *------------------------------------------------------------------------------------------*
+ * E11  | _deposit                            | Invalid destination address                 *
+ *------------------------------------------------------------------------------------------*
+ * E12  | _deposit                            | The minimum shares were not satisfied       *
+ *------------------------------------------------------------------------------------------*
+ * E20  | _withdrawWithLocked                 | Invalid shares amount                       *
+ *------------------------------------------------------------------------------------------*
+ * E30  | _withdrawNoLocked                   | Invalid shares amount                       *
+ *------------------------------------------------------------------------------------------*
+ * E31  | _withdrawNoLocked                   | Collateral balance is not sufficient        *
+ *------------------------------------------------------------------------------------------*
+ * E32  | _withdrawNoLocked                   | The minimum collateral was not satisfied    *
+ *------------------------------------------------------------------------------------------*
+ * E33  | _withdrawNoLocked                   | Collateral balance is not sufficient        *
+ *------------------------------------------------------------------------------------------*
+ * E34  | _withdrawNoLocked                   | Collateral balance is not sufficient        *
+ *------------------------------------------------------------------------------------------*
+ * E40  | _swap                               | Swap deadline reached                       *
+ *------------------------------------------------------------------------------------------*
+ * E41  | _swap                               | Invalid destination address                 *
+ *------------------------------------------------------------------------------------------*
+ * E42  | _internalSelling                    | The maximum payment restriction was reached *
+ *------------------------------------------------------------------------------------------*
+ * E43  | _internalSelling                    | The maximum number of open ACOs was reached *
+ *------------------------------------------------------------------------------------------*
+ * E50  | _quote                              | Invalid token amount                        *
+ *------------------------------------------------------------------------------------------*
+ * E51  | _quote                              | Invalid ACO token                           *
+ *------------------------------------------------------------------------------------------*
+ * E52  | _quote                              | Invalid ACO token expiration                *
+ *------------------------------------------------------------------------------------------*
+ * E53  | _quote                              | Invalid ACO token strike price              *
+ *------------------------------------------------------------------------------------------*
+ * E54  | _quote                              | ACO token expired                           *
+ *------------------------------------------------------------------------------------------*
+ * E55  | _internalQuote                      | Invalid quoted price                        *
+ *------------------------------------------------------------------------------------------*
+ * E56  | _getSizeData                        | The token amount is too small               *
+ *------------------------------------------------------------------------------------------*
+ * E57  | _getSizeData                        | Insufficient liquidity                      *
+ *------------------------------------------------------------------------------------------*
+ * E60  | restoreCollateral                   | No balance to restore                       *
+ *------------------------------------------------------------------------------------------*
+ * E80  | withdrawStuckToken                  | The token is forbidden to withdraw          *
+ *------------------------------------------------------------------------------------------*
+ * E81  | _setStrategy                        | Invalid strategy address                    *
+ *------------------------------------------------------------------------------------------*
+ * E82  | _setBaseVolatility                  | Invalid base volatility                     *
+ *------------------------------------------------------------------------------------------*
+ * E83  | _setAssetConverter                  | Invalid asset converter address             *
+ *------------------------------------------------------------------------------------------*
+ * E84  | _setAssetConverter                  | No price on the Oracle                      *
+ *------------------------------------------------------------------------------------------*
+ * E85  | _setTolerancePriceAbove             | Invalid above tolerance percentage          *
+ *------------------------------------------------------------------------------------------*
+ * E86  | _setTolerancePriceBelow             | Invalid below tolerance percentage          *
+ *------------------------------------------------------------------------------------------*
+ * E87  | _setMinExpiration                   | Invalid minimum seconds for expiration      *
+ *------------------------------------------------------------------------------------------*
+ * E88  | _setMaxExpiration                   | Invalid maximum seconds for expiration      *
+ *------------------------------------------------------------------------------------------*
+ * E89  | _setFeeDestination                  | Invalid fee destination address             *
+ *------------------------------------------------------------------------------------------*
+ * E90  | onlyFactory                         | Only the pool factory can call the method   *
+ *------------------------------------------------------------------------------------------*
+ * E91  | _setFee                             | Invalid fee value                           *
+ *------------------------------------------------------------------------------------------*
+ * E92  | _setWithdrawOpenPositionPenalty     | Invalid penalty percentage                  *
+ *------------------------------------------------------------------------------------------*
+ * E93  | _setUnderlyingPriceAdjustPercentage | Invalid underlying price adjust percentage  *
+ *------------------------------------------------------------------------------------------*
+ * E94  | _setMaximumOpenAco                  | Invalid maximum number of open ACOs allowed *
+ ********************************************************************************************
  */
 contract ACOPool2 is Ownable, ERC20, IACOPool2 {
     using Address for address;
@@ -71,6 +163,13 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newUnderlyingPriceAdjustPercentage Value of the new underlying price percentage adjust.
      */
 	event SetUnderlyingPriceAdjustPercentage(uint256 indexed oldUnderlyingPriceAdjustPercentage, uint256 indexed newUnderlyingPriceAdjustPercentage);
+	
+    /**
+     * @dev Emitted when the number of maximum open ACOs allowed has been changed.
+     * @param oldMaximumOpenAco Value of the previous maximum number of open ACOs allowed.
+     * @param newMaximumOpenAco Value of the new maximum number of open ACOs allowed.
+     */
+	event SetMaximumOpenAco(uint256 indexed oldMaximumOpenAco, uint256 indexed newMaximumOpenAco);
 	
 	/**
      * @dev Emitted when the fee has been changed.
@@ -251,6 +350,11 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	 * @dev Percentage value for the underlying price adjust. (100000 = 100%)
 	 */
 	uint256 public underlyingPriceAdjustPercentage;
+
+    /**
+	 * @dev Maximum number of open ACOs allowed.
+	 */
+	uint256 public maximumOpenAco;
 	
 	/**
 	 * @dev Array of ACO tokens negotiated.  
@@ -294,13 +398,13 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param initData The initialize data.
      */
     function init(InitData calldata initData) external override {
-		require(underlying == address(0) && strikeAsset == address(0), "Already initialized");
+		require(underlying == address(0) && strikeAsset == address(0), "E00");
         
-        require(initData.acoFactory.isContract(), "Invalid ACO Factory");
-        require(initData.chiToken.isContract(), "Invalid Chi Token");
-        require(initData.underlying != initData.strikeAsset, "Same assets");
-        require(ACOAssetHelper._isEther(initData.underlying) || initData.underlying.isContract(), "Invalid underlying");
-        require(ACOAssetHelper._isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "Invalid strike asset");
+        require(initData.acoFactory.isContract(), "E01");
+        require(initData.chiToken.isContract(), "E02");
+        require(initData.underlying != initData.strikeAsset, "E03");
+        require(ACOAssetHelper._isEther(initData.underlying) || initData.underlying.isContract(), "E04");
+        require(ACOAssetHelper._isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "E05");
         
         super.init();
 
@@ -315,6 +419,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         _setFeeDestination(initData.feeDestination);
 		_setWithdrawOpenPositionPenalty(initData.withdrawOpenPositionPenalty);
 		_setUnderlyingPriceAdjustPercentage(initData.underlyingPriceAdjustPercentage);
+        _setMaximumOpenAco(initData.maximumOpenAco);
         _setMaxExpiration(initData.maxExpiration);
         _setMinExpiration(initData.minExpiration);
         _setTolerancePriceAbove(initData.tolerancePriceAbove);
@@ -406,38 +511,45 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         (swapPrice, protocolFee, underlyingPrice, volatility,) = _quote(acoToken, tokenAmount);
     }
 	
+    /**
+     * @dev Function to get the shares for a collateral amount on deposit.
+     * @param collateralAmount Amount of collateral to be deposited.
+     * @return The shares to be received on the deposit.
+     */
+	function getDepositShares(uint256 collateralAmount) external view override returns(uint256) {
+        return _getDepositShares(collateralAmount);
+    }
+
 	/**
-     * @dev Function to get the withdrawal data for an account considering that there is NO locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Function to get the withdrawal data for a shares amount considering that there is NO locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * isPossible TRUE whether it is possible to withdraw from that way (NO locked) or FALSE otherwise.
      */
-	function getWithdrawNoLockedData(address account, uint256 shares) external view override returns(
+	function getWithdrawNoLockedData(uint256 shares) external view override returns(
         uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		bool isPossible
     ) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, isPossible) = _getWithdrawNoLockedData(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, isPossible) = _getWithdrawNoLockedData(shares);
     }
 	
 	/**
-     * @dev Function to get the withdrawal data for an account considering that there is locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Function to get the withdrawal data for a shares amount considering that there is locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function getWithdrawWithLocked(address account, uint256 shares) external view override returns(
+	function getWithdrawWithLocked(uint256 shares) external view override returns(
         uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
     ) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _getWithdrawWithLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _getWithdrawWithLocked(shares);
     }
 
 	/**
@@ -530,6 +642,16 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		_setUnderlyingPriceAdjustPercentage(newUnderlyingPriceAdjustPercentage);
 	}
 	
+    /**
+     * @dev Function to set the  maximum number of open ACOs allowed.
+	 * Only can be called by the pool factory.
+     * @param newMaximumOpenAco Value of the new maximum number of open ACOs allowed.
+     */
+	function setMaximumOpenAco(uint256 newMaximumOpenAco) external override {
+        onlyFactory();
+		_setMaximumOpenAco(newMaximumOpenAco);
+	}
+
 	/**
      * @dev Function to set the strategy address.
 	 * Only can be called by the pool factory.
@@ -569,7 +691,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      */
     function withdrawStuckToken(address token, address destination) external override {
         onlyFactory();
-        require(token != underlying && token != strikeAsset && !acoData[token].open, "Invalid token");
+        require(token != underlying && token != strikeAsset && !acoData[token].open, "E80");
         uint256 _balance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (_balance > 0) {
             ACOAssetHelper._transferAsset(token, destination, _balance);
@@ -579,85 +701,89 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	/**
      * @dev Function to deposit on the pool.
      * @param collateralAmount Amount of collateral to be deposited.
+     * @param minShares The minimum amount of shares acceptable.
      * @param to Address of the destination of the pool token.
      * @return The amount of pool tokens minted.
      */
-	function deposit(uint256 collateralAmount, address to) external payable override returns(uint256) {
-        return _deposit(collateralAmount, to);
+	function deposit(uint256 collateralAmount, uint256 minShares, address to) external payable override returns(uint256) {
+        return _deposit(collateralAmount, minShares, to);
     }
 	
 	/**
      * @dev Function to deposit on the pool using Chi gas token to saving gas.
      * @param collateralAmount Amount of collateral to be deposited.
+     * @param minShares The minimum amount of shares acceptable.
      * @param to Address of the destination of the pool token.
      * @return The amount of pool tokens minted.
      */
-	function depositWithGasToken(uint256 collateralAmount, address to) discountCHI external payable override returns(uint256) {
-        return _deposit(collateralAmount, to);
+	function depositWithGasToken(uint256 collateralAmount, uint256 minShares, address to) discountCHI external payable override returns(uint256) {
+        return _deposit(collateralAmount, minShares, to);
     }
 
 	/**
      * @dev Function to withdraw from the pool with NO locked collateral.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param minCollateral The minimum collateral amount acceptable on the withdrawal.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw.
      */
-	function withdrawNoLocked(address account, uint256 shares) external override returns (
+	function withdrawNoLocked(uint256 shares, uint256 minCollateral, address account) external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(shares, minCollateral, account);
     }
 	
 	/**
      * @dev Function to withdraw from the pool with NO locked collateral using Chi gas token to save gas.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param minCollateral The minimum collateral amount acceptable on the withdrawal.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw.
      */
-	function withdrawNoLockedWithGasToken(address account, uint256 shares) discountCHI external override returns (
+	function withdrawNoLockedWithGasToken(uint256 shares, uint256 minCollateral, address account) discountCHI external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(shares, minCollateral, account);
     }
 	
 	/**
      * @dev Function to withdraw from the pool and transferring the locked collateral and the obligation to redeem it on the expiration.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-    function withdrawWithLocked(address account, uint256 shares) external override returns (
+    function withdrawWithLocked(uint256 shares, address account) external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(shares, account);
     }
 	
 	/**
      * @dev Function to withdraw from the pool and transferring the locked collateral and the obligation to redeem it on the expiration using Chi gas token to save gas.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function withdrawWithLockedWithGasToken(address account, uint256 shares) discountCHI external override returns (
+	function withdrawWithLockedWithGasToken(uint256 shares, address account) discountCHI external override returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(account, shares);
+        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(shares, account);
     }
 	
 	/**
@@ -736,7 +862,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
             assetIn = _strikeAsset;
             assetOut = _underlying;
         }
-        require(balanceOut > 0, "No balance");
+        require(balanceOut > 0, "E60");
         
 		uint256 etherAmount = 0;
         if (ACOAssetHelper._isEther(assetOut)) {
@@ -750,24 +876,20 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	/**
      * @dev Internal function to deposit on the pool.
      * @param collateralAmount Amount of collateral to be deposited.
+     * @param minShares The minimum amount of shares acceptable.
      * @param to Address of the destination of the pool token.
      * @return shares The amount of pool tokens minted.
      */
-	function _deposit(uint256 collateralAmount, address to) internal returns(uint256 shares) {
-        require(collateralAmount > 0, "Invalid amount");
-        require(to != address(0) && to != address(this), "Invalid to");
+	function _deposit(uint256 collateralAmount, uint256 minShares, address to) internal returns(uint256 shares) {
+        require(collateralAmount > 0, "E10");
+        require(to != address(0) && to != address(this), "E11");
 		
-		(,,uint256 collateralBalance) = _getTotalCollateralBalance(true);
-		
+		(,,uint256 collateralBalance, uint256 collateralOnOpenPosition,) = _getTotalCollateralBalance(true);
+		collateralBalance = collateralBalance.sub(collateralOnOpenPosition);
+
 		address _collateral = collateral();
-        ACOAssetHelper._receiveAsset(_collateral, collateralAmount);
-		
 		if (ACOAssetHelper._isEther(_collateral)) {
-			if (collateralBalance > msg.value) {
-				collateralBalance = collateralBalance.sub(msg.value);
-			} else {
-				collateralBalance = 0;
-			}
+            collateralBalance = collateralBalance.sub(msg.value);
 		}
         
         if (collateralBalance == 0) {
@@ -775,33 +897,35 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         } else {
             shares = collateralAmount.mul(totalSupply()).div(collateralBalance);
         }
-       
+        require(shares >= minShares, "E12");
+
+        ACOAssetHelper._receiveAsset(_collateral, collateralAmount);
+
         super._mintAction(to, shares);
         
         emit Deposit(to, shares, collateralAmount);
     }
 	
 	/**
-     * @dev Internal function to get the withdrawal data for an account considering that there is locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Internal function to get the withdrawal data for a shares amount considering that there is locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function _getWithdrawWithLocked(address account, uint256 shares) internal view returns (
+	function _getWithdrawWithLocked(uint256 shares) internal view returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        if (shares > 0 && balanceOf(account) >= shares) {
+        uint256 _totalSupply = totalSupply();	
+        if (shares > 0 && shares <= _totalSupply) {
         
 			uint256 underlyingBalance = _getPoolBalanceOf(underlying);
 			uint256 strikeAssetBalance = _getPoolBalanceOf(strikeAsset);
 		
-			uint256 _totalSupply = totalSupply();	
             acos = new address[](openAcos.length);
             acosAmount = new uint256[](openAcos.length);
 			for (uint256 i = 0; i < openAcos.length; ++i) {
@@ -816,36 +940,55 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 			strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
 		}
     }
+
+    /**
+     * @dev Internal function to get the shares for a collateral amount on deposit.
+     * @param collateralAmount Amount of collateral to be deposited.
+     * @return The shares to be received on the deposit.
+     */
+	function _getDepositShares(uint256 collateralAmount) internal view returns(uint256) {
+        (,,uint256 collateralBalance, uint256 collateralOnOpenPosition,) = _getTotalCollateralBalance(true);
+		collateralBalance = collateralBalance.sub(collateralOnOpenPosition);
+
+        if (collateralBalance == 0) {
+            return collateralAmount;
+        } else {
+            return collateralAmount.mul(totalSupply()).div(collateralBalance);
+        }
+    }
 	
 	/**
-     * @dev Internal function to get the withdrawal data for an account considering that there is NO locked collateral on the operation.
-     * @param account Address of the account.
+     * @dev Internal function to get the withdrawal data for a shares amount considering that there is NO locked collateral on the operation.
      * @param shares Amount of shares to be withdrawn.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * isPossible TRUE whether it is possible to withdraw from that way (NO locked) or FALSE otherwise.
      */
-	function _getWithdrawNoLockedData(address account, uint256 shares) internal view returns (
+	function _getWithdrawNoLockedData(uint256 shares) internal view returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		bool isPossible
 	) {
-		if (shares > 0 && balanceOf(account) >= shares) {
+        uint256 _totalSupply = totalSupply();
+		if (shares > 0 && shares <= _totalSupply) {
 			
-			(uint256 underlyingBalance, uint256 strikeAssetBalance, uint256 collateralBalance) = _getTotalCollateralBalance(false);
-		
-			if (collateralBalance > 0) {
+			(uint256 underlyingBalance, 
+             uint256 strikeAssetBalance, 
+             uint256 collateralBalance, 
+             uint256 collateralOnOpenPosition,
+             uint256 collateralLockedRedeemable) = _getTotalCollateralBalance(false);
+
+			if (collateralBalance > collateralOnOpenPosition) {
 				
-				uint256 _totalSupply = totalSupply();
-				uint256 collateralAmount = shares.mul(collateralBalance).div(_totalSupply);
+				uint256 collateralAmount = shares.mul(collateralBalance.sub(collateralOnOpenPosition)).div(_totalSupply);
 				
 				if (isCall) {
-					if (collateralAmount <= underlyingBalance) {
+					if (collateralAmount <= underlyingBalance.add(collateralLockedRedeemable)) {
 						underlyingWithdrawn = collateralAmount;
 						strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
 						isPossible = true;
 					}
-				} else if (collateralAmount <= strikeAssetBalance) {
+				} else if (collateralAmount <= strikeAssetBalance.add(collateralLockedRedeemable)) {
 					strikeAssetWithdrawn = collateralAmount;
 					underlyingWithdrawn = underlyingBalance.mul(shares).div(_totalSupply);
 					isPossible = true;
@@ -856,33 +999,38 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 
 	/**
      * @dev Internal function to withdraw from the pool with NO locked collateral.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param minCollateral The minimum collateral amount acceptable on the withdrawal.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw.
      */
-    function _withdrawNoLocked(address account, uint256 shares) internal returns (
+    function _withdrawNoLocked(uint256 shares, uint256 minCollateral, address account) internal returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	) {
-        require(shares > 0, "Invalid shares");
+        require(shares > 0, "E30");
         
 		redeemACOTokens();
 		
         uint256 _totalSupply = totalSupply();
         _callBurn(account, shares);
         
-		(uint256 underlyingBalance, uint256 strikeAssetBalance, uint256 collateralBalance) = _getTotalCollateralBalance(false);
-		require(collateralBalance > 0, "No collateral balance");
-		
-		uint256 collateralAmount = shares.mul(collateralBalance).div(_totalSupply);
-		
+		(uint256 underlyingBalance, 
+         uint256 strikeAssetBalance, 
+         uint256 collateralBalance,
+         uint256 collateralOnOpenPosition,) = _getTotalCollateralBalance(false);
+		require(collateralBalance > collateralOnOpenPosition, "E31");
+
+		uint256 collateralAmount = shares.mul(collateralBalance.sub(collateralOnOpenPosition)).div(_totalSupply);
+		require(collateralAmount >= minCollateral, "E32");
+
         if (isCall) {
-			require(collateralAmount <= underlyingBalance, "No collateral available");
+			require(collateralAmount <= underlyingBalance, "E33");
 			underlyingWithdrawn = collateralAmount;
 			strikeAssetWithdrawn = strikeAssetBalance.mul(shares).div(_totalSupply);
         } else {
-			require(collateralAmount <= strikeAssetBalance, "No collateral available");
+			require(collateralAmount <= strikeAssetBalance, "E34");
 			strikeAssetWithdrawn = collateralAmount;
 			underlyingWithdrawn = underlyingBalance.mul(shares).div(_totalSupply);
 		}
@@ -895,20 +1043,20 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	
 	/**
      * @dev Internal function to withdraw from the pool and transferring the locked collateral and the obligation to redeem it on the expiration.
-     * @param account Address of the account to withdraw.
      * @param shares Amount of the account shares to be withdrawn.
+     * @param account Address of the account to withdraw.
      * @return underlyingWithdrawn The underlying amount on the withdraw
      * strikeAssetWithdrawn the strike asset amount on the withdraw
      * acos addresses of the ACOs with locked collateral that will be transferred
      * acosAmount the respective ACOs amount to be transferred.
      */
-	function _withdrawWithLocked(address account, uint256 shares) internal returns (
+	function _withdrawWithLocked(uint256 shares, address account) internal returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	) {
-        require(shares > 0, "Invalid shares");
+        require(shares > 0, "E20");
         
 		redeemACOTokens();
 		
@@ -936,12 +1084,16 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param isDeposit TRUE whether is a deposit operation, FALSE otherwise it is a withdraw.
      * @return underlyingBalance The pool underlying balance
      * strikeAssetBalance the pool strike asset balance 
-     * collateralBalance the pool collateral balance considering the available, locked collateral and the open position.
+     * collateralBalance the pool collateral balance considering the available, locked collateral and the open position
+     * collateralOnOpenPosition the pool collateral on open positions calculated using the options current price
+     * collateralLockedRedeemable the pool collateral locked that already can be redeem.
      */
 	function _getTotalCollateralBalance(bool isDeposit) internal view returns(
         uint256 underlyingBalance, 
         uint256 strikeAssetBalance, 
-        uint256 collateralBalance
+        uint256 collateralBalance,
+        uint256 collateralOnOpenPosition,
+        uint256 collateralLockedRedeemable
     ) {
 		underlyingBalance = _getPoolBalanceOf(underlying);
 		strikeAssetBalance = _getPoolBalanceOf(strikeAsset);
@@ -962,14 +1114,10 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 			}
 		}
 		
-		(uint256 collateralLocked, uint256 collateralOnOpenPosition) = _poolOpenPositionCollateralBalance(underlyingPrice, isDeposit);
+        uint256 collateralLocked;
+		(collateralLocked, collateralOnOpenPosition, collateralLockedRedeemable) = _poolOpenPositionCollateralBalance(underlyingPrice, isDeposit);
 		
         collateralBalance = collateralBalance.add(collateralLocked);
-		if (collateralBalance > collateralOnOpenPosition) {
-			collateralBalance = collateralBalance.sub(collateralOnOpenPosition);
-		} else {
-			collateralBalance = 0;
-		}
 	}
 	
 	/**
@@ -1000,8 +1148,8 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         address to, 
         uint256 deadline
     ) internal {
-        require(block.timestamp <= deadline, "Swap deadline");
-        require(to != address(0) && to != acoToken && to != address(this), "Invalid destination");
+        require(block.timestamp <= deadline, "E40");
+        require(to != address(0) && to != acoToken && to != address(this), "E41");
         
         (uint256 swapPrice, uint256 protocolFee, uint256 underlyingPrice, uint256 volatility, uint256 collateralAmount) = _quote(acoToken, tokenAmount);
         
@@ -1031,17 +1179,17 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         uint256 volatility, 
         uint256 collateralAmount
     ) {
-        require(tokenAmount > 0, "Invalid token amount");
+        require(tokenAmount > 0, "E50");
         
         (address _underlying, address _strikeAsset, bool _isCall, uint256 strikePrice, uint256 expiryTime) = acoFactory.acoTokenData(acoToken);
         
-		require(_acoBasicDataIsValid(acoToken, _underlying, _strikeAsset, _isCall), "Invalid ACO token");
-		require(_acoExpirationIsValid(expiryTime), "Invalid ACO token expiration");
+		require(_acoBasicDataIsValid(acoToken, _underlying, _strikeAsset, _isCall), "E51");
+		require(_acoExpirationIsValid(expiryTime), "E52");
 		
 		underlyingPrice = assetConverter.getPrice(_underlying, _strikeAsset);
-		require(_acoStrikePriceIsValid(strikePrice, underlyingPrice), "Invalid ACO token strike price");
+		require(_acoStrikePriceIsValid(strikePrice, underlyingPrice), "E53");
 
-        require(expiryTime > block.timestamp, "ACO token expired");
+        require(expiryTime > block.timestamp, "E54");
         (swapPrice, protocolFee, volatility, collateralAmount) = _internalQuote(acoToken, tokenAmount, strikePrice, expiryTime, underlyingPrice);
     }
 	
@@ -1079,7 +1227,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
             protocolFee = swapPrice.mul(fee).div(PERCENTAGE_PRECISION);
 			swapPrice = swapPrice.add(protocolFee);
         }
-        require(swapPrice > 0, "Invalid quote");
+        require(swapPrice > 0, "E55");
     }
 
 	/**
@@ -1099,9 +1247,9 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         } else {
             collateralAvailable = _getPoolBalanceOf(strikeAsset);
             collateralAmount = IACOToken(acoToken).getCollateralAmount(tokenAmount);
-            require(collateralAmount > 0, "Token amount is too small");
+            require(collateralAmount > 0, "E56");
         }
-        require(collateralAmount <= collateralAvailable, "Insufficient liquidity");
+        require(collateralAmount <= collateralAvailable, "E57");
     }
 
 	/**
@@ -1153,7 +1301,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         uint256 swapPrice,
         uint256 protocolFee
     ) internal {
-        require(swapPrice <= maxPayment, "Swap restriction");
+        require(swapPrice <= maxPayment, "E42");
         
         ACOAssetHelper._callTransferFromERC20(strikeAsset, msg.sender, address(this), swapPrice);
 
@@ -1169,6 +1317,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		}
 
 		if (!data.open) {
+            require(openAcos.length < maximumOpenAco, "E43");
 			acoData[acoToken] = AcoData(true, swapPrice.sub(protocolFee), collateralAmount, 0, acoTokens.length, openAcos.length);
             acoTokens.push(acoToken);    
             openAcos.push(acoToken);   
@@ -1185,11 +1334,13 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	 * @param underlyingPrice The current underlying price.
 	 * @param isDeposit TRUE whether it is a deposit operation, otherwise FALSE for a withdraw.
 	 * @return collateralLocked Total amount of collateral locked
-     * collateralOnOpenPosition the total collateral on open positions calculated using the options current price.
+     * collateralOnOpenPosition the total collateral on open positions calculated using the options current price
+     * collateralLockedRedeemable the pool collateral locked that already can be redeem.
      */
 	function _poolOpenPositionCollateralBalance(uint256 underlyingPrice, bool isDeposit) internal view returns(
         uint256 collateralLocked, 
-        uint256 collateralOnOpenPosition
+        uint256 collateralOnOpenPosition,
+        uint256 collateralLockedRedeemable
     ) {
 		bool _collateralIsUnderlying = isCall;
         uint256 _underlyingPrecision = underlyingPrecision;
@@ -1197,16 +1348,17 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 		for (uint256 i = 0; i < openAcos.length; ++i) {
 			address acoToken = openAcos[i];
 
-            (uint256 locked, uint256 openPosition) = _getOpenPositionCollateralBalance(
+            (uint256 locked, uint256 openPosition, uint256 lockedRedeemable) = _getOpenPositionCollateralBalance(
                 acoToken,
                 underlyingPrice,
                 _underlyingPrecision,
                 _acoFactory,
                 _collateralIsUnderlying
             );
-
+            
             collateralLocked = collateralLocked.add(locked);
             collateralOnOpenPosition = collateralOnOpenPosition.add(openPosition);
+            collateralLockedRedeemable = collateralLockedRedeemable.add(lockedRedeemable);
 		}
 		if (!isDeposit) {
 			collateralOnOpenPosition = collateralOnOpenPosition.mul(PERCENTAGE_PRECISION.add(withdrawOpenPositionPenalty)).div(PERCENTAGE_PRECISION);
@@ -1221,7 +1373,8 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
 	 * @param _acoFactory The ACO factory.
 	 * @param _collateralIsUnderlying TRUE whether the collateral is the underlying, otherwise FALSE for the strike asset as collateral.
 	 * @return collateralLocked Amount of collateral locked
-     * collateralOnOpenPosition the collateral on open positions calculated using the options current price.
+     * collateralOnOpenPosition the collateral on open positions calculated using the options current price
+     * collateralLockedRedeemable the collateral locked that already can be redeem
      */
     function _getOpenPositionCollateralBalance(
         address acoToken,
@@ -1231,7 +1384,8 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         bool _collateralIsUnderlying
     ) internal view returns(
         uint256 collateralLocked, 
-        uint256 collateralOnOpenPosition
+        uint256 collateralOnOpenPosition,
+        uint256 collateralLockedRedeemable
     ) {
         (,,,uint256 _strikePrice, uint256 _expiryTime) = _acoFactory.acoTokenData(acoToken);
 			
@@ -1242,7 +1396,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
         } else {
             collateralLocked = tokenAmount.mul(_strikePrice).div(_underlyingPrecision);
         }
-			
+		
         if (_expiryTime > block.timestamp) {
             (uint256 price,) = _strategyQuote(_strikePrice, _expiryTime, underlyingPrice, 0, 1);
             if (_collateralIsUnderlying) {
@@ -1251,6 +1405,8 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
             } else {
                 collateralOnOpenPosition = price.mul(tokenAmount).div(_underlyingPrecision);
             }
+        } else {
+            collateralLockedRedeemable = collateralLocked;
         }
     }
 	
@@ -1414,7 +1570,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newStrategy Address of the new strategy address.
      */
 	function _setStrategy(address newStrategy) internal {
-        require(newStrategy.isContract(), "Invalid strategy");
+        require(newStrategy.isContract(), "E81");
         emit SetStrategy(address(strategy), newStrategy);
         strategy = IACOPoolStrategy(newStrategy);
     }
@@ -1424,7 +1580,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newBaseVolatility Value of the new base volatility.
      */
     function _setBaseVolatility(uint256 newBaseVolatility) internal {
-        require(newBaseVolatility > 0, "Invalid base volatility");
+        require(newBaseVolatility > 0, "E82");
         emit SetBaseVolatility(baseVolatility, newBaseVolatility);
         baseVolatility = newBaseVolatility;
     }
@@ -1434,8 +1590,8 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newAssetConverter Address of the new asset converter.
      */
     function _setAssetConverter(address newAssetConverter) internal {
-        require(newAssetConverter.isContract(), "Invalid asset converter");
-		require(IACOAssetConverterHelper(newAssetConverter).getPrice(underlying, strikeAsset) > 0, "No price");
+        require(newAssetConverter.isContract(), "E83");
+		require(IACOAssetConverterHelper(newAssetConverter).getPrice(underlying, strikeAsset) > 0, "E84");
 		
 		_approveAssetsOnConverterHelper(isCall, newAssetConverter, underlying, strikeAsset);
 		
@@ -1448,7 +1604,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newTolerancePriceAbove Value of the new above price tolerance.
      */
     function _setTolerancePriceAbove(uint256 newTolerancePriceAbove) internal {
-        require(newTolerancePriceAbove < PERCENTAGE_PRECISION, "Invalid tolerance");
+        require(newTolerancePriceAbove < PERCENTAGE_PRECISION, "E85");
         emit SetTolerancePriceAbove(tolerancePriceAbove, newTolerancePriceAbove);
         tolerancePriceAbove = newTolerancePriceAbove;
     }
@@ -1458,7 +1614,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newTolerancePriceBelow Value of the new below price tolerance.
      */
     function _setTolerancePriceBelow(uint256 newTolerancePriceBelow) internal {
-        require(newTolerancePriceBelow < PERCENTAGE_PRECISION, "Invalid tolerance");
+        require(newTolerancePriceBelow < PERCENTAGE_PRECISION, "E86");
         emit SetTolerancePriceBelow(tolerancePriceBelow, newTolerancePriceBelow);
         tolerancePriceBelow = newTolerancePriceBelow;
     }
@@ -1468,7 +1624,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newMinExpiration Value of the new minimum expiration.
      */
     function _setMinExpiration(uint256 newMinExpiration) internal {
-        require(newMinExpiration <= maxExpiration, "Invalid min expiration");
+        require(newMinExpiration <= maxExpiration, "E87");
         emit SetMinExpiration(minExpiration, newMinExpiration);
         minExpiration = newMinExpiration;
     }
@@ -1478,7 +1634,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newMaxExpiration Value of the new maximum expiration.
      */
     function _setMaxExpiration(uint256 newMaxExpiration) internal {
-        require(newMaxExpiration >= minExpiration, "Invalid max expiration");
+        require(newMaxExpiration >= minExpiration, "E88");
         emit SetMaxExpiration(maxExpiration, newMaxExpiration);
         maxExpiration = newMaxExpiration;
     }
@@ -1488,7 +1644,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newFeeDestination Value of the new fee destination.
      */
     function _setFeeDestination(address newFeeDestination) internal {
-        require(newFeeDestination != address(0), "Invalid fee destination");
+        require(newFeeDestination != address(0), "E89");
         emit SetFeeDestination(feeDestination, newFeeDestination);
         feeDestination = newFeeDestination;
     }
@@ -1498,7 +1654,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newFee Value of the new protocol fee.
      */
     function _setFee(uint256 newFee) internal {
-        require(newFee <= 12500, "Invalid fee");
+        require(newFee <= 12500, "E91");
         emit SetFee(fee, newFee);
         fee = newFee;
     }
@@ -1508,7 +1664,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newWithdrawOpenPositionPenalty Value of the new penalty percentage on withdrawing open positions.
      */
     function _setWithdrawOpenPositionPenalty(uint256 newWithdrawOpenPositionPenalty) internal {
-        require(newWithdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "Invalid penalty");
+        require(newWithdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "E92");
         emit SetWithdrawOpenPositionPenalty(withdrawOpenPositionPenalty, newWithdrawOpenPositionPenalty);
         withdrawOpenPositionPenalty = newWithdrawOpenPositionPenalty;
     }
@@ -1518,9 +1674,19 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @param newUnderlyingPriceAdjustPercentage Value of the new underlying price percentage adjust.
      */
 	function _setUnderlyingPriceAdjustPercentage(uint256 newUnderlyingPriceAdjustPercentage) internal {
-        require(newUnderlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "Invalid underlying price adjust");
+        require(newUnderlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "E93");
         emit SetUnderlyingPriceAdjustPercentage(underlyingPriceAdjustPercentage, newUnderlyingPriceAdjustPercentage);
         underlyingPriceAdjustPercentage = newUnderlyingPriceAdjustPercentage;
+    }
+
+    /**
+     * @dev Internal function to set the maximum number of open ACOs allowed.
+     * @param newMaximumOpenAco Value of the new maximum number of open ACOs allowed.
+     */
+	function _setMaximumOpenAco(uint256 newMaximumOpenAco) internal {
+        require(newMaximumOpenAco > 0, "E94");
+        emit SetMaximumOpenAco(maximumOpenAco, newMaximumOpenAco);
+        maximumOpenAco = newMaximumOpenAco;
     }
 	
 	/**
@@ -1537,40 +1703,23 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
      * @dev Internal function to check whether the transaction sender is the pool factory.
      */
     function onlyFactory() internal view {
-        require(owner() == msg.sender, "Only pool factory");
+        require(owner() == msg.sender, "E90");
     }
 	
 	/**
      * @dev Internal function to get the token name.
      * The token name is assembled with the token data:
-     * ACO POOL UNDERLYING_SYMBOL-STRIKE_ASSET_SYMBOL-TYPE-STRIKE-RANGE_PERCENTAGE_ON_CURRENT_PRICE
+     * ACO POOL WRITE UNDERLYING_SYMBOL-STRIKE_ASSET_SYMBOL-TYPE
      * @return The token name.
      */
 	function _name() internal view returns(string memory) {
-        string memory strikePriceFormatted;
-        if (tolerancePriceBelow != 0 && tolerancePriceAbove != 0) {
-            strikePriceFormatted = string(abi.encodePacked(
-			">=", 
-			ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.sub(tolerancePriceBelow), 5),
-			"%&<=", 
-			ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.add(tolerancePriceAbove), 5),
-			"%-CURRENT-PRICE"));
-        } else if (tolerancePriceBelow != 0) {
-            strikePriceFormatted = string(abi.encodePacked("<", ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.sub(tolerancePriceBelow), 5), "%-CURRENT-PRICE"));
-        } else if (tolerancePriceAbove != 0) {
-            strikePriceFormatted = string(abi.encodePacked(">", ACONameFormatter.formatNumber(PERCENTAGE_PRECISION.add(tolerancePriceAbove), 5), "%-CURRENT-PRICE"));
-        } else {
-			strikePriceFormatted = string(abi.encodePacked("ALL"));
-		}
         return string(abi.encodePacked(
-            "ACO POOL ",
+            "ACO POOL WRITE ",
             ACOAssetHelper._getAssetSymbol(underlying),
             "-",
             ACOAssetHelper._getAssetSymbol(strikeAsset),
             "-",
-            ACONameFormatter.formatType(isCall),
-            "-STRIKE-",
-            strikePriceFormatted
+            ACONameFormatter.formatType(isCall)
         ));
     }
 }

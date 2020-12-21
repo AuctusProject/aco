@@ -95,6 +95,13 @@ contract ACOPoolFactory2 {
     event SetAcoPoolUnderlyingPriceAdjustPercentage(uint256 indexed previousUnderlyingPriceAdjustPercentage, uint256 indexed newUnderlyingPriceAdjustPercentage);
 	
     /**
+     * @dev Emitted when the ACO Pool maximum number of open ACOs allowed has been changed.
+     * @param previousMaximumOpenAco Value of the previous ACO Pool maximum number of open ACOs allowed.
+     * @param newMaximumOpenAco Value of the new ACO Pool maximum number of open ACOs allowed.
+     */
+    event SetAcoPoolMaximumOpenAco(uint256 indexed previousMaximumOpenAco, uint256 indexed newMaximumOpenAco);
+	
+    /**
      * @dev Emitted when permission for an ACO pool admin has been changed.
      * @param poolAdmin Address of the ACO pool admin.
      * @param previousPermission The previous permission situation.
@@ -167,6 +174,11 @@ contract ACOPoolFactory2 {
     uint256 public acoPoolUnderlyingPriceAdjustPercentage;
 
     /**
+     * @dev The ACO Pool maximum number of open ACOs allowed.
+     */
+    uint256 public acoPoolMaximumOpenAco;
+
+    /**
      * @dev The ACO pool admin permissions.
      */
     mapping(address => bool) public poolAdminPermission;
@@ -212,6 +224,7 @@ contract ACOPoolFactory2 {
 	 * @param _acoPoolFeeDestination ACO pool fee destination.
 	 * @param _acoPoolWithdrawOpenPositionPenalty ACO pool penalty percentage on withdrawing open positions.
 	 * @param _acoPoolUnderlyingPriceAdjustPercentage ACO pool underlying price percentage adjust.
+     * @param _acoPoolMaximumOpenAco ACO pool maximum number of open ACOs allowed.
      */
     function init(
         address _factoryAdmin, 
@@ -222,7 +235,8 @@ contract ACOPoolFactory2 {
         uint256 _acoPoolFee,
         address _acoPoolFeeDestination,
 		uint256 _acoPoolWithdrawOpenPositionPenalty,
-		uint256 _acoPoolUnderlyingPriceAdjustPercentage
+		uint256 _acoPoolUnderlyingPriceAdjustPercentage,
+        uint256 _acoPoolMaximumOpenAco
     ) public {
         require(factoryAdmin == address(0) && acoPoolImplementation == address(0), "ACOPoolFactory::init: Contract already initialized.");
         
@@ -235,6 +249,7 @@ contract ACOPoolFactory2 {
         _setAcoPoolFeeDestination(_acoPoolFeeDestination);
 		_setAcoPoolWithdrawOpenPositionPenalty(_acoPoolWithdrawOpenPositionPenalty);
 		_setAcoPoolUnderlyingPriceAdjustPercentage(_acoPoolUnderlyingPriceAdjustPercentage);
+        _setAcoPoolMaximumOpenAco(_acoPoolMaximumOpenAco);
         _setAcoPoolPermission(_factoryAdmin, true);
     }
 
@@ -282,6 +297,7 @@ contract ACOPoolFactory2 {
             acoPoolFeeDestination,
 			acoPoolWithdrawOpenPositionPenalty,
 			acoPoolUnderlyingPriceAdjustPercentage,
+            acoPoolMaximumOpenAco,
             tolerancePriceBelow,
             tolerancePriceAbove,
             minExpiration,
@@ -371,6 +387,15 @@ contract ACOPoolFactory2 {
     function setAcoPoolUnderlyingPriceAdjustPercentage(uint256 newUnderlyingPriceAdjustPercentage) onlyFactoryAdmin external virtual {
         _setAcoPoolUnderlyingPriceAdjustPercentage(newUnderlyingPriceAdjustPercentage);
     }
+
+    /**
+     * @dev Function to set the ACO Pool maximum number of open ACOs allowed.
+     * Only can be called by the factory admin.
+     * @param newMaximumOpenAco Value of the new ACO Pool maximum number of open ACOs allowed.
+     */
+    function setAcoPoolMaximumOpenAco(uint256 newMaximumOpenAco) onlyFactoryAdmin external virtual {
+        _setAcoPoolMaximumOpenAco(newMaximumOpenAco);
+    }
 	
     /**
      * @dev Function to set the ACO pool permission.
@@ -430,6 +455,16 @@ contract ACOPoolFactory2 {
      */
     function setUnderlyingPriceAdjustPercentageOnAcoPool(uint256[] calldata underlyingPriceAdjustPercentages, address[] calldata acoPools) onlyPoolAdmin external virtual {
         _setAcoPoolUint256Data(IACOPool2.setUnderlyingPriceAdjustPercentage.selector, underlyingPriceAdjustPercentages, acoPools);
+    }
+
+    /**
+     * @dev Function to change the ACO pools maximum number of open ACOs allowed.
+     * Only can be called by a pool admin.
+     * @param maximumOpenAcos Array of the maximum number of open ACOs allowed.
+     * @param acoPools Array of ACO pools addresses.
+     */
+    function setMaximumOpenAcoOnAcoPool(uint256[] calldata maximumOpenAcos, address[] calldata acoPools) onlyPoolAdmin external virtual {
+        _setAcoPoolUint256Data(IACOPool2.setMaximumOpenAco.selector, maximumOpenAcos, acoPools);
     }
 	
 	/**
@@ -608,6 +643,15 @@ contract ACOPoolFactory2 {
     function _setAcoPoolUnderlyingPriceAdjustPercentage(uint256 newUnderlyingPriceAdjustPercentage) internal virtual {
         emit SetAcoPoolUnderlyingPriceAdjustPercentage(acoPoolUnderlyingPriceAdjustPercentage, newUnderlyingPriceAdjustPercentage);
         acoPoolUnderlyingPriceAdjustPercentage = newUnderlyingPriceAdjustPercentage;
+    }
+
+    /**
+     * @dev Internal function to set the ACO Pool maximum number of open ACOs allowed.
+     * @param newMaximumOpenAco Value of the new ACO Pool maximum number of open ACOs allowed.
+     */
+    function _setAcoPoolMaximumOpenAco(uint256 newMaximumOpenAco) internal virtual {
+        emit SetAcoPoolMaximumOpenAco(acoPoolMaximumOpenAco, newMaximumOpenAco);
+        acoPoolMaximumOpenAco = newMaximumOpenAco;
     }
     
     /**

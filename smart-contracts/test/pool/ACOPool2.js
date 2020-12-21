@@ -3,7 +3,6 @@ const poolFactoryABI = require("../../artifacts/ACOPoolFactory2.json");
 const factoryABI = require("../../artifacts/ACOFactory.json");
 const { createAcoPoolStrategy } = require("./ACOPoolStrategy.js");
 const { AddressZero } = require("ethers/constants");
-const { getCurrentTimestamp } = require("./ACOPool");
 
 let started = false;
 
@@ -18,6 +17,7 @@ describe("ACOPool2", function() {
   let poolFee = 5000;
   let withdrawOpenPositionPenalty = 10000;
   let underlyingPriceAdjustPercentage = 500;
+  let maxOpenAco = 50;
   let maxExercisedAccounts = 120;
   let token1;
   let token1Name = "TOKEN1";
@@ -146,7 +146,7 @@ describe("ACOPool2", function() {
     await ACOPoolFactoryTemp.deployed();
     
     let poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
-    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, converterHelper.address, chiToken.address, poolFee, await addr3.getAddress(), withdrawOpenPositionPenalty, underlyingPriceAdjustPercentage]);
+    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, converterHelper.address, chiToken.address, poolFee, await addr3.getAddress(), withdrawOpenPositionPenalty, underlyingPriceAdjustPercentage, maxOpenAco]);
     let buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOPoolFactoryTemp.address, poolFactoryInitData);
     await buidlerACOPoolFactoryProxy.deployed();
     ACOPoolFactory = await ethers.getContractAt("ACOPoolFactory2", buidlerACOPoolFactoryProxy.address);
@@ -261,19 +261,19 @@ describe("ACOPool2", function() {
       let val2 = ethers.utils.bigNumberify("500000000");
 
       await expect(
-        ACOPoolToken1Token2Call.deposit(0, await owner.getAddress())
-      ).to.be.revertedWith("Invalid amount");
+        ACOPoolToken1Token2Call.deposit(0, 1, await owner.getAddress())
+      ).to.be.revertedWith("E10");
       
       await expect(
-        ACOPoolToken1Token2Call.deposit(val1, AddressZero)
-      ).to.be.revertedWith("Invalid to");
+        ACOPoolToken1Token2Call.deposit(val1, 1, AddressZero)
+      ).to.be.revertedWith("E11");
 
       await expect(
-        ACOPoolToken1Token2Call.deposit(val1, await owner.getAddress(), {value: 1})
+        ACOPoolToken1Token2Call.deposit(val1, 1, await owner.getAddress(), {value: 1})
       ).to.be.revertedWith("ACOAssetHelper:: Ether is not expected");
       
       await expect(
-        ACOPoolToken1Token2Call.deposit(val1, await owner.getAddress())
+        ACOPoolToken1Token2Call.deposit(val1, 1, await owner.getAddress())
       ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
 
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(0);
@@ -282,11 +282,19 @@ describe("ACOPool2", function() {
       await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
       await token1.connect(addr3).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-      await ACOPoolToken1Token2Call.deposit(val1, await addr1.getAddress());
+      let d1 = await ACOPoolToken1Token2Call.getDepositShares(val1);
+      expect(d1).to.equal(val1);
+      await expect(
+        ACOPoolToken1Token2Call.deposit(val1, d1.add(1), await addr1.getAddress())
+      ).to.be.revertedWith("E12");
+
+      await ACOPoolToken1Token2Call.deposit(val1, d1, await addr1.getAddress());
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(val1);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
 
-      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, await addr2.getAddress());
+      let d2 = await ACOPoolToken1Token2Call.getDepositShares(val2);
+      expect(d2).to.equal(val2);
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, d2, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -299,8 +307,13 @@ describe("ACOPool2", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress())).to.equal(val2);
 
+      let d3 = await ACOPoolToken1Token2Call.getDepositShares(val1);
+      await expect(
+        ACOPoolToken1Token2Call.connect(addr3).depositWithGasToken(val1, d3.add(100), await addr3.getAddress())
+      ).to.be.revertedWith("E12");
+
       let addr3bal = ethers.utils.bigNumberify("99000000");
-      await ACOPoolToken1Token2Call.connect(addr3).depositWithGasToken(val1, await addr3.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr3).depositWithGasToken(val1, d3.sub(100), await addr3.getAddress());
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.be.gt(val1.add(val2).add(addr3bal));
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.be.lt(val1.add(val2).add(val1));
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
@@ -313,19 +326,19 @@ describe("ACOPool2", function() {
       let val2 = ethers.utils.bigNumberify("50000000000");
 
       await expect(
-        ACOPoolToken1Token2Put.deposit(0, await owner.getAddress())
-      ).to.be.revertedWith("Invalid amount");
+        ACOPoolToken1Token2Put.deposit(0, 1, await owner.getAddress())
+      ).to.be.revertedWith("E10");
       
       await expect(
-        ACOPoolToken1Token2Put.deposit(val1, AddressZero)
-      ).to.be.revertedWith("Invalid to");
+        ACOPoolToken1Token2Put.deposit(val1, 1, AddressZero)
+      ).to.be.revertedWith("E11");
 
       await expect(
-        ACOPoolToken1Token2Put.deposit(val1, await owner.getAddress(), {value: 1})
+        ACOPoolToken1Token2Put.deposit(val1, 1, await owner.getAddress(), {value: 1})
       ).to.be.revertedWith("ACOAssetHelper:: Ether is not expected");
       
       await expect(
-        ACOPoolToken1Token2Put.deposit(val1, await owner.getAddress())
+        ACOPoolToken1Token2Put.deposit(val1, 1, await owner.getAddress())
       ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
 
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(0);
@@ -334,11 +347,19 @@ describe("ACOPool2", function() {
       await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
       await token2.connect(addr3).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-      await ACOPoolToken1Token2Put.deposit(val1, await addr1.getAddress());
+      let d1 = await ACOPoolToken1Token2Put.getDepositShares(val1);
+      expect(d1).to.equal(val1);
+      await expect(
+        ACOPoolToken1Token2Put.deposit(val1, d1.add(1), await addr1.getAddress())
+      ).to.be.revertedWith("E12");
+
+      await ACOPoolToken1Token2Put.deposit(val1, d1, await addr1.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(val1);
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
 
-      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      let d2 = await ACOPoolToken1Token2Put.getDepositShares(val2);
+      expect(d2).to.equal(val2);
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, d2, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -351,8 +372,13 @@ describe("ACOPool2", function() {
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress())).to.equal(val2);
 
+      let d3 = await ACOPoolToken1Token2Put.getDepositShares(val1);
+      await expect(
+        ACOPoolToken1Token2Put.connect(addr3).depositWithGasToken(val1, d3.add(1000), await addr3.getAddress())
+      ).to.be.revertedWith("E12");
+
       let addr3bal = ethers.utils.bigNumberify("9900000000");
-      await ACOPoolToken1Token2Put.connect(addr3).depositWithGasToken(val1, await addr3.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr3).depositWithGasToken(val1, d3.sub(1000), await addr3.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.be.gt(val1.add(val2).add(addr3bal));
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.be.lt(val1.add(val2).add(val1));
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
@@ -365,24 +391,32 @@ describe("ACOPool2", function() {
       let val2 = ethers.utils.bigNumberify("5000000000000000000");
 
       await expect(
-        ACOPoolEthToken2Call.deposit(0, await owner.getAddress(), {value: 0})
-      ).to.be.revertedWith("Invalid amount");
+        ACOPoolEthToken2Call.deposit(0, 1, await owner.getAddress(), {value: 0})
+      ).to.be.revertedWith("E10");
       
       await expect(
-        ACOPoolEthToken2Call.deposit(val1, AddressZero)
-      ).to.be.revertedWith("Invalid to");
+        ACOPoolEthToken2Call.deposit(val1, 1, AddressZero)
+      ).to.be.revertedWith("E11");
 
       await expect(
-        ACOPoolEthToken2Call.deposit(val1, await owner.getAddress(), {value: 1})
+        ACOPoolEthToken2Call.deposit(val1, 1, await owner.getAddress(), {value: 1})
       ).to.be.revertedWith("ACOAssetHelper:: Invalid ETH amount");
       
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
 
-      await ACOPoolEthToken2Call.deposit(val1, await addr1.getAddress(), {value: val1});
+      let d1 = await ACOPoolEthToken2Call.getDepositShares(val1);
+      expect(d1).to.equal(val1);
+      await expect(
+        ACOPoolEthToken2Call.deposit(val1, d1.add(1), await addr1.getAddress(), {value: val1})
+      ).to.be.revertedWith("E12");
+
+      await ACOPoolEthToken2Call.deposit(val1, d1, await addr1.getAddress(), {value: val1});
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(val1);
       expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
 
-      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
+      let d2 = await ACOPoolEthToken2Call.getDepositShares(val2);
+      expect(d2).to.equal(val2);
+      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, d2, await addr2.getAddress(), {value: val2});
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -395,8 +429,13 @@ describe("ACOPool2", function() {
       expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(val2);
 
+      let d3 = await ACOPoolEthToken2Call.getDepositShares(val1);
+      await expect(
+        ACOPoolEthToken2Call.connect(addr3).depositWithGasToken(val1, d3.add(ethers.utils.bigNumberify("2500000000000")), await addr3.getAddress(), {value: val1})
+      ).to.be.revertedWith("E12");
+
       let addr3bal = ethers.utils.bigNumberify("990000000000000000");
-      await ACOPoolEthToken2Call.connect(addr3).depositWithGasToken(val1, await addr3.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.connect(addr3).depositWithGasToken(val1, d3.sub(ethers.utils.bigNumberify("2500000000000")), await addr3.getAddress(), {value: val1});
       expect(await ACOPoolEthToken2Call.totalSupply()).to.be.gt(val1.add(val2).add(addr3bal));
       expect(await ACOPoolEthToken2Call.totalSupply()).to.be.lt(val1.add(val2).add(val1));
       expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
@@ -409,19 +448,19 @@ describe("ACOPool2", function() {
       let val2 = ethers.utils.bigNumberify("50000000000");
 
       await expect(
-        ACOPoolEthToken2Put.deposit(0, await owner.getAddress())
-      ).to.be.revertedWith("Invalid amount");
+        ACOPoolEthToken2Put.deposit(0, 1, await owner.getAddress())
+      ).to.be.revertedWith("E10");
       
       await expect(
-        ACOPoolEthToken2Put.deposit(val1, AddressZero)
-      ).to.be.revertedWith("Invalid to");
+        ACOPoolEthToken2Put.deposit(val1, 1, AddressZero)
+      ).to.be.revertedWith("E11");
 
       await expect(
-        ACOPoolEthToken2Put.deposit(val1, await owner.getAddress(), {value: 1})
+        ACOPoolEthToken2Put.deposit(val1, 1, await owner.getAddress(), {value: 1})
       ).to.be.revertedWith("ACOAssetHelper:: Ether is not expected");
       
       await expect(
-        ACOPoolEthToken2Put.deposit(val1, await owner.getAddress())
+        ACOPoolEthToken2Put.deposit(val1, 1, await owner.getAddress())
       ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
 
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(0);
@@ -430,11 +469,19 @@ describe("ACOPool2", function() {
       await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
       await token2.connect(addr3).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-      await ACOPoolEthToken2Put.deposit(val1, await addr1.getAddress());
+      let d1 = await ACOPoolEthToken2Put.getDepositShares(val1);
+      expect(d1).to.equal(val1);
+      await expect(
+        ACOPoolEthToken2Put.deposit(val1, d1.add(1), await addr1.getAddress(), {value: val1})
+      ).to.be.revertedWith("E12");
+
+      await ACOPoolEthToken2Put.deposit(val1, d1, await addr1.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(val1);
       expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
 
-      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      let d2 = await ACOPoolEthToken2Put.getDepositShares(val2);
+      expect(d2).to.equal(val2);
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, d2, await addr2.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -445,8 +492,13 @@ describe("ACOPool2", function() {
       expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(val2);
 
+      let d3 = await ACOPoolEthToken2Put.getDepositShares(val1);
+      await expect(
+        ACOPoolEthToken2Put.connect(addr3).depositWithGasToken(val1, d3.add(1000), await addr3.getAddress())
+      ).to.be.revertedWith("E12");
+
       let addr3bal = ethers.utils.bigNumberify("9900000000");
-      await ACOPoolEthToken2Put.connect(addr3).depositWithGasToken(val1, await addr3.getAddress());
+      await ACOPoolEthToken2Put.connect(addr3).depositWithGasToken(val1, d3.sub(1000), await addr3.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.be.gt(val1.add(val2).add(addr3bal));
       expect(await ACOPoolEthToken2Put.totalSupply()).to.be.lt(val1.add(val2).add(val1));
       expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
@@ -464,8 +516,8 @@ describe("ACOPool2", function() {
       await token1.approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
       await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-      await ACOPoolToken1Token2Call.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -504,42 +556,50 @@ describe("ACOPool2", function() {
       let current = await getCurrentTimestamp();
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), current)
-      ).to.be.revertedWith("Swap deadline");
+      ).to.be.revertedWith("E40");
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), AddressZero, 1999999999)
-      ).to.be.revertedWith("Invalid destination");
+      ).to.be.revertedWith("E41");
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, 0, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid token amount");
+      ).to.be.revertedWith("E50");
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token");
+      ).to.be.revertedWith("E51");
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token strike price");
+      ).to.be.revertedWith("E53");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([10], [ACOPoolToken1Token2Call.address]);
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token expiration");
+      ).to.be.revertedWith("E52");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([(30*86400)], [ACOPoolToken1Token2Call.address]);
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount.mul(5), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Insufficient liquidity");
+      ).to.be.revertedWith("E57");
 
       let quote3 = await ACOPoolToken1Token2Call.quote(ACOToken1Token2Call.address, swapAmount);
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, quote3[0].sub(tol), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Swap restriction");
+      ).to.be.revertedWith("E42");
 
       await ACOPoolFactory.setTolerancePriceBelowOnAcoPool([0],[ACOPoolToken1Token2Call.address]);
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([1], [ACOPoolToken1Token2Call.address]);
+
+      await expect(
+        ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E43");
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([2], [ACOPoolToken1Token2Call.address]);
 
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await token2.balanceOf(ACOPoolToken1Token2Call.address);
@@ -563,8 +623,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolToken1Token2Put.address, token1TotalSupply);
       await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token1TotalSupply);
 
-      await ACOPoolToken1Token2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -602,42 +662,50 @@ describe("ACOPool2", function() {
       let current = await getCurrentTimestamp();
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), current)
-      ).to.be.revertedWith("Swap deadline");
+      ).to.be.revertedWith("E40");
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), AddressZero, 1999999999)
-      ).to.be.revertedWith("Invalid destination");
+      ).to.be.revertedWith("E41");
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, 0, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid token amount");
+      ).to.be.revertedWith("E50");
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token");
+      ).to.be.revertedWith("E51");
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token strike price");
+      ).to.be.revertedWith("E53");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([10], [ACOPoolToken1Token2Put.address]);
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token expiration");
+      ).to.be.revertedWith("E52");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([(30*86400)], [ACOPoolToken1Token2Put.address]);
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount.mul(5), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Insufficient liquidity");
+      ).to.be.revertedWith("E57");
 
       let quote3 = await ACOPoolToken1Token2Put.quote(ACOToken1Token2Put.address, swapAmount);
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, quote3[0].sub(tol), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Swap restriction");
+      ).to.be.revertedWith("E42");
 
       await ACOPoolFactory.setTolerancePriceAboveOnAcoPool([0],[ACOPoolToken1Token2Put.address]);
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([1], [ACOPoolToken1Token2Put.address]);
+
+      await expect(
+        ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E43");
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([2], [ACOPoolToken1Token2Put.address]);
 
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await token2.balanceOf(ACOPoolToken1Token2Put.address);
@@ -658,8 +726,8 @@ describe("ACOPool2", function() {
 
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
 
-      await ACOPoolEthToken2Call.deposit(val1, await addr1.getAddress(), {value: val1});
-      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.deposit(val1, 1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress(), {value: val2});
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -698,42 +766,50 @@ describe("ACOPool2", function() {
       let current = await getCurrentTimestamp();
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), current)
-      ).to.be.revertedWith("Swap deadline");
+      ).to.be.revertedWith("E40");
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), AddressZero, 1999999999)
-      ).to.be.revertedWith("Invalid destination");
+      ).to.be.revertedWith("E41");
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, 0, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid token amount");
+      ).to.be.revertedWith("E50");
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token");
+      ).to.be.revertedWith("E51");
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token strike price");
+      ).to.be.revertedWith("E53");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([10], [ACOPoolEthToken2Call.address]);
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token expiration");
+      ).to.be.revertedWith("E52");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([(30*86400)], [ACOPoolEthToken2Call.address]);
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount.mul(5), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Insufficient liquidity");
+      ).to.be.revertedWith("E57");
 
       let quote3 = await ACOPoolEthToken2Call.quote(ACOEthToken2Call.address, swapAmount);
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, quote3[0].sub(tol), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Swap restriction");
+      ).to.be.revertedWith("E42");
 
       await ACOPoolFactory.setTolerancePriceBelowOnAcoPool([0],[ACOPoolEthToken2Call.address]);
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([1], [ACOPoolEthToken2Call.address]);
+
+      await expect(
+        ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E43");
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([2], [ACOPoolEthToken2Call.address]);
 
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await token2.balanceOf(ACOPoolEthToken2Call.address);
@@ -757,8 +833,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolEthToken2Put.address, token1TotalSupply);
       await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token1TotalSupply);
 
-      await ACOPoolEthToken2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolEthToken2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(val1.add(val2));
       expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(val1);
       expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -796,46 +872,54 @@ describe("ACOPool2", function() {
       let current = await getCurrentTimestamp();
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), current)
-      ).to.be.revertedWith("Swap deadline");
+      ).to.be.revertedWith("E40");
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), AddressZero, 1999999999)
-      ).to.be.revertedWith("Invalid destination");
+      ).to.be.revertedWith("E41");
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, 0, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid token amount");
+      ).to.be.revertedWith("E50");
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Call.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token");
+      ).to.be.revertedWith("E51");
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token strike price");
+      ).to.be.revertedWith("E53");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([10], [ACOPoolEthToken2Put.address]);
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Invalid ACO token expiration");
+      ).to.be.revertedWith("E52");
 
       await ACOPoolFactory.setMaxExpirationOnAcoPool([(30*86400)], [ACOPoolEthToken2Put.address]);
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount.mul(1000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Insufficient liquidity");
+      ).to.be.revertedWith("E57");
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, 1, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Token amount is too small");
+      ).to.be.revertedWith("E56");
 
       let quote3 = await ACOPoolEthToken2Put.quote(ACOEthToken2Put.address, swapAmount);
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, quote3[0].sub(tol), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("Swap restriction");
+      ).to.be.revertedWith("E42");
 
       await ACOPoolFactory.setTolerancePriceAboveOnAcoPool([0],[ACOPoolEthToken2Put.address]);
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([1], [ACOPoolEthToken2Put.address]);
+
+      await expect(
+        ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, swapAmount, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E43");
+
+      await ACOPoolFactory.setMaximumOpenAcoOnAcoPool([2], [ACOPoolEthToken2Put.address]);
 
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await token2.balanceOf(ACOPoolEthToken2Put.address);
@@ -856,8 +940,8 @@ describe("ACOPool2", function() {
       await token1.approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
       await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-      await ACOPoolToken1Token2Call.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       
       await token2.approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
       await token2.approve(ACOToken1Token2Call.address, token2TotalSupply);
@@ -876,7 +960,7 @@ describe("ACOPool2", function() {
       expect(await token2.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(0);
       expect(await token1.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(poolBal.add(result.collateralRestored));
 
-      await expect(ACOPoolToken1Token2Call.restoreCollateral()).to.be.revertedWith("No balance");
+      await expect(ACOPoolToken1Token2Call.restoreCollateral()).to.be.revertedWith("E60");
     });
     it("Check restore ACOPoolToken1Token2Put", async function () {
       let val1 = ethers.utils.bigNumberify("10000000000");
@@ -885,8 +969,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-      await ACOPoolToken1Token2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       await token1.approve(ACOToken1Token2Put.address, token1TotalSupply);
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
@@ -904,14 +988,14 @@ describe("ACOPool2", function() {
       expect(await token1.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(0);
       expect(await token2.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(poolBal.add(result.collateralRestored));
 
-      await expect(ACOPoolToken1Token2Put.restoreCollateral()).to.be.revertedWith("No balance");
+      await expect(ACOPoolToken1Token2Put.restoreCollateral()).to.be.revertedWith("E60");
     });
     it("Check restore ACOPoolEthToken2Call", async function () {
       let val1 = ethers.utils.bigNumberify("1000000000000000000");
       let val2 = ethers.utils.bigNumberify("5000000000000000000");
 
-      await ACOPoolEthToken2Call.deposit(val1, await addr1.getAddress(), {value: val1});
-      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.deposit(val1, 1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress(), {value: val2});
 
       await token2.approve(ACOPoolEthToken2Call.address, token2TotalSupply);
       await token2.approve(ACOEthToken2Call.address, token2TotalSupply);
@@ -930,7 +1014,7 @@ describe("ACOPool2", function() {
       expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(0);
       expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(poolBal.add(result.collateralRestored));
 
-      await expect(ACOPoolEthToken2Call.restoreCollateral()).to.be.revertedWith("No balance");
+      await expect(ACOPoolEthToken2Call.restoreCollateral()).to.be.revertedWith("E60");
     });
     it("Check restore ACOPoolEthToken2Put", async function () {
       let val1 = ethers.utils.bigNumberify("10000000000");
@@ -939,8 +1023,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolEthToken2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-      await ACOPoolEthToken2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolEthToken2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
       await ACOEthToken2Put.exercise(val1.mul(50000000), 0, {value: val1.mul(50000000).add(maxExercisedAccounts)});
@@ -957,7 +1041,7 @@ describe("ACOPool2", function() {
       expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(poolBal.add(result.collateralRestored));
       expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
 
-      await expect(ACOPoolEthToken2Put.restoreCollateral()).to.be.revertedWith("No balance");
+      await expect(ACOPoolEthToken2Put.restoreCollateral()).to.be.revertedWith("E60");
     });
     it("Check redeem ACO tokens for ACOPoolToken1Token2Call", async function () {
       let val1 = ethers.utils.bigNumberify("100000000");
@@ -966,8 +1050,8 @@ describe("ACOPool2", function() {
       await token1.approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
       await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-      await ACOPoolToken1Token2Call.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       
       await token2.approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
       await token2.approve(ACOToken1Token2Call.address, token2TotalSupply);
@@ -997,8 +1081,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-      await ACOPoolToken1Token2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       await token1.approve(ACOToken1Token2Put.address, token1TotalSupply);
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
@@ -1024,8 +1108,8 @@ describe("ACOPool2", function() {
       let val1 = ethers.utils.bigNumberify("1000000000000000000");
       let val2 = ethers.utils.bigNumberify("5000000000000000000");
 
-      await ACOPoolEthToken2Call.deposit(val1, await addr1.getAddress(), {value: val1});
-      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.deposit(val1, 1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress(), {value: val2});
 
       await token2.approve(ACOPoolEthToken2Call.address, token2TotalSupply);
       await token2.approve(ACOEthToken2Call.address, token2TotalSupply);
@@ -1055,8 +1139,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolEthToken2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-      await ACOPoolEthToken2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolEthToken2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
       await ACOEthToken2Put.exercise(val1.mul(100000000), 0, {value: val1.mul(100000000).add(maxExercisedAccounts)});
@@ -1084,8 +1168,8 @@ describe("ACOPool2", function() {
       await token1.approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
       await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-      await ACOPoolToken1Token2Call.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       
       await token2.approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
       await token2.approve(ACOToken1Token2Call.address, token2TotalSupply);
@@ -1125,8 +1209,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-      await ACOPoolToken1Token2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       await token1.approve(ACOToken1Token2Put.address, token1TotalSupply);
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
@@ -1162,8 +1246,8 @@ describe("ACOPool2", function() {
       let val1 = ethers.utils.bigNumberify("1000000000000000000");
       let val2 = ethers.utils.bigNumberify("5000000000000000000");
 
-      await ACOPoolEthToken2Call.deposit(val1, await addr1.getAddress(), {value: val1});
-      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.deposit(val1, 1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress(), {value: val2});
 
       await token2.approve(ACOPoolEthToken2Call.address, token2TotalSupply);
       await token2.approve(ACOEthToken2Call.address, token2TotalSupply);
@@ -1203,8 +1287,8 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolEthToken2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-      await ACOPoolEthToken2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolEthToken2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
       await ACOEthToken2Put.exercise(val1.mul(100000000), 0, {value: val1.mul(100000000).add(maxExercisedAccounts)});
@@ -1242,8 +1326,8 @@ describe("ACOPool2", function() {
       await token1.approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
       await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-      await ACOPoolToken1Token2Call.deposit(val1, await addr1.getAddress());
-      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       
       await token2.approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
       await token2.approve(ACOToken1Token2Call.address, token2TotalSupply);
@@ -1256,37 +1340,42 @@ describe("ACOPool2", function() {
       await ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, val1, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
 
       await expect(
-        ACOPoolToken1Token2Call.connect(addr1).withdrawNoLocked(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolToken1Token2Call.connect(addr1).withdrawNoLocked(0, 1, await addr1.getAddress())
+      ).to.be.revertedWith("E30");
 
       await expect(
-        ACOPoolToken1Token2Call.connect(addr1).withdrawWithLocked(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolToken1Token2Call.connect(addr1).withdrawWithLocked(0, await addr1.getAddress())
+      ).to.be.revertedWith("E20");
 
       await expect(
-        ACOPoolToken1Token2Call.withdrawNoLocked(await addr1.getAddress(), val1)
+        ACOPoolToken1Token2Call.withdrawNoLocked(val1, 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await ACOPoolToken1Token2Call.connect(addr1).approve(await owner.getAddress(), val2);
 
       await expect(
-        ACOPoolToken1Token2Call.withdrawNoLocked(await addr1.getAddress(), val1.add(1))
+        ACOPoolToken1Token2Call.withdrawNoLocked(val1.add(1), 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolToken1Token2Call.connect(addr2).withdrawWithLocked(await addr2.getAddress(), val2.add(1))
+        ACOPoolToken1Token2Call.connect(addr2).withdrawWithLocked(val2.add(1), await addr2.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolToken1Token2Call.connect(addr2).withdrawNoLocked(await addr2.getAddress(), val2)
-      ).to.be.revertedWith("No collateral available");
+        ACOPoolToken1Token2Call.connect(addr2).withdrawNoLocked(val2, 1, await addr2.getAddress())
+      ).to.be.revertedWith("E33");
      
       let bo1 = await token1.balanceOf(await owner.getAddress());
       let bo2 = await token2.balanceOf(await owner.getAddress());
       let ba1 = await token1.balanceOf(await addr1.getAddress());
       let ba2 = await token2.balanceOf(await addr1.getAddress());
-      let w1 = await ACOPoolToken1Token2Call.getWithdrawNoLockedData(await addr1.getAddress(), val1);
-      await ACOPoolToken1Token2Call.withdrawNoLocked(await addr1.getAddress(), val1);
+      let w1 = await ACOPoolToken1Token2Call.getWithdrawNoLockedData(val1);
+
+      await expect(
+        ACOPoolToken1Token2Call.withdrawNoLocked(val1, w1.underlyingWithdrawn.add(100), await addr1.getAddress())
+      ).to.be.revertedWith("E32");
+
+      await ACOPoolToken1Token2Call.withdrawNoLocked(val1, w1.underlyingWithdrawn.sub(100), await addr1.getAddress());
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(val2);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress())).to.equal(val2);
@@ -1303,8 +1392,8 @@ describe("ACOPool2", function() {
 
       ba1 = await token1.balanceOf(await addr2.getAddress());
       ba2 = await token2.balanceOf(await addr2.getAddress());
-      let w2 = await ACOPoolToken1Token2Call.getWithdrawWithLocked(await addr2.getAddress(), val2);
-      await ACOPoolToken1Token2Call.connect(addr2).withdrawWithLocked(await addr2.getAddress(), val2);
+      let w2 = await ACOPoolToken1Token2Call.getWithdrawWithLocked(val2);
+      await ACOPoolToken1Token2Call.connect(addr2).withdrawWithLocked(val2, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(0);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress())).to.equal(0);
@@ -1329,40 +1418,40 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-      await ACOPoolToken1Token2Put.deposit(val1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.deposit(val1, 1, await addr1.getAddress());
 
       await token1.approve(ACOToken1Token2Put.address, token1TotalSupply);
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(200), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
       
       await expect(
-        ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(0, 1, await addr1.getAddress())
+      ).to.be.revertedWith("E30");
 
       await expect(
-        ACOPoolToken1Token2Put.connect(addr1).withdrawWithLocked(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolToken1Token2Put.connect(addr1).withdrawWithLocked(0, await addr1.getAddress())
+      ).to.be.revertedWith("E20");
 
       await expect(
-        ACOPoolToken1Token2Put.withdrawNoLocked(await addr1.getAddress(), val1)
+        ACOPoolToken1Token2Put.withdrawNoLocked(val1, 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(await addr1.getAddress(), val1.add(1))
+        ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(val1.add(1), 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolToken1Token2Put.connect(addr1).withdrawWithLocked(await addr1.getAddress(), val1.add(1))
+        ACOPoolToken1Token2Put.connect(addr1).withdrawWithLocked(val1.add(1), await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(await addr1.getAddress(), val1)
-      ).to.be.revertedWith("No collateral available");
+        ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(val1, 1, await addr1.getAddress())
+      ).to.be.revertedWith("E34");
 
       let ba1 = await token1.balanceOf(await addr1.getAddress());
       let ba2 = await token2.balanceOf(await addr1.getAddress());
       let p2 = await token2.balanceOf(ACOPoolToken1Token2Put.address);
       let p1 = await token1.balanceOf(ACOPoolToken1Token2Put.address);
-      await ACOPoolToken1Token2Put.connect(addr1).withdrawWithLocked(await addr1.getAddress(), val1.div(2));
+      await ACOPoolToken1Token2Put.connect(addr1).withdrawWithLocked(val1.div(2), await addr1.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(val1.div(2));
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(val1.div(2));
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(ba1);
@@ -1373,13 +1462,18 @@ describe("ACOPool2", function() {
       expect(await ACOToken1Token2Put.currentCollateral(await addr1.getAddress())).to.equal(val1.div(4));
       
       await ACOToken1Token2Put.exercise(val1.div(800), 0);
-      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       ba1 = await token1.balanceOf(await addr2.getAddress());
       ba2 = await token2.balanceOf(await addr2.getAddress());
       let bal = await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress());
-      let w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(await addr2.getAddress(), bal);
-      await ACOPoolToken1Token2Put.connect(addr2).withdrawNoLocked(await addr2.getAddress(), bal);
+      let w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(bal);
+
+      await expect(
+        ACOPoolToken1Token2Put.connect(addr2).withdrawNoLocked(bal, w1.strikeAssetWithdrawn.add(1000), await addr2.getAddress())
+      ).to.be.revertedWith("E32");
+
+      await ACOPoolToken1Token2Put.connect(addr2).withdrawNoLocked(bal, w1.strikeAssetWithdrawn.sub(1000), await addr2.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(val1.div(2));
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(val1.div(2));
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress())).to.equal(0);
@@ -1388,7 +1482,7 @@ describe("ACOPool2", function() {
       expect(await ACOToken1Token2Put.currentCollateral(ACOPoolToken1Token2Put.address)).to.equal(val1.div(8));
       expect(await ACOToken1Token2Put.currentCollateral(await addr2.getAddress())).to.equal(0);
 
-      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
       await ACOToken1Token2Put.exercise(val1.div(800), 0);
       await ACOPoolFactory.setTolerancePriceAboveOnAcoPool([0],[ACOPoolToken1Token2Put.address]);
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, val1.div(1000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
@@ -1397,8 +1491,13 @@ describe("ACOPool2", function() {
       ba1 = await token1.balanceOf(await addr1.getAddress());
       ba2 = await token2.balanceOf(await addr1.getAddress());
       bal = await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress());
-      w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(await addr1.getAddress(), val1.div(2));
-      await ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(await addr1.getAddress(), val1.div(2));
+      w1 = await ACOPoolToken1Token2Put.getWithdrawNoLockedData(val1.div(2));
+
+      await expect(
+        ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(val1.div(2), w1.strikeAssetWithdrawn.add(1000), await addr1.getAddress())
+      ).to.be.revertedWith("E32");
+
+      await ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked(val1.div(2), w1.strikeAssetWithdrawn.sub(1000), await addr1.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(bal);
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr1.getAddress())).to.equal(ba1.add(w1.underlyingWithdrawn));
@@ -1411,15 +1510,15 @@ describe("ACOPool2", function() {
       await ACOPoolToken1Token2Put.connect(addr2).approve(await addr3.getAddress(), bal);
 
       await expect(
-        ACOPoolToken1Token2Put.connect(addr3).withdrawNoLocked(await addr2.getAddress(), bal)
-      ).to.be.revertedWith("No collateral available");
+        ACOPoolToken1Token2Put.connect(addr3).withdrawNoLocked(bal, 1, await addr2.getAddress())
+      ).to.be.revertedWith("E34");
 
       ba1 = await token1.balanceOf(await addr2.getAddress());
       ba2 = await token2.balanceOf(await addr2.getAddress());
       let ba31 = await token1.balanceOf(await addr3.getAddress());
       let ba32 = await token2.balanceOf(await addr3.getAddress());
-      w1 = await ACOPoolToken1Token2Put.getWithdrawWithLocked(await addr2.getAddress(), bal);
-      await ACOPoolToken1Token2Put.connect(addr3).withdrawWithLocked(await addr2.getAddress(), bal);
+      w1 = await ACOPoolToken1Token2Put.getWithdrawWithLocked(bal);
+      await ACOPoolToken1Token2Put.connect(addr3).withdrawWithLocked(bal, await addr2.getAddress());
       expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await token1.balanceOf(await addr3.getAddress())).to.equal(ba31.add(w1.underlyingWithdrawn));
@@ -1439,33 +1538,39 @@ describe("ACOPool2", function() {
       let val1 = ethers.utils.bigNumberify("1000000000000000000");
       let val2 = ethers.utils.bigNumberify("5000000000000000000");
 
-      await ACOPoolEthToken2Call.deposit(val1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.deposit(val1, 1, await addr1.getAddress(), {value: val1});
 
       await expect(
-        ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(0, 1, await addr1.getAddress())
+      ).to.be.revertedWith("E30");
 
       await expect(
-        ACOPoolEthToken2Call.connect(addr1).withdrawWithLockedWithGasToken(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolEthToken2Call.connect(addr1).withdrawWithLockedWithGasToken(0, await addr1.getAddress())
+      ).to.be.revertedWith("E20");
 
       await expect(
-        ACOPoolEthToken2Call.withdrawNoLockedWithGasToken(await addr1.getAddress(), val1)
+        ACOPoolEthToken2Call.withdrawNoLockedWithGasToken(val1, 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(await addr1.getAddress(), val1.add(1))
+        ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(val1.add(1), 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolEthToken2Call.connect(addr1).withdrawWithLockedWithGasToken(await addr1.getAddress(), val1.add(1))
+        ACOPoolEthToken2Call.connect(addr1).withdrawWithLockedWithGasToken(val1.add(1), await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       let ba2 = await token2.balanceOf(await addr1.getAddress());
       let ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr1.getAddress(),"latest"]));
       let p2 = await token2.balanceOf(ACOPoolEthToken2Call.address);
       let p1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]));
-      await ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(await addr1.getAddress(), val1);
+      let w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(val1);
+
+      await expect(
+        ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(val1, w1.underlyingWithdrawn.add(ethers.utils.bigNumberify("2500000000000")), await addr1.getAddress())
+      ).to.be.revertedWith("E32");
+
+      await ACOPoolEthToken2Call.connect(addr1).withdrawNoLockedWithGasToken(val1, w1.underlyingWithdrawn.sub(ethers.utils.bigNumberify("2500000000000")), await addr1.getAddress());
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
       expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr1.getAddress(),"latest"]))).to.be.gt(ba1);
@@ -1474,18 +1579,18 @@ describe("ACOPool2", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(p2.add(ba2));
       expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(0);
 
-      await ACOPoolEthToken2Call.deposit(val1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.deposit(val1, 1, await addr1.getAddress(), {value: val1});
       await token2.approve(ACOPoolEthToken2Call.address, token2TotalSupply);
       await token2.approve(ACOEthToken2Call.address, token2TotalSupply);
       await token2.approve(ACOEthToken2Call2.address, token2TotalSupply);
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, val1.div(4), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
       await ACOPoolFactory.setTolerancePriceBelowOnAcoPool([0],[ACOPoolEthToken2Call.address]);
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val1.div(4), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
-      await ACOPoolEthToken2Call.deposit(val2, await addr2.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.deposit(val2, 1, await addr2.getAddress(), {value: val2});
       let bal = await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress());
       
       await expect(
-        ACOPoolEthToken2Call.connect(addr3).withdrawWithLockedWithGasToken(await addr2.getAddress(), bal)
+        ACOPoolEthToken2Call.connect(addr3).withdrawWithLockedWithGasToken(bal, await addr2.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await ACOPoolEthToken2Call.connect(addr2).approve(await addr3.getAddress(), bal);
@@ -1494,8 +1599,8 @@ describe("ACOPool2", function() {
       ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr2.getAddress(),"latest"]));
       let ba32 = await token2.balanceOf(await addr3.getAddress());
       let ba31 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr3.getAddress(),"latest"]));
-      let w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(await addr2.getAddress(), bal);
-      await ACOPoolEthToken2Call.connect(addr3).withdrawWithLockedWithGasToken(await addr2.getAddress(), bal);
+      w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(bal);
+      await ACOPoolEthToken2Call.connect(addr3).withdrawWithLockedWithGasToken(bal, await addr2.getAddress());
       let col = val1.div(4).mul(bal).div(bal.add(val1));
 
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(val1);
@@ -1516,7 +1621,7 @@ describe("ACOPool2", function() {
       await ACOEthToken2Call2.exercise(val1.div(4), 0);
       
       await expect(
-        ACOPoolEthToken2Call.connect(addr3).withdrawNoLockedWithGasToken(await addr1.getAddress(), val1)
+        ACOPoolEthToken2Call.connect(addr3).withdrawNoLockedWithGasToken(val1, 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await ACOPoolEthToken2Call.connect(addr1).approve(await addr3.getAddress(), val1);
@@ -1525,13 +1630,18 @@ describe("ACOPool2", function() {
       ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr1.getAddress(),"latest"]));
       ba32 = await token2.balanceOf(await addr3.getAddress());
       ba31 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr3.getAddress(),"latest"]));
-      w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(await addr1.getAddress(), val1);
-      let w2 = await ACOPoolEthToken2Call.getWithdrawNoLockedData(await addr1.getAddress(), val1);
+      w1 = await ACOPoolEthToken2Call.getWithdrawWithLocked(val1);
+      let w2 = await ACOPoolEthToken2Call.getWithdrawNoLockedData(val1);
       expect(w1.underlyingWithdrawn).to.equal(w2.underlyingWithdrawn);
       expect(w1.strikeAssetWithdrawn).to.equal(w2.strikeAssetWithdrawn);
       expect(w1[3][0]).to.equal(0);
       expect(w1[3][1]).to.equal(0);
-      await ACOPoolEthToken2Call.connect(addr3).withdrawNoLockedWithGasToken(await addr1.getAddress(), val1);
+
+      await expect(
+        ACOPoolEthToken2Call.connect(addr3).withdrawNoLockedWithGasToken(val1, w1.underlyingWithdrawn.add(ethers.utils.bigNumberify("2500000000000")), await addr1.getAddress())
+      ).to.be.revertedWith("E32");
+
+      await ACOPoolEthToken2Call.connect(addr3).withdrawNoLockedWithGasToken(val1, w1.underlyingWithdrawn.sub(ethers.utils.bigNumberify("2500000000000")), await addr1.getAddress());
       expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
       expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(0);
@@ -1556,36 +1666,41 @@ describe("ACOPool2", function() {
       await token2.approve(ACOPoolEthToken2Put.address, token2TotalSupply);
       await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-      await ACOPoolEthToken2Put.deposit(val1, await addr1.getAddress());
-      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, await addr2.getAddress());
+      await ACOPoolEthToken2Put.deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
 
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
       await ACOPoolFactory.setTolerancePriceAboveOnAcoPool([0],[ACOPoolEthToken2Put.address]);
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
     
       await expect(
-        ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(0, 1, await addr1.getAddress())
+      ).to.be.revertedWith("E30");
 
       await expect(
-        ACOPoolEthToken2Put.connect(addr1).withdrawWithLocked(await addr1.getAddress(), 0)
-      ).to.be.revertedWith("Invalid shares");
+        ACOPoolEthToken2Put.connect(addr1).withdrawWithLocked(0, await addr1.getAddress())
+      ).to.be.revertedWith("E20");
 
       await expect(
-        ACOPoolEthToken2Put.withdrawNoLocked(await addr1.getAddress(), val1)
+        ACOPoolEthToken2Put.withdrawNoLocked(val1, 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(await addr1.getAddress(), val1.add(1))
+        ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(val1.add(1), 1, await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       await expect(
-        ACOPoolEthToken2Put.connect(addr1).withdrawWithLocked(await addr1.getAddress(), val1.add(1))
+        ACOPoolEthToken2Put.connect(addr1).withdrawWithLocked(val1.add(1), await addr1.getAddress())
       ).to.be.revertedWith("SafeMath: subtraction overflow");
 
       let ba2 = await token2.balanceOf(await addr1.getAddress());
-      let w1 = await ACOPoolEthToken2Put.getWithdrawNoLockedData(await addr1.getAddress(), val1);
-      await ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(await addr1.getAddress(), val1);
+      let w1 = await ACOPoolEthToken2Put.getWithdrawNoLockedData(val1);
+
+      await expect(
+        ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(val1, w1.strikeAssetWithdrawn.add(1000), await addr1.getAddress())
+      ).to.be.revertedWith("E32");
+
+      await ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked(val1, w1.strikeAssetWithdrawn.sub(1000), await addr1.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(val2);
       expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
@@ -1596,8 +1711,8 @@ describe("ACOPool2", function() {
       expect(await ACOEthToken2Put2.currentCollateral(await addr1.getAddress())).to.equal(0);
 
       ba2 = await token2.balanceOf(await addr2.getAddress());
-      w1 = await ACOPoolEthToken2Put.getWithdrawWithLocked(await addr2.getAddress(), val2.div(2));
-      await ACOPoolEthToken2Put.connect(addr2).withdrawWithLocked(await addr2.getAddress(), val2.div(2));
+      w1 = await ACOPoolEthToken2Put.getWithdrawWithLocked(val2.div(2));
+      await ACOPoolEthToken2Put.connect(addr2).withdrawWithLocked(val2.div(2), await addr2.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(val2.div(2));
       expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(val2.div(2));
       expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
@@ -1609,12 +1724,20 @@ describe("ACOPool2", function() {
 
       await ACOEthToken2Put.exercise(val1.mul(100000000), 0, {value: val1.mul(100000000).add(maxExercisedAccounts)});
       await network.provider.send("evm_setNextBlockTimestamp", [expiration]);
+      await network.provider.send("evm_mine");
       expect(await ACOPoolEthToken2Put.numberOfOpenAcoTokens()).to.equal(2);
 
       ba2 = await token2.balanceOf(await addr2.getAddress());
       let p2 = await token2.balanceOf(ACOPoolEthToken2Put.address);
       let ba1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [await addr2.getAddress(),"latest"]));
-      await ACOPoolEthToken2Put.connect(addr2).withdrawNoLocked(await addr2.getAddress(), val2.div(2));
+      w1 = await ACOPoolEthToken2Put.getWithdrawNoLockedData(val2.div(2));
+      expect(w1.strikeAssetWithdrawn).to.equal(p2.add(acoEthToken2PutPrice2.div(2)));
+      
+      await expect(
+        ACOPoolEthToken2Put.connect(addr2).withdrawNoLocked(val2.div(2), w1.strikeAssetWithdrawn.add(1000), await addr2.getAddress())
+      ).to.be.revertedWith("E32");
+
+      await ACOPoolEthToken2Put.connect(addr2).withdrawNoLocked(val2.div(2), w1.strikeAssetWithdrawn.sub(1000), await addr2.getAddress());
       expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(0);
       expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(ba2.add(p2).add(acoEthToken2PutPrice2.div(2)));
@@ -1627,16 +1750,369 @@ describe("ACOPool2", function() {
       expect(await ACOPoolEthToken2Put.numberOfOpenAcoTokens()).to.equal(0);
     });
     it("Check complex flow ACOPoolToken1Token2Call", async function () {
+      let val1 = ethers.utils.bigNumberify("100000000");
+      let val2 = ethers.utils.bigNumberify("200000000");
+      let val3 = ethers.utils.bigNumberify("300000000");
+      let val5 = ethers.utils.bigNumberify("500000000");
+      let val8 = ethers.utils.bigNumberify("800000000");
+      
+      await ACOPoolFactory.setTolerancePriceAboveOnAcoPool([0],[ACOPoolToken1Token2Call.address]);
+      await ACOPoolFactory.setTolerancePriceBelowOnAcoPool([0],[ACOPoolToken1Token2Call.address]);
 
+      await token1.connect(owner).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
+      await token1.connect(addr1).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
+      await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
+      await token1.connect(addr3).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
+      await token2.connect(owner).approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
+      await token2.connect(addr1).approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
+      await token2.connect(addr2).approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
+      await token2.connect(addr3).approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
+
+      await ACOPoolToken1Token2Call.connect(addr1).deposit(val8, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr2).swap(ACOToken1Token2Call.address, val1.div(2), ethers.utils.bigNumberify("9999999999"), await addr2.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call.address, val1.div(3), ethers.utils.bigNumberify("9999999999"), await addr2.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Call.connect(owner).deposit(val5, 1, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call2.address, val2, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Call.connect(addr3).deposit(val3, 1, await addr3.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr1).deposit(val2, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call.address, val1, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call2.address, val3, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await token2.connect(owner).approve(ACOToken1Token2Call.address, token2TotalSupply);
+      await token2.connect(addr2).approve(ACOToken1Token2Call.address, token2TotalSupply);
+      await ACOToken1Token2Call.connect(addr2).exercise(await ACOToken1Token2Call.balanceOf(await addr2.getAddress()), 0);
+      await ACOToken1Token2Call.connect(owner).exercise(await ACOToken1Token2Call.balanceOf(await owner.getAddress()), 0);
+      expect(await ACOPoolToken1Token2Call.numberOfAcoTokensNegotiated()).to.equal(2);
+      expect(await ACOPoolToken1Token2Call.numberOfOpenAcoTokens()).to.equal(2);
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration]);
+      await ACOPoolToken1Token2Call.connect(addr2).withdrawNoLocked(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress()), 1, await addr2.getAddress());
+      expect(await ACOPoolToken1Token2Call.numberOfAcoTokensNegotiated()).to.equal(2);
+      expect(await ACOPoolToken1Token2Call.numberOfOpenAcoTokens()).to.equal(0);
+      await ACOPoolToken1Token2Call.connect(owner).restoreCollateral();
+      let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, true, acoToken1Token2CallPrice2, expiration+86400, maxExercisedAccounts)).wait();
+      let result = tx.events[tx.events.length - 1].args;
+      let ACOToken1Token2Call3 = await ethers.getContractAt("ACOToken", result.acoToken);
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call3.address, val3, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Call.connect(addr1).withdrawWithLocked((await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).div(2), await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr2).deposit(val5, 1, await addr2.getAddress());
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call3.address, val2, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Call.connect(addr1).deposit(val2, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call3.address, val1, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await token2.connect(owner).approve(ACOToken1Token2Call3.address, token2TotalSupply);
+      await ACOToken1Token2Call3.connect(owner).exercise((await ACOToken1Token2Call3.balanceOf(await owner.getAddress())).div(3), 0);
+      await ACOPoolToken1Token2Call.connect(owner).swap(ACOToken1Token2Call3.address, val1.div(3), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOToken1Token2Call3.connect(owner).exercise((await ACOToken1Token2Call3.balanceOf(await owner.getAddress())).div(2), 0);
+      expect(await ACOPoolToken1Token2Call.numberOfAcoTokensNegotiated()).to.equal(3);
+      expect(await ACOPoolToken1Token2Call.numberOfOpenAcoTokens()).to.equal(1);
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration+86400]);
+      await ACOPoolToken1Token2Call.connect(addr1).redeemACOTokens();
+      await ACOToken1Token2Call3.connect(addr1).redeem();
+      expect(await ACOPoolToken1Token2Call.numberOfAcoTokensNegotiated()).to.equal(3);
+      expect(await ACOPoolToken1Token2Call.numberOfOpenAcoTokens()).to.equal(0);
+      await ACOPoolToken1Token2Call.connect(addr2).withdrawWithLocked(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress()), await addr2.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr3).withdrawNoLocked(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress()), 1, await addr3.getAddress());
+      await ACOPoolToken1Token2Call.connect(addr1).withdrawWithLocked(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress()), await addr1.getAddress());
+      
+      expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(0);
+      expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await ACOPoolToken1Token2Call.balanceOf(await owner.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(0);
+      expect(await token2.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(0);
+      expect(await ACOToken1Token2Call.currentCollateral(ACOPoolToken1Token2Call.address)).to.equal(0);
+      expect(await ACOToken1Token2Call.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call2.currentCollateral(ACOPoolToken1Token2Call.address)).to.equal(0);
+      expect(await ACOToken1Token2Call2.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call2.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call2.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call2.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call3.currentCollateral(ACOPoolToken1Token2Call.address)).to.equal(0);
+      expect(await ACOToken1Token2Call3.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call3.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call3.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Call3.currentCollateral(await owner.getAddress())).to.equal(0);
     });
     it("Check complex flow ACOPoolToken1Token2Put", async function () {
+      let val1 = ethers.utils.bigNumberify("10000000000");
+      let val4 = ethers.utils.bigNumberify("40000000000");
+      let val7 = ethers.utils.bigNumberify("70000000000");
+      let val10 = ethers.utils.bigNumberify("100000000000");
 
+      await token1.connect(owner).approve(ACOPoolToken1Token2Put.address, token1TotalSupply);
+      await token1.connect(addr1).approve(ACOPoolToken1Token2Put.address, token1TotalSupply);
+      await token1.connect(addr2).approve(ACOPoolToken1Token2Put.address, token1TotalSupply);
+      await token1.connect(addr3).approve(ACOPoolToken1Token2Put.address, token1TotalSupply);
+      await token2.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+      await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+      await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+      await token2.connect(addr3).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
+
+      let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration, maxExercisedAccounts)).wait();
+      let result = tx.events[tx.events.length - 1].args;
+      let aco2 = await ethers.getContractAt("ACOToken", result.acoToken);
+      tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+86400, maxExercisedAccounts)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      let aco3 = await ethers.getContractAt("ACOToken", result.acoToken);
+      tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+86400, maxExercisedAccounts)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      let aco4 = await ethers.getContractAt("ACOToken", result.acoToken);
+      tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+2*86400, maxExercisedAccounts)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      let aco5 = await ethers.getContractAt("ACOToken", result.acoToken);
+
+      await token1.connect(owner).approve(ACOToken1Token2Put.address, token1TotalSupply);
+      await token1.connect(owner).approve(aco2.address, token1TotalSupply);
+      await token1.connect(owner).approve(aco3.address, token1TotalSupply);
+      await token1.connect(owner).approve(aco4.address, token1TotalSupply);
+      await token1.connect(owner).approve(aco5.address, token1TotalSupply);
+
+      await ACOPoolToken1Token2Put.connect(addr1).deposit(val7, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(200), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(aco2.address, val1.div(400), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(aco3.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(300), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.connect(addr1).deposit(val4, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val1, 1, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.swap(aco4.address, val4.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(aco3.address, val1.div(200), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val1, 1, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.swap(aco2.address, val1.div(400), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.connect(addr3).deposit(val10, 1, await addr3.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr1).withdrawNoLocked((await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).div(3), 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.swap(aco3.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(aco5.address, val4.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.connect(addr1).deposit(val1, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val1, 1, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val4.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(aco3.address, val4.div(200), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await aco2.exercise(await aco2.balanceOf(await owner.getAddress()), 0);
+      await ACOPoolToken1Token2Put.connect(owner).restoreCollateral();
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration]);
+      await ACOPoolToken1Token2Put.swap(aco4.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.swap(aco3.address, val4.div(200), ethers.utils.bigNumberify("99999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.connect(addr2).withdrawNoLocked(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress()), 1, await addr2.getAddress());
+      expect(await ACOPoolToken1Token2Put.numberOfAcoTokensNegotiated()).to.equal(5);
+      expect(await ACOPoolToken1Token2Put.numberOfOpenAcoTokens()).to.equal(3);
+      await ACOPoolToken1Token2Put.redeemACOTokens();
+      expect(await ACOPoolToken1Token2Put.numberOfAcoTokensNegotiated()).to.equal(5);
+      expect(await ACOPoolToken1Token2Put.numberOfOpenAcoTokens()).to.equal(3);
+      await ACOPoolToken1Token2Put.swap(aco3.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.connect(addr1).deposit(val4, 1, await addr1.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr2).deposit(val7, 1, await addr2.getAddress());
+      await ACOPoolToken1Token2Put.connect(addr3).withdrawNoLocked(await ACOPoolToken1Token2Put.balanceOf(await addr3.getAddress()), 1, await addr3.getAddress());
+      await ACOPoolToken1Token2Put.swap(aco5.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await aco3.exercise((await aco3.balanceOf(await owner.getAddress())).div(2), 0);
+      await aco4.exercise((await aco4.balanceOf(await owner.getAddress())).div(2), 0);
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration+86400]);
+      expect(await ACOPoolToken1Token2Put.numberOfAcoTokensNegotiated()).to.equal(5);
+      expect(await ACOPoolToken1Token2Put.numberOfOpenAcoTokens()).to.equal(3);
+      await ACOPoolToken1Token2Put.redeemACOTokens();
+      expect(await ACOPoolToken1Token2Put.numberOfAcoTokensNegotiated()).to.equal(5);
+      expect(await ACOPoolToken1Token2Put.numberOfOpenAcoTokens()).to.equal(1);
+      await ACOPoolToken1Token2Put.swap(aco5.address, val4.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolToken1Token2Put.connect(addr1).withdrawWithLocked(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress()), await addr1.getAddress());
+      await ACOPoolToken1Token2Put.swap(aco5.address, val1.div(100), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration+2*86400]);
+      await ACOPoolToken1Token2Put.connect(addr2).withdrawNoLocked(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress()), 1, await addr2.getAddress());
+
+      await aco5.connect(addr1).redeem();
+
+      expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(0);
+      expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await ACOPoolToken1Token2Put.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await ACOPoolToken1Token2Put.balanceOf(await owner.getAddress())).to.equal(0);
+      expect(await token1.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(0);
+      expect(await token2.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(0);
+      expect(await ACOToken1Token2Put.currentCollateral(ACOPoolToken1Token2Put.address)).to.equal(0);
+      expect(await ACOToken1Token2Put.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Put.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Put.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOToken1Token2Put.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await aco2.currentCollateral(ACOPoolToken1Token2Put.address)).to.equal(0);
+      expect(await aco2.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco2.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco2.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await aco2.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(ACOPoolToken1Token2Put.address)).to.equal(0);
+      expect(await aco3.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(ACOPoolToken1Token2Put.address)).to.equal(0);
+      expect(await aco4.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await aco5.currentCollateral(ACOPoolToken1Token2Put.address)).to.equal(0);
+      expect(await aco5.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco5.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco5.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await aco5.currentCollateral(await owner.getAddress())).to.equal(0);
     });
     it("Check complex flow ACOPoolEthToken2Call", async function () {
+      let val1 = ethers.utils.bigNumberify("100000000000000000");
+      let val2 = ethers.utils.bigNumberify("200000000000000000");
+      let val3 = ethers.utils.bigNumberify("300000000000000000");
+      let val5 = ethers.utils.bigNumberify("500000000000000000");
 
+      await ACOPoolFactory.setTolerancePriceAboveOnAcoPool([0],[ACOPoolEthToken2Call.address]);
+      await ACOPoolFactory.setTolerancePriceBelowOnAcoPool([0],[ACOPoolEthToken2Call.address]);
+
+      await token2.connect(owner).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
+      await token2.connect(addr1).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
+      await token2.connect(addr2).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
+      await token2.connect(addr3).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
+
+      await token2.connect(owner).approve(ACOEthToken2Call.address, token2TotalSupply);
+      await token2.connect(owner).approve(ACOEthToken2Call2.address, token2TotalSupply);
+
+      await ACOPoolEthToken2Call.connect(addr1).deposit(val5, 1, await addr1.getAddress(), {value: val5});
+      await ACOPoolEthToken2Call.connect(addr1).withdrawNoLocked((await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).div(3), 1, await addr1.getAddress());
+      await ACOPoolEthToken2Call.connect(addr1).withdrawWithLocked((await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).div(2), await addr1.getAddress());
+      await ACOPoolEthToken2Call.connect(addr1).deposit(val2, 1, await addr1.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.connect(addr1).deposit(val1, 1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, val2, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val1, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.connect(addr2).deposit(val2, 1, await addr2.getAddress(), {value: val2});
+      await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val1, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Call.connect(addr2).withdrawNoLocked((await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress())).div(2), 1, await addr2.getAddress());
+      await ACOPoolEthToken2Call.connect(addr2).withdrawWithLocked((await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress())), await addr2.getAddress());
+      await ACOPoolEthToken2Call.connect(addr3).deposit(val3, 1, await addr3.getAddress(), {value: val3});
+      await ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, val2, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Call.connect(addr3).deposit(val1, 1, await addr3.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.connect(addr1).withdrawNoLocked((await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).div(3), 1, await addr1.getAddress());
+      await ACOPoolEthToken2Call.connect(addr3).withdrawWithLocked((await ACOPoolEthToken2Call.balanceOf(await addr3.getAddress())).div(2), await addr3.getAddress());
+      await ACOEthToken2Call.exercise(await ACOEthToken2Call.balanceOf(await owner.getAddress()), 0);
+      await ACOPoolEthToken2Call.connect(addr3).deposit(val1, 1, await addr3.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val1, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Call.connect(addr1).deposit(val1, 1, await addr1.getAddress(), {value: val1});
+      await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val2, ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Call.restoreCollateral();
+      await ACOEthToken2Call2.exercise((await ACOEthToken2Call2.balanceOf(await owner.getAddress())).div(2), 0);
+      await ACOPoolEthToken2Call.connect(addr3).withdrawNoLocked((await ACOPoolEthToken2Call.balanceOf(await addr3.getAddress())), 1, await addr3.getAddress());
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration]);
+      await ACOPoolEthToken2Call.redeemACOTokens();
+      await ACOPoolEthToken2Call.connect(addr1).withdrawWithLocked((await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())), await addr1.getAddress());
+    
+      await ACOEthToken2Call2.connect(addr2).redeem();
+      await ACOEthToken2Call2.connect(addr3).redeem();
+
+      expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
+      expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await ACOPoolEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await ACOPoolEthToken2Call.balanceOf(await owner.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(0);
+      expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(0);
+      expect(await ACOEthToken2Call.currentCollateral(ACOPoolEthToken2Call.address)).to.equal(0);
+      expect(await ACOEthToken2Call.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Call.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Call.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Call.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Call2.currentCollateral(ACOPoolEthToken2Call.address)).to.equal(0);
+      expect(await ACOEthToken2Call2.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Call2.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Call2.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Call2.currentCollateral(await owner.getAddress())).to.equal(0);
     });
     it("Check complex flow ACOPoolEthToken2Put", async function () {
+      let val1 = ethers.utils.bigNumberify("10000000000");
+      let val2 = ethers.utils.bigNumberify("20000000000");
+      let val5 = ethers.utils.bigNumberify("50000000000");
 
+      await ACOPoolFactory.setTolerancePriceAboveOnAcoPool([0],[ACOPoolEthToken2Put.address]);
+      await ACOPoolFactory.setTolerancePriceBelowOnAcoPool([0],[ACOPoolEthToken2Put.address]);
+
+      await token2.connect(owner).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+      await token2.connect(addr1).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+      await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+      await token2.connect(addr3).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
+
+      await token2.connect(owner).approve(ACOEthToken2Put.address, token2TotalSupply);
+      await token2.connect(owner).approve(ACOEthToken2Put2.address, token2TotalSupply);
+
+      let tx = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, acoEthToken2PutPrice, expiration+86400, maxExercisedAccounts)).wait();
+      let result = tx.events[tx.events.length - 1].args;
+      let aco3 = await ethers.getContractAt("ACOToken", result.acoToken);
+      tx = await (await ACOFactory.createAcoToken(AddressZero, token2.address, false, acoEthToken2PutPrice2, expiration+86400, maxExercisedAccounts)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      let aco4 = await ethers.getContractAt("ACOToken", result.acoToken);
+
+      await token2.connect(owner).approve(aco3.address, token2TotalSupply);
+      await token2.connect(owner).approve(aco4.address, token2TotalSupply);
+
+      await ACOPoolEthToken2Put.connect(addr1).deposit(val5, 1, await addr1.getAddress());
+      await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val2.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
+      await ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.connect(addr3).deposit(val1, 1, await addr3.getAddress());
+      await ACOPoolEthToken2Put.swap(aco3.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress());
+      await ACOPoolEthToken2Put.swap(aco3.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val2.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.connect(addr1).withdrawNoLocked((await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).div(4), 1, await addr1.getAddress());
+      await ACOPoolEthToken2Put.connect(addr3).deposit(val1, 1, await addr3.getAddress());
+      await ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.connect(addr2).withdrawNoLocked((await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).div(5), 1, await addr2.getAddress());
+      let bal = (await ACOEthToken2Put.balanceOf(await owner.getAddress()));
+      let exec = (await ACOEthToken2Put.getBaseExerciseData(bal))[1];
+      await ACOEthToken2Put.exercise(bal, 0, {value: exec.add(maxExercisedAccounts)});
+      await ACOPoolEthToken2Put.restoreCollateral();
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration]);
+      await ACOPoolEthToken2Put.swap(aco3.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.connect(addr2).withdrawWithLocked((await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())), await addr2.getAddress());
+      await ACOPoolEthToken2Put.swap(aco4.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      await ACOPoolEthToken2Put.connect(addr3).deposit(val1, 1, await addr3.getAddress());
+      await ACOPoolEthToken2Put.swap(aco3.address, val1.mul(100000000), ethers.utils.bigNumberify("9999999999"), await owner.getAddress(), 1999999999);
+      bal = (await aco3.balanceOf(await owner.getAddress()));
+      exec = (await aco3.getBaseExerciseData(bal))[1];
+      await aco3.exercise(bal, 0, {value: exec.add(maxExercisedAccounts)});
+      bal = (await aco4.balanceOf(await owner.getAddress())).div(4);
+      exec = (await aco4.getBaseExerciseData(bal))[1];
+      await aco4.exercise(bal, 0, {value: exec.add(maxExercisedAccounts)});
+      await network.provider.send("evm_setNextBlockTimestamp", [expiration+86400]);
+      await ACOPoolEthToken2Put.connect(addr1).withdrawWithLocked((await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())), await addr1.getAddress());
+      await ACOPoolEthToken2Put.connect(addr3).withdrawWithLocked((await ACOPoolEthToken2Put.balanceOf(await addr3.getAddress())), await addr3.getAddress());
+      
+      expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(0);
+      expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
+      expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await ACOPoolEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(0);
+      expect(await ACOPoolEthToken2Put.balanceOf(await owner.getAddress())).to.equal(0);
+      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
+      expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(0);
+      expect(await ACOEthToken2Put.currentCollateral(ACOPoolEthToken2Put.address)).to.equal(0);
+      expect(await ACOEthToken2Put.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Put.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Put.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Put.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Put2.currentCollateral(ACOPoolEthToken2Put.address)).to.equal(0);
+      expect(await ACOEthToken2Put2.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Put2.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Put2.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await ACOEthToken2Put2.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(ACOPoolEthToken2Put.address)).to.equal(0);
+      expect(await aco3.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await aco3.currentCollateral(await owner.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(ACOPoolEthToken2Put.address)).to.equal(0);
+      expect(await aco4.currentCollateral(await addr1.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(await addr3.getAddress())).to.equal(0);
+      expect(await aco4.currentCollateral(await owner.getAddress())).to.equal(0);
     });
   });
 });
+
+const getCurrentTimestamp = async () => {
+  let block = await network.provider.send("eth_getBlockByNumber",["latest",true]);
+  return parseInt(block.timestamp, 16);
+};
