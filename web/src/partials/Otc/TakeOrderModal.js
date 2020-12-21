@@ -8,7 +8,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { acoOtcAddress, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, toDecimals, usdcAddress, wethAddress, zero } from '../../util/constants'
+import { acoOtcAddress, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, usdcAddress, wethAddress, zero } from '../../util/constants'
 import { allowance, allowDeposit } from '../../util/erc20Methods'
 import { swapAskOrder, swapBidOrder } from '../../util/acoOtcMethods'
 
