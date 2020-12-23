@@ -62,6 +62,71 @@ const getBaseVolatility = (pool) => {
   });
 };
 
+const getWithdrawNoLockedOnAcoPool = (acoPool, shares) => {
+  return new Promise((resolve, reject) => { 
+    callEthereum("eth_call", {"to": acoPool, "data": "0xf92a336f" + numberToData(shares)}).then((result) => {
+      if (result.startsWith("0x")) {
+        resolve({
+          underlying: BigInt("0x" + result.substring(2, 66)),
+          strikeAsset: BigInt("0x" + result.substring(66, 130)),
+          isPossible: (parseInt(result.substring(130), 16) === 1)
+        });
+      } else {
+        reject(new Error("Error on get withdraw data for " + acoPool));
+      }
+    }).catch((err) => reject(err));
+  });
+};
+
+const getPoolNetData = (acoPool, totalSupply, poolDecimals) => {
+  return new Promise((resolve, reject) => { 
+    internalGetPoolNetData(acoPool, totalSupply, poolDecimals, reject, resolve, 0);
+  }).catch((err) => reject(err));
+};
+
+
+const internalGetPoolNetData = (acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt) => {
+  return new Promise((resolve, reject) => { 
+    if (totalSupply === BigInt(0) || poolDecimals <= attempt || attempt === 3) {
+      onSuccess({
+        underlyingPerShare: "0",
+        strikeAssetPerShare: "0",
+        underlyingTotalShare: "0",
+        strikeAssetTotalShare: "0"
+      });
+      resolve();
+    } else {
+      const share = BigInt(10) ** BigInt(poolDecimals - attempt);
+      if (totalSupply >= share) {
+        getWithdrawNoLockedOnAcoPool(acoPool, share).then((result) => {
+          if (result.isPossible) {
+            onSuccess({
+              underlyingPerShare: (result.underlying * (BigInt(10) ** BigInt(attempt))).toString(10),
+              strikeAssetPerShare: (result.strikeAsset * (BigInt(10) ** BigInt(attempt))).toString(10),
+              underlyingTotalShare: (totalSupply * result.underlying / share).toString(10),
+              strikeAssetTotalShare: (totalSupply * result.strikeAsset / share).toString(10)
+            });
+          } else {
+            ++attempt;
+            internalGetPoolNetData(acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt);
+          }
+          resolve();
+        }).catch((err) => {
+          onError(err);
+          resolve();
+        });
+      } else {
+        ++attempt;
+        internalGetPoolNetData(acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt);
+        resolve();
+      }
+    }
+  }).catch((err) => {
+    onError(err);
+    resolve();
+  });
+};
+
 const getSymbol = (token) => {
   return new Promise((resolve, reject) => {
     if (isEther(token)) {
@@ -99,6 +164,18 @@ const getDecimals = (token) => {
         }
       }).catch((err) => reject(err));
     }
+  });
+};
+
+const getTotalSupply = (token) => {
+  return new Promise((resolve, reject) => {
+      callEthereum("eth_call", {"to": token, "data": "0x18160ddd"}).then((result) => {
+      if (result) {
+        resolve(BigInt(result));
+      } else {
+        resolve(BigInt(0));
+      }
+    }).catch((err) => reject(err));
   });
 };
 
@@ -276,6 +353,8 @@ module.exports.acoPools = () => {
         promises.push(getBalance(response[i].underlying, response[i].acoPool));
         added[(response[i].acoPool+"str")] = promises.length;
         promises.push(getBalance(response[i].strikeAsset, response[i].acoPool));
+        added[(response[i].acoPool+"tol")] = promises.length;
+        promises.push(getTotalSupply(response[i].acoPool));
         added[response[i].acoPool] = promises.length;
         promises.push(getTokenInfo(response[i].acoPool));
         if (added[response[i].underlying] === undefined) {
@@ -289,15 +368,28 @@ module.exports.acoPools = () => {
       }
       Promise.all(promises).then((result) =>
       {
+        const shareDataPromises = [];
         for (let j = 0; j < response.length; ++j) {
           response[j].volatility = result[added[(response[j].acoPool+"vol")]];
           response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
           response[j].strikeAssetBalance = (result[added[(response[j].acoPool+"str")]]).toString(10);
+          response[j].totalSupply = (result[added[(response[j].acoPool+"tol")]]).toString(10);
           response[j].acoPoolInfo = result[added[response[j].acoPool]];
           response[j].underlyingInfo = result[added[response[j].underlying]];
           response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
+
+          shareDataPromises.push(getPoolNetData(response[j].acoPool, result[added[(response[j].acoPool+"tol")]], result[added[response[j].acoPool]].decimals))
         }
-        resolve(response);
+        Promise.all(shareDataPromises).then((data) => 
+        {
+          for (let k = 0; k < response.length; ++k) {
+            response[k].underlyingPerShare = data[k].underlyingPerShare;
+            response[k].strikeAssetPerShare = data[k].strikeAssetPerShare;
+            response[k].underlyingTotalShare = data[k].underlyingTotalShare;
+            response[k].strikeAssetTotalShare = data[k].strikeAssetTotalShare;
+          }
+          resolve(response);
+        }).catch((err) => reject(err));
       }).catch((err) => reject(err));
     }).catch((err) => reject(err));
   });
