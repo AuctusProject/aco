@@ -102,6 +102,38 @@ const getDecimals = (token) => {
   });
 };
 
+const getBalance = (token, address) => {
+  if (isEther(token)) {
+    return getEthBalance(address);
+  } else {
+    return getTokenBalance(token, address);
+  }
+};
+
+const getTokenBalance = (token, address) => {
+  return new Promise((resolve, reject) => {
+      callEthereum("eth_call", {"to": token, "data": "0x70a08231" + addressToData(address)}).then((result) => {
+      if (result) {
+        resolve(BigInt(result));
+      } else {
+        resolve(BigInt(0));
+      }
+    }).catch((err) => reject(err));
+  });
+};
+
+const getEthBalance = (address) => {    
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_getBalance", address).then((result) => {
+      if (result) {
+        resolve(BigInt(result));
+      } else {
+        resolve(BigInt(0));
+      }
+    }).catch((err) => reject(err));
+  });
+};
+
 const getTransaction = (transactionHash) => {
   return new Promise((resolve, reject) => {
     callEthereum("eth_getTransactionReceipt", transactionHash, null).then((result) => {
@@ -240,6 +272,10 @@ module.exports.acoPools = () => {
       for (let i = 0; i < response.length; ++i) {
         added[(response[i].acoPool+"vol")] = promises.length;
         promises.push(getBaseVolatility(response[i].acoPool));
+        added[(response[i].acoPool+"und")] = promises.length;
+        promises.push(getBalance(response[i].underlying, response[i].acoPool));
+        added[(response[i].acoPool+"str")] = promises.length;
+        promises.push(getBalance(response[i].strikeAsset, response[i].acoPool));
         added[response[i].acoPool] = promises.length;
         promises.push(getTokenInfo(response[i].acoPool));
         if (added[response[i].underlying] === undefined) {
@@ -255,6 +291,8 @@ module.exports.acoPools = () => {
       {
         for (let j = 0; j < response.length; ++j) {
           response[j].volatility = result[added[(response[j].acoPool+"vol")]];
+          response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
+          response[j].strikeAssetBalance = (result[added[(response[j].acoPool+"str")]]).toString(10);
           response[j].acoPoolInfo = result[added[response[j].acoPool]];
           response[j].underlyingInfo = result[added[response[j].underlying]];
           response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
