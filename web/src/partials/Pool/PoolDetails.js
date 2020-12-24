@@ -197,7 +197,7 @@ class PoolDetails extends Component {
             Liquidity Available: {this.formatAssetValue(pool.underlyingInfo, pool.underlyingBalance)} / {this.formatAssetValue(pool.strikeAssetInfo, pool.strikeAssetBalance)}
           </div>
           <div className="pool-net-value">
-            Net Value of Open Position: {this.getTotalNetValue(pool.underlyingTotalShare, pool.strikeAssetTotalShare)}
+            Total Pool Net Value: {this.getTotalNetValue(pool.underlyingTotalShare, pool.strikeAssetTotalShare)}
           </div>
         </div>
       </div>
