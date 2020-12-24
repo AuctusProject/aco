@@ -9,6 +9,7 @@ import DepositModal from './DepositModal'
 import WithdrawModal from './WithdrawModal'
 import { getAccountPoolPosition } from '../../util/acoPoolMethods'
 import BigNumber from 'bignumber.js'
+import { getCollateralInfo } from '../../util/acoTokenMethods'
 
 class PoolDetails extends Component {
   constructor(props) {
@@ -106,6 +107,9 @@ class PoolDetails extends Component {
 
   getUnderlyingValue = (underlyingAmount) => {
     var underlyingPrice = this.context.ticker && this.context.ticker[this.props.pool.underlyingInfo.symbol]
+    if (!underlyingPrice) {
+      underlyingPrice = 0
+    }
     return underlyingAmount * underlyingPrice
   }
   
@@ -115,6 +119,7 @@ class PoolDetails extends Component {
 
   onDepositHide = (refresh) => {
     if (refresh) {
+      this.props.refreshPoolData(true)
       this.updateBalances()
     }
     this.setState({depositPool: null})
@@ -126,6 +131,7 @@ class PoolDetails extends Component {
 
   onWithdrawHide = (refresh) => {
     if (refresh) {
+      this.props.refreshPoolData(true)
       this.updateBalances()
     }
     this.setState({withdrawPool: null})
@@ -136,9 +142,12 @@ class PoolDetails extends Component {
   }
 
   getCurrentAccountPosition = () => {
-    this.setState({accountPosition: null})
-    getAccountPoolPosition(this.props.pool.acoPool, this.state.withdrawBalance).then(accountPosition => {
-      this.setState({accountPosition: accountPosition})
+    this.setState({accountPosition: null}, () => {
+      if (this.state.withdrawBalance && this.state.withdrawBalance > 0) {
+        getAccountPoolPosition(this.props.pool.acoPool, this.state.withdrawBalance).then(accountPosition => {
+          this.setState({accountPosition: accountPosition})
+        })
+      }
     })
   }
 
@@ -218,7 +227,12 @@ class PoolDetails extends Component {
             <div className={"action-btn"} onClick={this.onWithdrawClick}>WITHDRAW</div>
           </div>
         </div>
-        {this.state.accountPosition && <div className="vault-position">
+        {!this.state.accountPosition ? 
+        (this.state.withdrawBalance && this.state.withdrawBalance > 0 && <div className="vault-position">
+          <div className="vault-position-title"><FontAwesomeIcon icon={faSpinner} className="fa-spin"/> Loading your position...</div>
+        </div>)
+        :
+        <div className="vault-position">
           <div className="vault-position-title">Your position:</div>
           <div className="pool-net-value mb-3">
             Total Net Value: {this.getAccountTotalNetValue()}
@@ -258,7 +272,7 @@ class PoolDetails extends Component {
               <tr key={tokenPosition.address}>
                 <td>{tokenPosition.acoTokenInfo.name}</td>
                 <td className="value-highlight">{fromDecimals(tokenPosition.balance, tokenPosition.acoTokenInfo.decimals)}</td>
-                <td className="value-highlight">{this.getTotalAcoPositionBalance(tokenPosition)}</td>
+                <td className="value-highlight">{fromDecimals(tokenPosition.collateralAmount, getCollateralInfo(tokenPosition).decimals, 4, 0)}</td>
               </tr>)}
             </tbody>            
           </table></>}

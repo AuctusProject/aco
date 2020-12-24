@@ -13,7 +13,11 @@ class Pools extends Component {
   }
   
   componentDidMount = () => {
-    getAcoPools().then(pools => 
+    this.refreshPoolData(false)
+  }
+
+  refreshPoolData = (forceRefresh) => {
+    getAcoPools(forceRefresh).then(pools => 
       this.setState({pools: pools, loading: false})
     )
   }
@@ -28,7 +32,7 @@ class Pools extends Component {
           </div>
           <div className="accordion" id="vaultsAccordion">
             {this.state.pools && this.state.pools.map(pool => (
-              <PoolDetails key={pool.acoPool} {...this.props} pool={pool}/>
+              <PoolDetails key={pool.acoPool} {...this.props} pool={pool} refreshPoolData={this.refreshPoolData}/>
             ))}
           </div>
           {this.state.loading && <Loading></Loading>}

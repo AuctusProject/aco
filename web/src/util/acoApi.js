@@ -54,9 +54,9 @@ export function getAcoAsset(address) {
 }
 
 var acoPools = null
-export function getAcoPools() {
+export function getAcoPools(forceRefresh) {
     return new Promise(function(resolve,reject){
-        if (acoPools != null) {
+        if (acoPools != null && !forceRefresh) {
             resolve(acoPools)
             return
         }

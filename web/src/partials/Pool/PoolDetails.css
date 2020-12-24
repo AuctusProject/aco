@@ -2,15 +2,13 @@
     display: flex;    
     flex-direction: row;
     align-items: center;
+    font-size: 14px;
+    font-weight: 300;
+    flex: 1;
 }
 
 .pool-card .card-header {
     justify-content: space-between;
-}
-
-.pool-icon-header-info {
-    font-size: 14px;
-    font-weight: 300;
 }
 
 .pool-name {

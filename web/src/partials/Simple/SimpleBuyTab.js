@@ -275,7 +275,7 @@ class SimpleBuyTab extends Component {
       var amount = toDecimals(this.state.qtyValue, this.state.selectedOption.acoTokenInfo.decimals)
       var restriction = this.getMaxToPay()
       var deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
-      return swap(this.context.web3.selectedAccount, true, this.state.swapQuote.poolAddress, this.state.selectedOption.acoToken, amount.toString(), restriction.toString(), deadline, nonce)
+      return swap(this.context.web3.selectedAccount, this.state.swapQuote.poolAddress, this.state.selectedOption.acoToken, amount.toString(), restriction.toString(), deadline, nonce)
     }
     else {
       return sendTransactionWithNonce(this.state.swapQuote.gasPrice, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)

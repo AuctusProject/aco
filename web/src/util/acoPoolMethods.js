@@ -4,6 +4,7 @@ import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
 import { fromDecimals } from './constants';
 import { getOption } from './acoFactoryMethods';
+import { getCollateralAmount } from './acoTokenMethods';
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
@@ -13,33 +14,38 @@ function getAcoPoolContract(acoPoolAddress) {
     return null;
 }
 
-export const getPoolQuote = (isBuying, acoPoolAddress, option, amount) => {
-    var acoPoolContract = getAcoPoolContract(acoPoolAddress)
-    var defaultDecodeMethodReturn = acoPoolContract._decodeMethodReturn
-    acoPoolContract._decodeMethodReturn = (outputs, result) => {
-        if (result && result.length >= 202) {
-            const errorLength = parseInt(result.substring(74, 138), 16);
-            const hexError = result.substring(138, 138 + errorLength * 2);
-            let errorMsg = "";
-            for (let i = 0; i < hexError.length; i += 2) {
-              errorMsg += String.fromCharCode(parseInt(hexError.substr(i, 2), 16));
+export const getPoolQuote = (acoPoolAddress, option, amount) => {
+    return new Promise((resolve,reject)=>{
+        var acoPoolContract = getAcoPoolContract(acoPoolAddress)
+        var defaultDecodeMethodReturn = acoPoolContract._decodeMethodReturn
+        acoPoolContract._decodeMethodReturn = (outputs, result) => {
+            if (result && result.length === 258 && result.startsWith("0x00")) {
+                return defaultDecodeMethodReturn(outputs, result)
+            } else if (result && result.length >= 202) {
+                const errorLength = parseInt(result.substring(74, 138), 16);
+                const hexError = result.substring(138, 138 + errorLength * 2);
+                let errorMsg = "";
+                for (let i = 0; i < hexError.length; i += 2) {
+                    errorMsg += String.fromCharCode(parseInt(hexError.substr(i, 2), 16));
+                }
+                return errorMsg;
+            } else {
+                return "Invalid quote result";
             }
-            return errorMsg;
         }
-        else {
-            return defaultDecodeMethodReturn(outputs, result)
-        }        
-    }
-    return acoPoolContract.methods.quote(isBuying, option.acoToken, amount).call()
+        acoPoolContract.methods.quote(option.acoToken, amount).call()
+        .then(result => resolve(result))
+        .catch(err => resolve({}))
+    })
 }
 
 
-export const getBestPoolQuote = (isBuying, option, amount) => {
+export const getBestPoolQuote = (option, amount) => {
     return new Promise((resolve, reject) => {
         getAvailablePoolsForOption(option).then(acoPoolAddresses => {
             let swapPromises = []   
             for (let i = 0; i < acoPoolAddresses.length; i++) {
-                swapPromises.push(getPoolQuote(isBuying, acoPoolAddresses[i].acoPool, option, amount))
+                swapPromises.push(getPoolQuote(acoPoolAddresses[i].acoPool, option, amount))
             }
             Promise.all(swapPromises).then(result => {
                 let bestResult = null
@@ -60,9 +66,9 @@ export const getBestPoolQuote = (isBuying, option, amount) => {
     })
 }
 
-export const swap = (from, isBuying, acoPoolAddress, acoToken, amount, restriction, deadline, nonce) => {
+export const swap = (from, acoPoolAddress, acoToken, amount, restriction, deadline, nonce) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
-    var data = acoPoolContract.methods.swap(isBuying, acoToken, amount, restriction, from, deadline).encodeABI()
+    var data = acoPoolContract.methods.swap(acoToken, amount, restriction, from, deadline).encodeABI()
     return sendTransactionWithNonce(null, null, from, acoPoolAddress, null, data, null, nonce)
 }
 
@@ -97,6 +103,8 @@ export const getAccountPoolPosition = (acoPoolAddress, shares) => {
                     getOption(acoTokenAddress).then(result => {
                         accountSituation.acoTokensInfos[acoTokenAddress] = result
                         accountSituation.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
+                        accountSituation.acoTokensInfos[acoTokenAddress].collateralAmount = getCollateralAmount(result, accountSituation[3][i])
+                        resolve()
                     })
                 }))
             }
