@@ -86,45 +86,34 @@ const getPoolNetData = (acoPool, totalSupply, poolDecimals) => {
 
 
 const internalGetPoolNetData = (acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt) => {
-  return new Promise((resolve, reject) => { 
-    if (totalSupply === BigInt(0) || poolDecimals <= attempt || attempt === 3) {
-      onSuccess({
-        underlyingPerShare: "0",
-        strikeAssetPerShare: "0",
-        underlyingTotalShare: "0",
-        strikeAssetTotalShare: "0"
-      });
-      resolve();
+  if (totalSupply === BigInt(0) || poolDecimals <= attempt || attempt === 3) {
+    onSuccess({
+      underlyingPerShare: "0",
+      strikeAssetPerShare: "0",
+      underlyingTotalShare: "0",
+      strikeAssetTotalShare: "0"
+    });
+  } else {
+    const share = BigInt(10) ** BigInt(poolDecimals - attempt);
+    if (totalSupply >= share) {
+      getWithdrawNoLockedOnAcoPool(acoPool, share).then((result) => {
+        if (result.isPossible) {
+          onSuccess({
+            underlyingPerShare: (result.underlying * (BigInt(10) ** BigInt(attempt))).toString(10),
+            strikeAssetPerShare: (result.strikeAsset * (BigInt(10) ** BigInt(attempt))).toString(10),
+            underlyingTotalShare: (totalSupply * result.underlying / share).toString(10),
+            strikeAssetTotalShare: (totalSupply * result.strikeAsset / share).toString(10)
+          });
+        } else {
+          ++attempt;
+          internalGetPoolNetData(acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt);
+        }
+      }).catch((err) => onError(err));
     } else {
-      const share = BigInt(10) ** BigInt(poolDecimals - attempt);
-      if (totalSupply >= share) {
-        getWithdrawNoLockedOnAcoPool(acoPool, share).then((result) => {
-          if (result.isPossible) {
-            onSuccess({
-              underlyingPerShare: (result.underlying * (BigInt(10) ** BigInt(attempt))).toString(10),
-              strikeAssetPerShare: (result.strikeAsset * (BigInt(10) ** BigInt(attempt))).toString(10),
-              underlyingTotalShare: (totalSupply * result.underlying / share).toString(10),
-              strikeAssetTotalShare: (totalSupply * result.strikeAsset / share).toString(10)
-            });
-          } else {
-            ++attempt;
-            internalGetPoolNetData(acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt);
-          }
-          resolve();
-        }).catch((err) => {
-          onError(err);
-          resolve();
-        });
-      } else {
-        ++attempt;
-        internalGetPoolNetData(acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt);
-        resolve();
-      }
+      ++attempt;
+      internalGetPoolNetData(acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt);
     }
-  }).catch((err) => {
-    onError(err);
-    resolve();
-  });
+  }
 };
 
 const getSymbol = (token) => {
