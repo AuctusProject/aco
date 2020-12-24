@@ -60,7 +60,7 @@
 }
 
 .btn-group.pill-button-group {
-    display: block;
+    display: flex;
     margin: auto;
     width: 260px;
     margin-bottom: 22px;
@@ -68,7 +68,7 @@
 
 .pill-button {
     width: 50%;
-    height: 35px;
+    min-height: 35px;
     background-color: #2e2e2e;
     font-size: 12px;
     font-weight: 500;
@@ -78,7 +78,7 @@
     text-align: center;
     color: #666666;
     border: none;
-    cursor: pointer;
+    cursor: pointer;    
 }
 
 .pill-button:not(.active):hover {

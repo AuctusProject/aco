@@ -6,13 +6,7 @@ import '../../libs/SafeMath.sol';
 import '../../libs/Address.sol';
 import '../../libs/ACOAssetHelper.sol';
 import '../../interfaces/IACOVault.sol';
-import '../../interfaces/IController.sol';
-import '../../interfaces/IACOPoolFactory.sol';
-import '../../interfaces/IACOFlashExercise.sol';
-import '../../interfaces/IACOFactory.sol';
-import '../../interfaces/IACOAssetConverterHelper.sol';
-import '../../interfaces/IACOToken.sol';
-import '../../interfaces/IACOPool.sol';
+import '../../interfaces/IACOPool2.sol';
 
 
 contract ACOVault is Ownable, IACOVault {
@@ -27,7 +21,6 @@ contract ACOVault is Ownable, IACOVault {
     event SetAcoFlashExercise(address indexed oldAcoFlashExercise, address indexed newAcoFlashExercise);
     event SetMinPercentageToKeep(uint256 indexed oldMinPercentageToKeep, uint256 indexed newMinPercentageToKeep);
     event SetAcoToken(address indexed oldAcoToken, address indexed newAcoToken);
-    event SetAcoPool(address indexed oldAcoPool, address indexed newAcoPool);
     event SetTolerancePriceAbove(uint256 indexed oldTolerancePriceAbove, uint256 indexed newTolerancePriceAbove);
     event SetTolerancePriceBelow(uint256 indexed oldTolerancePriceBelow, uint256 indexed newTolerancePriceBelow);
     event SetMinExpiration(uint256 indexed oldMinExpiration, uint256 indexed newMinExpiration);
@@ -41,7 +34,7 @@ contract ACOVault is Ownable, IACOVault {
     event Deposit(address indexed account, uint256 shares, uint256 amount);
     event Withdraw(address indexed account, uint256 shares, uint256 amount, uint256 fee);
 
-    IACOPoolFactory public immutable override acoPoolFactory;
+    IACOPoolFactory2 public immutable override acoPoolFactory;
     IACOFactory public immutable override acoFactory;
     address public immutable override token;
     
@@ -51,7 +44,6 @@ contract ACOVault is Ownable, IACOVault {
     IACOAssetConverterHelper public override assetConverter;
     IACOFlashExercise public override acoFlashExercise;
     
-    IACOPool public override acoPool;
     IACOToken public override currentAcoToken;
     address[] public override acoTokens;
     address[] public override validAcos;
@@ -77,7 +69,7 @@ contract ACOVault is Ownable, IACOVault {
         require(initData.acoFactory.isContract(), "ACOVault:: Invalid ACO factory");
         require(initData.token.isContract(), "ACOVault:: Invalid token");
         
-        acoPoolFactory = IACOPoolFactory(initData.acoPoolFactory);
+        acoPoolFactory = IACOPoolFactory2(initData.acoPoolFactory);
         acoFactory = IACOFactory(initData.acoFactory);
         token = initData.token;
         _setAssetConverter(initData.assetConverter);
@@ -90,13 +82,7 @@ contract ACOVault is Ownable, IACOVault {
         _setMinExpiration(initData.minExpiration);
         _setTolerancePriceAbove(initData.tolerancePriceAbove);
         _setTolerancePriceBelow(initData.tolerancePriceBelow);
-        _setAcoToken(
-            IACOAssetConverterHelper(initData.assetConverter), 
-            IACOFactory(initData.acoFactory), 
-            IACOPoolFactory(initData.acoPoolFactory), 
-            initData.currentAcoToken, 
-            initData.acoPool
-        );
+        _setAcoToken(IACOAssetConverterHelper(initData.assetConverter), IACOFactory(initData.acoFactory), initData.currentAcoToken);
         _setOperator(msg.sender, true);
     }
 
@@ -222,21 +208,11 @@ contract ACOVault is Ownable, IACOVault {
         _setOperator(operator, permission);
     }
     
-    function setAcoToken(address newAcoToken, address newAcoPool) external override {
+    function setAcoToken(address newAcoToken) external override {
         require(operators[msg.sender], "ACOVault:: Invalid sender");
-        _setAcoToken(assetConverter, acoFactory, acoPoolFactory, newAcoToken, newAcoPool);
+        _setAcoToken(assetConverter, acoFactory, newAcoToken);
     }
-    
-    function setAcoPool(address newAcoPool) external override {
-        require(operators[msg.sender], "ACOVault:: Invalid sender");
-        (address underlying, 
-         address strikeAsset, 
-         bool isCall, 
-         uint256 strikePrice, 
-         uint256 expiryTime) = acoFactory.acoTokenData(address(currentAcoToken));
-        _setAcoPool(acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
-    }
-    
+
     function withdrawStuckToken(address _token, address destination) external override {
         require(msg.sender == address(controller), "ACOVault:: Invalid sender");
         require(address(token) != _token && !acoData[_token].initialized, "ACOVault:: Invalid token");
@@ -328,10 +304,17 @@ contract ACOVault is Ownable, IACOVault {
         emit ExerciseAco(acoToken, acoBalance, tokenIn);
     }
     
-    function setReward(uint256 acoTokenAmount, uint256 rewardAmount) external override {
+    function setReward(address acoPool, uint256 acoTokenAmount, uint256 rewardAmount) external override {
         require(msg.sender == address(controller), "ACOVault:: Invalid sender");
+		
         address _currentAcoToken = address(currentAcoToken);
         require(IACOToken(_currentAcoToken).expiryTime() > minTimeToExercise.add(block.timestamp), "ACOVault:: Invalid time to buy");
+		
+		(address poolUnderlying, address poolStrikeAsset,) = acoPoolFactory.acoPoolBasicData(acoPool);
+		require(poolUnderlying != poolStrikeAsset, "ACOVault:: Invalid pool");
+		IACOPool2 _pool = IACOPool2(acoPool);
+		require(_pool.canSwap(_currentAcoToken), "ACOVault:: Pool cannot swap");
+		
         address _token = token;
         address poolExpectedAsset = IACOToken(_currentAcoToken).strikeAsset();
         
@@ -342,11 +325,12 @@ contract ACOVault is Ownable, IACOVault {
             restriction = rewardAmount;
         }
         
-        uint256 amount = acoPool.swap(true, _currentAcoToken, acoTokenAmount, restriction, address(this), block.timestamp);
+		ACOAssetHelper._setAssetInfinityApprove(poolExpectedAsset, address(this), acoPool, restriction);
+        _pool.swap(_currentAcoToken, acoTokenAmount, restriction, address(this), block.timestamp);
         
         AcoData storage _acoData = acoData[_currentAcoToken];
-        _acoData.amount = amount.add(_acoData.amount);
-        _acoData.tokenPerShare = amount.mul(1e18).div(totalSupply).add(_acoData.tokenPerShare);
+        _acoData.amount = acoTokenAmount.add(_acoData.amount);
+        _acoData.tokenPerShare = acoTokenAmount.mul(1e18).div(totalSupply).add(_acoData.tokenPerShare);
         
         if (_token != poolExpectedAsset) {
             uint256 poolAssetBalance = ACOAssetHelper._getAssetBalanceOf(poolExpectedAsset, address(this));
@@ -355,7 +339,7 @@ contract ACOVault is Ownable, IACOVault {
             }
         }
         
-        emit RewardAco(_currentAcoToken, amount);
+        emit RewardAco(_currentAcoToken, acoTokenAmount);
     }
     
     function skim(address account) external override {
@@ -735,20 +719,15 @@ contract ACOVault is Ownable, IACOVault {
     function _setAcoToken(
         IACOAssetConverterHelper _assetConverter,
         IACOFactory _acoFactory, 
-        IACOPoolFactory _acoPoolFactory, 
-        address newAcoToken, 
-        address newAcoPool
+        address newAcoToken
     ) internal {
         (address underlying, 
-         address strikeAsset, 
-         bool isCall, 
+         address strikeAsset,, 
          uint256 strikePrice, 
          uint256 expiryTime) = _acoFactory.acoTokenData(newAcoToken);
          
         _acoTokenValidation(_assetConverter, underlying, strikeAsset, strikePrice, expiryTime);
         
-        _setAcoPool(_acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime);
-
         emit SetAcoToken(address(currentAcoToken), newAcoToken);
         
         setValidAcoTokens();
@@ -762,23 +741,6 @@ contract ACOVault is Ownable, IACOVault {
             acoTokens.push(newAcoToken);
             validAcos.push(newAcoToken);
         }
-    }
-    
-    function _setAcoPool(
-        IACOPoolFactory _acoPoolFactory, 
-        address newAcoPool,
-        address underlying, 
-        address strikeAsset, 
-        bool isCall, 
-        uint256 strikePrice, 
-        uint256 expiryTime
-    ) internal {
-        _acoPoolValidation(_acoPoolFactory, newAcoPool, underlying, strikeAsset, isCall, strikePrice, expiryTime); 
-        
-        emit SetAcoPool(address(acoPool), newAcoPool);
-        
-        ACOAssetHelper._callApproveERC20(strikeAsset, newAcoPool, MAX_UINT);
-        acoPool = IACOPool(newAcoPool);
     }
     
     function _acoTokenValidation(
@@ -799,35 +761,6 @@ contract ACOVault is Ownable, IACOVault {
         uint256 minPrice = strikePrice.mul(PERCENTAGE_PRECISION.sub(tolerancePriceBelow)).div(PERCENTAGE_PRECISION);
         
         require(price >= minPrice && price <= maxPrice, "ACOVault:: Invalid ACO strike price");
-    }
-    
-    function _acoPoolValidation(
-        IACOPoolFactory _acoPoolFactory,
-        address newAcoPool,
-        address underlying, 
-        address strikeAsset, 
-        bool isCall, 
-        uint256 strikePrice, 
-        uint256 expiryTime
-    ) internal view {
-        (uint256 poolStart, 
-         address poolUnderlying, 
-         address poolStrikeAsset, 
-         bool poolIsCall, 
-         uint256 poolMinStrikePrice, 
-         uint256 poolMaxStrikePrice, 
-         uint256 poolMinExpiration, 
-         uint256 poolMaxExpiration,) = _acoPoolFactory.acoPoolData(newAcoPool);
-        require(
-            poolStart <= block.timestamp &&
-            underlying == poolUnderlying &&
-            strikeAsset == poolStrikeAsset &&
-            isCall == poolIsCall &&
-            poolMinStrikePrice <= strikePrice &&
-            poolMaxStrikePrice >= strikePrice &&
-            poolMinExpiration <= expiryTime &&
-            poolMaxExpiration >= expiryTime, 
-            "ACOVault:: Invalid ACO pool");
     }
     
     function _setController(address newController) internal {

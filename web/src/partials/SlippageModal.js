@@ -36,7 +36,7 @@ class SlippageModal extends Component {
 
   getSlippageOption = (value) => {
     var buttonClass = this.props.maxSlippage === value ? "btn-secondary" : "btn-outline-secondary"
-    return <button onClick={() => this.onSlippageSelect(value)} class={"btn btn-sm mr-2 "+buttonClass}> {formatPercentage(value, 0)} </button>
+    return <button onClick={() => this.onSlippageSelect(value)} className={"btn btn-sm mr-2 "+buttonClass}> {formatPercentage(value, 0)} </button>
   }
 
   onSlippageSelect = (value) => {
@@ -56,7 +56,7 @@ class SlippageModal extends Component {
   }
 
   getCustomInput = () => {
-    return <div class="input-field">
+    return <div className="input-field">
       <DecimalInput tabIndex="-1" placeholder="Custom" onChange={this.onCustomValueChange} value={this.state.customValue}></DecimalInput>
       <div className="percentage-label">%</div>
     </div>

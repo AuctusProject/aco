@@ -4,7 +4,7 @@ import { getSwapQuote, isInsufficientLiquidity } from "./zrxApi"
 export function getBestQuote(option, amount, isBuy) {
     return new Promise(function(resolve,reject){
         let promises = []
-        promises.push(getBestPoolQuote(isBuy, option, amount))
+        promises.push(getBestPoolQuote(option, amount))
         promises.push(getZrxQuote(option.acoToken, option.strikeAsset, amount, isBuy))
         Promise.all(promises).then(quotes => {
             let poolQuote = quotes[0]

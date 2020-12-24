@@ -2,11 +2,12 @@ import './Vaults.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { acoVaults } from '../util/constants'
+import { acoVaults, acoVaultsV2 } from '../util/constants'
 import VaultDetails from '../partials/Vault/VaultDetails'
 import { getCRVAPY } from '../util/getCRVAPY'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import DiscontinuedVaultDetails from '../partials/Vault/DiscontinuedVaultDetails'
 
 class Vaults extends Component {
   constructor() {
@@ -32,7 +33,10 @@ class Vaults extends Component {
       </div>
       <div className="accordion" id="vaultsAccordion">
         {Object.keys(acoVaults).map(vaultAddress => 
-          <VaultDetails key={vaultAddress} {...this.props} CRVAPYs={this.state.CRVAPYs} vaultAddress={vaultAddress}></VaultDetails>
+          <DiscontinuedVaultDetails key={vaultAddress} {...this.props} CRVAPYs={this.state.CRVAPYs} vaultAddress={vaultAddress} />
+        )}
+        {Object.keys(acoVaultsV2).map(vaultAddress => 
+          <VaultDetails key={vaultAddress} {...this.props} CRVAPYs={this.state.CRVAPYs} vaultAddress={vaultAddress} />
         )}
       </div>
     </div>

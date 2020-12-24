@@ -154,7 +154,7 @@ class NavBar extends Component {
                           <div className="subnav-link-description">Start trading non-custodial otions immediately.</div>
                         </div>
                       </NavLink>
-                      <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/pools")}>
+                      <NavLink onClick={this.submenuClick} to="/pools">
                         <div className="subnav-link">
                           <div className="subnav-link-title">POOLS</div>
                           <div className="subnav-link-description">Become a liquidity provider and receive premiums by automatically selling covered options.</div>
@@ -188,7 +188,7 @@ class NavBar extends Component {
                           <div className="subnav-link-title">TRADE OPTIONS</div>
                         </div>
                       </NavLink>
-                      <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/pools")}>
+                      <NavLink onClick={this.submenuClick} to="/pools">
                         <div className="subnav-link">
                           <div className="subnav-link-title">POOLS</div>
                         </div>

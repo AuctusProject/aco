@@ -2,12 +2,11 @@ pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
 import './IController.sol';
-import './IACOPoolFactory.sol';
+import './IACOPoolFactory2.sol';
 import './IACOFlashExercise.sol';
 import './IACOFactory.sol';
 import './IACOAssetConverterHelper.sol';
 import './IACOToken.sol';
-import './IACOPool.sol';
 import './IControlled.sol';
 
 interface IACOVault is IControlled {
@@ -19,7 +18,6 @@ interface IACOVault is IControlled {
         address acoFlashExercise;
         uint256 minPercentageToKeep;
         address currentAcoToken;
-        address acoPool;
         uint256 tolerancePriceAbove;
         uint256 tolerancePriceBelow;
         uint256 minExpiration;
@@ -56,12 +54,11 @@ interface IACOVault is IControlled {
     function decimals() external view returns(uint8);
     function totalSupply() external view returns(uint256);
     function balanceOf(address account) external view returns(uint256);
-    function acoPoolFactory() external view returns(IACOPoolFactory);
+    function acoPoolFactory() external view returns(IACOPoolFactory2);
     function acoFactory() external view returns(IACOFactory);
     function controller() external view returns(IController);
     function assetConverter() external view returns(IACOAssetConverterHelper);
     function acoFlashExercise() external view returns(IACOFlashExercise);
-    function acoPool() external view returns(IACOPool);
     function currentAcoToken() external view returns(IACOToken);
     function acoTokens(uint256 index) external view returns(address);
     function validAcos(uint256 index) external view returns(address);
@@ -90,8 +87,7 @@ interface IACOVault is IControlled {
     function setExerciseSlippage(uint256 newMinTimeToExercise) external;
     function setWithdrawFee(uint256 newWithdrawFee) external;
     function setOperator(address operator, bool permission) external;
-    function setAcoToken(address newAcoToken, address newAcoPool) external;
-    function setAcoPool(address newAcoPool) external;
+    function setAcoToken(address newAcoToken) external;
     function balance() external view returns(uint256);
     function available() external view returns(uint256);
     function getPricePerFullShare() external view returns(uint256);
@@ -101,7 +97,7 @@ interface IACOVault is IControlled {
     function deposit(uint256 amount) external;
     function earn() external;
     function withdraw(uint256 shares) external;
-    function setReward(uint256 acoTokenAmount, uint256 rewardAmount) external;
+    function setReward(address acoPool, uint256 acoTokenAmount, uint256 rewardAmount) external;
     function skim(address account) external;
     function setValidAcoTokens() external;
 }

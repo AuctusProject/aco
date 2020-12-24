@@ -1,0 +1,134 @@
+.pool-icon-header-info {
+    display: flex;    
+    flex-direction: row;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 300;
+    flex: 1;
+}
+
+.pool-card .card-header {
+    justify-content: space-between;
+}
+
+.pool-name {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.pool-name img {
+    max-height: 40px;
+    max-width: 40px;
+    margin-right: 12px;
+}
+
+.header-separator {
+    width: 1px;
+    height: 67px;
+    background-color: #505050;
+    margin: 0 30px;
+}
+
+.pool-icon {
+    margin-right: 10px;
+}
+
+.pool-card .card-header .vault-chevron {
+    margin-left: 30px
+}
+
+.pool-header-iv-info {
+    text-align: center;
+}
+
+.pool-iv-value {
+    color: #1782fc;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+
+@media (max-width:600px) {
+    .header-separator {
+        width: 100%;
+        height: 1px;
+        margin: 16px 0;
+    }
+}
+
+.card-header.disabled {
+    cursor: default;
+}
+
+.pool-card .input-row {
+    justify-content: space-around;
+}
+
+.pool-card .input-column {
+    max-width: 305px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pool-card .input-label {
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.6px;
+}
+
+.pool-card .input-field {
+    width: 100%;
+}
+
+.pool-card .input-field input {
+    width: 100%;
+}
+
+.pool-card .action-btn {
+    border-radius: 2px;
+    min-width: 160px;
+}
+
+.pool-position {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.pool-position-title {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+}
+
+.pool-position tfoot td {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-align: center;
+    color: #1782fc;
+}
+
+.light-mode .pool-position .aco-table thead th.value-highlight {
+    background-color: #aaaaaa;
+}
+
+.light-mode .pool-position .aco-table td.value-highlight {
+    background-color: #f2f2f2;
+}
+
+.light-mode .pool-position th:first-child,
+.light-mode .pool-position td:first-child {
+    text-align: left;
+}
+
+.accordion .card-body {
+    text-align: center;
+}
+
+.accordion .card-body .action-btn {
+    margin-left: auto;
+    margin-right: auto;
+}

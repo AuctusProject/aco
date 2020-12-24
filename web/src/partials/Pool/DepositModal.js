@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { toDecimals, maxAllowance, fromDecimals, getBalanceOfAsset, isEther, formatDate } from '../../util/constants'
+import { toDecimals, maxAllowance, fromDecimals, isEther, DEFAULT_POOL_SLIPPAGE, formatPercentage } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -13,24 +13,21 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { deposit } from '../../util/acoPoolMethods'
+import { deposit, getDepositShares } from '../../util/acoPoolMethods'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faCog, faInfoCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import SlippageModal from '../SlippageModal'
+import ReactTooltip from 'react-tooltip'
+import BigNumber from 'bignumber.js'
 
 class DepositModal extends Component {
   constructor(props) {
     super(props)
     this.state = { 
       depositValue: "",
-      depositAssetBalance: "",
-      loading: true
+      accepted: false,
+      maxSlippage: DEFAULT_POOL_SLIPPAGE
     }
-  }
-
-  componentDidMount = () => {
-    getBalanceOfAsset(this.getDepositAsset(), this.context.web3.selectedAccount).then((balance) => {
-      this.setState({depositAssetBalance: balance, loading: false})
-    })
   }
 
   componentDidUpdate = (prevProps) => {
@@ -95,32 +92,45 @@ class DepositModal extends Component {
     }
   }
 
+  getDepositMinValue = () => {
+    return new Promise((resolve, reject) => {
+      getDepositShares(this.props.pool.acoPool, this.getDepositAssetValue()).then(shares => { 
+        var minShares = fromDecimals(new BigNumber(shares).times(new BigNumber(1-this.state.maxSlippage)), 0, 0, 0)
+        resolve(minShares)
+      }).catch(err => reject(err))
+    })    
+  }
+
   sendDepositTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
-    deposit(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getDepositAssetValue(), isEther(this.getDepositAsset()),  nonce)
-      .then(result => {
-        if (result) {
-          this.setStepsModalInfo(++stepNumber, needApproval)
-          checkTransactionIsMined(result)
-            .then(result => {
-              if (result) {
-                this.setStepsModalInfo(++stepNumber, needApproval)
-              }
-              else {
+    this.getDepositMinValue().then(minShares => {
+      deposit(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getDepositAssetValue(), minShares, isEther(this.getDepositAsset()), nonce)
+        .then(result => {
+          if (result) {
+            this.setStepsModalInfo(++stepNumber, needApproval)
+            checkTransactionIsMined(result)
+              .then(result => {
+                if (result) {
+                  this.setStepsModalInfo(++stepNumber, needApproval)
+                }
+                else {
+                  this.setStepsModalInfo(-1, needApproval)
+                }
+              })
+              .catch(() => {
                 this.setStepsModalInfo(-1, needApproval)
-              }
-            })
-            .catch(() => {
-              this.setStepsModalInfo(-1, needApproval)
-            })
-        }
-        else {
+              })
+          }
+          else {
+            this.setStepsModalInfo(-1, needApproval)
+          }
+        })
+        .catch(() => {
           this.setStepsModalInfo(-1, needApproval)
-        }
-      })
-      .catch(() => {
-        this.setStepsModalInfo(-1, needApproval)
-      })
+        })
+    }).catch(() => {
+      this.setStepsModalInfo(-1, needApproval)
+    })
   }
 
   setStepsModalInfo = (stepNumber, needApproval) => {
@@ -200,6 +210,9 @@ class DepositModal extends Component {
     if (this.isInsufficientFunds()) {
       return "Insufficient funds"
     }    
+    if (!this.state.accepted) {
+      return "Accept the conditions"
+    }    
     return null
   }
 
@@ -208,7 +221,7 @@ class DepositModal extends Component {
   }
 
   isInsufficientFunds = () => {
-    return this.getDepositAssetValue().gt(new Web3Utils.BN(this.state.depositAssetBalance))
+    return this.getDepositAssetValue().gt(new Web3Utils.BN(this.props.depositBalance))
   }
 
   onMaxClick = () => {
@@ -225,32 +238,36 @@ class DepositModal extends Component {
   }
 
   getDepositAssetBalanceFromDecimals = () => {
-    return fromDecimals(this.state.depositAssetBalance, this.getDepositAssetDecimals())
+    return fromDecimals(this.props.depositBalance, this.getDepositAssetDecimals())
   }
 
   getPoolSummaryMessage = () => {
     let pool = this.props.pool
-    let strikeRange = fromDecimals(pool.minStrikePrice, pool.strikeAssetInfo.decimals, 4, 0) +
-      " "+pool.strikeAssetInfo.symbol +
-      " and " +
-      fromDecimals(pool.maxStrikePrice, pool.strikeAssetInfo.decimals, 4, 0) +
-      " "+pool.strikeAssetInfo.symbol
-    return <div className="pool-summary">This pool automatically sells {pool.isCall ? "CALL" : "PUT"} options with strike price between {strikeRange} and expiration date between {formatDate(pool.minExpiration, true)} and {formatDate(pool.maxExpiration, true)}.</div>
+    return <div className="pool-summary">The amount deposited will be used to automatically sell ethereum {pool.isCall ? "call" : "put"} options. If the utilization rate is high, you will have to wait for the liquidity to unlock from open positions to be able to exit your position.</div>
   }
 
-  getPoolWarningMessage = () => {
-  return <div className="pool-warning">Attention: Withdrawals will not be available until the end date of the pool on {formatDate(this.props.pool.maxExpiration, true)}.</div>
+  onAcceptedChange = (event) => {
+    this.setState({accepted: event.target.checked})
+  }
+  
+  onSlippageClick = () => {
+    let slippageModalInfo = {}
+    slippageModalInfo.onClose = () => this.setState({slippageModalInfo: null})
+    slippageModalInfo.setMaxSlippage = (value) => this.setState({maxSlippage: value})
+    this.setState({slippageModalInfo: slippageModalInfo})
+  }
+
+  getSlippageFormatted = () => {
+    return formatPercentage(this.state.maxSlippage)
   }
 
   render() {
-    return (<Modal className="aco-modal sell-modal deposit-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
+    return (<Modal className="aco-modal deposit-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
       <Modal.Header closeButton>DEPOSIT</Modal.Header>
       <Modal.Body>
       <div className="exercise-action">
-          <div className="confirm-card">
-            <div className="confirm-card-header">
-              {this.getPoolSummaryMessage()}
-            </div>
+        <div className="confirm-card-header">{this.props.pool.acoPoolInfo.symbol}</div>
+          <div className="confirm-card">            
             <div className={"confirm-card-body " + (this.isInsufficientFunds() ? "insufficient-funds-error" : "")}>
               <div className="balance-column">
                 <div>Amount available to deposit: <span>{this.state.loading ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : this.getFormattedDepositAssetBalance()}</span></div>
@@ -265,13 +282,34 @@ class DepositModal extends Component {
                   </div>
                 </div>
               </div>
-              {this.getPoolWarningMessage()}
+              <div className="input-row mt-3">
+                <div className="input-column">
+                  <div className="input-label">Slippage tolerance&nbsp;<FontAwesomeIcon data-tip data-for={"slippage-tolerance-tooltip"} icon={faInfoCircle}></FontAwesomeIcon></div>
+                  <div className="input-value clickable slippage-value" onClick={this.onSlippageClick}>
+                    {this.getSlippageFormatted()}
+                    <FontAwesomeIcon icon={faCog}></FontAwesomeIcon>
+                  </div>
+                  <ReactTooltip className="info-tooltip" id={"slippage-tolerance-tooltip"}>
+                    Your transaction will revert if the price changes unfavorably by more than this percentage.
+                  </ReactTooltip>
+                </div>
+              </div>
+              <div className="card-separator"></div>
+              {this.getPoolSummaryMessage()}
+              <div className="form-group form-check">
+                <input type="checkbox" onChange={this.onAcceptedChange} checked={this.state.accepted} className="form-check-input clickable" id="acceptPoolDeposit"/>
+                <label className="form-check-label clickable" htmlFor="acceptPoolDeposit">
+                  Agree
+                </label>
+              </div>
+              <div className="card-separator"></div>
             </div>
             <div className="confirm-card-actions">
               <div className="aco-button cancel-btn" onClick={() => this.props.onHide(false)}>Go back</div>
               <div className={"aco-button action-btn " + (this.canDeposit() ? "" : "disabled")} onClick={this.onDepositClick}>Confirm</div>
             </div>
           </div>
+          {this.state.slippageModalInfo && <SlippageModal {...this.state.slippageModalInfo} maxSlippage={this.state.maxSlippage} />}
           {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
         </div>
       </Modal.Body>

@@ -23,42 +23,6 @@ export const acoPoolFactoryABI =
 			},
 			{
 				"indexed": false,
-				"internalType": "uint256",
-				"name": "poolStart",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "minStrikePrice",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "maxStrikePrice",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "minExpiration",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "maxExpiration",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "canBuy",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
 				"internalType": "address",
 				"name": "acoPool",
 				"type": "address"
@@ -79,25 +43,6 @@ export const acoPoolFactoryABI =
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "previousAcoAssetConverterHelper",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "newAcoAssetConverterHelper",
-				"type": "address"
-			}
-		],
-		"name": "SetAcoAssetConverterHelper",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
 				"name": "previousAcoFactory",
 				"type": "address"
 			},
@@ -109,25 +54,6 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "SetAcoFactory",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "previousAcoFlashExercise",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "newAcoFlashExercise",
-				"type": "address"
-			}
-		],
-		"name": "SetAcoFlashExercise",
 		"type": "event"
 	},
 	{
@@ -192,6 +118,25 @@ export const acoPoolFactoryABI =
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "uint256",
+				"name": "previousMaximumOpenAco",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "newMaximumOpenAco",
+				"type": "uint256"
+			}
+		],
+		"name": "SetAcoPoolMaximumOpenAco",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
 				"internalType": "address",
 				"name": "poolAdmin",
 				"type": "address"
@@ -210,6 +155,63 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "SetAcoPoolPermission",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "previousUnderlyingPriceAdjustPercentage",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "newUnderlyingPriceAdjustPercentage",
+				"type": "uint256"
+			}
+		],
+		"name": "SetAcoPoolUnderlyingPriceAdjustPercentage",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "previousWithdrawOpenPositionPenalty",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "newWithdrawOpenPositionPenalty",
+				"type": "uint256"
+			}
+		],
+		"name": "SetAcoPoolWithdrawOpenPositionPenalty",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousAssetConverterHelper",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newAssetConverterHelper",
+				"type": "address"
+			}
+		],
+		"name": "SetAssetConverterHelper",
 		"type": "event"
 	},
 	{
@@ -289,19 +291,6 @@ export const acoPoolFactoryABI =
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "acoFlashExercise",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -309,13 +298,8 @@ export const acoPoolFactoryABI =
 				"type": "address"
 			}
 		],
-		"name": "acoPoolData",
+		"name": "acoPoolBasicData",
 		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "poolStart",
-				"type": "uint256"
-			},
 			{
 				"internalType": "address",
 				"name": "underlying",
@@ -329,31 +313,6 @@ export const acoPoolFactoryABI =
 			{
 				"internalType": "bool",
 				"name": "isCall",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint256",
-				"name": "minStrikePrice",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "maxStrikePrice",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "minExpiration",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "maxExpiration",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "canBuy",
 				"type": "bool"
 			}
 		],
@@ -394,6 +353,45 @@ export const acoPoolFactoryABI =
 				"internalType": "address",
 				"name": "",
 				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "acoPoolMaximumOpenAco",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "acoPoolUnderlyingPriceAdjustPercentage",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "acoPoolWithdrawOpenPositionPenalty",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -444,17 +442,12 @@ export const acoPoolFactoryABI =
 			},
 			{
 				"internalType": "uint256",
-				"name": "poolStart",
+				"name": "tolerancePriceBelow",
 				"type": "uint256"
 			},
 			{
 				"internalType": "uint256",
-				"name": "minStrikePrice",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "maxStrikePrice",
+				"name": "tolerancePriceAbove",
 				"type": "uint256"
 			},
 			{
@@ -466,11 +459,6 @@ export const acoPoolFactoryABI =
 				"internalType": "uint256",
 				"name": "maxExpiration",
 				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "canBuy",
-				"type": "bool"
 			},
 			{
 				"internalType": "address",
@@ -526,7 +514,7 @@ export const acoPoolFactoryABI =
 			},
 			{
 				"internalType": "address",
-				"name": "_acoFlashExercise",
+				"name": "_assetConverterHelper",
 				"type": "address"
 			},
 			{
@@ -543,6 +531,21 @@ export const acoPoolFactoryABI =
 				"internalType": "address",
 				"name": "_acoPoolFeeDestination",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_acoPoolWithdrawOpenPositionPenalty",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_acoPoolUnderlyingPriceAdjustPercentage",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_acoPoolMaximumOpenAco",
+				"type": "uint256"
 			}
 		],
 		"name": "init",
@@ -573,55 +576,11 @@ export const acoPoolFactoryABI =
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "newAcoAssetConverterHelper",
-				"type": "address"
-			}
-		],
-		"name": "setAcoAssetConverterHelper",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
 				"name": "newAcoFactory",
 				"type": "address"
 			}
 		],
 		"name": "setAcoFactory",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "newAcoFlashExercise",
-				"type": "address"
-			}
-		],
-		"name": "setAcoFlashExercise",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256[]",
-				"name": "baseVolatilities",
-				"type": "uint256[]"
-			},
-			{
-				"internalType": "address[]",
-				"name": "acoPools",
-				"type": "address[]"
-			}
-		],
-		"name": "setAcoPoolBaseVolatility",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -668,6 +627,19 @@ export const acoPoolFactoryABI =
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "newMaximumOpenAco",
+				"type": "uint256"
+			}
+		],
+		"name": "setAcoPoolMaximumOpenAco",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "poolAdmin",
 				"type": "address"
@@ -691,12 +663,38 @@ export const acoPoolFactoryABI =
 				"type": "address"
 			},
 			{
-				"internalType": "address[]",
-				"name": "acoPools",
-				"type": "address[]"
+				"internalType": "bool",
+				"name": "newPermission",
+				"type": "bool"
 			}
 		],
-		"name": "setAcoPoolStrategy",
+		"name": "setAcoPoolStrategyPermission",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newUnderlyingPriceAdjustPercentage",
+				"type": "uint256"
+			}
+		],
+		"name": "setAcoPoolUnderlyingPriceAdjustPercentage",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newWithdrawOpenPositionPenalty",
+				"type": "uint256"
+			}
+		],
+		"name": "setAcoPoolWithdrawOpenPositionPenalty",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -705,16 +703,47 @@ export const acoPoolFactoryABI =
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "strategy",
+				"name": "newAssetConverterHelper",
 				"type": "address"
-			},
-			{
-				"internalType": "bool",
-				"name": "newPermission",
-				"type": "bool"
 			}
 		],
-		"name": "setAcoPoolStrategyPermission",
+		"name": "setAssetConverterHelper",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "assetConverters",
+				"type": "address[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setAssetConverterOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "baseVolatilities",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setBaseVolatilityOnAcoPool",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -748,6 +777,209 @@ export const acoPoolFactoryABI =
 	{
 		"inputs": [
 			{
+				"internalType": "address[]",
+				"name": "feeDestinations",
+				"type": "address[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setFeeDestinationOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "fees",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setFeeOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "maxExpirations",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setMaxExpirationOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "maximumOpenAcos",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setMaximumOpenAcoOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "minExpirations",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setMinExpirationOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "strategy",
+				"type": "address"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setStrategyOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "tolerancePricesAbove",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setTolerancePriceAboveOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "tolerancePricesBelow",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setTolerancePriceBelowOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "underlyingPriceAdjustPercentages",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setUnderlyingPriceAdjustPercentageOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "acoCreator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "permission",
+				"type": "bool"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setValidAcoCreatorOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "withdrawOpenPositionPenalties",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setWithdrawOpenPositionPenaltyOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "address",
 				"name": "",
 				"type": "address"
@@ -762,6 +994,29 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "asset",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "destination",
+				"type": "address"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "withdrawStuckAssetOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{

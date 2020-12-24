@@ -53,6 +53,14 @@ contract ACOToken is ERC20 {
     event Assigned(address indexed from, address indexed to, uint256 paidAmount, uint256 tokenAmount);
 
     /**
+     * @dev Emitted when the collateralized token is transferred.
+     * @param from Address of the account of the collateral owner.
+     * @param to Address of the account to get the collateralized tokens.
+     * @param tokenCollateralizedAmount Amount of collateralized tokens transferred.
+     */
+    event TransferCollateralOwnership(address indexed from, address indexed to, uint256 tokenCollateralizedAmount);
+
+    /**
      * @dev The ERC20 token address for the underlying asset (0x0 for Ethereum). 
      */
     address public underlying;
@@ -525,6 +533,31 @@ contract ACOToken is ERC20 {
      */
     function exerciseAccounts(uint256 tokenAmount, address[] calldata accounts) external payable returns(uint256) {
         return _exerciseFromAccounts(msg.sender, tokenAmount, accounts);
+    }
+
+    /**
+     * @dev Function to transfer collateralized tokens.
+     * @param recipient Address of the destination.
+     * @param tokenCollateralizedAmount Amount of collateralized tokens to be transferred.
+     */
+    function transferCollateralOwnership(address recipient, uint256 tokenCollateralizedAmount) external {
+        require(recipient != address(0), "ACOToken::transferCollateralOwnership: Invalid recipient");
+        require(tokenCollateralizedAmount > 0, "ACOToken::transferCollateralOwnership: Invalid amount");
+
+        TokenCollateralized storage senderData = tokenData[msg.sender];
+        senderData.amount = senderData.amount.sub(tokenCollateralizedAmount);
+
+        _removeCollateralDataIfNecessary(msg.sender);
+
+        TokenCollateralized storage recipientData = tokenData[recipient];
+        if (_hasCollateral(recipientData)) {
+            recipientData.amount = recipientData.amount.add(tokenCollateralizedAmount);
+        } else {
+            tokenData[recipient] = TokenCollateralized(tokenCollateralizedAmount, _collateralOwners.length);
+            _collateralOwners.push(recipient);
+        }
+
+        emit TransferCollateralOwnership(msg.sender, recipient, tokenCollateralizedAmount);
     }
     
     /**

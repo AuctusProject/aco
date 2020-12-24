@@ -1,20 +1,18 @@
-import './VaultDetails.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { acoVaultsV2, formatPercentage, fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
-import { faChevronDown, faLongArrowAltRight, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { acoVaults, fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
+import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import DecimalInput from '../Util/DecimalInput'
 import { getAccountPosition, getAcoVaultInfo } from '../../util/acoVaultMethods'
 import WithdrawVaultModal from './WithdrawVaultModal'
-import DepositVaultModal from './DepositVaultModal'
 import Web3Utils from 'web3-utils'
 
-class VaultDetails extends Component {
+class DiscontinuedVaultDetails extends Component {
   constructor(props) {
     super(props)
-    this.state = { depositBalance: null, withdrawBalance: null, depositValue: "", withdrawValue: ""}
+    this.state = { withdrawBalance: null, withdrawValue: ""}
   }
 
   componentDidMount = () => {
@@ -34,13 +32,10 @@ class VaultDetails extends Component {
   }
 
   updateBalances = () => {
-    this.setState({vaultBalance:null,depositBalance:null,accountPosition:null})
+    this.setState({vaultBalance:null, accountPosition:null})
     if (this.isConnected() && this.state.acoVaultInfo) {
       getBalanceOfAsset(this.state.acoVaultInfo.address, this.context.web3.selectedAccount).then(vaultBalance => {
         this.setState({vaultBalance: vaultBalance}, this.getCurrentAccountPosition)
-      })
-      getBalanceOfAsset(this.state.acoVaultInfo.tokenInfo.address, this.context.web3.selectedAccount).then(vaultTokenBalance => {
-        this.setState({depositBalance: vaultTokenBalance})
       })
     }
   }
@@ -51,10 +46,7 @@ class VaultDetails extends Component {
     })
   }
 
-  onDepositValueChange = (value) => {
-    this.setState({ depositValue: value })
-  }
-
+  
   onWithdrawValueChange = (value) => {
     this.setState({ withdrawValue: value })
   }
@@ -66,34 +58,6 @@ class VaultDetails extends Component {
     else {
       return null
     }
-  }
-
-  getFormattedDepositBalance = () => {
-    if (this.state.depositBalance && this.state.acoVaultInfo) {
-      return fromDecimals(this.state.depositBalance, this.state.acoVaultInfo.tokenInfo.decimals)
-    }
-    else {
-      return null
-    }
-  }
-
-  onDepositClick = () => {
-    if (this.canDeposit()) {
-      let info = {}
-      info.address = this.state.acoVaultInfo.address
-      info.amount = toDecimals(this.state.depositValue, this.state.acoVaultInfo.tokenInfo.decimals)
-      info.depositAsset = this.state.acoVaultInfo.tokenInfo.address
-      info.depositAssetSymbol = this.state.acoVaultInfo.tokenInfo.symbol
-      info.depositValue = this.state.depositValue
-      this.setState({depositVaultModalInfo: info})
-    }
-  }
-
-  onDepositHide = (refresh) => {
-    if (refresh) {
-      this.updateBalances()
-    }
-    this.setState({depositVaultModalInfo: null})
   }
 
   onWithdrawClick = () => {
@@ -117,10 +81,6 @@ class VaultDetails extends Component {
       this.updateBalances()
     }
     this.setState({withdrawVaultModalInfo: null})
-  }
-
-  onMaxDepositClick = () => {
-    this.onDepositValueChange(this.getFormattedDepositBalance())
   }
 
   onMaxWithdrawClick = () => {
@@ -148,16 +108,8 @@ class VaultDetails extends Component {
     return ""
   }
 
-  canDeposit = () => {
-    return this.state.acoVaultInfo !== null && this.state.depositValue !== null && this.state.depositValue !== "" && !this.isInsufficientFundsToDeposit()
-  }  
-
-  isInsufficientFundsToDeposit = () => {
-    return this.state.acoVaultInfo != null && this.state.depositValue !== null && this.state.depositValue !== "" && this.state.depositBalance !== null && toDecimals(this.state.depositValue, this.state.acoVaultInfo.tokenInfo.decimals).gt(this.state.depositBalance)
-  }
-
   canWithdraw = () => {
-    return this.state.acoVaultInfo != null && this.state.withdrawValue !== null && this.state.withdrawValue !== "" && !this.isInsufficientFundsToDeposit()
+    return this.state.acoVaultInfo != null && this.state.withdrawValue !== null && this.state.withdrawValue !== "" && !this.isInsufficientFundsToWithdraw()
   }  
 
   isInsufficientFundsToWithdraw = () => {
@@ -168,52 +120,30 @@ class VaultDetails extends Component {
     this.props.signIn(null, this.context)
   }
 
+  showDiscontinuedVault = () => {
+    return this.isConnected() && this.state.vaultBalance && this.state.vaultBalance > 0
+  }
+
   render() {
     let vaultAddress = this.props.vaultAddress
-    return <div className="card vault-card">
+    return !this.showDiscontinuedVault() ? <></> : <div className="card vault-card">
     <div className={"card-header collapsed "+(this.isConnected() ? "" : "disabled")} id={"heading"+vaultAddress} data-toggle="collapse" data-target={"#collapse"+vaultAddress} aria-expanded="false" aria-controls={"collapse"+vaultAddress}>
       <div className="vault-name">
-        <img src={"/images/vaults/"+acoVaultsV2[vaultAddress].img} alt="ERC-20" />
-        {acoVaultsV2[vaultAddress].name}
+        <img src={"/images/vaults/"+acoVaults[vaultAddress].img} alt="ERC-20" />
+        <div className="">
+          <div>{acoVaults[vaultAddress].name}</div>
+          <span className="discontinued-label">(DISCONTINUED)</span>
+        </div>
       </div>
       <div className="header-separator"></div>
-      {!this.isConnected() ? <div className="card-body">
-        <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
-          <div>CONNECT WALLET</div>
-        </div>
-      </div> :
-      <>
       <div className="vault-details">
-        <div className="vault-apy">
-          <div>
-            APY
-          </div>
-          <div className="vault-apy-value">
-            {this.props.CRVAPYs && this.props.CRVAPYs["3pool"] && formatPercentage(this.props.CRVAPYs["3pool"]/100.0)}
-          </div>
-        </div>
-        <div className="right-arrow">
-          <FontAwesomeIcon icon={faLongArrowAltRight}/>
-        </div>
-        <div className="vault-option">
-          <div>ETH {this.state.acoVaultInfo ? (this.state.acoVaultInfo.currentAcoTokenInfo.isCall ? "CALL": "PUT") : ""} OPTION</div>
-          {this.state.acoVaultInfo && <div className="vault-current-option"><span>Current option:</span><span>{this.state.acoVaultInfo.currentAcoTokenInfo.name}</span></div>}
-        </div>
+          This vault has been discontinued due to our last update, please withdraw your funds.
       </div>
       <FontAwesomeIcon className="vault-chevron" icon={faChevronDown}/>
-      </>}      
     </div>    
     <div id={"collapse"+vaultAddress} className="collapse" aria-labelledby={"heading"+vaultAddress} data-parent="#vaultsAccordion">      
-      {this.isConnected() && <div className="card-body">
+      <div className="card-body">
         <div className="input-row">
-          <div className={"input-column " + (this.isInsufficientFundsToDeposit() ? "insufficient-funds-error" : "")}>
-            <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedDepositBalance()) ? (this.getFormattedDepositBalance() + " "+ this.state.acoVaultInfo.tokenInfo.symbol) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
-            <div className="input-field">
-              <DecimalInput tabIndex="-1" onChange={this.onDepositValueChange} value={this.state.depositValue}></DecimalInput>
-              <div className="max-btn" onClick={this.onMaxDepositClick}>MAX</div>
-            </div>
-            <div className={"action-btn "+(this.canDeposit() ? "" : "disabled")} onClick={this.onDepositClick}>DEPOSIT</div>
-          </div>
           <div className={"input-column " + (this.isInsufficientFundsToWithdraw() ? "insufficient-funds-error" : "")}>
             <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedWithdrawBalance()) ? (this.getFormattedWithdrawBalance() + " SHARES") : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
             <div className="input-field">
@@ -251,19 +181,17 @@ class VaultDetails extends Component {
                 <td></td>
                 <td colSpan="2">TOTAL VALUE: ${this.getTotalBalanceValue()}</td>
               </tr>
-            </tfoot>
-            
+            </tfoot>            
           </table>
         </div>}
-      </div>}
+      </div>
     </div>
-    {this.state.depositVaultModalInfo && <DepositVaultModal info={this.state.depositVaultModalInfo} onHide={this.onDepositHide} />}
     {this.state.withdrawVaultModalInfo && <WithdrawVaultModal info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
   </div>
   }
 }
 
-VaultDetails.contextTypes = {
+DiscontinuedVaultDetails.contextTypes = {
   web3: PropTypes.object
 }
-export default withRouter(VaultDetails)
+export default withRouter(DiscontinuedVaultDetails)
