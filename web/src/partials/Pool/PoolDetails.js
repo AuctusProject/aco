@@ -191,7 +191,7 @@ class PoolDetails extends Component {
             {this.getFormattedPoolName(pool)}
           </div>
           <div className="pool-description">
-            Automatically sell {pool.isCall ? "call" : "put"} options
+            Automatically sell {pool.underlyingInfo.symbol} {pool.isCall ? "call" : "put"} options
           </div>
           <div className="pool-liquidity">
             Liquidity Available: {this.formatAssetValue(pool.underlyingInfo, pool.underlyingBalance)} / {this.formatAssetValue(pool.strikeAssetInfo, pool.strikeAssetBalance)}
