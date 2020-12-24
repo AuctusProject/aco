@@ -2,11 +2,13 @@ import './PoolDetails.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { formatPercentage, fromDecimals, getBalanceOfAsset } from '../../util/constants'
+import { formatPercentage, formatWithPrecision, fromDecimals, getBalanceOfAsset } from '../../util/constants'
 import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import DepositModal from './DepositModal'
 import WithdrawModal from './WithdrawModal'
+import { getAccountPoolPosition } from '../../util/acoPoolMethods'
+import BigNumber from 'bignumber.js'
 
 class PoolDetails extends Component {
   constructor(props) {
@@ -42,10 +44,6 @@ class PoolDetails extends Component {
         this.setState({depositBalance: depositBalance})
       })
     }
-  }
-  
-  getCurrentAccountPosition = () => {
-    
   }
 
   getPoolCollateral = () => {
@@ -92,8 +90,23 @@ class PoolDetails extends Component {
     return (fromDecimals(value, assetInfo.decimals, 4, 0) ?? 0) + " " + assetInfo.symbol
   }
 
-  getNetValueOfOpenPosition = (pool) => {
-    return ""
+  getTotalNetValue = (underlyingValue, strikeValue) => {
+    if (underlyingValue || strikeValue) {      
+      var underlyingConverted = fromDecimals(underlyingValue, this.props.pool.underlyingInfo.decimals, 4, 0)
+      var strikeConverted = fromDecimals(strikeValue, this.props.pool.strikeAssetInfo.decimals, 4, 0)
+      
+      var totalDollar = Number(this.getUnderlyingValue(underlyingConverted)) + Number(strikeConverted)
+      var underlyingFormatted = (underlyingConverted ?? 0) + " " + this.props.pool.underlyingInfo.symbol
+      var strikeFormatted = (strikeConverted ?? 0) + " " + this.props.pool.strikeAssetInfo.symbol
+            
+      return `~$${formatWithPrecision(Number(totalDollar))} (${underlyingFormatted} + ${strikeFormatted})`
+    }
+    return null
+  }
+
+  getUnderlyingValue = (underlyingAmount) => {
+    var underlyingPrice = this.context.ticker && this.context.ticker[this.props.pool.underlyingInfo.symbol]
+    return underlyingAmount * underlyingPrice
   }
   
   onDepositClick = () => {
@@ -122,10 +135,44 @@ class PoolDetails extends Component {
     return `WRITE ${pool.underlyingInfo.symbol} ${pool.isCall ? "CALL" : "PUT"} OPTIONS`
   }
 
+  getCurrentAccountPosition = () => {
+    this.setState({accountPosition: null})
+    getAccountPoolPosition(this.props.pool.acoPool, this.state.withdrawBalance).then(accountPosition => {
+      this.setState({accountPosition: accountPosition})
+    })
+  }
+
+  getAccountTotalNetValue = () => {  
+    return this.getTotalNetValue(this.getValueTimesShares(this.props.pool.underlyingPerShare), this.getValueTimesShares(this.props.pool.strikeAssetPerShare))
+  }
+
+  getValueTimesShares = (value) => {
+    var convertedShares = this.state.withdrawBalance ? fromDecimals(this.state.withdrawBalance, this.props.pool.acoPoolInfo.decimals) : 0
+    return new BigNumber(convertedShares).times(new BigNumber(value))
+  }
+  
+  getTotalAcoPositionBalance = (tokenPosition) => {
+    if (tokenPosition.value) {
+      return tokenPosition.value.toString()
+    }
+    return ""
+  }
+
   render() {
     let pool = this.props.pool
     let poolAddress = pool.acoPool
     let iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[this.getPoolCollateral().symbol]
+
+    let underlyingBalanceFormatted = null
+    let underlyingValueFormatted = null
+    let strikeBalanceFormatted = null
+    if (this.state.accountPosition) {
+      let underlyingBalance = fromDecimals(this.state.accountPosition[0], this.props.pool.underlyingInfo.decimals, 4, 0)
+      underlyingBalanceFormatted = underlyingBalance
+      underlyingValueFormatted = formatWithPrecision(this.getUnderlyingValue(underlyingBalance))
+      strikeBalanceFormatted = fromDecimals(this.state.accountPosition[1], this.props.pool.strikeAssetInfo.decimals, 4, 0)
+    }
+
     return <div className="card pool-card">
     <div className={"card-header collapsed "+(this.isConnected() ? "" : "disabled")} id={"heading"+poolAddress} data-toggle="collapse" data-target={"#collapse"+poolAddress} aria-expanded="false" aria-controls={"collapse"+poolAddress}>
       <div className="pool-icon-header-info">
@@ -141,7 +188,7 @@ class PoolDetails extends Component {
             Liquidity Available: {this.formatAssetValue(pool.underlyingInfo, pool.underlyingBalance)} / {this.formatAssetValue(pool.strikeAssetInfo, pool.strikeAssetBalance)}
           </div>
           <div className="pool-net-value">
-            Net Value of Open Position: {this.getNetValueOfOpenPosition(pool)}
+            Net Value of Open Position: {this.getTotalNetValue(pool.underlyingTotalShare, pool.strikeAssetTotalShare)}
           </div>
         </div>
       </div>
@@ -173,6 +220,9 @@ class PoolDetails extends Component {
         </div>
         {this.state.accountPosition && <div className="vault-position">
           <div className="vault-position-title">Your position:</div>
+          <div className="pool-net-value mb-3">
+            Total Net Value: {this.getAccountTotalNetValue()}
+          </div>
           <table className="aco-table mx-auto table-responsive-md">
             <thead>
               <tr>
@@ -183,25 +233,35 @@ class PoolDetails extends Component {
             </thead>
             <tbody>
               <tr>
-                <td>{this.state.acoVaultInfo.tokenInfo.symbol}</td>
-                <td className="value-highlight">{this.getFormattedWithdrawBalance()}</td>
-                <td className="value-highlight">{this.getTotalPositionBalance()}</td>
+                <td>{this.props.pool.underlyingInfo.symbol}</td>
+                <td className="value-highlight">{underlyingBalanceFormatted}</td>
+                <td className="value-highlight">{underlyingValueFormatted}</td>
               </tr>
-              {this.state.accountPosition.acoTokensInfos && Object.values(this.state.accountPosition.acoTokensInfos).map(tokenPosition =>
+              <tr>
+                <td>{this.props.pool.strikeAssetInfo.symbol}</td>
+                <td className="value-highlight">{strikeBalanceFormatted}</td>
+                <td className="value-highlight">{strikeBalanceFormatted}</td>
+              </tr>
+            </tbody>            
+          </table>
+          {this.state.accountPosition[2].length > 0 && <><div className="vault-position-title mt-3">Open positions:</div>
+          <table className="aco-table mx-auto table-responsive-md">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th className="value-highlight">Open Position</th>
+                <th className="value-highlight">Collateral Locked</th>
+              </tr>
+            </thead>
+            <tbody>
+            {this.state.accountPosition.acoTokensInfos && Object.values(this.state.accountPosition.acoTokensInfos).map(tokenPosition =>
               <tr key={tokenPosition.address}>
                 <td>{tokenPosition.acoTokenInfo.name}</td>
                 <td className="value-highlight">{fromDecimals(tokenPosition.balance, tokenPosition.acoTokenInfo.decimals)}</td>
                 <td className="value-highlight">{this.getTotalAcoPositionBalance(tokenPosition)}</td>
               </tr>)}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td></td>
-                <td colSpan="2">TOTAL VALUE: ${this.getTotalBalanceValue()}</td>
-              </tr>
-            </tfoot>
-            
-          </table>
+            </tbody>            
+          </table></>}
         </div>}
       </div>}
     </div>
@@ -213,6 +273,7 @@ class PoolDetails extends Component {
 
 PoolDetails.contextTypes = {
   assetsImages: PropTypes.object,
-  web3: PropTypes.object
+  web3: PropTypes.object,
+  ticker: PropTypes.object
 }
 export default withRouter(PoolDetails)

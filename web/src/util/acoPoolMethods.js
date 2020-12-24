@@ -3,6 +3,7 @@ import { acoPoolABI } from './acoPoolABI';
 import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
 import { fromDecimals } from './constants';
+import { getOption } from './acoFactoryMethods';
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
@@ -83,6 +84,28 @@ export function canSwap(acoPoolAddress, acoToken) {
 export const getDepositShares = (acoPoolAddress, amount) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
     return acoPoolContract.methods.getDepositShares(amount).call()
+}
+
+export const getAccountPoolPosition = (acoPoolAddress, shares) => {
+    return new Promise((resolve, reject) => {   
+        getWithdrawWithLocked(acoPoolAddress, shares).then(accountSituation => {
+            accountSituation.acoTokensInfos = {}
+            var promises = []
+            for (let i = 0; i < accountSituation[2].length; ++i) {
+                promises.push(new Promise((resolve) => {
+                    var acoTokenAddress = accountSituation[2][i]
+                    getOption(acoTokenAddress).then(result => {
+                        accountSituation.acoTokensInfos[acoTokenAddress] = result
+                        accountSituation.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
+                    })
+                }))
+            }
+            Promise.all(promises).then(() => {
+                resolve(accountSituation)
+            })
+            .catch(err => reject(err))
+        })
+    })
 }
 
 export const getWithdrawWithLocked = (acoPoolAddress, shares) => {
