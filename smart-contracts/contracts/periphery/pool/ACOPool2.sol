@@ -4,7 +4,6 @@ pragma experimental ABIEncoderV2;
 import '../../util/Ownable.sol';
 import '../../libs/Address.sol';
 import '../../libs/ACOAssetHelper.sol';
-import '../../libs/ACONameFormatter.sol';
 import '../../core/ERC20.sol';
 import '../../interfaces/IACOFactory.sol';
 import '../../interfaces/IACOAssetConverterHelper.sol';
@@ -1719,7 +1718,7 @@ contract ACOPool2 is Ownable, ERC20, IACOPool2 {
             "-",
             ACOAssetHelper._getAssetSymbol(strikeAsset),
             "-",
-            ACONameFormatter.formatType(isCall)
+            (isCall ? "CALL" : "PUT")
         ));
     }
 }

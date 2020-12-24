@@ -6,11 +6,6 @@ import '../../libs/SafeMath.sol';
 import '../../libs/Address.sol';
 import '../../libs/ACOAssetHelper.sol';
 import '../../interfaces/IACOVault.sol';
-import '../../interfaces/IController.sol';
-import '../../interfaces/IACOFlashExercise.sol';
-import '../../interfaces/IACOFactory.sol';
-import '../../interfaces/IACOAssetConverterHelper.sol';
-import '../../interfaces/IACOToken.sol';
 import '../../interfaces/IACOPool2.sol';
 
 
