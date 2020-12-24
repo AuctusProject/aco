@@ -1,8 +1,8 @@
 import { getWeb3 } from './web3Methods'
-import { acoPoolFactoryAddress, getBalanceOfAsset } from './constants';
+import { acoPoolFactoryAddress, getBalanceOfAsset, toDecimals } from './constants';
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
-import { baseVolatility, collateralDeposited } from './acoPoolMethods';
+import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 
 var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {
@@ -16,19 +16,6 @@ function getAcoPoolFactoryContract() {
 }
 
 var availablePools = null
-function getAvailablePools(underlying, strikeAsset, isCall) {
-    return new Promise((resolve, reject) => {
-        getAllAvailablePools().then(pools => {
-            let filteredPools = []
-            if (pools) {
-                filteredPools = pools.filter(p => p.underlying.toLowerCase() === underlying.toLowerCase() && p.strikeAsset.toLowerCase() === strikeAsset.toLowerCase() && p.isCall === isCall)
-            }
-            resolve(filteredPools)
-        })
-        .catch(err => reject(err))
-    })
-}
-
 export const getAllAvailablePools = () => {
     return new Promise((resolve, reject) => {
         if (availablePools != null) {
@@ -50,6 +37,9 @@ export const getAllAvailablePools = () => {
                         if (!assetsAddresses.includes(eventValues.underlying)) {
                             assetsAddresses.push(eventValues.underlying)
                         }
+                        if (!assetsAddresses.includes(eventValues.acoPool)) {
+                            assetsAddresses.push(eventValues.acoPool)
+                        }                        
                     }
                     fillTokensInformations(pools, assetsAddresses)
                     .then(pools => {
@@ -81,18 +71,20 @@ function fillTokensInformations(pools, assetsAddresses) {
         Promise.all(promises).then(() => {
             var acoPoolPromises = []
             for (let i = 0; i < pools.length; i++) {
-                var acoPoolPromise = getERC20AssetInfo(pools[i].acoPool)
-                acoPoolPromises.push(acoPoolPromise)
-                acoPoolPromise.then(result => {
-                    pools[i].acoPoolInfo = result
-                    pools[i].underlyingInfo = assetsInfo[pools[i].underlying]
-                    pools[i].strikeAssetInfo = assetsInfo[pools[i].strikeAsset]
+                pools[i].acoPoolInfo = assetsInfo[pools[i].acoPool]
+                pools[i].underlyingInfo = assetsInfo[pools[i].underlying]
+                pools[i].strikeAssetInfo = assetsInfo[pools[i].strikeAsset]
+
+                var underlyingBalancePromise = getBalanceOfAsset(pools[i].underlying, pools[i].acoPool)
+                acoPoolPromises.push(underlyingBalancePromise)
+                underlyingBalancePromise.then(result => {
+                    pools[i].underlyingBalance = result
                 })
 
-                var acoPoolCollateralDepositedPromise = collateralDeposited(pools[i].acoPool)
-                acoPoolPromises.push(acoPoolCollateralDepositedPromise)
-                acoPoolCollateralDepositedPromise.then(result => {
-                    pools[i].collateralDeposited = result
+                var strikeAssetBalancePromise = getBalanceOfAsset(pools[i].strikeAsset, pools[i].acoPool)
+                acoPoolPromises.push(strikeAssetBalancePromise)
+                strikeAssetBalancePromise.then(result => {
+                    pools[i].strikeAssetBalance = result
                 })
 
                 var acoPoolVolatilityPromise = baseVolatility(pools[i].acoPool)
@@ -101,17 +93,18 @@ function fillTokensInformations(pools, assetsAddresses) {
                     pools[i].volatility = result
                 })
 
-                var acoPoolUnderlyingBalancePromise = getBalanceOfAsset(pools[i].underlying, pools[i].acoPool)
-                acoPoolPromises.push(acoPoolUnderlyingBalancePromise)
-                acoPoolUnderlyingBalancePromise.then(result => {
-                    pools[i].underlyingBalance = result
+                var withdrawNoLockedDataPromise = getWithdrawNoLockedData(pools[i].acoPool, toDecimals(1, pools[i].acoPoolInfo.decimals))
+                acoPoolPromises.push(withdrawNoLockedDataPromise)
+                withdrawNoLockedDataPromise.then(result => {
+                    pools[i].withdrawNoLockedData = result
                 })
 
-                var acoPoolStrikeAssetBalancePromise = getBalanceOfAsset(pools[i].strikeAsset, pools[i].acoPool)
-                acoPoolPromises.push(acoPoolStrikeAssetBalancePromise)
-                acoPoolStrikeAssetBalancePromise.then(result => {
-                    pools[i].strikeAssetBalance = result
+                var collateralPromise = collateral(pools[i].acoPool)
+                acoPoolPromises.push(collateralPromise)
+                collateralPromise.then(result => {
+                    pools[i].collateralInfo = assetsInfo[result]
                 })
+
                 .catch(err => reject(err))
             }
             Promise.all(acoPoolPromises).then(() => {
@@ -124,19 +117,25 @@ function fillTokensInformations(pools, assetsAddresses) {
 
 export const getAvailablePoolsForOption = (option) => {
     return new Promise((resolve, reject) => {
-        getAvailablePools(option.underlying, option.strikeAsset, option.isCall).then(pools => {
+        getAllAvailablePools().then(pools => {
+            let canSwapPromises = []
             let filteredPools = []
             for (let i = 0; i < pools.length; i++) {
                 const pool = pools[i];
-                if (pool.poolStart * 1000 <= Date.now() &&
-                    pool.minExpiration <= option.expiryTime &&
-                    pool.maxExpiration >= option.expiryTime &&
-                    pool.minStrikePrice <= option.strikePrice &&
-                    pool.maxStrikePrice >= option.strikePrice) {
-                    filteredPools.push(pool)
-                }
+                let canSwapPromise = canSwap(pool.acoPool, option.acoToken)
+                canSwapPromises.push(canSwapPromise)
+                canSwapPromise.then(result => {
+                    if (result) {
+                        filteredPools.push(pool)
+                    }
+                })                
+                .catch(err => reject(err))
             }
-            resolve(filteredPools)
+            
+            Promise.all(canSwapPromises).then(() => {
+                resolve(filteredPools)
+            })            
+            .catch(err => reject(err))
         })
         .catch(err => reject(err))
     })

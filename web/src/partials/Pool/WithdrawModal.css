@@ -1,0 +1,9 @@
+.bottom-alert-message {
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.bottom-alert-message span {
+    text-decoration: underline;
+    cursor: pointer;
+}

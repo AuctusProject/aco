@@ -1,7 +1,7 @@
 .accordion .card {
     margin: 20px 0;
     border-radius: 0.25rem !important;
-    border: solid 1px #464646;
+    border: solid 1px #464646 !important;
 }
 
 .accordion .card .card-header {
@@ -32,6 +32,15 @@
     font-size: 16px;
     letter-spacing: 0.4px;
     margin: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.discontinued-label {
+    color: #ed2e2e;
+    font-size: 13px;
 }
 
 .vault-name img {

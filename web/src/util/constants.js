@@ -19,6 +19,7 @@ export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
 export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
 export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
 export const acoVaults = JSON.parse(process.env.REACT_APP_ACO_VAULTS);
+export const acoVaultsV2 = JSON.parse(process.env.REACT_APP_ACO_VAULTS_V2);
 export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
@@ -35,6 +36,7 @@ export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
 export const DEFAULT_SLIPPAGE = 0.05
+export const DEFAULT_POOL_SLIPPAGE = 0.01
 export const OTC_ORDER_STATUS_AVAILABLE = "0x00"
 
 export const OPTION_TYPES = {

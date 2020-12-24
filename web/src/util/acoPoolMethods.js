@@ -65,25 +65,51 @@ export const swap = (from, isBuying, acoPoolAddress, acoToken, amount, restricti
     return sendTransactionWithNonce(null, null, from, acoPoolAddress, null, data, null, nonce)
 }
 
-export function collateralDeposited(acoPoolAddress) {
-    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
-    return acoPoolContract.methods.collateralDeposited().call()
-}
-
 export function baseVolatility(acoPoolAddress) {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
     return acoPoolContract.methods.baseVolatility().call()
 }
 
-export const deposit = (from, acoPoolAddress, amount, isEther, nonce) => {
+export const collateral = (acoPoolAddress) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
-    var data = acoPoolContract.methods.deposit(amount, from).encodeABI()
+    return acoPoolContract.methods.collateral().call()
+}
+
+export function canSwap(acoPoolAddress, acoToken) {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.canSwap(acoToken).call()
+}
+
+export const getDepositShares = (acoPoolAddress, amount) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.getDepositShares(amount).call()
+}
+
+export const getWithdrawWithLocked = (acoPoolAddress, shares) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.getWithdrawWithLocked(shares).call()
+}
+
+export const getWithdrawNoLockedData = (acoPoolAddress, shares) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.getWithdrawNoLockedData(shares).call()
+}
+
+export const deposit = (from, acoPoolAddress, amount, minShares, isEther, nonce) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    var data = acoPoolContract.methods.deposit(amount, minShares, from).encodeABI()
     var value = isEther ? amount : 0
     return sendTransactionWithNonce(null, null, from, acoPoolAddress, value, data, null, nonce)
 }
 
-export const redeem = (from, acoPoolAddress) => {
+export const withdrawNoLocked = (from, acoPoolAddress, shares, minCollateral) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
-    var data = acoPoolContract.methods.redeem().encodeABI()
+    var data = acoPoolContract.methods.withdrawNoLocked(shares, minCollateral, from).encodeABI()
+    return sendTransaction(null, null, from, acoPoolAddress, null, data)
+}
+
+export const withdrawWithLocked = (from, acoPoolAddress, shares) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    var data = acoPoolContract.methods.withdrawWithLocked(shares, from).encodeABI()
     return sendTransaction(null, null, from, acoPoolAddress, null, data)
 }
