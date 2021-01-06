@@ -27,7 +27,7 @@ class ExerciseModal extends Component {
     getMaxExercisedAccounts(this.props.position.option).then(result => this.setState({ maxExercisedAccounts: result }))
 
     getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result => {
-      this.setState({ payAssetBalance: result, selectedTab: ((result === "0") ? 2 : 1) })
+      this.setState({ payAssetBalance: result, selectedTab: 2 })
     })
     hasUniswapPair(this.props.position.option.acoToken).then(result => {
       this.setState({ flashAvailable: result })
@@ -376,8 +376,8 @@ class ExerciseModal extends Component {
           {this.state.selectedTab === null && <Loading></Loading>}
           {this.state.selectedTab !== null && <>
           <div className="btn-group pill-button-group">
-            <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>
             <button onClick={this.selectTab(2)} type="button" className={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>FLASH EXERCISE</button>
+            <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>EXERCISE</button>            
           </div>
           <div className="confirm-card">
             <div className="confirm-card-header">{this.props.position.option.acoTokenInfo.symbol}</div>

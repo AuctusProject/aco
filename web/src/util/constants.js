@@ -143,13 +143,13 @@ export function getBalanceOfAsset(assetAddress, userAddress) {
 }
 
 export function fromDecimals(input, decimals, maxSignificantsDigits = 4, minSignificantsDigits = 4) {
-    if (!input) {
+    if (!input || isNaN(input)) {
         return null
     }
     if (input.decimalPlaces) {
         input = input.decimalPlaces(0)
     }
-    var integerValue = Web3Utils.toBN(input.toString())
+    var integerValue = Web3Utils.toBN(input.toFixed ? input.toFixed() : input.toString())
     var negative = integerValue.lt(zero); // eslint-disable-line
     const base = new Web3Utils.BN(10).pow(new Web3Utils.BN(decimals))
     const baseLength = decimals
