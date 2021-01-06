@@ -146,6 +146,18 @@ export function getCollateralAmount(optionInfo, tokenAmount) {
     if (optionInfo.isCall) {
         return tokenAmount;
     } else if (tokenAmount > 0) {
+        var decimalsTokenAmount = toDecimals(tokenAmount, parseInt(optionInfo.underlyingInfo.decimals))
+        var decimalsCollateralAmount = getTokenStrikePriceRelation(optionInfo, decimalsTokenAmount)
+        return fromDecimals(decimalsCollateralAmount, parseInt(optionInfo.strikeAssetInfo.decimals))
+    } else {
+        return 0;
+    }
+}
+
+export function getCollateralAmountInDecimals(optionInfo, tokenAmount) {
+    if (optionInfo.isCall) {
+        return tokenAmount;
+    } else if (tokenAmount > 0) {
         return getTokenStrikePriceRelation(optionInfo, tokenAmount)
     } else {
         return 0;
@@ -156,7 +168,7 @@ export function getTokenStrikePriceRelation(optionInfo, tokenAmount) {
     if (!tokenAmount || parseFloat(tokenAmount) === 0) {
         return ""
     }
-    return fromDecimals(fromDecimals(new Web3Utils.BN(optionInfo.strikePrice).mul(toDecimals(tokenAmount, optionInfo.underlyingInfo.decimals)), parseInt(optionInfo.strikeAssetInfo.decimals)), parseInt(optionInfo.underlyingInfo.decimals))
+    return fromDecimals(new Web3Utils.BN(optionInfo.strikePrice).mul(new Web3Utils.BN(tokenAmount)), parseInt(optionInfo.underlyingInfo.decimals), 0, 0)
 }
 
 export function getOpenPositionAmount(position) {

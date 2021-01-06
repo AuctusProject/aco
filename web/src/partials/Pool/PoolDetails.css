@@ -30,7 +30,9 @@
 }
 
 .pool-icon {
-    margin-right: 10px;
+    margin-right: 20px;
+    height: 40px;
+    width: 40px;
 }
 
 .pool-card .card-header .vault-chevron {

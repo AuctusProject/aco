@@ -4,7 +4,7 @@ import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
 import { fromDecimals } from './constants';
 import { getOption } from './acoFactoryMethods';
-import { getCollateralAmount } from './acoTokenMethods';
+import { getCollateralAmountInDecimals } from './acoTokenMethods';
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
@@ -103,7 +103,7 @@ export const getAccountPoolPosition = (acoPoolAddress, shares) => {
                     getOption(acoTokenAddress).then(result => {
                         accountSituation.acoTokensInfos[acoTokenAddress] = result
                         accountSituation.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
-                        accountSituation.acoTokensInfos[acoTokenAddress].collateralAmount = getCollateralAmount(result, accountSituation[3][i])
+                        accountSituation.acoTokensInfos[acoTokenAddress].collateralAmount = getCollateralAmountInDecimals(result, accountSituation[3][i])
                         resolve()
                     })
                 }))

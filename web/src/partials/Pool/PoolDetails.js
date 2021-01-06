@@ -10,6 +10,7 @@ import WithdrawModal from './WithdrawModal'
 import { getAccountPoolPosition } from '../../util/acoPoolMethods'
 import BigNumber from 'bignumber.js'
 import { getCollateralInfo } from '../../util/acoTokenMethods'
+import { ASSETS_INFO } from '../../util/assets'
 
 class PoolDetails extends Component {
   constructor(props) {
@@ -97,10 +98,8 @@ class PoolDetails extends Component {
       var strikeConverted = fromDecimals(strikeValue, this.props.pool.strikeAssetInfo.decimals, 4, 0)
       
       var totalDollar = Number(this.getUnderlyingValue(underlyingConverted)) + Number(strikeConverted)
-      var underlyingFormatted = (underlyingConverted ?? 0) + " " + this.props.pool.underlyingInfo.symbol
-      var strikeFormatted = (strikeConverted ?? 0) + " " + this.props.pool.strikeAssetInfo.symbol
             
-      return `~$${formatWithPrecision(Number(totalDollar))} (${underlyingFormatted} + ${strikeFormatted})`
+      return `~$${formatWithPrecision(Number(totalDollar))}`
     }
     return null
   }
@@ -167,10 +166,22 @@ class PoolDetails extends Component {
     return ""
   }
 
+  getAssetIconUrl = () => {
+    var pool = this.props.pool
+    var symbol = this.getPoolCollateral().symbol
+    if (pool.isCall) {
+      return this.context && this.context.assetsImages && this.context.assetsImages[symbol]
+    }
+    else {
+      return ASSETS_INFO[symbol] ? ASSETS_INFO[symbol].icon : null
+    }
+  }
+
   render() {
     let pool = this.props.pool
     let poolAddress = pool.acoPool
-    let iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[this.getPoolCollateral().symbol]
+    
+    let iconUrl = this.getAssetIconUrl()
 
     let underlyingBalanceFormatted = null
     let underlyingValueFormatted = null
@@ -189,9 +200,6 @@ class PoolDetails extends Component {
         <div className="pool-header-info">
           <div className="pool-name">
             {this.getFormattedPoolName(pool)}
-          </div>
-          <div className="pool-description">
-            Automatically sell {pool.underlyingInfo.symbol} {pool.isCall ? "call" : "put"} options
           </div>
           <div className="pool-liquidity">
             Liquidity Available: {this.formatAssetValue(pool.underlyingInfo, pool.underlyingBalance)} / {this.formatAssetValue(pool.strikeAssetInfo, pool.strikeAssetBalance)}
