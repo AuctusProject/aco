@@ -35,7 +35,7 @@ class OptionChart extends Component {
   }
   static defaultProps = {
     quantity: 1,
-    volatility: 20,
+    volatility: 40,
     isBuy: true,
     isCall: true       
   }
@@ -64,16 +64,19 @@ class OptionChart extends Component {
     && !!this.props.quantity && !isNaN(this.props.quantity) && !!this.props.volatility && !isNaN(this.props.volatility) 
     && !!this.props.currentPrice && !isNaN(this.props.currentPrice)) {
       var chart = this.getBaseChart()
-      var precision = this.getPrecision(this.props.strikePrice)
-      var offset = Math.round(this.props.strikePrice * this.props.volatility / 100 * precision) / precision
-
+      
+      var precision
       var min
       var max
       if (this.props.isBuy && this.props.isCall) {
         min = Math.min(this.props.strikePrice, this.props.currentPrice)
-        max = Math.max(this.props.strikePrice, this.props.currentPrice) + offset
+        max = Math.max(this.props.strikePrice, this.props.currentPrice)
+        precision = this.getPrecision(max)
+        max += Math.round(max * this.props.volatility / 100 * precision) / precision
       } else {
-        min = Math.max(Math.min(this.props.strikePrice, this.props.currentPrice) - offset, 0)
+        min = Math.min(this.props.strikePrice, this.props.currentPrice)
+        precision = this.getPrecision(min)
+        min = Math.max(min - Math.round(min * this.props.volatility / 100 * precision) / precision, 0)
         max = Math.max(this.props.strikePrice, this.props.currentPrice)
       }
       var step = Math.round(precision * (max - min) / 8) / precision
