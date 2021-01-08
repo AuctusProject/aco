@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { getOptionsPositions } from '../../util/acoFactoryMethods'
 import { getOptionCollateralFormatedValue, getOptionTokenAmountFormatedValue, redeem, getFormattedOpenPositionAmount, getOptionFormattedPrice } from '../../util/acoTokenMethods'
-import { ONE_SECOND, getNumberWithSignal, formatDate, PositionsLayoutMode } from '../../util/constants'
+import { ONE_SECOND, getNumberWithSignal, formatDate, PositionsLayoutMode, getTimeToExpiry } from '../../util/constants'
 import { checkTransactionIsMined } from '../../util/web3Methods'
 import StepsModal from '../StepsModal/StepsModal'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
@@ -133,6 +133,13 @@ class WrittenOptionsPositions extends Component {
     this.setState({ stepsModalInfo: null })
   }
 
+  getTimeToExpiryLabel = (expiryTime) => {
+    var timeToExpiry = getTimeToExpiry(expiryTime)
+    return timeToExpiry.days > 0 ? 
+        `${timeToExpiry.days}d ${timeToExpiry.hours}h ${timeToExpiry.minutes}m` :
+        `${timeToExpiry.hours}h ${timeToExpiry.minutes}m`;
+  }
+
   render() {
     return (!this.state.positions ? (this.props.mode === PositionsLayoutMode.Advanced ? <Loading/> : null) :
       (this.state.positions.length === 0  ? <></> :
@@ -164,7 +171,12 @@ class WrittenOptionsPositions extends Component {
               <td><OptionBadge isCall={position.option.isCall}></OptionBadge></td>
               {this.props.isOtcPositions && <td>{position.option.underlyingInfo.symbol}</td>}
               <td>{getOptionFormattedPrice(position.option)}</td>
-              <td>{formatDate(position.option.expiryTime, true)}</td>
+              <td>
+				        <div className="expiration-cell">
+                  <div>{formatDate(position.option.expiryTime, false)}</div>
+                  <div className="time-to-expiry">{this.getTimeToExpiryLabel(position.option.expiryTime)}</div>
+                </div>
+			        </td>
               <td>{getOptionTokenAmountFormatedValue(position.currentCollateralizedTokens, position.option)}</td>
               {this.props.mode === PositionsLayoutMode.Advanced && <td>{getOptionTokenAmountFormatedValue(position.balance, position.option)}</td>}
               {this.props.mode === PositionsLayoutMode.Advanced && <td>{getNumberWithSignal(getFormattedOpenPositionAmount(position))}</td>}

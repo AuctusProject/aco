@@ -2,3 +2,19 @@
     width: 264px;
     min-width: 264px;
 }
+
+.expiration-cell {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+}
+
+.time-to-expiry {
+    padding: 2px 10px;
+    margin: 4px auto 0px;
+    background-color: #333333;
+}
+
+.light-mode .time-to-expiry {
+    background-color: #e6e6e6;
+}
