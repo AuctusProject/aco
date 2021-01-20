@@ -1,6 +1,7 @@
 import Web3Utils from 'web3-utils'
 import Web3 from 'web3'
 import { wethAddress, wssInfuraAddress } from './constants'
+import '@metamask/legacy-web3'
 
 var _web3 = null
 var _web3Fallback = null
