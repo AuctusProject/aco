@@ -168,7 +168,7 @@ export function getTokenStrikePriceRelation(optionInfo, tokenAmount) {
     if (!tokenAmount || parseFloat(tokenAmount) === 0) {
         return ""
     }
-    return fromDecimals(new Web3Utils.BN(optionInfo.strikePrice).mul(new Web3Utils.BN(tokenAmount)), parseInt(optionInfo.underlyingInfo.decimals), 0, 0)
+    return fromDecimals(fromDecimals(new Web3Utils.BN(optionInfo.strikePrice).mul(new Web3Utils.BN(toDecimals(tokenAmount, optionInfo.underlyingInfo.decimals))), parseInt(optionInfo.underlyingInfo.decimals), 0, 0), parseInt(optionInfo.underlyingInfo.decimals), 18, 18)
 }
 
 export function getOpenPositionAmount(position) {
