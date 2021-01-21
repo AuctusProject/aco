@@ -266,7 +266,7 @@ class PoolDetails extends Component {
               </tr>
             </tbody>            
           </table>
-          {this.state.accountPosition[2].length > 0 && <><div className="vault-position-title mt-3">Open positions:</div>
+          {this.state.accountPosition.acoTokensInfos && Object.values(this.state.accountPosition.acoTokensInfos).length > 0 && <><div className="vault-position-title mt-3">Open positions:</div>
           <table className="aco-table mx-auto table-responsive-md">
             <thead>
               <tr>
