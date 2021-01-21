@@ -118,7 +118,8 @@ export function getExerciseInfo(option) {
 
 export function getExerciseValue(option, amount, maxExercisedAccounts) {
     var exerciseInfo = getExerciseInfo(option)
-    return fromDecimals(toDecimals(option.isCall ? getTokenStrikePriceRelation(option, amount) : amount, exerciseInfo.decimals).add(new Web3Utils.BN(maxExercisedAccounts)), exerciseInfo.decimals, exerciseInfo.decimals)
+    var amountDecimals = toDecimals(amount, option.underlyingInfo.decimals)
+    return fromDecimals(new Web3Utils.BN(option.isCall ? getTokenStrikePriceRelation(option, amountDecimals) : amountDecimals).add(new Web3Utils.BN(maxExercisedAccounts)), exerciseInfo.decimals, exerciseInfo.decimals)
 }
 
 export function getMaxExercisedAccounts(optionInfo) {
@@ -168,7 +169,7 @@ export function getTokenStrikePriceRelation(optionInfo, tokenAmount) {
     if (!tokenAmount || parseFloat(tokenAmount) === 0) {
         return ""
     }
-    return fromDecimals(fromDecimals(new Web3Utils.BN(optionInfo.strikePrice).mul(new Web3Utils.BN(toDecimals(tokenAmount, optionInfo.underlyingInfo.decimals))), parseInt(optionInfo.underlyingInfo.decimals), 0, 0), parseInt(optionInfo.underlyingInfo.decimals), 18, 18)
+    return fromDecimals(new Web3Utils.BN(optionInfo.strikePrice).mul(new Web3Utils.BN(tokenAmount)), parseInt(optionInfo.underlyingInfo.decimals), 0, 0)
 }
 
 export function getOpenPositionAmount(position) {
