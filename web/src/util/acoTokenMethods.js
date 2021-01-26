@@ -118,7 +118,8 @@ export function getExerciseInfo(option) {
 
 export function getExerciseValue(option, amount, maxExercisedAccounts) {
     var exerciseInfo = getExerciseInfo(option)
-    return fromDecimals(toDecimals(option.isCall ? getTokenStrikePriceRelation(option, amount) : amount, exerciseInfo.decimals).add(new Web3Utils.BN(maxExercisedAccounts)), exerciseInfo.decimals, exerciseInfo.decimals)
+    var amountDecimals = toDecimals(amount, option.underlyingInfo.decimals)
+    return fromDecimals(new Web3Utils.BN(option.isCall ? getTokenStrikePriceRelation(option, amountDecimals) : amountDecimals).add(new Web3Utils.BN(maxExercisedAccounts)), exerciseInfo.decimals, exerciseInfo.decimals)
 }
 
 export function getMaxExercisedAccounts(optionInfo) {

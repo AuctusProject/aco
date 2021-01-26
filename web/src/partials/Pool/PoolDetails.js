@@ -266,7 +266,7 @@ class PoolDetails extends Component {
               </tr>
             </tbody>            
           </table>
-          {this.state.accountPosition[2].length > 0 && <><div className="vault-position-title mt-3">Open positions:</div>
+          {this.state.accountPosition.acoTokensInfos && Object.values(this.state.accountPosition.acoTokensInfos).length > 0 && <><div className="vault-position-title mt-3">Open positions:</div>
           <table className="aco-table mx-auto table-responsive-md">
             <thead>
               <tr>
@@ -277,7 +277,7 @@ class PoolDetails extends Component {
             </thead>
             <tbody>
             {this.state.accountPosition.acoTokensInfos && Object.values(this.state.accountPosition.acoTokensInfos).map(tokenPosition =>
-              <tr key={tokenPosition.address}>
+              <tr key={tokenPosition.acoToken}>
                 <td>{tokenPosition.acoTokenInfo.name}</td>
                 <td className="value-highlight">{fromDecimals(tokenPosition.balance, tokenPosition.acoTokenInfo.decimals)}</td>
                 <td className="value-highlight">{fromDecimals(tokenPosition.collateralAmount, getCollateralInfo(tokenPosition).decimals, 4, 0)}</td>

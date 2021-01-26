@@ -6,7 +6,7 @@ import OptionBadge from '../OptionBadge'
 import { getOptionFormattedPrice, getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
 import { listPositionsForExercise } from '../../util/acoFactoryMethods'
 import { confirm } from '../../util/sweetalert'
-import { fromDecimals, formatDate, PositionsLayoutMode } from '../../util/constants'
+import { fromDecimals, formatDate, PositionsLayoutMode, getTimeToExpiry } from '../../util/constants'
 
 class ExercisePositions extends Component {
   constructor() {
@@ -84,6 +84,13 @@ class ExercisePositions extends Component {
     this.props.setSellPosition(position)
   }
 
+  getTimeToExpiryLabel = (expiryTime) => {
+    var timeToExpiry = getTimeToExpiry(expiryTime)
+    return timeToExpiry.days > 0 ? 
+        `${timeToExpiry.days}d ${timeToExpiry.hours}h ${timeToExpiry.minutes}m` :
+        `${timeToExpiry.hours}h ${timeToExpiry.minutes}m`;
+  }
+  
   render() {
     return <div>
         {!this.state.positions ? null :
@@ -113,7 +120,12 @@ class ExercisePositions extends Component {
               {this.props.isOtcPositions && <td>{position.option.underlyingInfo.symbol}</td>}
               {this.props.mode === PositionsLayoutMode.Advanced && <td>{position.option.acoTokenInfo.symbol}</td>}
               <td>{getOptionFormattedPrice(position.option)}</td>
-              <td>{formatDate(position.option.expiryTime, true)}</td>
+              <td>
+				        <div className="expiration-cell">
+                  <div>{formatDate(position.option.expiryTime, false)}</div>
+                  <div className="time-to-expiry">{this.getTimeToExpiryLabel(position.option.expiryTime)}</div>
+                </div>
+			        </td>
               <td>{getFormattedOpenPositionAmount(position)}</td>
               <td className={!this.props.isOtcPositions ? "exercise-actions-cell" : ""}>
                 {!this.props.isOtcPositions && this.props.mode === PositionsLayoutMode.Basic && <div className="action-btn mr-2" onClick={this.onSellClick(position)}>SELL EARLY</div>}

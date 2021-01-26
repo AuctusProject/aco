@@ -170,7 +170,7 @@ class DiscontinuedVaultDetails extends Component {
                 <td className="value-highlight">{this.getTotalPositionBalance()}</td>
               </tr>
               {this.state.accountPosition.acoTokensInfos && Object.values(this.state.accountPosition.acoTokensInfos).map(tokenPosition =>
-              <tr key={tokenPosition.address}>
+              <tr key={tokenPosition.acoToken}>
                 <td>{tokenPosition.acoTokenInfo.name}</td>
                 <td className="value-highlight">{fromDecimals(tokenPosition.balance, tokenPosition.acoTokenInfo.decimals)}</td>
                 <td className="value-highlight">{this.getTotalAcoPositionBalance(tokenPosition)}</td>

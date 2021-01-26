@@ -11,6 +11,7 @@ import SimpleManageTab from '../partials/Simple/SimpleManageTab'
 import { getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
+import Pools from './Pools'
 
 class Simple extends Component {
   constructor() {
@@ -128,7 +129,10 @@ class Simple extends Component {
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/buy`)}>Buy</NavLink>
             </li>
             <li className="nav-item">
-              <NavLink className="nav-link" to={this.getUrlWithPairId(`/write`)}>Write<div className="earn-badge">Earn</div></NavLink>
+              <NavLink className="nav-link" to={this.getUrlWithPairId(`/write`)}>Write</NavLink>
+            </li>            
+            <li className="nav-item">
+              <NavLink className="nav-link" to={`/pools`}>Pools<div className="earn-badge">Earn</div></NavLink>
             </li>
             <li className="nav-item">
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/manage`)}>Manage</NavLink>
@@ -140,6 +144,9 @@ class Simple extends Component {
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("write") > 0 ? " show active" : "")}>
               <SimpleWriteTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded}/>
+            </div>
+            <div className={"tab-pane fade" + (window.location.pathname.indexOf("pools") > 0 ? " show active" : "")}>
+              <Pools {...this.props} isConnected={this.isConnected()} />
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("manage") > 0 ? " show active" : "")}>
               <SimpleManageTab {...this.props} isConnected={this.isConnected()}/>
