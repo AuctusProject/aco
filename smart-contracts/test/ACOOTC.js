@@ -1,22 +1,22 @@
 const { expect } = require("chai");
-const factoryABI = require("../artifacts/ACOFactory.json");
+const factoryABI = require("../artifacts/contracts/core/ACOFactory.sol/ACOFactory.json");
 
 describe("ACOOTC", function() {
   let owner;
   let addr1;
   let addr2;
   let addr3;
-  let fee = ethers.utils.bigNumberify("30");
+  let fee = ethers.BigNumber.from("30");
   let token1;
   let token1Name = "TOKEN1";
   let token1Symbol = "TOK1";
   let token1Decimals = 8;
-  let token1TotalSupply = ethers.utils.bigNumberify("100000000000000000000000000");
+  let token1TotalSupply = ethers.BigNumber.from("100000000000000000000000000");
   let token2;
   let token2Name = "TOKEN2";
   let token2Symbol = "TOK2";
   let token2Decimals = 6;
-  let token2TotalSupply = ethers.utils.bigNumberify("1000000000000000000000000");
+  let token2TotalSupply = ethers.BigNumber.from("1000000000000000000000000");
   let buidlerFactory;
   let weth;
   let acoOtc;
@@ -80,7 +80,7 @@ describe("ACOOTC", function() {
 
     let ownerAddr = await owner.getAddress();
     let addr2Addr = await addr2.getAddress();
-    let initData = factoryInterface.functions.init.encode([ownerAddr, ACOToken.address, fee, addr2Addr]);
+    let initData = factoryInterface.encodeFunctionData("init", [ownerAddr, ACOToken.address, fee, addr2Addr]);
     let buidlerProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactoryV3.address, initData);
     await buidlerProxy.deployed();
 
@@ -90,12 +90,12 @@ describe("ACOOTC", function() {
     token2 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token2Name, token2Symbol, token2Decimals, token2TotalSupply);
     await token2.deployed();
     
-    await token1.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("100000000000000000"));
-    await token1.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("100000000000000000"));
-    await token1.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("100000000000000000"));
-    await token2.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("1000000000000000"));
-    await token2.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("1000000000000000"));
-    await token2.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("1000000000000000"));
+    await token1.connect(owner).transfer(await addr1.getAddress(), ethers.BigNumber.from("100000000000000000"));
+    await token1.connect(owner).transfer(await addr2.getAddress(), ethers.BigNumber.from("100000000000000000"));
+    await token1.connect(owner).transfer(await addr3.getAddress(), ethers.BigNumber.from("100000000000000000"));
+    await token2.connect(owner).transfer(await addr1.getAddress(), ethers.BigNumber.from("1000000000000000"));
+    await token2.connect(owner).transfer(await addr2.getAddress(), ethers.BigNumber.from("1000000000000000"));
+    await token2.connect(owner).transfer(await addr3.getAddress(), ethers.BigNumber.from("1000000000000000"));
 
     weth = await (await ethers.getContractFactory("WETH9")).deploy();
     await weth.deployed(); 
@@ -413,7 +413,7 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount);
 
       bal11 = await token1.balanceOf(await addr1.getAddress());
       bal12 = await token1.balanceOf(await addr2.getAddress());
@@ -445,7 +445,7 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount);
 
       ++nonce;
       let collateralAmount = Math.floor(signerAmount * strikePrice / 100000000);
@@ -479,7 +479,7 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(0);
 
       bal11 = await token1.balanceOf(await addr1.getAddress());
       bal12 = await token1.balanceOf(await addr2.getAddress());
@@ -510,7 +510,7 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(0);
 
       ++nonce;
       const signer4 = getPartyAco(await addr1.getAddress(),signerAmount,token1.address,ethers.constants.AddressZero,false,strikePrice,expiryTime);
@@ -545,7 +545,7 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount);
 
       bal11 = await token1.balanceOf(await addr1.getAddress());
       bal12 = await token1.balanceOf(await addr2.getAddress());
@@ -578,14 +578,14 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount);
   });
     it("Swap ask order with signer permission", async function () { 
       let expiryTime = 1699999999;
       let signerAmount = 100000000;
       let senderAmount = 10000000;
       let strikePrice = 18000000000;
-      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x0",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
+      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x00",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
       const signer1 = getPartyAco(await addr1.getAddress(),signerAmount,token1.address,token2.address,true,strikePrice,expiryTime);
       const sender1 = getPartyToken(ethers.constants.AddressZero,senderAmount,token2.address);
       const emptyAffiliate = getPartyToken(ethers.constants.AddressZero,0,ethers.constants.AddressZero);
@@ -755,7 +755,7 @@ describe("ACOOTC", function() {
         acoOtc.connect(addr1).swapAskOrder(getNestedAskOrder(signedOrder))
       ).to.be.revertedWith("ACOOTC:: Self transfer");
 
-      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x0",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
+      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x00",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
       order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
       order = {...order,signature:emptySignature};
       await expect(
@@ -800,7 +800,7 @@ describe("ACOOTC", function() {
       signedOrder = await getPersonalSignedAskOrder(addr1, order);
       await expect(
         acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
-      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+      ).to.be.revertedWith("transferFrom");
 
       await token2.connect(addr2).approve(acoOtc.address, senderAmount);
       
@@ -815,7 +815,7 @@ describe("ACOOTC", function() {
       signedOrder = await getPersonalSignedAskOrder(addr1, order);
       await expect(
         acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
-      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+      ).to.be.revertedWith("transferFrom");
 
       await token1.connect(addr1).approve(acoOtc.address, signerAmount);
 
@@ -824,7 +824,7 @@ describe("ACOOTC", function() {
       signedOrder = await getPersonalSignedAskOrder(addr1, order);
       await expect(
         acoOtc.connect(addr2).swapAskOrder(getNestedAskOrder(signedOrder))
-      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+      ).to.be.revertedWith("transferFrom");
 
       await token1.connect(addr1).approve(acoOtc.address, signerAmount + 100000);
 
@@ -1048,7 +1048,7 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount);
 
       bal11 = await token1.balanceOf(await addr1.getAddress());
       bal12 = await token1.balanceOf(await addr2.getAddress());
@@ -1079,7 +1079,7 @@ describe("ACOOTC", function() {
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount);
 
       ++nonce;
       let collateralAmount = Math.floor(senderAmount * strikePrice / 100000000);
@@ -1113,7 +1113,7 @@ describe("ACOOTC", function() {
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
       expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(0);
 
       bal11 = await token1.balanceOf(await addr1.getAddress());
       bal12 = await token1.balanceOf(await addr2.getAddress());
@@ -1144,7 +1144,7 @@ describe("ACOOTC", function() {
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
       expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(0);
       
       ++nonce;
       const sender5 = getPartyAco(await addr3.getAddress(),senderAmount,token1.address,ethers.constants.AddressZero,false,strikePrice,expiryTime);
@@ -1178,7 +1178,7 @@ describe("ACOOTC", function() {
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
       expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount);
 
       bal11 = await token1.balanceOf(await addr1.getAddress());
       bal12 = await token1.balanceOf(await addr2.getAddress());
@@ -1210,14 +1210,14 @@ describe("ACOOTC", function() {
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
       expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount);
     });
     it("Swap bid order with signer permission", async function () { 
       let expiryTime = 1699999999;
       let signerAmount = 10000000;
       let senderAmount = 100000000;
       let strikePrice = 18000000000;
-      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x0",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
+      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x00",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
       const signer1 = getPartyToken(await addr1.getAddress(),signerAmount,token2.address);
       const sender1 = getPartyAco(ethers.constants.AddressZero,senderAmount,token1.address,token2.address,true,strikePrice,expiryTime);
       const emptyAffiliate = getPartyToken(ethers.constants.AddressZero,0,ethers.constants.AddressZero);
@@ -1388,7 +1388,7 @@ describe("ACOOTC", function() {
         acoOtc.connect(addr1).swapBidOrder(getNestedBidOrder(signedOrder))
       ).to.be.revertedWith("ACOOTC:: Self transfer");
 
-      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x0",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
+      const emptySignature = {signatory:ethers.constants.AddressZero,validator:ethers.constants.AddressZero,version:"0x00",v:0,r:"0x0000000000000000000000000000000000000000000000000000000000000000",s:"0x0000000000000000000000000000000000000000000000000000000000000000"};
       order = getUnsignedOrder(nonce, expiry, signer1, sender1, emptyAffiliate);
       order = {...order,signature:emptySignature};
       await expect(
@@ -1433,7 +1433,7 @@ describe("ACOOTC", function() {
       signedOrder = await getPersonalSignedBidOrder(addr1, order);
       await expect(
         acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
-      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+      ).to.be.revertedWith("transferFrom");
 
       await token1.connect(addr2).approve(acoOtc.address, senderAmount);
       
@@ -1448,7 +1448,7 @@ describe("ACOOTC", function() {
       signedOrder = await getPersonalSignedBidOrder(addr1, order);
       await expect(
         acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
-      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+      ).to.be.revertedWith("transferFrom");
 
       await token2.connect(addr1).approve(acoOtc.address, signerAmount);
 
@@ -1457,7 +1457,7 @@ describe("ACOOTC", function() {
       signedOrder = await getPersonalSignedBidOrder(addr1, order);
       await expect(
         acoOtc.connect(addr2).swapBidOrder(getNestedBidOrder(signedOrder))
-      ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+      ).to.be.revertedWith("transferFrom");
 
       await token1.connect(addr1).approve(acoOtc.address, 100000);
 

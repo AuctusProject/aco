@@ -292,6 +292,8 @@ contract ACOPoolFactory2 {
             underlying, 
             strikeAsset,
             isCall,
+            address(0),
+            0,
 			assetConverterHelper,
             acoPoolFee,
             acoPoolFeeDestination,
@@ -782,5 +784,181 @@ contract ACOPoolFactory2 {
         }
         IACOPool2(proxy).init(initData);
         return proxy;
+    }
+}
+
+contract ACOPoolFactory2V2 is ACOPoolFactory2 {
+ 
+    /**
+     * @dev Emitted when the lending pool has been changed.
+     * @param oldLendingPool Address of the previous lending pool.
+     * @param newLendingPool Address of the new lending pool.
+     */
+    event SetAcoPoolLendingPool(address indexed oldLendingPool, address indexed newLendingPool);
+    
+    /**
+     * @dev Emitted when the lending pool referral has been changed.
+     * @param oldLendingPoolReferral Value of the previous lending pool referral.
+     * @param newLendingPoolReferral Value of the new lending pool referral.
+     */
+    event SetAcoPoolLendingPoolReferral(uint256 indexed oldLendingPoolReferral, uint256 indexed newLendingPoolReferral);
+    
+    /**
+	 * @dev Value of the lending pool referral.
+	 */
+	uint16 public lendingPoolReferral;
+	
+	/**
+	 * @dev Address of the lending pool.
+	 */
+	address public lendingPool;
+    
+    /**
+     * @dev Function to set the lending pool.
+     * Only can be called by the factory admin.
+     * @param newLendingPool Address of the new lending pool.
+     */
+    function setAcoPoolLendingPool(address newLendingPool) onlyFactoryAdmin external virtual {
+        _setAcoPoolLendingPool(newLendingPool);
+    }   
+
+    /**
+     * @dev Function to set the lending pool referral.
+     * Only can be called by the factory admin.
+     * @param newLendingPoolReferral Value of the new lending pool referral.
+     */
+    function setAcoPoolLendingPoolReferral(uint16 newLendingPoolReferral) onlyFactoryAdmin external virtual {
+        _setAcoPoolLendingPoolReferral(newLendingPoolReferral);
+    }
+    
+    /**
+     * @dev Function to create a new ACO pool.
+     * It deploys a minimal proxy for the ACO pool implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall True if the type is CALL, false for PUT.
+     * @param tolerancePriceBelow The below tolerance price percentage for ACO tokens.
+     * @param tolerancePriceAbove The above tolerance price percentage for ACO tokens.
+     * @param minExpiration The minimum expiration seconds after the current time for ACO tokens.
+     * @param maxExpiration The maximum expiration seconds after the current time for ACO tokens.
+     * @param strategy Address of the pool strategy to be used.
+     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
+     * @return The created ACO pool address.
+     */
+    function createAcoPool(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 tolerancePriceBelow,
+        uint256 tolerancePriceAbove,
+        uint256 minExpiration,
+        uint256 maxExpiration,
+        address strategy,
+        uint256 baseVolatility
+    ) onlyFactoryAdmin external override virtual returns(address) {
+        _validateStrategy(strategy);
+        return _createAcoPool(IACOPool2.InitData(
+            acoFactory,
+            chiToken,
+            underlying, 
+            strikeAsset,
+            isCall,
+            lendingPool,
+            lendingPoolReferral,
+			assetConverterHelper,
+            acoPoolFee,
+            acoPoolFeeDestination,
+			acoPoolWithdrawOpenPositionPenalty,
+			acoPoolUnderlyingPriceAdjustPercentage,
+            acoPoolMaximumOpenAco,
+            tolerancePriceBelow,
+            tolerancePriceAbove,
+            minExpiration,
+            maxExpiration,
+            strategy,
+            baseVolatility
+        ));
+    }
+    
+    /**
+     * @dev Function to change the ACO pools fee data.
+     * Only can be called by a pool admin.
+     * @param feeDestinations Array of the fee destinations addresses.
+     * @param fees Array of the fee percentages.
+     * @param acoPools Array of ACO pools addresses.
+     */
+    function setFeeDataOnAcoPool(address[] calldata feeDestinations, uint256[] calldata fees, address[] calldata acoPools) onlyPoolAdmin external virtual {
+        _setAcoPoolAddressUint256Data(IACOPool2.setFeeData.selector, feeDestinations, fees, acoPools);
+    }
+    
+     /**
+     * @dev Function to change the ACO pools fee data.
+     * Only can be called by a pool admin.
+     * @param tolerancePricesBelow Array of the below tolerance price percentages.
+     * @param tolerancePricesAbove Array of the above tolerance price percentages.
+     * @param minExpirations Array of the minimum expirations.
+     * @param maxExpirations Array of the maximum expirations.
+     * @param acoPools Array of ACO pools addresses.
+     */
+    function setAcoPermissionDataOnAcoPool(
+        uint256[] calldata tolerancePricesBelow, 
+        uint256[] calldata tolerancePricesAbove, 
+        uint256[] calldata minExpirations,
+        uint256[] calldata maxExpirations,
+        address[] calldata acoPools
+    ) onlyPoolAdmin external virtual {
+        require(tolerancePricesBelow.length == tolerancePricesAbove.length 
+            && tolerancePricesAbove.length == minExpirations.length
+            && minExpirations.length == maxExpirations.length
+            && maxExpirations.length == acoPools.length, "ACOPoolFactory::setAcoPermissionDataOnAcoPool: Invalid arguments");
+        
+        bytes4 selector = IACOPool2.setPoolDataForAcoPermission.selector;
+        for (uint256 i = 0; i < acoPools.length; ++i) {
+			(bool success,) = acoPools[i].call(abi.encodeWithSelector(selector, tolerancePricesBelow[i], tolerancePricesAbove[i], minExpirations[i], maxExpirations[i]));
+			require(success, "ACOPoolFactory::setAcoPermissionDataOnAcoPool");
+        }
+    }
+    
+    /**
+     * @dev Function to change the ACO pools lending pool referrals.
+     * Only can be called by a pool admin.
+     * @param lendingPoolReferrals Array of the lending pool referrals.
+     * @param acoPools Array of ACO pools addresses.
+     */
+    function setLendingPoolReferralOnAcoPool(uint256[] calldata lendingPoolReferrals, address[] calldata acoPools) onlyPoolAdmin external virtual {
+        _setAcoPoolUint256Data(IACOPool2.setLendingPoolReferral.selector, lendingPoolReferrals, acoPools);
+    }
+    
+    /**
+     * @dev Internal function to set the lending pool.
+     * @param newLendingPool Address of the new lending pool.
+     */
+    function _setAcoPoolLendingPool(address newLendingPool) internal virtual {
+        emit SetAcoPoolLendingPool(lendingPool, newLendingPool);
+        lendingPool = newLendingPool;
+    }
+    
+    /**
+     * @dev Internal function to set the lending pool referral.
+     * @param newLendingPoolReferral Value of the new lending pool referral.
+     */
+    function _setAcoPoolLendingPoolReferral(uint16 newLendingPoolReferral) internal virtual {
+        emit SetAcoPoolLendingPoolReferral(lendingPoolReferral, newLendingPoolReferral);
+        lendingPoolReferral = newLendingPoolReferral;
+    }
+    
+    /**
+     * @dev Internal function to change the ACO pools an address and a number data.
+	 * @param selector Function selector to be called on the ACO pool.
+     * @param addresses Array of the addresses to be set.
+     * @param numbers Array of the numbers to be set.
+     * @param acoPools Array of ACO pools addresses.
+     */
+    function _setAcoPoolAddressUint256Data(bytes4 selector, address[] memory addresses, uint256[] memory numbers, address[] memory acoPools) internal virtual {
+        require(addresses.length == acoPools.length && numbers.length == acoPools.length, "ACOPoolFactory::_setAcoPoolAddressUint256Data: Invalid arguments");
+        for (uint256 i = 0; i < acoPools.length; ++i) {
+			(bool success,) = acoPools[i].call(abi.encodeWithSelector(selector, addresses[i], numbers[i]));
+			require(success, "ACOPoolFactory::_setAcoPoolAddressUint256Data");
+        }
     }
 }

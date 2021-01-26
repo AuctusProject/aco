@@ -11,6 +11,8 @@ interface IACOPool2 is IERC20 {
         address underlying;
         address strikeAsset;
         bool isCall; 
+        address lendingPool;
+        uint16 lendingPoolReferral;
 		address assetConverter;
         uint256 fee;
         address feeDestination;
@@ -57,6 +59,16 @@ interface IACOPool2 is IERC20 {
 		address[] memory acos, 
 		uint256[] memory acosAmount
 	);
+	function getGeneralData() external view returns(
+        uint256 underlyingBalance,
+		uint256 strikeAssetBalance,
+		uint256 collateralLocked,
+        uint256 collateralOnOpenPosition,
+        uint256 collateralLockedRedeemable
+    );
+	function setLendingPoolReferral(uint16 newLendingPoolReferral) external;
+	function setPoolDataForAcoPermission(uint256 newTolerancePriceBelow, uint256 newTolerancePriceAbove, uint256 newMinExpiration, uint256 newMaxExpiration) external;
+	function setFeeData(address newFeeDestination, uint256 newFee) external;
 	function setAssetConverter(address newAssetConverter) external;
     function setTolerancePriceBelow(uint256 newTolerancePriceBelow) external;
     function setTolerancePriceAbove(uint256 newTolerancePriceAbove) external;
@@ -71,23 +83,23 @@ interface IACOPool2 is IERC20 {
 	function setBaseVolatility(uint256 newBaseVolatility) external;
 	function setValidAcoCreator(address newAcoCreator, bool newPermission) external;
     function withdrawStuckToken(address token, address destination) external;
-    function deposit(uint256 collateralAmount, uint256 minShares, address to) external payable returns(uint256 acoPoolTokenAmount);
-	function depositWithGasToken(uint256 collateralAmount, uint256 minShares, address to) external payable returns(uint256 acoPoolTokenAmount);
-	function withdrawNoLocked(uint256 shares, uint256 minCollateral, address account) external returns (
+    function deposit(uint256 collateralAmount, uint256 minShares, address to, bool isLendingToken) external payable returns(uint256 acoPoolTokenAmount);
+	function depositWithGasToken(uint256 collateralAmount, uint256 minShares, address to, bool isLendingToken) external payable returns(uint256 acoPoolTokenAmount);
+	function withdrawNoLocked(uint256 shares, uint256 minCollateral, address account, bool withdrawLendingToken) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	);
-	function withdrawNoLockedWithGasToken(uint256 shares, uint256 minCollateral, address account) external returns (
+	function withdrawNoLockedWithGasToken(uint256 shares, uint256 minCollateral, address account, bool withdrawLendingToken) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn
 	);
-    function withdrawWithLocked(uint256 shares, address account) external returns (
+    function withdrawWithLocked(uint256 shares, address account, bool withdrawLendingToken) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
 		uint256[] memory acosAmount
 	);
-	function withdrawWithLockedWithGasToken(uint256 shares, address account) external returns (
+	function withdrawWithLockedWithGasToken(uint256 shares, address account, bool withdrawLendingToken) external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
@@ -98,4 +110,5 @@ interface IACOPool2 is IERC20 {
     function redeemACOTokens() external;
 	function redeemACOToken(address acoToken) external;
     function restoreCollateral() external;
+    function lendCollateral() external;
 }

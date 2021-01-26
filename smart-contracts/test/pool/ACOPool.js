@@ -1,8 +1,8 @@
 const { expect } = require("chai");
-const poolFactoryABI = require("../../artifacts/ACOPoolFactory.json");
-const factoryABI = require("../../artifacts/ACOFactory.json");
+const poolFactoryABI = require("../../artifacts/contracts/periphery/pool/ACOPoolFactory.sol/ACOPoolFactory.json");
+const factoryABI = require("../../artifacts/contracts/core/ACOFactory.sol/ACOFactory.json");
 const { createAcoStrategy1 } = require("./ACOStrategy1.js");
-const { AddressZero } = require("ethers/constants");
+const AddressZero = "0x0000000000000000000000000000000000000000";
 
 let started = false;
 
@@ -13,23 +13,23 @@ describe("ACOPool", function() {
     let addr1;
     let addr2;
     let addr3;
-    let fee = ethers.utils.bigNumberify("100");
+    let fee = ethers.BigNumber.from("100");
     let maxExercisedAccounts = 120;
     let token1;
     let token1Name = "TOKEN1";
     let token1Symbol = "TOK1";
     let token1Decimals = 8;
-    let token1TotalSupply = ethers.utils.bigNumberify("100000000000000000");
+    let token1TotalSupply = ethers.BigNumber.from("100000000000000000");
     let token2;
     let token2Name = "TOKEN2";
     let token2Symbol = "TOK2";
     let token2Decimals = 6;
-    let token2TotalSupply = ethers.utils.bigNumberify("1000000000000000");
+    let token2TotalSupply = ethers.BigNumber.from("1000000000000000");
     let pairToken1Token2;
     let pairWethToken2;
-    let token1Liq = ethers.utils.bigNumberify("50000000000");
-    let token2Liq = ethers.utils.bigNumberify("5000000000000");
-    let wethLiq = ethers.utils.bigNumberify("12500000000000000000000");
+    let token1Liq = ethers.BigNumber.from("50000000000");
+    let token2Liq = ethers.BigNumber.from("5000000000000");
+    let wethLiq = ethers.BigNumber.from("12500000000000000000000");
     let defaultStrategy;
     let aggregatorToken1Token2;
     let aggregatorWethToken2;
@@ -40,18 +40,18 @@ describe("ACOPool", function() {
     let chiToken;
     let converterHelper;
 
-    let token1Token2Price = ethers.utils.bigNumberify("10000000000");
-    let ethToken2Price = ethers.utils.bigNumberify("400000000");
+    let token1Token2Price = ethers.BigNumber.from("10000000000");
+    let ethToken2Price = ethers.BigNumber.from("400000000");
     let expiration;
     let start;
-    let acoEthToken2CallPrice = ethers.utils.bigNumberify("500000000");
-    let acoEthToken2CallPrice2 = ethers.utils.bigNumberify("300000000");
-    let acoEthToken2PutPrice = ethers.utils.bigNumberify("300000000");
-    let acoEthToken2PutPrice2 = ethers.utils.bigNumberify("500000000");
-    let acoToken1Token2CallPrice = ethers.utils.bigNumberify("12000000000");
-    let acoToken1Token2CallPrice2 = ethers.utils.bigNumberify("9000000000");
-    let acoToken1Token2PutPrice = ethers.utils.bigNumberify("9000000000");
-    let acoToken1Token2PutPrice2 = ethers.utils.bigNumberify("12000000000");
+    let acoEthToken2CallPrice = ethers.BigNumber.from("500000000");
+    let acoEthToken2CallPrice2 = ethers.BigNumber.from("300000000");
+    let acoEthToken2PutPrice = ethers.BigNumber.from("300000000");
+    let acoEthToken2PutPrice2 = ethers.BigNumber.from("500000000");
+    let acoToken1Token2CallPrice = ethers.BigNumber.from("12000000000");
+    let acoToken1Token2CallPrice2 = ethers.BigNumber.from("9000000000");
+    let acoToken1Token2PutPrice = ethers.BigNumber.from("9000000000");
+    let acoToken1Token2PutPrice2 = ethers.BigNumber.from("12000000000");
     let ethToken2BaseVolatility = 85000;
     let token1Token2BaseVolatility = 70000;
     let ACOEthToken2Call;
@@ -71,7 +71,7 @@ describe("ACOPool", function() {
         [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
         
         if (!started) {
-            let baseTx = {to: await owner.getAddress(), value: ethers.utils.bigNumberify("5000000000000000000000")};
+            let baseTx = {to: await owner.getAddress(), value: ethers.BigNumber.from("5000000000000000000000")};
             await addr1.sendTransaction(baseTx);
             await addr2.sendTransaction(baseTx);
             await addr3.sendTransaction(baseTx);
@@ -85,7 +85,7 @@ describe("ACOPool", function() {
         await ACOTokenTemp.deployed();
     
         let factoryInterface = new ethers.utils.Interface(factoryABI.abi);
-        let factoryInitData = factoryInterface.functions.init.encode([await owner.getAddress(), ACOTokenTemp.address, 0, await addr3.getAddress()]);
+        let factoryInitData = factoryInterface.encodeFunctionData("init", [await owner.getAddress(), ACOTokenTemp.address, 0, await addr3.getAddress()]);
         let buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOFactoryTemp.address, factoryInitData);
         await buidlerACOFactoryProxy.deployed();
         ACOFactory = await ethers.getContractAt("ACOFactoryV3", buidlerACOFactoryProxy.address);
@@ -105,16 +105,16 @@ describe("ACOPool", function() {
         token1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token1Name, token1Symbol, token1Decimals, token1TotalSupply);
         await token1.deployed();
 
-        await token1.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("100000000000000"));
-        await token1.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("100000000000000"));
-        await token1.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("100000000000000"));
+        await token1.connect(owner).transfer(await addr1.getAddress(), ethers.BigNumber.from("100000000000000"));
+        await token1.connect(owner).transfer(await addr2.getAddress(), ethers.BigNumber.from("100000000000000"));
+        await token1.connect(owner).transfer(await addr3.getAddress(), ethers.BigNumber.from("100000000000000"));
     
         token2 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token2Name, token2Symbol, token2Decimals, token2TotalSupply);
         await token2.deployed();
         
-        await token2.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("1000000000000"));
-        await token2.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("1000000000000"));
-        await token2.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("1000000000000"));
+        await token2.connect(owner).transfer(await addr1.getAddress(), ethers.BigNumber.from("1000000000000"));
+        await token2.connect(owner).transfer(await addr2.getAddress(), ethers.BigNumber.from("1000000000000"));
+        await token2.connect(owner).transfer(await addr3.getAddress(), ethers.BigNumber.from("1000000000000"));
 
         aggregatorToken1Token2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, token1Token2Price.mul(100));
         await aggregatorToken1Token2.deployed();
@@ -135,7 +135,7 @@ describe("ACOPool", function() {
         await ACOPoolFactoryTempV2.deployed();
         
         let poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
-        let poolFactoryInitData = poolFactoryInterface.functions.init.encode([await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, await addr3.getAddress()]);
+        let poolFactoryInitData = poolFactoryInterface.encodeFunctionData("init", [await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, await addr3.getAddress()]);
         let buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOPoolFactoryTemp.address, poolFactoryInitData);
         await buidlerACOPoolFactoryProxy.deployed();
         ACOPoolFactory = await ethers.getContractAt("ACOPoolFactoryV2", buidlerACOPoolFactoryProxy.address);
@@ -223,19 +223,19 @@ describe("ACOPool", function() {
         current = await getCurrentTimestamp();
         start = current + 140;
 
-        let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+        let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, start, ethers.BigNumber.from("9000000000"), ethers.BigNumber.from("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
         let result8 = tx8.events[tx8.events.length - 1].args;
         ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool", result8.acoPool);
 
-        let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, start, ethers.utils.bigNumberify("9000000000"), ethers.utils.bigNumberify("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
+        let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, start, ethers.BigNumber.from("9000000000"), ethers.BigNumber.from("12000000000"), start, expiration, false, defaultStrategy.address, token1Token2BaseVolatility)).wait();
         let result9 = tx9.events[tx9.events.length - 1].args;
         ACOPoolToken1Token2Put = await ethers.getContractAt("ACOPool", result9.acoPool);
         
-        let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+        let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, start, ethers.BigNumber.from("300000000"), ethers.BigNumber.from("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
         let result10 = tx10.events[tx10.events.length - 1].args;
         ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool", result10.acoPool);
 
-        let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, start, ethers.utils.bigNumberify("300000000"), ethers.utils.bigNumberify("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
+        let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, start, ethers.BigNumber.from("300000000"), ethers.BigNumber.from("500000000"), start, expiration, false, defaultStrategy.address, ethToken2BaseVolatility)).wait();
         let result11 = tx11.events[tx11.events.length - 1].args;
         ACOPoolEthToken2Put = await ethers.getContractAt("ACOPool", result11.acoPool);
     });
@@ -264,7 +264,7 @@ describe("ACOPool", function() {
                 underlying: token1.address,
                 strikeAsset: token2.address,
                 minStrikePrice: 1,
-                maxStrikePrice: ethers.utils.bigNumberify("10000000000000000000000"),
+                maxStrikePrice: ethers.BigNumber.from("10000000000000000000000"),
                 minExpiration: now + 86400,
                 maxExpiration: now + (30*86400),
                 isCall: true,
@@ -284,7 +284,7 @@ describe("ACOPool", function() {
             expect(await ACOPool.acoFactory()).to.equal(ACOFactory.address);
             expect(await ACOPool.assetConverterHelper()).to.equal(converterHelper.address);
             expect(await ACOPool.minStrikePrice()).to.equal(1);
-            expect(await ACOPool.maxStrikePrice()).to.equal(ethers.utils.bigNumberify("10000000000000000000000"));
+            expect(await ACOPool.maxStrikePrice()).to.equal(ethers.BigNumber.from("10000000000000000000000"));
             expect(await ACOPool.minExpiration()).to.equal(now + 86400);
             expect(await ACOPool.maxExpiration()).to.equal(now + (30*86400));
             expect(await ACOPool.canBuy()).to.equal(false);
@@ -308,7 +308,7 @@ describe("ACOPool", function() {
                 underlying: token1.address,
                 strikeAsset: token2.address,
                 minStrikePrice: 1,
-                maxStrikePrice: ethers.utils.bigNumberify("10000000000000000000000"),
+                maxStrikePrice: ethers.BigNumber.from("10000000000000000000000"),
                 minExpiration: now + 86400,
                 maxExpiration: now + (30*86400),
                 isCall: true,
@@ -370,7 +370,7 @@ describe("ACOPool", function() {
                 underlying: token1.address,
                 strikeAsset: token2.address,
                 minStrikePrice: 1,
-                maxStrikePrice: ethers.utils.bigNumberify("10000000000000000000000"),
+                maxStrikePrice: ethers.BigNumber.from("10000000000000000000000"),
                 minExpiration: now + 86400,
                 maxExpiration: now + (30*86400),
                 isCall: true,
@@ -410,7 +410,7 @@ describe("ACOPool", function() {
                 underlying: token1.address,
                 strikeAsset: token2.address,
                 minStrikePrice: 1,
-                maxStrikePrice: ethers.utils.bigNumberify("600000000"),
+                maxStrikePrice: ethers.BigNumber.from("600000000"),
                 minExpiration: now + 86400,
                 maxExpiration: now + (5*86400),
                 isCall: true,
@@ -452,7 +452,7 @@ describe("ACOPool", function() {
                 underlying: AddressZero,
                 strikeAsset: token2.address,
                 minStrikePrice: 1,
-                maxStrikePrice: ethers.utils.bigNumberify("600000000"),
+                maxStrikePrice: ethers.BigNumber.from("600000000"),
                 minExpiration: now + 86400,
                 maxExpiration: now + (5*86400),
                 isCall: true,
@@ -466,14 +466,14 @@ describe("ACOPool", function() {
 
             let ownerAddr = await owner.getAddress();
 
-            let depositAmount = ethers.utils.bigNumberify("1000000000000000000");
+            let depositAmount = ethers.BigNumber.from("1000000000000000000");
             await ACOPool.deposit(depositAmount, ownerAddr, {value: depositAmount});
             
             expect(await ACOPool.collateralDeposited()).to.equal(depositAmount);
 
             await ACOPool.connect(addr2).deposit(depositAmount, addr2Addr, {value: depositAmount});
             
-            expect(await ACOPool.collateralDeposited()).to.equal(ethers.utils.bigNumberify("2000000000000000000"));
+            expect(await ACOPool.collateralDeposited()).to.equal(ethers.BigNumber.from("2000000000000000000"));
         });
         it("Check fail to deposit", async function () {            
             let addr2Addr = await addr2.getAddress();
@@ -489,7 +489,7 @@ describe("ACOPool", function() {
                 underlying: token1.address,
                 strikeAsset: token2.address,
                 minStrikePrice: 1,
-                maxStrikePrice: ethers.utils.bigNumberify("600000000"),
+                maxStrikePrice: ethers.BigNumber.from("600000000"),
                 minExpiration: now + 86400,
                 maxExpiration: now + (5*86400),
                 isCall: true,
@@ -522,17 +522,17 @@ describe("ACOPool", function() {
 
             await expect(
                 ACOPool.deposit(depositAmount, ownerAddr, {value: 1})
-            ).to.be.revertedWith("ACOAssetHelper:: Ether is not expected");
+            ).to.be.revertedWith("No payable");
             
             await expect(
                 ACOPool.deposit(depositAmount, ownerAddr)
-            ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+            ).to.be.revertedWith("transferFrom");
         });
         it("Check deposit ACOPoolEthToken2Call", async function () {
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
 
-            let val1 = ethers.utils.bigNumberify("1000000000000000000");
-            let val2 = ethers.utils.bigNumberify("5000000000000000000");
+            let val1 = ethers.BigNumber.from("1000000000000000000");
+            let val2 = ethers.BigNumber.from("5000000000000000000");
             await ACOPoolEthToken2Call.connect(addr1).deposit(val1, await addr1.getAddress(), {value: val1});
             expect(await ACOPoolEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(val1);
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(val1);
@@ -557,10 +557,10 @@ describe("ACOPool", function() {
             await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
             await token2.connect(addr3).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-            let val1 = ethers.utils.bigNumberify("200000000");
-            let val2 = ethers.utils.bigNumberify("600000000");
-            let bal1 = ethers.utils.bigNumberify("200000000000000000000");
-            let bal2 = ethers.utils.bigNumberify("600000000000000000000");
+            let val1 = ethers.BigNumber.from("200000000");
+            let val2 = ethers.BigNumber.from("600000000");
+            let bal1 = ethers.BigNumber.from("200000000000000000000");
+            let bal2 = ethers.BigNumber.from("600000000000000000000");
             await ACOPoolEthToken2Put.connect(addr1).deposit(val1, await addr1.getAddress());
             expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(bal1);
             expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(bal1);
@@ -585,10 +585,10 @@ describe("ACOPool", function() {
             await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
             await token1.connect(addr3).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-            let val1 = ethers.utils.bigNumberify("800000000");
-            let val2 = ethers.utils.bigNumberify("2000000000");
-            let bal1 = ethers.utils.bigNumberify("8000000000000000000");
-            let bal2 = ethers.utils.bigNumberify("20000000000000000000");
+            let val1 = ethers.BigNumber.from("800000000");
+            let val2 = ethers.BigNumber.from("2000000000");
+            let bal1 = ethers.BigNumber.from("8000000000000000000");
+            let bal2 = ethers.BigNumber.from("20000000000000000000");
             await ACOPoolToken1Token2Call.connect(addr1).deposit(val1, await addr3.getAddress());
             expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
             expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(bal1);
@@ -612,10 +612,10 @@ describe("ACOPool", function() {
             await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(addr3).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-            let val1 = ethers.utils.bigNumberify("10000");
-            let val2 = ethers.utils.bigNumberify("8000");
-            let bal1 = ethers.utils.bigNumberify("10000000000000000");
-            let bal2 = ethers.utils.bigNumberify("8000000000000000");
+            let val1 = ethers.BigNumber.from("10000");
+            let val2 = ethers.BigNumber.from("8000");
+            let bal1 = ethers.BigNumber.from("10000000000000000");
+            let bal2 = ethers.BigNumber.from("8000000000000000");
             await ACOPoolToken1Token2Put.connect(addr1).deposit(val1, await addr3.getAddress());
             expect(await ACOPoolToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(0);
             expect(await ACOPoolToken1Token2Put.balanceOf(await addr3.getAddress())).to.equal(bal1);
@@ -635,15 +635,15 @@ describe("ACOPool", function() {
         it("Check swap ACOPoolEthToken2Call", async function () {
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
 
-            let val1 = ethers.utils.bigNumberify("5000000000000000000");
+            let val1 = ethers.BigNumber.from("5000000000000000000");
             await ACOPoolEthToken2Call.connect(addr1).deposit(val1, await addr1.getAddress(), {value: val1});
             await await ACOPoolEthToken2Call.connect(addr2).deposit(val1, await addr2.getAddress(), {value: val1});
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(val1.mul(2));
 
             await jumpUntilStart(start);
             let deadline = (await getCurrentTimestamp()) + 100;
-            let swapAmount = ethers.utils.bigNumberify("1000000000000000000");
-            let maxValueToPay = ethers.utils.bigNumberify("30000000");
+            let swapAmount = ethers.BigNumber.from("1000000000000000000");
+            let maxValueToPay = ethers.BigNumber.from("30000000");
             expect(await ACOEthToken2Call.balanceOf(await owner.getAddress())).to.equal(0);
             await token2.connect(owner).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
             await ACOPoolEthToken2Call.swap(true, ACOEthToken2Call.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
@@ -660,7 +660,7 @@ describe("ACOPool", function() {
             expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
             expect((await ACOPoolEthToken2Call.acoTokensData(ACOEthToken2Call.address)).amountSold).to.equal(swapAmount.mul(3));
 
-            maxValueToPay = ethers.utils.bigNumberify("300000000");
+            maxValueToPay = ethers.BigNumber.from("300000000");
             await ACOPoolEthToken2Call.swap(true, ACOEthToken2Call2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
             expect(await ACOEthToken2Call2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
             expect((await ACOPoolEthToken2Call.acoTokensData(ACOEthToken2Call2.address)).amountSold).to.equal(swapAmount);
@@ -671,17 +671,17 @@ describe("ACOPool", function() {
             await token2.connect(addr1).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
             await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-            let val1 = ethers.utils.bigNumberify("3000000000");            
+            let val1 = ethers.BigNumber.from("3000000000");            
             await ACOPoolEthToken2Put.connect(addr1).deposit(val1, await addr1.getAddress());
             await await ACOPoolEthToken2Put.connect(addr2).deposit(val1, await addr2.getAddress());
 
-            let totalSupply = ethers.utils.bigNumberify("6000000000000000000000");
+            let totalSupply = ethers.BigNumber.from("6000000000000000000000");
             expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(totalSupply);
 
             await jumpUntilStart(start);
             let deadline = (await getCurrentTimestamp()) + 100;
-            let swapAmount = ethers.utils.bigNumberify("1000000000000000000");
-            let maxValueToPay = ethers.utils.bigNumberify("30000000");
+            let swapAmount = ethers.BigNumber.from("1000000000000000000");
+            let maxValueToPay = ethers.BigNumber.from("30000000");
             expect(await ACOEthToken2Put.balanceOf(await owner.getAddress())).to.equal(0);
             await token2.connect(owner).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
             await ACOPoolEthToken2Put.swap(true, ACOEthToken2Put.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
@@ -698,7 +698,7 @@ describe("ACOPool", function() {
             expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
             expect((await ACOPoolEthToken2Put.acoTokensData(ACOEthToken2Put.address)).amountSold).to.equal(swapAmount.mul(3));
 
-            maxValueToPay = ethers.utils.bigNumberify("200000000");
+            maxValueToPay = ethers.BigNumber.from("200000000");
             await ACOPoolEthToken2Put.swap(true, ACOEthToken2Put2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
             expect(await ACOEthToken2Put2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
             expect((await ACOPoolEthToken2Put.acoTokensData(ACOEthToken2Put2.address)).amountSold).to.equal(swapAmount);
@@ -709,17 +709,17 @@ describe("ACOPool", function() {
             await token1.connect(addr1).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
             await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
 
-            let val1 = ethers.utils.bigNumberify("12000000000000");            
+            let val1 = ethers.BigNumber.from("12000000000000");            
             await ACOPoolToken1Token2Call.connect(addr1).deposit(val1, await addr1.getAddress());
             await await ACOPoolToken1Token2Call.connect(addr2).deposit(val1, await addr2.getAddress());
 
-            let totalSupply = ethers.utils.bigNumberify("240000000000000000000000");
+            let totalSupply = ethers.BigNumber.from("240000000000000000000000");
             expect(await ACOPoolToken1Token2Call.totalSupply()).to.equal(totalSupply);
 
             await jumpUntilStart(start);
             let deadline = (await getCurrentTimestamp()) + 100;
-            let swapAmount = ethers.utils.bigNumberify("100000000");
-            let maxValueToPay = ethers.utils.bigNumberify("300000000");
+            let swapAmount = ethers.BigNumber.from("100000000");
+            let maxValueToPay = ethers.BigNumber.from("300000000");
             expect(await ACOToken1Token2Call.balanceOf(await owner.getAddress())).to.equal(0);
             await token2.connect(owner).approve(ACOPoolToken1Token2Call.address, token2TotalSupply);
             await ACOPoolToken1Token2Call.swap(true, ACOToken1Token2Call.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
@@ -736,7 +736,7 @@ describe("ACOPool", function() {
             expect(await ACOToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
             expect((await ACOPoolToken1Token2Call.acoTokensData(ACOToken1Token2Call.address)).amountSold).to.equal(swapAmount.mul(3));
 
-            maxValueToPay = ethers.utils.bigNumberify("3000000000");
+            maxValueToPay = ethers.BigNumber.from("3000000000");
             await ACOPoolToken1Token2Call.swap(true, ACOToken1Token2Call2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
             expect(await ACOToken1Token2Call2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
             expect((await ACOPoolToken1Token2Call.acoTokensData(ACOToken1Token2Call2.address)).amountSold).to.equal(swapAmount);
@@ -747,17 +747,17 @@ describe("ACOPool", function() {
             await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-            let val1 = ethers.utils.bigNumberify("90000000000");            
+            let val1 = ethers.BigNumber.from("90000000000");            
             await ACOPoolToken1Token2Put.connect(addr1).deposit(val1, await addr1.getAddress());
             await await ACOPoolToken1Token2Put.connect(addr2).deposit(val1, await addr2.getAddress());
 
-            let totalSupply = ethers.utils.bigNumberify("180000000000000000000000");
+            let totalSupply = ethers.BigNumber.from("180000000000000000000000");
             expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(totalSupply);
 
             await jumpUntilStart(start)
             let deadline = (await getCurrentTimestamp()) + 100;
-            let swapAmount = ethers.utils.bigNumberify("1000000");
-            let maxValueToPay = ethers.utils.bigNumberify("300000000");
+            let swapAmount = ethers.BigNumber.from("1000000");
+            let maxValueToPay = ethers.BigNumber.from("300000000");
             expect(await ACOToken1Token2Put.balanceOf(await owner.getAddress())).to.equal(0);
             await token2.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline);
@@ -774,7 +774,7 @@ describe("ACOPool", function() {
             expect(await ACOToken1Token2Put.balanceOf(await addr1.getAddress())).to.equal(swapAmount.mul(2));
             expect((await ACOPoolToken1Token2Put.acoTokensData(ACOToken1Token2Put.address)).amountSold).to.equal(swapAmount.mul(3));
 
-            maxValueToPay = ethers.utils.bigNumberify("3000000000");
+            maxValueToPay = ethers.BigNumber.from("3000000000");
             await ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put2.address, swapAmount, maxValueToPay, await addr1.getAddress(), deadline);
             expect(await ACOToken1Token2Put2.balanceOf(await addr1.getAddress())).to.equal(swapAmount);
             expect((await ACOPoolToken1Token2Put.acoTokensData(ACOToken1Token2Put2.address)).amountSold).to.equal(swapAmount);
@@ -785,11 +785,11 @@ describe("ACOPool", function() {
             await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-            let val1 = ethers.utils.bigNumberify("90000000000");            
+            let val1 = ethers.BigNumber.from("90000000000");            
             await ACOPoolToken1Token2Put.connect(addr1).deposit(val1, await addr1.getAddress());
             await await ACOPoolToken1Token2Put.connect(addr2).deposit(val1, await addr2.getAddress());
 
-            let totalSupply = ethers.utils.bigNumberify("180000000000000000000000");
+            let totalSupply = ethers.BigNumber.from("180000000000000000000000");
             expect(await ACOPoolToken1Token2Put.totalSupply()).to.equal(totalSupply);
 
 
@@ -798,17 +798,17 @@ describe("ACOPool", function() {
             await token2.connect(addr1).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
             await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
 
-            let val2 = ethers.utils.bigNumberify("3000000000");            
+            let val2 = ethers.BigNumber.from("3000000000");            
             await ACOPoolEthToken2Put.connect(addr1).deposit(val2, await addr1.getAddress());
             await await ACOPoolEthToken2Put.connect(addr2).deposit(val2, await addr2.getAddress());
-            let totalSupply2 = ethers.utils.bigNumberify("6000000000000000000000");
+            let totalSupply2 = ethers.BigNumber.from("6000000000000000000000");
             expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(totalSupply2);
 
             await jumpUntilStart(start);
 
             let deadline = (await getCurrentTimestamp()) + 100;
-            let swapAmount = ethers.utils.bigNumberify("100000000");
-            let maxValueToPay = ethers.utils.bigNumberify("500000000");
+            let swapAmount = ethers.BigNumber.from("100000000");
+            let maxValueToPay = ethers.BigNumber.from("500000000");
             expect(await ACOToken1Token2Put.balanceOf(await owner.getAddress())).to.equal(0);
             
             await expect(
@@ -854,22 +854,22 @@ describe("ACOPool", function() {
                 ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put.address, swapAmount, 1, await owner.getAddress(), deadline)
             ).to.be.revertedWith("ACOPool:: Swap restriction");
 
-            await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("800000000000"));
+            await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("800000000000"));
             
             await expect(
                 ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline)
             ).to.be.revertedWith("ACOPool:: Swap restriction");
 
-            await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("1000000000000"));
+            await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("1000000000000"));
 
             await expect(
                 ACOPoolToken1Token2Put.swap(true, ACOToken1Token2Put.address, swapAmount, maxValueToPay, await owner.getAddress(), deadline)
-            ).to.be.revertedWith("ACOAssetHelper::_callTransferFromERC20");
+            ).to.be.revertedWith("transferFrom");
         });
         it("Check restore for ACOPoolEthToken2Call", async function () {
-            let val1 = ethers.utils.bigNumberify("1000000000000000000");
-            let val2 = ethers.utils.bigNumberify("2000000000000000000");
-            let val3 = ethers.utils.bigNumberify("3000000000000000000");
+            let val1 = ethers.BigNumber.from("1000000000000000000");
+            let val2 = ethers.BigNumber.from("2000000000000000000");
+            let val3 = ethers.BigNumber.from("3000000000000000000");
             await ACOPoolEthToken2Call.connect(addr1).deposit(val1, await addr1.getAddress(), {value: val1});
             await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
             await ACOPoolEthToken2Call.connect(addr3).deposit(val3, await addr3.getAddress(), {value: val3});
@@ -883,9 +883,9 @@ describe("ACOPool", function() {
             let quote = await ACOPoolEthToken2Call.quote(true, ACOEthToken2Call.address, val1);
             await ACOPoolEthToken2Call.connect(owner).swap(true, ACOEthToken2Call.address, val1, quote[0], await owner.getAddress(), start + 100);
 
-            expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(ethers.utils.bigNumberify(quote[0].sub(quote[1])));
+            expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(ethers.BigNumber.from(quote[0].sub(quote[1])));
 
-            let balance = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]));
+            let balance = ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]));
 
             let tx = await (await ACOPoolEthToken2Call.connect(addr2).restoreCollateral()).wait();
             let result = tx.events[tx.events.length - 1].args;
@@ -895,9 +895,9 @@ describe("ACOPool", function() {
             expect(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"])).to.equal(balance.add(result.collateralIn));
         });
         it("Check restore for ACOPoolEthToken2Put", async function () {
-            let val1 = ethers.utils.bigNumberify("1000000000");
-            let val2 = ethers.utils.bigNumberify("2000000000");
-            let val3 = ethers.utils.bigNumberify("3000000000");
+            let val1 = ethers.BigNumber.from("1000000000");
+            let val2 = ethers.BigNumber.from("2000000000");
+            let val3 = ethers.BigNumber.from("3000000000");
 
             await token2.connect(owner).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
             await token2.connect(addr1).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
@@ -912,32 +912,32 @@ describe("ACOPool", function() {
 
             expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(val1.add(val2).add(val3));
 
-            let amount = ethers.utils.bigNumberify("2000000000000000000");
+            let amount = ethers.BigNumber.from("2000000000000000000");
             let quote = await ACOPoolEthToken2Put.quote(true, ACOEthToken2Put.address, amount);
             await ACOPoolEthToken2Put.connect(owner).swap(true, ACOEthToken2Put.address, amount, quote[0], await owner.getAddress(), start + 100);
             
-            let value = ethers.utils.bigNumberify(quote[0].sub(quote[1]));
+            let value = ethers.BigNumber.from(quote[0].sub(quote[1]));
             expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(val1.add(val2).add(val3).sub(acoEthToken2PutPrice.mul(2)).add(value));
 
             let acoBalance = await ACOEthToken2Put.balanceOf(await owner.getAddress());
             expect(acoBalance).to.equal(amount);
             let exercise = await ACOEthToken2Put.getBaseExerciseData(amount);
-            await ACOEthToken2Put.connect(owner).exercise(amount, 1, {value: ethers.utils.bigNumberify(exercise[1]).add(maxExercisedAccounts)});
+            await ACOEthToken2Put.connect(owner).exercise(amount, 1, {value: ethers.BigNumber.from(exercise[1]).add(maxExercisedAccounts)});
             
             expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(val1.add(val2).add(val3).sub(acoEthToken2PutPrice.mul(2)).add(value));
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(amount.add(1));
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(amount.add(1));
 
-            await aggregatorWethToken2.updateAnswer(ethers.utils.bigNumberify("30000000000"));
+            await aggregatorWethToken2.updateAnswer(ethers.BigNumber.from("30000000000"));
             let tx = await (await ACOPoolEthToken2Put.connect(addr2).restoreCollateral()).wait();
             let result = tx.events[tx.events.length - 1].args;
             
-            expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(val1.add(val2).add(val3).sub(acoEthToken2PutPrice.mul(2)).add(value).add(ethers.utils.bigNumberify(result.collateralIn)));
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
+            expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(val1.add(val2).add(val3).sub(acoEthToken2PutPrice.mul(2)).add(value).add(ethers.BigNumber.from(result.collateralIn)));
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
         });
         it("Check restore for ACOPoolToken1Token2Call", async function () {
-            let val1 = ethers.utils.bigNumberify("100000000");
-            let val2 = ethers.utils.bigNumberify("200000000");
-            let val3 = ethers.utils.bigNumberify("300000000");
+            let val1 = ethers.BigNumber.from("100000000");
+            let val2 = ethers.BigNumber.from("200000000");
+            let val3 = ethers.BigNumber.from("300000000");
             
             await token1.connect(owner).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
             await token1.connect(addr1).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
@@ -954,11 +954,11 @@ describe("ACOPool", function() {
 
             expect(await token2.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(0);
 
-            let amount = ethers.utils.bigNumberify("50000000");
+            let amount = ethers.BigNumber.from("50000000");
             let quote = await ACOPoolToken1Token2Call.quote(true, ACOToken1Token2Call.address, amount);
             await ACOPoolToken1Token2Call.connect(owner).swap(true, ACOToken1Token2Call.address, amount, quote[0], await owner.getAddress(), start + 100);
 
-            expect(await token2.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(ethers.utils.bigNumberify(quote[0].sub(quote[1])));
+            expect(await token2.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(ethers.BigNumber.from(quote[0].sub(quote[1])));
             expect(await token1.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(val1.add(val2).add(val3).sub(amount));
 
             let tx = await (await ACOPoolToken1Token2Call.connect(addr2).restoreCollateral()).wait();
@@ -969,9 +969,9 @@ describe("ACOPool", function() {
             expect(await token1.balanceOf(ACOPoolToken1Token2Call.address)).to.equal(val1.add(val2).add(val3).sub(amount).add(result.collateralIn));
         });
         it("Check restore for ACOPoolToken1Token2Put", async function () {
-            let val1 = ethers.utils.bigNumberify("1000000000");
-            let val2 = ethers.utils.bigNumberify("2000000000");
-            let val3 = ethers.utils.bigNumberify("3000000000");
+            let val1 = ethers.BigNumber.from("1000000000");
+            let val2 = ethers.BigNumber.from("2000000000");
+            let val3 = ethers.BigNumber.from("3000000000");
 
             await token2.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
@@ -986,11 +986,11 @@ describe("ACOPool", function() {
 
             expect(await token2.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(val1.add(val2).add(val3));
 
-            let amount = ethers.utils.bigNumberify("10000000");
+            let amount = ethers.BigNumber.from("10000000");
             let quote = await ACOPoolToken1Token2Put.quote(true, ACOToken1Token2Put.address, amount);
             await ACOPoolToken1Token2Put.connect(owner).swap(true, ACOToken1Token2Put.address, amount, quote[0], await owner.getAddress(), start + 100);
             
-            let value = ethers.utils.bigNumberify(quote[0].sub(quote[1]));
+            let value = ethers.BigNumber.from(quote[0].sub(quote[1]));
             expect(await token2.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(val1.add(val2).add(val3).add(value).sub("900000000"));
 
             let acoBalance = await ACOToken1Token2Put.balanceOf(await owner.getAddress());
@@ -1001,16 +1001,16 @@ describe("ACOPool", function() {
             expect(await token2.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(val1.add(val2).add(val3).add(value).sub("900000000"));
             expect(await token1.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(amount.add(1));
 
-            await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("900000000000"));
+            await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("900000000000"));
             let tx = await (await ACOPoolToken1Token2Put.connect(addr2).restoreCollateral()).wait();
             let result = tx.events[tx.events.length - 1].args;
             
-            expect(await token2.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(val1.add(val2).add(val3).add(value).sub("900000000").add(ethers.utils.bigNumberify(result.collateralIn)));
+            expect(await token2.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(val1.add(val2).add(val3).add(value).sub("900000000").add(ethers.BigNumber.from(result.collateralIn)));
             expect(await token1.balanceOf(ACOPoolToken1Token2Put.address)).to.equal(0);
         });
         it("Check restore fail", async function () {
-            let val1 = ethers.utils.bigNumberify("1000000000");
-            let val2 = ethers.utils.bigNumberify("2000000000000000000");
+            let val1 = ethers.BigNumber.from("1000000000");
+            let val2 = ethers.BigNumber.from("2000000000000000000");
 
             await token2.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(owner).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
@@ -1024,7 +1024,7 @@ describe("ACOPool", function() {
             await expect(ACOPoolToken1Token2Put.connect(addr2).restoreCollateral()).to.be.revertedWith("ACOPool:: No balance");
             await expect(ACOPoolEthToken2Call.connect(addr2).restoreCollateral()).to.be.revertedWith("ACOPool:: No balance");
             
-            let amount1 = ethers.utils.bigNumberify("10000000");
+            let amount1 = ethers.BigNumber.from("10000000");
             let quote1 = await ACOPoolToken1Token2Put.quote(true, ACOToken1Token2Put.address, amount1);
             await ACOPoolToken1Token2Put.connect(owner).swap(true, ACOToken1Token2Put.address, amount1, quote1[0], await owner.getAddress(), start + 100);
             
@@ -1033,7 +1033,7 @@ describe("ACOPool", function() {
             await token1.connect(owner).approve(ACOToken1Token2Put.address, token1TotalSupply);
             await ACOToken1Token2Put.connect(owner).exercise(amount1, start);
 
-            let amount2 = ethers.utils.bigNumberify("1000000000000000");
+            let amount2 = ethers.BigNumber.from("1000000000000000");
             let quote2 = await ACOPoolEthToken2Call.quote(true, ACOEthToken2Call.address, amount2);
             await ACOPoolEthToken2Call.connect(owner).swap(true, ACOEthToken2Call.address, amount2, quote2[0], await owner.getAddress(), start + 100);
 
@@ -1043,8 +1043,8 @@ describe("ACOPool", function() {
             await expect(ACOPoolEthToken2Call.connect(addr2).restoreCollateral()).to.be.revertedWith("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         });
         it("Check redeem ACOPoolEthToken2Call", async function () {
-            let val1 = ethers.utils.bigNumberify("1000000000000000000");
-            let val2 = ethers.utils.bigNumberify("3500000000000000000");
+            let val1 = ethers.BigNumber.from("1000000000000000000");
+            let val2 = ethers.BigNumber.from("3500000000000000000");
             await ACOPoolEthToken2Call.connect(addr1).deposit(val1, await addr1.getAddress(), {value: val1});
             await ACOPoolEthToken2Call.connect(addr2).deposit(val1, await addr2.getAddress(), {value: val1});
             await ACOPoolEthToken2Call.connect(addr3).deposit(val1, await addr3.getAddress(), {value: val1});
@@ -1086,18 +1086,18 @@ describe("ACOPool", function() {
             expect(await ACOPoolEthToken2Call.balanceOf(await owner.getAddress())).to.equal(val2);
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(totalSupply);
             expect(await ACOPoolEthToken2Call.numberOfACOTokensCurrentlyNegotiated()).to.equal(0);
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(totalSupply);
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(totalSupply);
             expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(poolBalance2);
 
             await ACOPoolEthToken2Call.connect(addr2).approve(await owner.getAddress(), val1);
 
-            let addr2Balance1 = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [(await addr2.getAddress()),"latest"]));
+            let addr2Balance1 = ethers.BigNumber.from(await network.provider.send("eth_getBalance", [(await addr2.getAddress()),"latest"]));
             let addr2Balance2 = await token2.balanceOf(await addr2.getAddress());
             let ownerBalance2 = await token2.balanceOf(await owner.getAddress());
             await ACOPoolEthToken2Call.connect(owner).redeemFrom(await addr2.getAddress());
 
             let addr2Redeem2 = poolBalance2.mul(val1).div(totalSupply);
-            let addr2bal = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [(await addr2.getAddress()),"latest"]));
+            let addr2bal = ethers.BigNumber.from(await network.provider.send("eth_getBalance", [(await addr2.getAddress()),"latest"]));
             ownerBalance2 = ownerBalance2.add(addr2Redeem2);
             expect(addr2bal).to.equal(addr2Balance1);
             expect(await token2.balanceOf(await addr2.getAddress())).to.equal(addr2Balance2);
@@ -1110,7 +1110,7 @@ describe("ACOPool", function() {
             expect(await ACOPoolEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(val1);
             expect(await ACOPoolEthToken2Call.balanceOf(await owner.getAddress())).to.equal(val2);
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(totalSupply);
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(totalSupply);
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(totalSupply);
             expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(poolBalance2);
 
             await ACOPoolEthToken2Call.connect(owner).redeem();
@@ -1125,7 +1125,7 @@ describe("ACOPool", function() {
             expect(await ACOPoolEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(val1);
             expect(await ACOPoolEthToken2Call.balanceOf(await owner.getAddress())).to.equal(0);
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(totalSupply);
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(totalSupply);
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(totalSupply);
             expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(poolBalance2);
 
             let addr3Balance2 = await token2.balanceOf(await addr3.getAddress());
@@ -1138,11 +1138,11 @@ describe("ACOPool", function() {
             expect(await ACOPoolEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(0);
             expect(await ACOPoolEthToken2Call.balanceOf(await owner.getAddress())).to.equal(0);
             expect(await ACOPoolEthToken2Call.totalSupply()).to.equal(0);
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(0);
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Call.address,"latest"]))).to.equal(0);
             expect(await token2.balanceOf(ACOPoolEthToken2Call.address)).to.equal(0);
         });
         it("Check redeem ACOPoolEthToken2Put", async function () {
-            let val1 = ethers.utils.bigNumberify("10000000000");
+            let val1 = ethers.BigNumber.from("10000000000");
 
             await token2.connect(owner).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
             await token2.connect(addr2).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
@@ -1153,23 +1153,23 @@ describe("ACOPool", function() {
 
             await jumpUntilStart(start);
 
-            let amount = ethers.utils.bigNumberify("2000000000000000000");
+            let amount = ethers.BigNumber.from("2000000000000000000");
             let quote = await ACOPoolEthToken2Put.quote(true, ACOEthToken2Put.address, amount);
             await ACOPoolEthToken2Put.connect(addr3).swap(true, ACOEthToken2Put.address, amount, quote[0], await addr1.getAddress(), start + 100);
             
             let exercise = await ACOEthToken2Put.getBaseExerciseData(amount);
-            await ACOEthToken2Put.connect(addr1).exercise(amount, 1, {value: ethers.utils.bigNumberify(exercise[1]).add(maxExercisedAccounts)});
+            await ACOEthToken2Put.connect(addr1).exercise(amount, 1, {value: ethers.BigNumber.from(exercise[1]).add(maxExercisedAccounts)});
 
             await network.provider.send("evm_setNextBlockTimestamp", [expiration]);
 
-            await aggregatorWethToken2.updateAnswer(ethers.utils.bigNumberify("30000000000"));
+            await aggregatorWethToken2.updateAnswer(ethers.BigNumber.from("30000000000"));
             await ACOPoolEthToken2Put.connect(addr1).restoreCollateral();
 
             expect(await ACOPoolEthToken2Put.numberOfACOTokensCurrentlyNegotiated()).to.equal(1);
 
             await ACOPoolEthToken2Put.connect(addr1).approve(await addr3.getAddress(), amount.mul(val1));
             let poolBalance = await token2.balanceOf(ACOPoolEthToken2Put.address);
-            let addr1bal = ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [(await addr1.getAddress()),"latest"]));
+            let addr1bal = ethers.BigNumber.from(await network.provider.send("eth_getBalance", [(await addr1.getAddress()),"latest"]));
             let addr1Bal2 = await token2.balanceOf(await addr1.getAddress());
             let addr2Bal2 = await token2.balanceOf(await addr2.getAddress());
             let addr3Bal2 = await token2.balanceOf(await addr3.getAddress());
@@ -1179,7 +1179,7 @@ describe("ACOPool", function() {
 
             let profit = poolBalance.div(2);
             expect(await token2.balanceOf(ACOPoolEthToken2Put.address)).to.equal(0);
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [ACOPoolEthToken2Put.address,"latest"]))).to.equal(0);
             expect(await ACOPoolEthToken2Put.totalSupply()).to.equal(0);
             expect(await ACOPoolEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
             expect(await ACOPoolEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(0);
@@ -1188,12 +1188,12 @@ describe("ACOPool", function() {
             expect(await token2.balanceOf(await addr1.getAddress())).to.equal(addr1Bal2);
             expect(await token2.balanceOf(await addr2.getAddress())).to.equal(addr2Bal2.add(profit).add(1));
             expect(await token2.balanceOf(await addr3.getAddress())).to.equal(addr3Bal2.add(profit));
-            expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [(await addr1.getAddress()),"latest"]))).to.equal(addr1bal);
+            expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [(await addr1.getAddress()),"latest"]))).to.equal(addr1bal);
         });
         it("Check redeem ACOPoolToken1Token2Call", async function () {
-            let val1 = ethers.utils.bigNumberify("100000000");
-            let val2 = ethers.utils.bigNumberify("900000000");
-            let val3 = ethers.utils.bigNumberify("600000000");
+            let val1 = ethers.BigNumber.from("100000000");
+            let val2 = ethers.BigNumber.from("900000000");
+            let val3 = ethers.BigNumber.from("600000000");
             
             await token1.connect(owner).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
             await token1.connect(addr1).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
@@ -1208,7 +1208,7 @@ describe("ACOPool", function() {
 
             await jumpUntilStart(start);
 
-            let amount = ethers.utils.bigNumberify("1600000000");
+            let amount = ethers.BigNumber.from("1600000000");
             let quote = await ACOPoolToken1Token2Call.quote(true, ACOToken1Token2Call.address, amount);
             await ACOPoolToken1Token2Call.connect(owner).swap(true, ACOToken1Token2Call.address, amount, quote[0], await owner.getAddress(), start + 100);
 
@@ -1247,9 +1247,9 @@ describe("ACOPool", function() {
             expect(await token2.balanceOf(await addr3.getAddress())).to.equal(addr3Bal2.add(addr3pool2));
         });
         it("Check redeem ACOPoolToken1Token2Put", async function () {
-            let val1 = ethers.utils.bigNumberify("2000000000");
-            let val2 = ethers.utils.bigNumberify("3000000000");
-            let val3 = ethers.utils.bigNumberify("4000000000");
+            let val1 = ethers.BigNumber.from("2000000000");
+            let val2 = ethers.BigNumber.from("3000000000");
+            let val3 = ethers.BigNumber.from("4000000000");
 
             await token2.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
@@ -1262,7 +1262,7 @@ describe("ACOPool", function() {
 
             await jumpUntilStart(start);
 
-            let amount = ethers.utils.bigNumberify("100000000");
+            let amount = ethers.BigNumber.from("100000000");
             let quote = await ACOPoolToken1Token2Put.quote(true, ACOToken1Token2Put.address, amount);
             await ACOPoolToken1Token2Put.connect(owner).swap(true, ACOToken1Token2Put.address, amount, quote[0], await owner.getAddress(), start + 100);
 
@@ -1307,8 +1307,8 @@ describe("ACOPool", function() {
             expect(await token2.balanceOf(await addr3.getAddress())).to.equal(addr3Bal2.add(addr3pool2));
         });
         it("Check redeem fail", async function () {
-            let val1 = ethers.utils.bigNumberify("100000000");
-            let val2 = ethers.utils.bigNumberify("900000000");
+            let val1 = ethers.BigNumber.from("100000000");
+            let val2 = ethers.BigNumber.from("900000000");
             
             await token1.connect(owner).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
             await token1.connect(addr2).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
@@ -1346,13 +1346,13 @@ describe("ACOPool", function() {
             await ACOPoolToken1Token2Call.connect(owner).redeemFrom(await addr3.getAddress());
         });
         it("Check redeem ACO tokens", async function () {
-            let val1 = ethers.utils.bigNumberify("1000000000000000000");
-            let val2 = ethers.utils.bigNumberify("3500000000000000000");
+            let val1 = ethers.BigNumber.from("1000000000000000000");
+            let val2 = ethers.BigNumber.from("3500000000000000000");
             await ACOPoolEthToken2Call.connect(addr1).deposit(val1, await addr1.getAddress(), {value: val1});
             await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
 
-            let val21 = ethers.utils.bigNumberify("20000000000");
-            let val22 = ethers.utils.bigNumberify("30000000000");
+            let val21 = ethers.BigNumber.from("20000000000");
+            let val22 = ethers.BigNumber.from("30000000000");
 
             await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
@@ -1375,11 +1375,11 @@ describe("ACOPool", function() {
 
             await ACOEthToken2Call.connect(owner).exercise(val1, start);
 
-            let amount1 = ethers.utils.bigNumberify("100000000");
+            let amount1 = ethers.BigNumber.from("100000000");
             let quote11 = await ACOPoolToken1Token2Put.quote(true, ACOToken1Token2Put.address, amount1);
             await ACOPoolToken1Token2Put.connect(owner).swap(true, ACOToken1Token2Put.address, amount1, quote11[0], await owner.getAddress(), start + 100);
 
-            let amount12 = ethers.utils.bigNumberify("200000000");
+            let amount12 = ethers.BigNumber.from("200000000");
             let quote12 = await ACOPoolToken1Token2Put.quote(true, ACOToken1Token2Put2.address, amount12);
             await ACOPoolToken1Token2Put.connect(owner).swap(true, ACOToken1Token2Put2.address, amount12, quote12[0], await owner.getAddress(), start + 100);
 
@@ -1397,13 +1397,13 @@ describe("ACOPool", function() {
             expect(await ACOPoolToken1Token2Put.numberOfACOTokensCurrentlyNegotiated()).to.equal(0);
         });
         it("Check redeem ACO token", async function () {
-            let val1 = ethers.utils.bigNumberify("1000000000000000000");
-            let val2 = ethers.utils.bigNumberify("3500000000000000000");
+            let val1 = ethers.BigNumber.from("1000000000000000000");
+            let val2 = ethers.BigNumber.from("3500000000000000000");
             await ACOPoolEthToken2Call.connect(addr1).deposit(val1, await addr1.getAddress(), {value: val1});
             await ACOPoolEthToken2Call.connect(addr2).deposit(val2, await addr2.getAddress(), {value: val2});
 
-            let val21 = ethers.utils.bigNumberify("20000000000");
-            let val22 = ethers.utils.bigNumberify("30000000000");
+            let val21 = ethers.BigNumber.from("20000000000");
+            let val22 = ethers.BigNumber.from("30000000000");
 
             await token2.connect(addr1).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
             await token2.connect(addr2).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
@@ -1426,11 +1426,11 @@ describe("ACOPool", function() {
 
             await ACOEthToken2Call.connect(owner).exercise(val1, start);
 
-            let amount1 = ethers.utils.bigNumberify("100000000");
+            let amount1 = ethers.BigNumber.from("100000000");
             let quote11 = await ACOPoolToken1Token2Put.quote(true, ACOToken1Token2Put.address, amount1);
             await ACOPoolToken1Token2Put.connect(owner).swap(true, ACOToken1Token2Put.address, amount1, quote11[0], await owner.getAddress(), start + 100);
 
-            let amount12 = ethers.utils.bigNumberify("200000000");
+            let amount12 = ethers.BigNumber.from("200000000");
             let quote12 = await ACOPoolToken1Token2Put.quote(true, ACOToken1Token2Put2.address, amount12);
             await ACOPoolToken1Token2Put.connect(owner).swap(true, ACOToken1Token2Put2.address, amount12, quote12[0], await owner.getAddress(), start + 100);
 

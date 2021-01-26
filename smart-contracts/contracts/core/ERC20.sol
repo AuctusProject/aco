@@ -18,11 +18,11 @@ abstract contract ERC20 is IERC20 {
     function symbol() public view virtual returns(string memory);
     function decimals() public view virtual returns(uint8);
 
-    function totalSupply() public view override returns(uint256) {
+    function totalSupply() public view override virtual returns(uint256) {
         return _totalSupply;
     }
 
-    function balanceOf(address account) public view override returns(uint256) {
+    function balanceOf(address account) public view override virtual returns(uint256) {
         return _balances[account];
     }
 

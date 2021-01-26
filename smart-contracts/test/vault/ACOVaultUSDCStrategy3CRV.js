@@ -18,14 +18,14 @@ describe("ACOVaultUSDCStrategy3CRV", function() {
     let tokenName = "Curve DAO Token";
     let tokenSymbol = "CRV";
     let tokenDecimals = 18;
-    let tokenTotalSupply = ethers.utils.bigNumberify("10000000000000000000000000");
+    let tokenTotalSupply = ethers.BigNumber.from("10000000000000000000000000");
     crv = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await crv.deployed();
 
     tokenName = "Curve Pool Token";
     tokenSymbol = "CRV Pool";
     tokenDecimals = 18;
-    tokenTotalSupply = ethers.utils.bigNumberify("0");
+    tokenTotalSupply = ethers.BigNumber.from("0");
     crvPoolToken = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await crvPoolToken.deployed();
 
@@ -38,21 +38,21 @@ describe("ACOVaultUSDCStrategy3CRV", function() {
     tokenName = "DAI";
     tokenSymbol = "DAI";
     tokenDecimals = 18;
-    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000000000000000");
+    tokenTotalSupply = ethers.BigNumber.from("1000000000000000000000000");
     _coin1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin1.deployed();
 
     tokenName = "USDC";
     tokenSymbol = "USDC";
     tokenDecimals = 6;
-    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000");
+    tokenTotalSupply = ethers.BigNumber.from("1000000000000");
     _coin2 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin2.deployed();
 
     tokenName = "USDT";
     tokenSymbol = "USDT";
     tokenDecimals = 6;
-    tokenTotalSupply = ethers.utils.bigNumberify("1000000000000");
+    tokenTotalSupply = ethers.BigNumber.from("1000000000000");
     _coin3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin3.deployed();
 

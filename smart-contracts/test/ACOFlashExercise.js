@@ -1,27 +1,27 @@
 const { expect } = require("chai");
-const factoryABI = require("../artifacts/ACOFactory.json");
+const factoryABI = require("../artifacts/contracts/core/ACOFactory.sol/ACOFactory.json");
 
 describe("ACOFlashExercise", function() {
   let owner;
   let addr1;
   let addr2;
   let addr3;
-  let fee = ethers.utils.bigNumberify("100");
+  let fee = ethers.BigNumber.from("100");
   let token1;
   let token1Name = "TOKEN1";
   let token1Symbol = "TOK1";
   let token1Decimals = 8;
-  let token1TotalSupply = ethers.utils.bigNumberify("1000000000000000");
+  let token1TotalSupply = ethers.BigNumber.from("1000000000000000");
   let token2;
   let token2Name = "TOKEN2";
   let token2Symbol = "TOK2";
   let token2Decimals = 18;
-  let token2TotalSupply = ethers.utils.bigNumberify("100000000000000000000000000");
+  let token2TotalSupply = ethers.BigNumber.from("100000000000000000000000000");
   let token3;
   let token3Name = "TOKEN3";
   let token3Symbol = "TOK3";
   let token3Decimals = 6;
-  let token3TotalSupply = ethers.utils.bigNumberify("10000000000000000");
+  let token3TotalSupply = ethers.BigNumber.from("10000000000000000");
   let buidlerFactory;
   let buidlerEthT1003C;
   let buidlerEthT1003P;
@@ -46,10 +46,10 @@ describe("ACOFlashExercise", function() {
   let pairToken1weth;
   let pairToken2Token3;
   let maxExercisedAccounts = 120;
-  let token1Liq = ethers.utils.bigNumberify("1000000000");
-  let token2Liq = ethers.utils.bigNumberify("90000000000000000000000");
-  let token3Liq = ethers.utils.bigNumberify("90000000000");
-  let wethLiq = ethers.utils.bigNumberify("300000000000000000000");
+  let token1Liq = ethers.BigNumber.from("1000000000");
+  let token2Liq = ethers.BigNumber.from("90000000000000000000000");
+  let token3Liq = ethers.BigNumber.from("90000000000");
+  let wethLiq = ethers.BigNumber.from("300000000000000000000");
 
   beforeEach(async function () {
     [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
@@ -68,7 +68,7 @@ describe("ACOFlashExercise", function() {
 
     let ownerAddr = await owner.getAddress();
     let addr2Addr = await addr2.getAddress();
-    let initData = factoryInterface.functions.init.encode([ownerAddr, ACOToken.address, fee, addr2Addr]);
+    let initData = factoryInterface.encodeFunctionData("init", [ownerAddr, ACOToken.address, fee, addr2Addr]);
     let buidlerProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactory.address, initData);
     await buidlerProxy.deployed();
 
@@ -88,33 +88,33 @@ describe("ACOFlashExercise", function() {
     await buidlerFactory.setOperator(await owner.getAddress(), true);
 
     time = Math.round(new Date().getTime() / 1000) + 86400;
-    price1 = ethers.utils.bigNumberify("3000000");
+    price1 = ethers.BigNumber.from("3000000");
     let tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, true, price1, time, maxExercisedAccounts)).wait();
     buidlerEthT1003C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);  
 
     tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token1.address, false, price1, time, maxExercisedAccounts)).wait();
     buidlerEthT1003P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-    price2 = ethers.utils.bigNumberify("10000000000000000000000");
+    price2 = ethers.BigNumber.from("10000000000000000000000");
     tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, false, price2, time, maxExercisedAccounts)).wait();
     buidlerT1T210000P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);  
 
     tx = await (await buidlerFactory.createAcoToken(token1.address, token2.address, true, price2, time, maxExercisedAccounts)).wait();
     buidlerT1T210000C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-    pricer1 = ethers.utils.bigNumberify("8100000000");
+    pricer1 = ethers.BigNumber.from("8100000000");
     tx = await (await buidlerFactory.createAcoToken(token1.address, token3.address, true, pricer1, time, maxExercisedAccounts)).wait();
     buidlerT1T38100C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-    pricer2 = ethers.utils.bigNumberify("9900000000");
+    pricer2 = ethers.BigNumber.from("9900000000");
     tx = await (await buidlerFactory.createAcoToken(token1.address, token3.address, false, pricer2, time, maxExercisedAccounts)).wait();
     buidlerT1T39900P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-    pricer3 = ethers.utils.bigNumberify("270000000");
+    pricer3 = ethers.BigNumber.from("270000000");
     tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token3.address, true, pricer3, time, maxExercisedAccounts)).wait();
     buidlerEthT3270C = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken); 
 
-    pricer4 = ethers.utils.bigNumberify("330000000");
+    pricer4 = ethers.BigNumber.from("330000000");
     tx = await (await buidlerFactory.createAcoToken(ethers.constants.AddressZero, token3.address, false, pricer4, time, maxExercisedAccounts)).wait();
     buidlerEthT3330P = await ethers.getContractAt("ACOToken", tx.events[tx.events.length - 1].args.acoToken);
 
@@ -233,32 +233,32 @@ describe("ACOFlashExercise", function() {
       expect((await flashExercise.getMiddleRoute(token3.address, ethers.constants.AddressZero))[1][0]).to.equal(token2.address);
     });
     it("Check flash exercise", async function () {
-      let start1Balance = ethers.utils.bigNumberify("10000000000");
+      let start1Balance = ethers.BigNumber.from("10000000000");
       await token1.transfer(await addr1.getAddress(), start1Balance);
       await token1.transfer(await addr2.getAddress(), start1Balance);
       await token1.transfer(await addr3.getAddress(), start1Balance);
-      let start2Balance = ethers.utils.bigNumberify("10000000000000000000000");
+      let start2Balance = ethers.BigNumber.from("10000000000000000000000");
       await token2.transfer(await addr1.getAddress(), start2Balance);
       await token2.transfer(await addr2.getAddress(), start2Balance);
       await token2.transfer(await addr3.getAddress(), start2Balance);
-      let val1 = ethers.utils.bigNumberify("2000000000000000000");
-      let val2 = ethers.utils.bigNumberify("4000000000000000000");
-      let val3 = ethers.utils.bigNumberify("1000000000000000000");
-      let precision1 = ethers.utils.bigNumberify("100000000");
-      let value1 = ethers.utils.bigNumberify("2000000000000000000000");
-      let value2 = ethers.utils.bigNumberify("4000000000000000000000");
-      let value3 = ethers.utils.bigNumberify("1000000000000000000000");
+      let val1 = ethers.BigNumber.from("2000000000000000000");
+      let val2 = ethers.BigNumber.from("4000000000000000000");
+      let val3 = ethers.BigNumber.from("1000000000000000000");
+      let precision1 = ethers.BigNumber.from("100000000");
+      let value1 = ethers.BigNumber.from("2000000000000000000000");
+      let value2 = ethers.BigNumber.from("4000000000000000000000");
+      let value3 = ethers.BigNumber.from("1000000000000000000000");
       let amount1 = value1.mul(precision1).div(price2);
       let amount2 = value2.mul(precision1).div(price2);
       let amount3 = value3.mul(precision1).div(price2);
-      let precision2 = ethers.utils.bigNumberify("1000000000000000000");
-      let v1 = ethers.utils.bigNumberify("200000000");
-      let v2 = ethers.utils.bigNumberify("400000000");
-      let v3 = ethers.utils.bigNumberify("100000000");
+      let precision2 = ethers.BigNumber.from("1000000000000000000");
+      let v1 = ethers.BigNumber.from("200000000");
+      let v2 = ethers.BigNumber.from("400000000");
+      let v3 = ethers.BigNumber.from("100000000");
       let a1 = v1.mul(precision2).div(price1);
       let a2 = v2.mul(precision2).div(price1);
       let a3 = v3.mul(precision2).div(price1);
-      let one = ethers.utils.bigNumberify("1");
+      let one = ethers.BigNumber.from("1");
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1}); 
       await token2.connect(addr1).approve(buidlerT1T210000P.address, value1);
@@ -335,8 +335,8 @@ describe("ACOFlashExercise", function() {
 
       expect(await buidlerEthT1003P.totalCollateral()).to.equal(v1.add(v2).add(v3));  
       expect(await buidlerEthT1003P.balanceOf(await addr1.getAddress())).to.equal(0); 
-      expect(await buidlerEthT1003P.balanceOf(await addr2.getAddress())).to.equal(a2.sub(a3.mul(ethers.utils.bigNumberify("3")))); 
-      expect(await buidlerEthT1003P.balanceOf(await addr3.getAddress())).to.equal(a3.add(a3.mul(ethers.utils.bigNumberify("4"))));
+      expect(await buidlerEthT1003P.balanceOf(await addr2.getAddress())).to.equal(a2.sub(a3.mul(ethers.BigNumber.from("3")))); 
+      expect(await buidlerEthT1003P.balanceOf(await addr3.getAddress())).to.equal(a3.add(a3.mul(ethers.BigNumber.from("4"))));
       expect(await buidlerEthT1003P.balanceOf(await owner.getAddress())).to.equal(a3);
       expect(await buidlerEthT1003P.currentCollateral(await addr1.getAddress())).to.equal(v1.sub(one));
       expect(await buidlerEthT1003P.currentCollateral(await addr2.getAddress())).to.equal(v2.sub(one));
@@ -458,19 +458,19 @@ describe("ACOFlashExercise", function() {
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(token2TotalSupply.sub(token2Liq.mul(2)).sub(start2Balance.mul(3)).add(exp2));
     });
     it("Check flash exercise accounts", async function () {
-      let start1Balance = ethers.utils.bigNumberify("10000000000");
+      let start1Balance = ethers.BigNumber.from("10000000000");
       await token1.transfer(await addr1.getAddress(), start1Balance);
       await token1.transfer(await addr2.getAddress(), start1Balance);
       await token1.transfer(await addr3.getAddress(), start1Balance);
-      let start2Balance = ethers.utils.bigNumberify("10000000000000000000000");
+      let start2Balance = ethers.BigNumber.from("10000000000000000000000");
       await token2.transfer(await addr1.getAddress(), start2Balance);
       await token2.transfer(await addr2.getAddress(), start2Balance);
       await token2.transfer(await addr3.getAddress(), start2Balance);
-      let precision1 = ethers.utils.bigNumberify("100000000");
-      let precision2 = ethers.utils.bigNumberify("1000000000000000000");
-      let v1 = ethers.utils.bigNumberify("100000000");
-      let v2 = ethers.utils.bigNumberify("200000000");
-      let v3 = ethers.utils.bigNumberify("300000000");
+      let precision1 = ethers.BigNumber.from("100000000");
+      let precision2 = ethers.BigNumber.from("1000000000000000000");
+      let v1 = ethers.BigNumber.from("100000000");
+      let v2 = ethers.BigNumber.from("200000000");
+      let v3 = ethers.BigNumber.from("300000000");
       let a1 = v1.mul(precision2).div(price1);
       let a2 = v2.mul(precision2).div(price1);
       let a3 = v3.mul(precision2).div(price1);
@@ -625,32 +625,32 @@ describe("ACOFlashExercise", function() {
       expect(await addr3.getBalance()).to.equal(b3);
     });
     it("Check fail to flash exercise", async function () {
-      let start1Balance = ethers.utils.bigNumberify("10000000000");
+      let start1Balance = ethers.BigNumber.from("10000000000");
       await token1.transfer(await addr1.getAddress(), start1Balance);
       await token1.transfer(await addr2.getAddress(), start1Balance);
       await token1.transfer(await addr3.getAddress(), start1Balance);
-      let start2Balance = ethers.utils.bigNumberify("10000000000000000000000");
+      let start2Balance = ethers.BigNumber.from("10000000000000000000000");
       await token2.transfer(await addr1.getAddress(), start2Balance);
       await token2.transfer(await addr2.getAddress(), start2Balance);
       await token2.transfer(await addr3.getAddress(), start2Balance);
-      let val1 = ethers.utils.bigNumberify("2000000000000000000");
-      let val2 = ethers.utils.bigNumberify("4000000000000000000");
-      let val3 = ethers.utils.bigNumberify("1000000000000000000");
-      let precision1 = ethers.utils.bigNumberify("100000000");
-      let value1 = ethers.utils.bigNumberify("2000000000000000000000");
-      let value2 = ethers.utils.bigNumberify("4000000000000000000000");
-      let value3 = ethers.utils.bigNumberify("1000000000000000000000");
+      let val1 = ethers.BigNumber.from("2000000000000000000");
+      let val2 = ethers.BigNumber.from("4000000000000000000");
+      let val3 = ethers.BigNumber.from("1000000000000000000");
+      let precision1 = ethers.BigNumber.from("100000000");
+      let value1 = ethers.BigNumber.from("2000000000000000000000");
+      let value2 = ethers.BigNumber.from("4000000000000000000000");
+      let value3 = ethers.BigNumber.from("1000000000000000000000");
       let amount1 = value1.mul(precision1).div(price2);
       let amount2 = value2.mul(precision1).div(price2);
       let amount3 = value3.mul(precision1).div(price2);
-      let precision2 = ethers.utils.bigNumberify("1000000000000000000");
-      let v1 = ethers.utils.bigNumberify("200000000");
-      let v2 = ethers.utils.bigNumberify("400000000");
-      let v3 = ethers.utils.bigNumberify("100000000");
+      let precision2 = ethers.BigNumber.from("1000000000000000000");
+      let v1 = ethers.BigNumber.from("200000000");
+      let v2 = ethers.BigNumber.from("400000000");
+      let v3 = ethers.BigNumber.from("100000000");
       let a1 = v1.mul(precision2).div(price1);
       let a2 = v2.mul(precision2).div(price1);
       let a3 = v3.mul(precision2).div(price1);
-      let one = ethers.utils.bigNumberify("1");
+      let one = ethers.BigNumber.from("1");
 
       await buidlerEthT1003C.connect(addr1).mintPayable({value: val1}); 
       await token2.connect(addr1).approve(buidlerT1T210000P.address, value1);
@@ -745,18 +745,18 @@ describe("ACOFlashExercise", function() {
       await flashExercise.setUniswapMiddleRoute(token1.address, token3.address, [token2.address]);
       await flashExercise.setUniswapMiddleRoute(ethers.constants.AddressZero, token3.address, [token1.address,token2.address]);
       
-      let start1Balance = ethers.utils.bigNumberify("10000000");
+      let start1Balance = ethers.BigNumber.from("10000000");
       await token1.transfer(await addr1.getAddress(), start1Balance);
-      let start3Balance = ethers.utils.bigNumberify("1320000000");
+      let start3Balance = ethers.BigNumber.from("1320000000");
       await token3.transfer(await addr1.getAddress(), start3Balance);
 
-      let valec = ethers.utils.bigNumberify("1000000000000000000");
+      let valec = ethers.BigNumber.from("1000000000000000000");
       await buidlerEthT3270C.connect(addr1).mintPayable({value: valec}); 
-      let valep = ethers.utils.bigNumberify("330000000");
+      let valep = ethers.BigNumber.from("330000000");
       await buidlerEthT3330P.connect(addr1).mint(valep); 
-      let val1c = ethers.utils.bigNumberify("10000000");
+      let val1c = ethers.BigNumber.from("10000000");
       await buidlerT1T38100C.connect(addr1).mint(val1c); 
-      let val1p = ethers.utils.bigNumberify("990000000");
+      let val1p = ethers.BigNumber.from("990000000");
       await buidlerT1T39900P.connect(addr1).mint(val1p); 
 
       await buidlerEthT3270C.connect(addr1).transfer(await addr3.getAddress(), valec);
@@ -789,7 +789,7 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
       expect(await addr3.getBalance()).to.be.above(bf3);
       expect(await addr3.getBalance()).to.be.below(bf3.add(exp1));
       expect(await addr2.getBalance()).to.equal(bf2.add(valec.mul(fee).div(100000)));
@@ -807,7 +807,7 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
       expect(await addr1.getBalance()).to.equal(bf1.add(valec).add(1));
       expect(await addr3.getBalance()).to.be.below(bf32);
      
@@ -829,7 +829,7 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
     
       let exp4 = await flashExercise.getEstimatedReturn(buidlerT1T39900P.address, val1c);
       await flashExercise.connect(addr3).flashExercise(buidlerT1T39900P.address, val1c, exp4, 0);
@@ -845,7 +845,7 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
     
       await flashExercise.setUniswapMiddleRoute(token3.address, token1.address, [token2.address]);
       await flashExercise.setUniswapMiddleRoute(token3.address, ethers.constants.AddressZero, [token2.address,token1.address]);
@@ -880,7 +880,7 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
       expect(await addr3.getBalance()).to.be.above(bf3);
       expect(await addr3.getBalance()).to.be.below(bf3.add(exp11));
       expect(await addr2.getBalance()).to.equal(bf2.add(valec.mul(fee).div(100000)));
@@ -901,7 +901,7 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
       expect(await addr1.getBalance()).to.equal(bf1.add(valec).add(1));
       expect(await addr3.getBalance()).to.be.below(bf32);
 
@@ -919,7 +919,7 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
     
       let exp41 = await flashExercise.getEstimatedReturn(buidlerT1T39900P.address, val1c);
       await flashExercise.connect(addr3).flashExercise(buidlerT1T39900P.address, val1c, exp41, 0);
@@ -935,19 +935,19 @@ describe("ACOFlashExercise", function() {
       expect(await token3.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token2.balanceOf(flashExercise.address)).to.equal(0);
       expect(await token1.balanceOf(flashExercise.address)).to.equal(0);
-      expect(ethers.utils.bigNumberify(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [flashExercise.address,"latest"]))).to.equal(0);
     });
     it("Check fail to flash exercise with route", async function () {
       await token1.connect(addr1).approve(buidlerT1T38100C.address, token1TotalSupply);
 
-      let start1Balance = ethers.utils.bigNumberify("10000000");
+      let start1Balance = ethers.BigNumber.from("10000000");
       await token1.transfer(await addr1.getAddress(), start1Balance);
-      let start3Balance = ethers.utils.bigNumberify("1320000000");
+      let start3Balance = ethers.BigNumber.from("1320000000");
       await token3.transfer(await addr1.getAddress(), start3Balance);
 
-      let valec = ethers.utils.bigNumberify("1000000000000000000");
+      let valec = ethers.BigNumber.from("1000000000000000000");
       await buidlerEthT3270C.connect(addr1).mintPayable({value: valec}); 
-      let val1c = ethers.utils.bigNumberify("10000000");
+      let val1c = ethers.BigNumber.from("10000000");
       await buidlerT1T38100C.connect(addr1).mint(val1c);  
 
       await buidlerEthT3270C.connect(addr1).transfer(await addr3.getAddress(), valec);
