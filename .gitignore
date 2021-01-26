@@ -11,3 +11,4 @@
 /smart-contracts/contracts/interfaces/artifacts
 /smart-contracts/contracts/periphery/pool/artifacts
 /smart-contracts/contracts/only-for-tests/artifacts
+/smart-contracts/contracts/util/artifacts
