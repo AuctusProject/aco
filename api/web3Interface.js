@@ -1,6 +1,7 @@
 const Axios = require('axios');
 
 const fromBlock = "0x" + parseInt(process.env.FROM_BLOCK).toString(16);
+const oldPoolImplementation = "0x68153d392966d38b7ae4415bd5778d02a579a437";
 
 const callEthereum = (method, methodData, secondParam = "latest") => {
   return new Promise((resolve, reject) => {
@@ -123,7 +124,6 @@ const getPoolNetData = (acoPool, totalSupply, poolDecimals) => {
     internalGetPoolNetData(acoPool, totalSupply, poolDecimals, reject, resolve, 0);
   });
 };
-
 
 const internalGetPoolNetData = (acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt) => {
   if (totalSupply === BigInt(0) || poolDecimals <= attempt || attempt === 3) {
@@ -308,12 +308,10 @@ const listAcoPools = () => {
             if (i === 0) event.acoPool = ("0x" + pureData.substring(o + 24, o + size));
             else if (i === 1) event.acoPoolImplementation = ("0x" + pureData.substring(o + 24, o + size));
           }
-          if (event.acoPoolImplementation !== "0x68153d392966d38b7ae4415bd5778d02a579a437") {
-            event.underlying = ("0x" + result[k].topics[1].substring(26));
-            event.strikeAsset = ("0x" + result[k].topics[2].substring(26));
-            event.isCall = (parseInt(result[k].topics[3], 16) === 1);
-            response.push(event);
-          }
+          event.underlying = ("0x" + result[k].topics[1].substring(26));
+          event.strikeAsset = ("0x" + result[k].topics[2].substring(26));
+          event.isCall = (parseInt(result[k].topics[3], 16) === 1);
+          response.push(event);
         }
       }
       resolve(response);
@@ -380,10 +378,6 @@ module.exports.acoPools = () => {
       for (let i = 0; i < response.length; ++i) {
         added[(response[i].acoPool+"vol")] = promises.length;
         promises.push(getBaseVolatility(response[i].acoPool));
-        added[(response[i].acoPool+"pen")] = promises.length;
-        promises.push(getOpenPositionPenaltyPercentage(response[i].acoPool));
-        added[(response[i].acoPool+"ged")] = promises.length;
-        promises.push(getGeneralData(response[i].acoPool));
         added[(response[i].acoPool+"tol")] = promises.length;
         promises.push(getTotalSupply(response[i].acoPool));
         added[response[i].acoPool] = promises.length;
@@ -396,48 +390,78 @@ module.exports.acoPools = () => {
           added[response[i].strikeAsset] = promises.length;
           promises.push(getTokenInfo(response[i].strikeAsset));
         }
+        if (response[i].acoPoolImplementation === oldPoolImplementation) {
+          added[(response[i].acoPool+"und")] = promises.length;
+          promises.push(getBalance(response[i].underlying, response[i].acoPool));
+          added[(response[i].acoPool+"str")] = promises.length;
+          promises.push(getBalance(response[i].strikeAsset, response[i].acoPool));
+        } else {
+          added[(response[i].acoPool+"pen")] = promises.length;
+          promises.push(getOpenPositionPenaltyPercentage(response[i].acoPool));
+          added[(response[i].acoPool+"ged")] = promises.length;
+          promises.push(getGeneralData(response[i].acoPool));
+        }
       }
       Promise.all(promises).then((result) =>
       {
+        const shareDataPromises = [];
+        const shareDataIndex = [];
         for (let j = 0; j < response.length; ++j) {
           let totalSupply = result[added[(response[j].acoPool+"tol")]];
+          let poolDecimals = result[added[response[j].acoPool]].decimals;
+
           response[j].volatility = result[added[(response[j].acoPool+"vol")]];
           response[j].totalSupply = totalSupply.toString(10);
           response[j].acoPoolInfo = result[added[response[j].acoPool]];
           response[j].underlyingInfo = result[added[response[j].underlying]];
           response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
 
-          let openPositionPenalty = result[added[(response[j].acoPool+"pen")]];
-          let generalData = result[added[(response[j].acoPool+"ged")]];
-
-          response[j].underlyingBalance = generalData.underlyingBalance.toString(10);
-          response[j].strikeAssetBalance = generalData.strikeAssetBalance.toString(10);
-
-          let collateral;
-          if (response[j].isCall) {
-            collateral = generalData.underlyingBalance;
-            share
+          if (response[j].acoPoolImplementation === oldPoolImplementation) {
+            response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
+            response[j].strikeAssetBalance = (result[added[(response[j].acoPool+"str")]]).toString(10);
+            shareDataIndex.push(j);
+            shareDataPromises.push(getPoolNetData(response[j].acoPool, totalSupply, poolDecimals));
           } else {
-            collateral = generalData.strikeAssetBalance;
-          }
-          let collateralPerShare = collateral + generalData.collateralLocked - (generalData.collateralOnOpenPosition * (BigInt(100000) + openPositionPenalty)) / BigInt(100000);
-          let share = BigInt(10) ** BigInt(result[added[response[j].acoPool]].decimals);
-          if (share > totalSupply) {
-            share = totalSupply;
-          }
-          if (response[j].isCall) {
-            response[j].underlyingPerShare = (share * collateralPerShare / totalSupply).toString(10);
-            response[j].strikeAssetPerShare = (share * generalData.strikeAssetBalance / totalSupply).toString(10);
-            response[j].underlyingTotalShare = collateralPerShare.toString(10);
-            response[j].strikeAssetTotalShare = generalData.strikeAssetBalance.toString(10);
-          } else {
-            response[j].underlyingPerShare = (share * generalData.underlyingBalance / totalSupply).toString(10);
-            response[j].strikeAssetPerShare = (share * collateralPerShare / totalSupply).toString(10);
-            response[j].underlyingTotalShare = generalData.underlyingBalance.toString(10);
-            response[j].strikeAssetTotalShare = collateralPerShare.toString(10);
+            let openPositionPenalty = result[added[(response[j].acoPool+"pen")]];
+            let generalData = result[added[(response[j].acoPool+"ged")]];
+
+            response[j].underlyingBalance = generalData.underlyingBalance.toString(10);
+            response[j].strikeAssetBalance = generalData.strikeAssetBalance.toString(10);
+
+            let collateral;
+            if (response[j].isCall) {
+              collateral = generalData.underlyingBalance;
+            } else {
+              collateral = generalData.strikeAssetBalance;
+            }
+            let collateralPerShare = collateral + generalData.collateralLocked - (generalData.collateralOnOpenPosition * (BigInt(100000) + openPositionPenalty)) / BigInt(100000);
+            let share = BigInt(10) ** BigInt(poolDecimals);
+            if (share > totalSupply) {
+              share = totalSupply;
+            }
+            if (response[j].isCall) {
+              response[j].underlyingPerShare = (share * collateralPerShare / totalSupply).toString(10);
+              response[j].strikeAssetPerShare = (share * generalData.strikeAssetBalance / totalSupply).toString(10);
+              response[j].underlyingTotalShare = collateralPerShare.toString(10);
+              response[j].strikeAssetTotalShare = generalData.strikeAssetBalance.toString(10);
+            } else {
+              response[j].underlyingPerShare = (share * generalData.underlyingBalance / totalSupply).toString(10);
+              response[j].strikeAssetPerShare = (share * collateralPerShare / totalSupply).toString(10);
+              response[j].underlyingTotalShare = generalData.underlyingBalance.toString(10);
+              response[j].strikeAssetTotalShare = collateralPerShare.toString(10);
+            }
           }
         }
-        resolve(response);
+        Promise.all(shareDataPromises).then((data) => 
+        {
+          for (let k = 0; k < shareDataIndex.length; ++k) {
+            response[shareDataIndex[k]].underlyingPerShare = data[k].underlyingPerShare;
+            response[shareDataIndex[k]].strikeAssetPerShare = data[k].strikeAssetPerShare;
+            response[shareDataIndex[k]].underlyingTotalShare = data[k].underlyingTotalShare;
+            response[shareDataIndex[k]].strikeAssetTotalShare = data[k].strikeAssetTotalShare;
+          }
+          resolve(response);
+        }).catch((err) => reject(err));
       }).catch((err) => reject(err));
     }).catch((err) => reject(err));
   });
