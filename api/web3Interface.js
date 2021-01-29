@@ -428,27 +428,34 @@ module.exports.acoPools = () => {
             response[j].underlyingBalance = generalData.underlyingBalance.toString(10);
             response[j].strikeAssetBalance = generalData.strikeAssetBalance.toString(10);
 
-            let collateral;
-            if (response[j].isCall) {
-              collateral = generalData.underlyingBalance;
+            if (totalSupply > BigInt(0)) {
+              let collateral;
+              if (response[j].isCall) {
+                collateral = generalData.underlyingBalance;
+              } else {
+                collateral = generalData.strikeAssetBalance;
+              }
+              let collateralPerShare = collateral + generalData.collateralLocked - (generalData.collateralOnOpenPosition * (BigInt(100000) + openPositionPenalty)) / BigInt(100000);
+              let share = BigInt(10) ** BigInt(poolDecimals);
+              if (share > totalSupply) {
+                share = totalSupply;
+              }
+              if (response[j].isCall) {
+                response[j].underlyingPerShare = (share * collateralPerShare / totalSupply).toString(10);
+                response[j].strikeAssetPerShare = (share * generalData.strikeAssetBalance / totalSupply).toString(10);
+                response[j].underlyingTotalShare = collateralPerShare.toString(10);
+                response[j].strikeAssetTotalShare = generalData.strikeAssetBalance.toString(10);
+              } else {
+                response[j].underlyingPerShare = (share * generalData.underlyingBalance / totalSupply).toString(10);
+                response[j].strikeAssetPerShare = (share * collateralPerShare / totalSupply).toString(10);
+                response[j].underlyingTotalShare = generalData.underlyingBalance.toString(10);
+                response[j].strikeAssetTotalShare = collateralPerShare.toString(10);
+              }
             } else {
-              collateral = generalData.strikeAssetBalance;
-            }
-            let collateralPerShare = collateral + generalData.collateralLocked - (generalData.collateralOnOpenPosition * (BigInt(100000) + openPositionPenalty)) / BigInt(100000);
-            let share = BigInt(10) ** BigInt(poolDecimals);
-            if (share > totalSupply) {
-              share = totalSupply;
-            }
-            if (response[j].isCall) {
-              response[j].underlyingPerShare = (share * collateralPerShare / totalSupply).toString(10);
-              response[j].strikeAssetPerShare = (share * generalData.strikeAssetBalance / totalSupply).toString(10);
-              response[j].underlyingTotalShare = collateralPerShare.toString(10);
-              response[j].strikeAssetTotalShare = generalData.strikeAssetBalance.toString(10);
-            } else {
-              response[j].underlyingPerShare = (share * generalData.underlyingBalance / totalSupply).toString(10);
-              response[j].strikeAssetPerShare = (share * collateralPerShare / totalSupply).toString(10);
-              response[j].underlyingTotalShare = generalData.underlyingBalance.toString(10);
-              response[j].strikeAssetTotalShare = collateralPerShare.toString(10);
+              response[j].underlyingPerShare = "0";
+              response[j].strikeAssetPerShare = "0";
+              response[j].underlyingTotalShare = "0";
+              response[j].strikeAssetTotalShare = "0";
             }
           }
         }
