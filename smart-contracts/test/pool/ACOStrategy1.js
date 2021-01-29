@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const strategy1ABI = require("../../artifacts/ACOStrategy1.json");
+const strategy1ABI = require("../../artifacts/contracts/periphery/pool/ACOStrategy1.sol/ACOStrategy1.json");
 
 describe("ACOStrategy1", function () {
   let buidlerFactory;
@@ -7,16 +7,16 @@ describe("ACOStrategy1", function () {
   let token1Name = "TOKEN1";
   let token1Symbol = "TOK1";
   let token1Decimals = 8;
-  let token1TotalSupply = ethers.utils.bigNumberify("100000000000000000");
+  let token1TotalSupply = ethers.BigNumber.from("100000000000000000");
   let token2;
   let token2Name = "TOKEN2";
   let token2Symbol = "TOK2";
   let token2Decimals = 6;
-  let token2TotalSupply = ethers.utils.bigNumberify("1000000000000000");
+  let token2TotalSupply = ethers.BigNumber.from("1000000000000000");
   let aggregatorToken1Token2;
   let strategy1;  
   let percentagePrecision = 100000;
-  let token1Token2Price = ethers.utils.bigNumberify("10000000000");
+  let token1Token2Price = ethers.BigNumber.from("10000000000");
   let token1Token2BaseVolatility = 70000;
 
   beforeEach(async function () {
@@ -173,28 +173,28 @@ describe("ACOStrategy1", function () {
         underlying: token1.address,
         strikeAsset: token2.address,
         isCallOption: true,
-        strikePrice: ethers.utils.bigNumberify("9000000000"), 
+        strikePrice: ethers.BigNumber.from("9000000000"), 
         expiryTime: expiry,
         baseVolatility: token1Token2BaseVolatility,
-        collateralOrderAmount: ethers.utils.bigNumberify("9000000000"),
-        collateralAvailable: ethers.utils.bigNumberify("90000000000"),
-        collateralTotalDeposited: ethers.utils.bigNumberify("90000000000"),
+        collateralOrderAmount: ethers.BigNumber.from("9000000000"),
+        collateralAvailable: ethers.BigNumber.from("90000000000"),
+        collateralTotalDeposited: ethers.BigNumber.from("90000000000"),
         strikeAssetEarnedSelling: 0,
         strikeAssetSpentBuying: 0,
         amountPurchased: 0,
         amountSold: 0,
       }
-      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.utils.bigNumberify("1000000000"));
+      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.BigNumber.from("1000000000"));
 
-      await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("1050000000000"));
-      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.utils.bigNumberify("1500000000"));
+      await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("1050000000000"));
+      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.BigNumber.from("1500000000"));
 
-      await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("1500000000000"));
+      await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("1500000000000"));
 
       let quote1 = (await strategy1.quote(optionQuote));
-      await expect(quote1[0]).to.gt(ethers.utils.bigNumberify("5000000000"));
+      await expect(quote1[0]).to.gt(ethers.BigNumber.from("5000000000"));
 
-      optionQuote.collateralAvailable = ethers.utils.bigNumberify("18000000000");
+      optionQuote.collateralAvailable = ethers.BigNumber.from("18000000000");
       let quote2 = (await strategy1.quote(optionQuote));
       await expect(quote2[0]).to.gt(quote1[0]);
 
@@ -214,12 +214,12 @@ describe("ACOStrategy1", function () {
         underlying: token1.address,
         strikeAsset: token2.address,
         isCallOption: true,
-        strikePrice: ethers.utils.bigNumberify("11000000000"), 
+        strikePrice: ethers.BigNumber.from("11000000000"), 
         expiryTime: expiry,
         baseVolatility: token1Token2BaseVolatility,
-        collateralOrderAmount: ethers.utils.bigNumberify("11000000000"),
-        collateralAvailable: ethers.utils.bigNumberify("110000000000"),
-        collateralTotalDeposited: ethers.utils.bigNumberify("110000000000"),
+        collateralOrderAmount: ethers.BigNumber.from("11000000000"),
+        collateralAvailable: ethers.BigNumber.from("110000000000"),
+        collateralTotalDeposited: ethers.BigNumber.from("110000000000"),
         strikeAssetEarnedSelling: 0,
         strikeAssetSpentBuying: 0,
         amountPurchased: 0,
@@ -227,14 +227,14 @@ describe("ACOStrategy1", function () {
       }
 
       let quote1 = (await strategy1.quote(optionQuote));
-      await expect(quote1[0]).to.gt(ethers.utils.bigNumberify("0"));
+      await expect(quote1[0]).to.gt(ethers.BigNumber.from("0"));
 
-      await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("1050000000000"));
+      await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("1050000000000"));
 
       let quote2 = (await strategy1.quote(optionQuote));
       await expect(quote2[0]).to.gt(quote1[0]);
 
-      optionQuote.collateralAvailable = ethers.utils.bigNumberify("22000000000");
+      optionQuote.collateralAvailable = ethers.BigNumber.from("22000000000");
       let quote3 = (await strategy1.quote(optionQuote));
       await expect(quote3[0]).to.gt(quote2[0]);
 
@@ -254,28 +254,28 @@ describe("ACOStrategy1", function () {
         underlying: token1.address,
         strikeAsset: token2.address,
         isCallOption: false,
-        strikePrice: ethers.utils.bigNumberify("11000000000"), 
+        strikePrice: ethers.BigNumber.from("11000000000"), 
         expiryTime: expiry,
         baseVolatility: token1Token2BaseVolatility,
-        collateralOrderAmount: ethers.utils.bigNumberify("11000000000"),
-        collateralAvailable: ethers.utils.bigNumberify("110000000000"),
-        collateralTotalDeposited: ethers.utils.bigNumberify("110000000000"),
+        collateralOrderAmount: ethers.BigNumber.from("11000000000"),
+        collateralAvailable: ethers.BigNumber.from("110000000000"),
+        collateralTotalDeposited: ethers.BigNumber.from("110000000000"),
         strikeAssetEarnedSelling: 0,
         strikeAssetSpentBuying: 0,
         amountPurchased: 0,
         amountSold: 0,
       }
-      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.utils.bigNumberify("1000000000"));
+      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.BigNumber.from("1000000000"));
 
-      await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("950000000000"));
-      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.utils.bigNumberify("1500000000"));
+      await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("950000000000"));
+      await expect((await strategy1.quote(optionQuote))[0]).to.gt(ethers.BigNumber.from("1500000000"));
 
-      await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("800000000000"));
+      await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("800000000000"));
 
       let quote1 = (await strategy1.quote(optionQuote));
-      await expect(quote1[0]).to.gt(ethers.utils.bigNumberify("3000000000"));
+      await expect(quote1[0]).to.gt(ethers.BigNumber.from("3000000000"));
 
-      optionQuote.collateralAvailable = ethers.utils.bigNumberify("22000000000");
+      optionQuote.collateralAvailable = ethers.BigNumber.from("22000000000");
       let quote2 = (await strategy1.quote(optionQuote));
       await expect(quote2[0]).to.gt(quote1[0]);
 
@@ -295,12 +295,12 @@ describe("ACOStrategy1", function () {
         underlying: token1.address,
         strikeAsset: token2.address,
         isCallOption: false,
-        strikePrice: ethers.utils.bigNumberify("9000000000"), 
+        strikePrice: ethers.BigNumber.from("9000000000"), 
         expiryTime: expiry,
         baseVolatility: token1Token2BaseVolatility,
-        collateralOrderAmount: ethers.utils.bigNumberify("9000000000"),
-        collateralAvailable: ethers.utils.bigNumberify("90000000000"),
-        collateralTotalDeposited: ethers.utils.bigNumberify("90000000000"),
+        collateralOrderAmount: ethers.BigNumber.from("9000000000"),
+        collateralAvailable: ethers.BigNumber.from("90000000000"),
+        collateralTotalDeposited: ethers.BigNumber.from("90000000000"),
         strikeAssetEarnedSelling: 0,
         strikeAssetSpentBuying: 0,
         amountPurchased: 0,
@@ -308,14 +308,14 @@ describe("ACOStrategy1", function () {
       }
 
       let quote1 = (await strategy1.quote(optionQuote));
-      await expect(quote1[0]).to.gt(ethers.utils.bigNumberify("0"));
+      await expect(quote1[0]).to.gt(ethers.BigNumber.from("0"));
 
-      await aggregatorToken1Token2.updateAnswer(ethers.utils.bigNumberify("950000000000"));
+      await aggregatorToken1Token2.updateAnswer(ethers.BigNumber.from("950000000000"));
 
       let quote2 = (await strategy1.quote(optionQuote));
       await expect(quote2[0]).to.gt(quote1[0]);
 
-      optionQuote.collateralAvailable = ethers.utils.bigNumberify("18000000000");
+      optionQuote.collateralAvailable = ethers.BigNumber.from("18000000000");
       let quote3 = (await strategy1.quote(optionQuote));
       await expect(quote3[0]).to.gt(quote2[0]);
 

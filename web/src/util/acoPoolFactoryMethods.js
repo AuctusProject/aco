@@ -1,5 +1,5 @@
 import { getWeb3 } from './web3Methods'
-import { acoPoolFactoryAddress, getBalanceOfAsset, toDecimals } from './constants';
+import { acoPoolFactoryAddress, deprecatedPoolImplementation, getBalanceOfAsset, toDecimals } from './constants';
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
@@ -30,16 +30,18 @@ export const getAllAvailablePools = () => {
                     var pools = []
                     for (let i = 0; i < events.length; i++) {
                         const eventValues = events[i].returnValues;
-                        pools.push(eventValues)
-                        if (!assetsAddresses.includes(eventValues.strikeAsset)) {
-                            assetsAddresses.push(eventValues.strikeAsset)
+                        if (eventValues.acoPoolImplementation.toLowerCase() !== deprecatedPoolImplementation.toLowerCase()) {                        
+                            pools.push(eventValues)
+                            if (!assetsAddresses.includes(eventValues.strikeAsset)) {
+                                assetsAddresses.push(eventValues.strikeAsset)
+                            }
+                            if (!assetsAddresses.includes(eventValues.underlying)) {
+                                assetsAddresses.push(eventValues.underlying)
+                            }
+                            if (!assetsAddresses.includes(eventValues.acoPool)) {
+                                assetsAddresses.push(eventValues.acoPool)
+                            }
                         }
-                        if (!assetsAddresses.includes(eventValues.underlying)) {
-                            assetsAddresses.push(eventValues.underlying)
-                        }
-                        if (!assetsAddresses.includes(eventValues.acoPool)) {
-                            assetsAddresses.push(eventValues.acoPool)
-                        }                        
                     }
                     fillTokensInformations(pools, assetsAddresses)
                     .then(pools => {

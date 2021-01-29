@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const factoryABI = require("../artifacts/ACOFactory.json");
+const factoryABI = require("../artifacts/contracts/core/ACOFactory.sol/ACOFactory.json");
 
 describe("ACOFactory", function() {
   let buidlerProxy;
@@ -45,7 +45,7 @@ describe("ACOFactory", function() {
 
     let ownerAddr = await owner.getAddress();
     let addr2Addr = await addr2.getAddress();
-    let initData = factoryInterface.functions.init.encode([ownerAddr, ACOToken.address, fee, addr2Addr]);
+    let initData = factoryInterface.encodeFunctionData("init", [ownerAddr, ACOToken.address, fee, addr2Addr]);
     buidlerProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactory.address, initData);
     await buidlerProxy.deployed();
 

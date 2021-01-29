@@ -20,7 +20,7 @@ library ACOAssetHelper {
      */
     function _callApproveERC20(address token, address spender, uint256 amount) internal {
         (bool success, bytes memory returndata) = token.call(abi.encodeWithSelector(0x095ea7b3, spender, amount));
-        require(success && (returndata.length == 0 || abi.decode(returndata, (bool))), "ACOAssetHelper::_callApproveERC20");
+        require(success && (returndata.length == 0 || abi.decode(returndata, (bool))), "approve");
     }
     
     /**
@@ -31,7 +31,7 @@ library ACOAssetHelper {
      */
     function _callTransferERC20(address token, address recipient, uint256 amount) internal {
         (bool success, bytes memory returndata) = token.call(abi.encodeWithSelector(0xa9059cbb, recipient, amount));
-        require(success && (returndata.length == 0 || abi.decode(returndata, (bool))), "ACOAssetHelper::_callTransferERC20");
+        require(success && (returndata.length == 0 || abi.decode(returndata, (bool))), "transfer");
     }
     
     /**
@@ -43,7 +43,7 @@ library ACOAssetHelper {
      */
      function _callTransferFromERC20(address token, address sender, address recipient, uint256 amount) internal {
         (bool success, bytes memory returndata) = token.call(abi.encodeWithSelector(0x23b872dd, sender, recipient, amount));
-        require(success && (returndata.length == 0 || abi.decode(returndata, (bool))), "ACOAssetHelper::_callTransferFromERC20");
+        require(success && (returndata.length == 0 || abi.decode(returndata, (bool))), "transferFrom");
     }
     
     /**
@@ -56,7 +56,7 @@ library ACOAssetHelper {
             return "ETH";
         } else {
             (bool success, bytes memory returndata) = asset.staticcall(abi.encodeWithSelector(0x95d89b41));
-            require(success, "ACOAssetHelper::_getAssetSymbol");
+            require(success, "symbol");
             return abi.decode(returndata, (string));
         }
     }
@@ -71,7 +71,7 @@ library ACOAssetHelper {
             return uint8(18);
         } else {
             (bool success, bytes memory returndata) = asset.staticcall(abi.encodeWithSelector(0x313ce567));
-            require(success, "ACOAssetHelper::_getAssetDecimals");
+            require(success, "decimals");
             return abi.decode(returndata, (uint8));
         }
     }
@@ -86,7 +86,7 @@ library ACOAssetHelper {
             return "Ethereum";
         } else {
             (bool success, bytes memory returndata) = asset.staticcall(abi.encodeWithSelector(0x06fdde03));
-            require(success, "ACOAssetHelper::_getAssetName");
+            require(success, "name");
             return abi.decode(returndata, (string));
         }
     }
@@ -102,7 +102,7 @@ library ACOAssetHelper {
             return account.balance;
         } else {
             (bool success, bytes memory returndata) = asset.staticcall(abi.encodeWithSelector(0x70a08231, account));
-            require(success, "ACOAssetHelper::_getAssetBalanceOf");
+            require(success, "balanceOf");
             return abi.decode(returndata, (uint256));
         }
     }
@@ -119,7 +119,7 @@ library ACOAssetHelper {
             return 0;
         } else {
             (bool success, bytes memory returndata) = asset.staticcall(abi.encodeWithSelector(0xdd62ed3e, owner, spender));
-            require(success, "ACOAssetHelper::_getAssetAllowance");
+            require(success, "allowance");
             return abi.decode(returndata, (uint256));
         }
     }
@@ -133,7 +133,7 @@ library ACOAssetHelper {
     function _transferAsset(address asset, address to, uint256 amount) internal {
         if (_isEther(asset)) {
             (bool success,) = to.call{value:amount}(new bytes(0));
-            require(success, 'ACOAssetHelper::_transferAsset');
+            require(success, "send");
         } else {
             _callTransferERC20(asset, to, amount);
         }
@@ -146,9 +146,9 @@ library ACOAssetHelper {
      */
     function _receiveAsset(address asset, uint256 amount) internal {
         if (_isEther(asset)) {
-            require(msg.value == amount, "ACOAssetHelper:: Invalid ETH amount");
+            require(msg.value == amount, "Invalid ETH amount");
         } else {
-            require(msg.value == 0, "ACOAssetHelper:: Ether is not expected");
+            require(msg.value == 0, "No payable");
             _callTransferFromERC20(asset, msg.sender, address(this), amount);
         }
     }

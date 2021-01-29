@@ -1,6 +1,7 @@
 const Axios = require('axios');
 
 const fromBlock = "0x" + parseInt(process.env.FROM_BLOCK).toString(16);
+const oldPoolImplementation = "0x68153d392966d38b7ae4415bd5778d02a579a437";
 
 const callEthereum = (method, methodData, secondParam = "latest") => {
   return new Promise((resolve, reject) => {
@@ -62,6 +63,46 @@ const getBaseVolatility = (pool) => {
   });
 };
 
+const getOpenPositionPenaltyPercentage = (pool) => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0x9a4ed023"}).then((result) => 
+      {
+        if (result) {
+          resolve(BigInt(result));
+        } else {
+          reject(new Error("Invalid open position penalty"));
+        }
+      }).catch((err) => reject(err));
+  });
+};
+
+const getGeneralData = (pool) => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0x9b4e23ae"}).then((result) =>  {
+      if (result) {
+        const pureData = result.substring(2);
+        const size = 64;
+        const numChunks = Math.ceil(pureData.length / size);
+        const response = {};
+        for (let i = 0, o = 0; i < numChunks; ++i, o += size) {
+          let property = "";
+          if (i === 0) property = "underlyingBalance";
+          else if (i === 1) property = "strikeAssetBalance";
+          else if (i === 2) property = "collateralLocked";
+          else if (i === 3) property = "collateralOnOpenPosition";
+          else if (i === 4) property = "collateralLockedRedeemable";
+          if (property) {
+            response[property] = BigInt("0x" + pureData.substring(o, o + size));
+          }
+        }
+        resolve(response);
+      } else {
+        reject(new Error("Invalid general data"));
+      }
+    }).catch((err) => reject(err));
+  });
+};
+
 const getWithdrawNoLockedOnAcoPool = (acoPool, shares) => {
   return new Promise((resolve, reject) => { 
     callEthereum("eth_call", {"to": acoPool, "data": "0xf92a336f" + numberToData(shares)}).then((result) => {
@@ -81,9 +122,8 @@ const getWithdrawNoLockedOnAcoPool = (acoPool, shares) => {
 const getPoolNetData = (acoPool, totalSupply, poolDecimals) => {
   return new Promise((resolve, reject) => { 
     internalGetPoolNetData(acoPool, totalSupply, poolDecimals, reject, resolve, 0);
-  }).catch((err) => reject(err));
+  });
 };
-
 
 const internalGetPoolNetData = (acoPool, totalSupply, poolDecimals, onError, onSuccess, attempt) => {
   if (totalSupply === BigInt(0) || poolDecimals <= attempt || attempt === 3) {
@@ -338,10 +378,6 @@ module.exports.acoPools = () => {
       for (let i = 0; i < response.length; ++i) {
         added[(response[i].acoPool+"vol")] = promises.length;
         promises.push(getBaseVolatility(response[i].acoPool));
-        added[(response[i].acoPool+"und")] = promises.length;
-        promises.push(getBalance(response[i].underlying, response[i].acoPool));
-        added[(response[i].acoPool+"str")] = promises.length;
-        promises.push(getBalance(response[i].strikeAsset, response[i].acoPool));
         added[(response[i].acoPool+"tol")] = promises.length;
         promises.push(getTotalSupply(response[i].acoPool));
         added[response[i].acoPool] = promises.length;
@@ -354,28 +390,82 @@ module.exports.acoPools = () => {
           added[response[i].strikeAsset] = promises.length;
           promises.push(getTokenInfo(response[i].strikeAsset));
         }
+        if (response[i].acoPoolImplementation === oldPoolImplementation) {
+          added[(response[i].acoPool+"und")] = promises.length;
+          promises.push(getBalance(response[i].underlying, response[i].acoPool));
+          added[(response[i].acoPool+"str")] = promises.length;
+          promises.push(getBalance(response[i].strikeAsset, response[i].acoPool));
+        } else {
+          added[(response[i].acoPool+"pen")] = promises.length;
+          promises.push(getOpenPositionPenaltyPercentage(response[i].acoPool));
+          added[(response[i].acoPool+"ged")] = promises.length;
+          promises.push(getGeneralData(response[i].acoPool));
+        }
       }
       Promise.all(promises).then((result) =>
       {
         const shareDataPromises = [];
+        const shareDataIndex = [];
         for (let j = 0; j < response.length; ++j) {
+          let totalSupply = result[added[(response[j].acoPool+"tol")]];
+          let poolDecimals = result[added[response[j].acoPool]].decimals;
+
           response[j].volatility = result[added[(response[j].acoPool+"vol")]];
-          response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
-          response[j].strikeAssetBalance = (result[added[(response[j].acoPool+"str")]]).toString(10);
-          response[j].totalSupply = (result[added[(response[j].acoPool+"tol")]]).toString(10);
+          response[j].totalSupply = totalSupply.toString(10);
           response[j].acoPoolInfo = result[added[response[j].acoPool]];
           response[j].underlyingInfo = result[added[response[j].underlying]];
           response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
 
-          shareDataPromises.push(getPoolNetData(response[j].acoPool, result[added[(response[j].acoPool+"tol")]], result[added[response[j].acoPool]].decimals))
+          if (response[j].acoPoolImplementation === oldPoolImplementation) {
+            response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
+            response[j].strikeAssetBalance = (result[added[(response[j].acoPool+"str")]]).toString(10);
+            shareDataIndex.push(j);
+            shareDataPromises.push(getPoolNetData(response[j].acoPool, totalSupply, poolDecimals));
+          } else {
+            let openPositionPenalty = result[added[(response[j].acoPool+"pen")]];
+            let generalData = result[added[(response[j].acoPool+"ged")]];
+
+            response[j].underlyingBalance = generalData.underlyingBalance.toString(10);
+            response[j].strikeAssetBalance = generalData.strikeAssetBalance.toString(10);
+
+            if (totalSupply > BigInt(0)) {
+              let collateral;
+              if (response[j].isCall) {
+                collateral = generalData.underlyingBalance;
+              } else {
+                collateral = generalData.strikeAssetBalance;
+              }
+              let collateralPerShare = collateral + generalData.collateralLocked - (generalData.collateralOnOpenPosition * (BigInt(100000) + openPositionPenalty)) / BigInt(100000);
+              let share = BigInt(10) ** BigInt(poolDecimals);
+              if (share > totalSupply) {
+                share = totalSupply;
+              }
+              if (response[j].isCall) {
+                response[j].underlyingPerShare = (share * collateralPerShare / totalSupply).toString(10);
+                response[j].strikeAssetPerShare = (share * generalData.strikeAssetBalance / totalSupply).toString(10);
+                response[j].underlyingTotalShare = collateralPerShare.toString(10);
+                response[j].strikeAssetTotalShare = generalData.strikeAssetBalance.toString(10);
+              } else {
+                response[j].underlyingPerShare = (share * generalData.underlyingBalance / totalSupply).toString(10);
+                response[j].strikeAssetPerShare = (share * collateralPerShare / totalSupply).toString(10);
+                response[j].underlyingTotalShare = generalData.underlyingBalance.toString(10);
+                response[j].strikeAssetTotalShare = collateralPerShare.toString(10);
+              }
+            } else {
+              response[j].underlyingPerShare = "0";
+              response[j].strikeAssetPerShare = "0";
+              response[j].underlyingTotalShare = "0";
+              response[j].strikeAssetTotalShare = "0";
+            }
+          }
         }
         Promise.all(shareDataPromises).then((data) => 
         {
-          for (let k = 0; k < response.length; ++k) {
-            response[k].underlyingPerShare = data[k].underlyingPerShare;
-            response[k].strikeAssetPerShare = data[k].strikeAssetPerShare;
-            response[k].underlyingTotalShare = data[k].underlyingTotalShare;
-            response[k].strikeAssetTotalShare = data[k].strikeAssetTotalShare;
+          for (let k = 0; k < shareDataIndex.length; ++k) {
+            response[shareDataIndex[k]].underlyingPerShare = data[k].underlyingPerShare;
+            response[shareDataIndex[k]].strikeAssetPerShare = data[k].strikeAssetPerShare;
+            response[shareDataIndex[k]].underlyingTotalShare = data[k].underlyingTotalShare;
+            response[shareDataIndex[k]].strikeAssetTotalShare = data[k].strikeAssetTotalShare;
           }
           resolve(response);
         }).catch((err) => reject(err));

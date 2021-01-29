@@ -14,7 +14,7 @@
                 "--data",
                 "{}",
                 "-s",
-                "dev"
+                "prod"
             ],
             "autoAttachChildProcesses": true
         }

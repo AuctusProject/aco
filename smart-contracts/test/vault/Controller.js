@@ -1,8 +1,8 @@
 const { expect } = require("chai");
-const poolFactoryABI = require("../../artifacts/ACOPoolFactory2.json");
-const factoryABI = require("../../artifacts/ACOFactory.json");
+const poolFactoryABI = require("../../artifacts/contracts/periphery/pool/ACOPoolFactory2.sol/ACOPoolFactory2.json");
+const factoryABI = require("../../artifacts/contracts/core/ACOFactory.sol/ACOFactory.json");
 const { createAcoPoolStrategy } = require("../pool/ACOPoolStrategy.js");
-const { AddressZero } = require("ethers/constants");
+const AddressZero = "0x0000000000000000000000000000000000000000";
 
 let started = false;
 
@@ -15,12 +15,12 @@ describe("Controller", function() {
   let token2Name = "TOKEN2";
   let token2Symbol = "TOK2";
   let token2Decimals = 6;
-  let token2TotalSupply = ethers.utils.bigNumberify("1000000000000000");
+  let token2TotalSupply = ethers.BigNumber.from("1000000000000000");
   let pairWethToken2;
   let pairCrvToken2;
-  let token2Liq = ethers.utils.bigNumberify("5000000000000");
-  let crvLiq = ethers.utils.bigNumberify("5000000000000000000000000");
-  let wethLiq = ethers.utils.bigNumberify("12500000000000000000000");
+  let token2Liq = ethers.BigNumber.from("5000000000000");
+  let crvLiq = ethers.BigNumber.from("5000000000000000000000000");
+  let wethLiq = ethers.BigNumber.from("12500000000000000000000");
   let aggregatorWethToken2;
   let ACOFactory;
   let ACOPoolFactory;
@@ -33,11 +33,11 @@ describe("Controller", function() {
   let converterHelper;
   let vault;
   let controller;
-  let fee = ethers.utils.bigNumberify("100");
+  let fee = ethers.BigNumber.from("100");
   let maxExercisedAccounts = 120;
   let minTimeToExercise = 43200;
 
-  let ethToken2Price = ethers.utils.bigNumberify("400000000");
+  let ethToken2Price = ethers.BigNumber.from("400000000");
   let expiration;
   let start;
   let ethToken2BaseVolatility = 85000;
@@ -54,14 +54,14 @@ describe("Controller", function() {
     let tokenName = "Curve DAO Token";
     let tokenSymbol = "CRV";
     let tokenDecimals = 18;
-    let tokenTotalSupply = ethers.utils.bigNumberify("1000000000000000000000000000000");
+    let tokenTotalSupply = ethers.BigNumber.from("1000000000000000000000000000000");
     crv = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await crv.deployed();
 
     tokenName = "Curve Pool Token";
     tokenSymbol = "CRV Pool";
     tokenDecimals = 18;
-    tokenTotalSupply = ethers.utils.bigNumberify("0");
+    tokenTotalSupply = ethers.BigNumber.from("0");
     crvPoolToken = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await crvPoolToken.deployed();
 
@@ -74,14 +74,14 @@ describe("Controller", function() {
     tokenName = "DAI";
     tokenSymbol = "DAI";
     tokenDecimals = 18;
-    tokenTotalSupply = ethers.utils.bigNumberify("10000000000000000000000000000");
+    tokenTotalSupply = ethers.BigNumber.from("10000000000000000000000000000");
     _coin1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin1.deployed();
 
     tokenName = "USDT";
     tokenSymbol = "USDT";
     tokenDecimals = 6;
-    tokenTotalSupply = ethers.utils.bigNumberify("100000000000000000");
+    tokenTotalSupply = ethers.BigNumber.from("100000000000000000");
     _coin3 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(tokenName, tokenSymbol, tokenDecimals, tokenTotalSupply);
     await _coin3.deployed();
 
@@ -94,10 +94,10 @@ describe("Controller", function() {
     );
     await _curve.deployed();
 
-    await _coin1.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000000000000000"));
-    await token2.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("1000000"));
-    await _coin3.connect(owner).approve(_curve.address, ethers.utils.bigNumberify("100000000"));
-    await _curve.add_liquidity([ethers.utils.bigNumberify("1000000000000000000"), ethers.utils.bigNumberify("1000000"), ethers.utils.bigNumberify("100000000")], 0);
+    await _coin1.connect(owner).approve(_curve.address, ethers.BigNumber.from("1000000000000000000"));
+    await token2.connect(owner).approve(_curve.address, ethers.BigNumber.from("1000000"));
+    await _coin3.connect(owner).approve(_curve.address, ethers.BigNumber.from("100000000"));
+    await _curve.add_liquidity([ethers.BigNumber.from("1000000000000000000"), ethers.BigNumber.from("1000000"), ethers.BigNumber.from("100000000")], 0);
 
     vaultStrategy = await (await ethers.getContractFactory("ACOVaultUSDCStrategy3CRV")).deploy([
       _curve.address,
@@ -116,7 +116,7 @@ describe("Controller", function() {
     [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, addr9, addr10, addr11, addr12, addr13, addr14, addr15, ...addrs] = await ethers.getSigners();
     
     if (!started) {
-      let baseTx = {to: await owner.getAddress(), value: ethers.utils.bigNumberify("4500000000000000000000")};
+      let baseTx = {to: await owner.getAddress(), value: ethers.BigNumber.from("4500000000000000000000")};
       await addr13.sendTransaction(baseTx);
       await addr14.sendTransaction(baseTx);
       await addr15.sendTransaction(baseTx);
@@ -130,7 +130,7 @@ describe("Controller", function() {
     await ACOTokenTemp.deployed();
 
     let factoryInterface = new ethers.utils.Interface(factoryABI.abi);
-    let factoryInitData = factoryInterface.functions.init.encode([await owner.getAddress(), ACOTokenTemp.address, 0, await addr3.getAddress()]);
+    let factoryInitData = factoryInterface.encodeFunctionData("init", [await owner.getAddress(), ACOTokenTemp.address, 0, await addr3.getAddress()]);
     let buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOFactoryTemp.address, factoryInitData);
     await buidlerACOFactoryProxy.deployed();
     ACOFactory = await ethers.getContractAt("ACOFactoryV3", buidlerACOFactoryProxy.address);
@@ -150,9 +150,9 @@ describe("Controller", function() {
     token2 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token2Name, token2Symbol, token2Decimals, token2TotalSupply);
     await token2.deployed();
     
-    await token2.connect(owner).transfer(await addr1.getAddress(), ethers.utils.bigNumberify("1000000000000"));
-    await token2.connect(owner).transfer(await addr2.getAddress(), ethers.utils.bigNumberify("1000000000000"));
-    await token2.connect(owner).transfer(await addr3.getAddress(), ethers.utils.bigNumberify("1000000000000"));
+    await token2.connect(owner).transfer(await addr1.getAddress(), ethers.BigNumber.from("1000000000000"));
+    await token2.connect(owner).transfer(await addr2.getAddress(), ethers.BigNumber.from("1000000000000"));
+    await token2.connect(owner).transfer(await addr3.getAddress(), ethers.BigNumber.from("1000000000000"));
 
     aggregatorWethToken2 = await (await ethers.getContractFactory("AggregatorForTest")).deploy(8, ethToken2Price.mul(100));
     await aggregatorWethToken2.deployed();
@@ -189,19 +189,27 @@ describe("Controller", function() {
     await converterHelper.setAggregator(AddressZero, token2.address, aggregatorWethToken2.address);
     await converterHelper.setPairTolerancePercentage(AddressZero, token2.address, 1250);
 
-    let ACOPoolTemp = await (await ethers.getContractFactory("ACOPool2")).deploy();
+    let poolLib = await (await ethers.getContractFactory("ACOPoolLib")).deploy();
+    await poolLib.deployed();
+    let ACOPoolTemp = await (await ethers.getContractFactory("ACOPool2", {libraries:{ACOPoolLib:poolLib.address}})).deploy();
     await ACOPoolTemp.deployed();
 
-    let ACOPoolFactoryTemp = await (await ethers.getContractFactory("ACOPoolFactory2")).deploy();
+    let ACOPoolFactoryTemp = await (await ethers.getContractFactory("ACOPoolFactory2V2")).deploy();
     await ACOPoolFactoryTemp.deployed();
     
     let poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
-    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, converterHelper.address, chiToken.address, fee, await addr3.getAddress(), 10000, 500, 50]);
+    let poolFactoryInitData = poolFactoryInterface.encodeFunctionData("init", [await owner.getAddress(), ACOPoolTemp.address, buidlerACOFactoryProxy.address, converterHelper.address, chiToken.address, fee, await addr3.getAddress(), 10000, 500, 50]);
     let buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOPoolFactoryTemp.address, poolFactoryInitData);
     await buidlerACOPoolFactoryProxy.deployed();
-    ACOPoolFactory = await ethers.getContractAt("ACOPoolFactory2", buidlerACOPoolFactoryProxy.address);
+    ACOPoolFactory = await ethers.getContractAt("ACOPoolFactory2V2", buidlerACOPoolFactoryProxy.address);
 
     await ACOPoolFactory.setAcoPoolStrategyPermission(defaultStrategy.address, true);
+    
+    let lendingPool = await (await ethers.getContractFactory("LendingPoolForTest")).deploy(ethers.BigNumber.from("3000000000000000000000"));
+    await lendingPool.deployed();
+    await token2.approve(lendingPool.address, token2TotalSupply);
+    await lendingPool.setAsset(token2.address, token2TotalSupply.div(4));
+    await ACOPoolFactory.setAcoPoolLendingPool(lendingPool.address);
 
     let current = await getCurrentTimestamp();
     expiration = current + 3 * 86400;
@@ -219,8 +227,8 @@ describe("Controller", function() {
 
     await ACOPoolFactory.connect(owner).setValidAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolEthToken2Call.address]);
 
-    let d1 = ethers.utils.bigNumberify("50000000000000000000");
-    await ACOPoolEthToken2Call.connect(owner).deposit(d1, 1, await owner.getAddress(), {value: d1});
+    let d1 = ethers.BigNumber.from("50000000000000000000");
+    await ACOPoolEthToken2Call.connect(owner).deposit(d1, 1, await owner.getAddress(), false, {value: d1});
 
     await jumpUntilStart(start);
 
@@ -373,10 +381,10 @@ describe("Controller", function() {
     it("Withdraw stuck asset", async function () {
       await controller.setVault(vault.address, vaultStrategy.address);
 
-      let tokenX = await (await ethers.getContractFactory("ERC20ForTest")).deploy("X", "X", 18, ethers.utils.bigNumberify("1000000000000000000000000"));
+      let tokenX = await (await ethers.getContractFactory("ERC20ForTest")).deploy("X", "X", 18, ethers.BigNumber.from("1000000000000000000000000"));
       await tokenX.deployed();
 
-      let amount = ethers.utils.bigNumberify("10000000");
+      let amount = ethers.BigNumber.from("10000000");
       await tokenX.transfer(vault.address, amount);
       await tokenX.transfer(vaultStrategy.address, amount);
       await tokenX.transfer(controller.address, amount);
@@ -419,8 +427,8 @@ describe("Controller", function() {
     });
     it("Buy aco", async function () {
       await controller.setVault(vault.address, vaultStrategy.address);
-      let deposit = ethers.utils.bigNumberify("1000000000000");
-      let remain = ethers.utils.bigNumberify("50000000000");
+      let deposit = ethers.BigNumber.from("1000000000000");
+      let remain = ethers.BigNumber.from("50000000000");
       await vault.connect(owner).deposit(deposit); 
 
       expect(await token2.balanceOf(vault.address)).to.equal(deposit);
@@ -434,14 +442,14 @@ describe("Controller", function() {
       expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
       expect(await vaultStrategy.balanceOf()).to.be.above(0);
       let gBal = await _gauge.balanceOf(vaultStrategy.address);
-      gBal = gBal.div(ethers.utils.bigNumberify("1000000000000"));
+      gBal = gBal.div(ethers.BigNumber.from("1000000000000"));
       expect(await vaultStrategy.balanceOf()).to.equal(gBal);
 
-      let bal = ethers.utils.bigNumberify("1000000000000000000000");
+      let bal = ethers.BigNumber.from("1000000000000000000000");
       await mintr.setBalanceToMint(_gauge.address, bal);
 
-      let expected = ethers.utils.bigNumberify("1000000000");
-      let expectedFee = expected.mul(gasSubsidyFee).div(ethers.utils.bigNumberify("100000"));
+      let expected = ethers.BigNumber.from("1000000000");
+      let expectedFee = expected.mul(gasSubsidyFee).div(ethers.BigNumber.from("100000"));
       let previous = await token2.balanceOf(await owner.getAddress());
       
       await expect(
@@ -462,7 +470,7 @@ describe("Controller", function() {
       expect(await vaultStrategy.balanceOf()).to.equal(gBal);
 
       let reward = await token2.balanceOf(vaultStrategy.address);
-      let amount = ethers.utils.bigNumberify("23040000000000000000");
+      let amount = ethers.BigNumber.from("23040000000000000000");
       let aco = await ethers.getContractAt("ACOToken", await vault.currentAcoToken());
 
       await expect(
@@ -495,8 +503,8 @@ describe("Controller", function() {
     });
     it("Change strategy", async function () {
       await controller.setVault(vault.address, vaultStrategy.address);
-      let deposit = ethers.utils.bigNumberify("1000000000000");
-      let remain = ethers.utils.bigNumberify("50000000000");
+      let deposit = ethers.BigNumber.from("1000000000000");
+      let remain = ethers.BigNumber.from("50000000000");
       await vault.connect(owner).deposit(deposit); 
       await vault.earn();
 
@@ -532,7 +540,7 @@ describe("Controller", function() {
       expect(await crvPoolToken.balanceOf(vaultStrategy.address)).to.equal(0);
       expect(await crv.balanceOf(vaultStrategy.address)).to.equal(0);
       let gBal = await _gauge.balanceOf(vaultStrategy.address);
-      expect(await vaultStrategy.balanceOf()).to.equal(gBal.div(ethers.utils.bigNumberify("1000000000000")));
+      expect(await vaultStrategy.balanceOf()).to.equal(gBal.div(ethers.BigNumber.from("1000000000000")));
       expect(await token2.balanceOf(vault.address)).to.equal(remain);
 
       await controller.changeStrategy(vault.address, vaultStrategy2.address);

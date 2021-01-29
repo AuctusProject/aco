@@ -9,6 +9,7 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { getWithdrawNoLockedData, getWithdrawWithLocked, withdrawNoLocked, withdrawWithLocked } from '../../util/acoPoolMethods'
+import { withdrawNoLocked as withdrawNoLockedv2, withdrawWithLocked as withdrawWithLockedv2} from '../../util/acoPoolMethodsv2'
 import Modal from 'react-bootstrap/Modal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCog, faInfoCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -48,9 +49,13 @@ class WithdrawModal extends Component {
   onWithdrawClick = () => {
     let stepNumber = 0
     this.setStepsModalInfo(++stepNumber)
+
+    var withdrawNoLockedMethod = this.props.discontinued ? withdrawNoLocked : withdrawNoLockedv2
+    var withdrawWithLockedMethod = this.props.discontinued ? withdrawWithLocked : withdrawWithLockedv2
+
     var withdrawPromise = this.state.selectedTab === 1 ? 
-      withdrawNoLocked(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getWithdrawAssetValue(), this.getWithdrawMinCollateral()) :
-      withdrawWithLocked(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getWithdrawAssetValue())
+      withdrawNoLockedMethod(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getWithdrawAssetValue(), this.getWithdrawMinCollateral()) :
+      withdrawWithLockedMethod(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getWithdrawAssetValue())
     
     withdrawPromise.then(result => {
         if (result) {
@@ -135,7 +140,7 @@ class WithdrawModal extends Component {
   }
 
   onValueChange = (value) => {
-    this.setState({ withdrawValue: value }, this.getWithdrawInfo)
+    this.setState({ withdrawValue: value, withdrawNoLockedDataInfo: null, withdrawWithLockedInfo: null }, this.getWithdrawInfo)
   }
 
   getFormattedWithdrawAssetBalance = () => {
@@ -170,6 +175,12 @@ class WithdrawModal extends Component {
       return false
     }
     if (this.isInsufficientFunds()) {
+      return false
+    }
+    if (this.state.selectedTab === 1 && !this.state.withdrawNoLockedDataInfo) {
+      return false
+    }
+    if (this.state.selectedTab === 2 && !this.state.withdrawWithLockedInfo) {
       return false
     }
     return true
@@ -209,7 +220,6 @@ class WithdrawModal extends Component {
   }
 
   getWithdrawInfo = () => {
-    this.setState({withdrawNoLockedDataInfo: null, withdrawWithLockedInfo: null})
     getWithdrawNoLockedData(this.props.pool.acoPool, this.getWithdrawAssetValue()).then(withdrawNoLockedDataInfo => {
       this.setState({withdrawNoLockedDataInfo: withdrawNoLockedDataInfo})
     })

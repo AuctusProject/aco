@@ -1,6 +1,6 @@
 const { expect } = require("chai");
-const poolFactoryABI = require("../../artifacts/ACOPoolFactory.json");
-const factoryABI = require("../../artifacts/ACOFactory.json");
+const poolFactoryABI = require("../../artifacts/contracts/periphery/pool/ACOPoolFactory.sol/ACOPoolFactory.json");
+const factoryABI = require("../../artifacts/contracts/core/ACOFactory.sol/ACOFactory.json");
 const { createAcoStrategy1 } = require("./ACOStrategy1.js");
 
 describe("ACOPoolFactory", function() {
@@ -50,7 +50,7 @@ describe("ACOPoolFactory", function() {
     let ownerAddr = await owner.getAddress();
     let addr2Addr = await addr2.getAddress();
     let fee = 100
-    let factoryInitData = factoryInterface.functions.init.encode([ownerAddr, ACOToken.address, fee, addr2Addr]);
+    let factoryInitData = factoryInterface.encodeFunctionData("init", [ownerAddr, ACOToken.address, fee, addr2Addr]);
     buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactory.address, factoryInitData);
     await buidlerACOFactoryProxy.deployed();
     let buidlerFactory = await ethers.getContractAt("ACOFactoryV3", buidlerACOFactoryProxy.address);
@@ -75,7 +75,7 @@ describe("ACOPoolFactory", function() {
 
     poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
 
-    let poolFactoryInitData = poolFactoryInterface.functions.init.encode([ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, ownerAddr]);
+    let poolFactoryInitData = poolFactoryInterface.encodeFunctionData("init", [ownerAddr, ACOPool.address, buidlerACOFactoryProxy.address, flashExercise.address, chiToken.address, fee, ownerAddr]);
     buidlerACOPoolFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOPoolFactory.address, poolFactoryInitData);
     await buidlerACOPoolFactoryProxy.deployed();
     buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactory", buidlerACOPoolFactoryProxy.address);
@@ -130,7 +130,7 @@ describe("ACOPoolFactory", function() {
       await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
 
       let now = await getCurrentTimestamp();
-      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
+      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result1 = tx.events[tx.events.length - 1].args;
 
       let buidlerPool = await ethers.getContractAt("ACOPool", result1.acoPool);
@@ -141,7 +141,7 @@ describe("ACOPoolFactory", function() {
       expect(await buidlerPool.acoFlashExercise()).to.equal(flashExercise.address);
       expect(await buidlerPool.acoFactory()).to.equal(buidlerACOFactoryProxy.address);
       expect(await buidlerPool.minStrikePrice()).to.equal(1);
-      expect(await buidlerPool.maxStrikePrice()).to.equal(ethers.utils.bigNumberify("10000000000000000000000"));
+      expect(await buidlerPool.maxStrikePrice()).to.equal(ethers.BigNumber.from("10000000000000000000000"));
       expect(await buidlerPool.minExpiration()).to.equal(now + 86400);
       expect(await buidlerPool.maxExpiration()).to.equal(now + (30*86400));
       expect(await buidlerPool.canBuy()).to.equal(false);
@@ -158,20 +158,20 @@ describe("ACOPoolFactory", function() {
     
       let now = await getCurrentTimestamp();
       await expect(
-        buidlerACOPoolFactory.connect(addr1).createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.connect(addr1).createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPoolFactory::onlyFactoryAdmin");
 
       let newStrategy = await createAcoStrategy1();
       await expect(
-        buidlerACOPoolFactory.connect(owner).createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, newStrategy.address, 100000)
+        buidlerACOPoolFactory.connect(owner).createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, newStrategy.address, 100000)
       ).to.be.revertedWith("ACOPoolFactory::_validateStrategy: Invalid strategy");
       
       await expect(
-        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now - 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now - 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPool:: Invalid pool start");
 
       await expect(
-        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now - 86400, now + (30*86400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now - 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPool:: Invalid expiration");
 
       await expect(
@@ -179,27 +179,27 @@ describe("ACOPoolFactory", function() {
       ).to.be.revertedWith("ACOPool:: Invalid strike price range");
 
       await expect(
-        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 0, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 0, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPool:: Invalid strike price");
 
       await expect(
-        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPool:: Invalid expiration range");
 
       await expect(
-        buidlerACOPoolFactory.createAcoPool(token1.address, token1.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.createAcoPool(token1.address, token1.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPool:: Same assets");
 
       await expect(
-        buidlerACOPoolFactory.createAcoPool(await addr1.getAddress(), token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.createAcoPool(await addr1.getAddress(), token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPool:: Invalid underlying");
 
       await expect(
-        buidlerACOPoolFactory.createAcoPool(token1.address, await addr1.getAddress(), true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
+        buidlerACOPoolFactory.createAcoPool(token1.address, await addr1.getAddress(), true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)
       ).to.be.revertedWith("ACOPool:: Invalid strike asset");
       
       await expect(
-        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 0)
+        buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 0)
       ).to.be.revertedWith("ACOPool:: Invalid base volatility");
       
     });
@@ -499,7 +499,7 @@ describe("ACOPoolFactory", function() {
       await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
 
       let now = await getCurrentTimestamp();
-      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
+      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let acoPool = await ethers.getContractAt("ACOPool", result.acoPool);
       
@@ -546,7 +546,7 @@ describe("ACOPoolFactory", function() {
 
       let now = await getCurrentTimestamp();
      
-      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
+      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool", result.acoPool);
       
@@ -566,7 +566,7 @@ describe("ACOPoolFactory", function() {
       await buidlerACOPoolFactory.connect(owner).setAcoAssetConverterHelper(converterHelper.address);
 
       let now = await getCurrentTimestamp();
-      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.utils.bigNumberify("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
+      let tx = await (await buidlerACOPoolFactory.createAcoPool( token1.address, token2.address, true, now + 86400, 1, ethers.BigNumber.from("10000000000000000000000"), now + 86400, now + (30*86400), false, defaultStrategy.address, 100000)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool", result.acoPool);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
