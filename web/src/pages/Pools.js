@@ -5,6 +5,8 @@ import PropTypes from 'prop-types'
 import { getAcoPools } from '../util/acoApi'
 import Loading from '../partials/Util/Loading'
 import PoolDetails from '../partials/Pool/PoolDetails'
+import DiscontinuedPoolDetails from '../partials/Pool/DiscontinuedPoolDetails'
+import { deprecatedPoolImplementation } from '../util/constants'
 
 class Pools extends Component {
   constructor() {
@@ -17,9 +19,11 @@ class Pools extends Component {
   }
 
   refreshPoolData = (forceRefresh) => {
-    getAcoPools(forceRefresh).then(pools => 
-      this.setState({pools: pools, loading: false})
-    )
+    getAcoPools(forceRefresh).then(pools => {
+      var discontinuedPools = pools.filter(p => p.acoPoolImplementation.toLowerCase() === deprecatedPoolImplementation.toLowerCase())
+      var availablePools = pools.filter(p => p.acoPoolImplementation.toLowerCase() !== deprecatedPoolImplementation.toLowerCase())
+      this.setState({pools: availablePools, discontinuedPools: discontinuedPools, loading: false})
+    })
   }
   
   render() {
@@ -31,6 +35,9 @@ class Pools extends Component {
             <div className="alert-message">Pooled liquidity is in beta. Use at your own risk.</div>
           </div>
           <div className="accordion" id="vaultsAccordion">
+            {this.state.discontinuedPools && this.state.discontinuedPools.map(pool => (
+              <DiscontinuedPoolDetails key={pool.acoPool} {...this.props} pool={pool} refreshPoolData={this.refreshPoolData}/>
+            ))}
             {this.state.pools && this.state.pools.map(pool => (
               <PoolDetails key={pool.acoPool} {...this.props} pool={pool} refreshPoolData={this.refreshPoolData}/>
             ))}
