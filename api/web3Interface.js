@@ -502,7 +502,13 @@ const getAcoPoolWithdrawOpenPositionPenaltyHistory = async (pool) => {
       if (result) {
         const data = [];
         for (let i = 0; i < result.length; ++i) {
-          data.push({block: parseInt(result[i].blockNumber, 16), value: BigInt(result[i].topics[2])});
+          data.push({
+            block: parseInt(result[i].blockNumber, 16), 
+            tx: result[i].transactionHash,
+            txIndex: parseInt(result[i].transactionIndex, 16),
+            logIndex: parseInt(result[i].logIndex, 16),
+            value: BigInt(result[i].topics[2])
+          });
         }
         resolve(data);
       } else {
@@ -510,6 +516,158 @@ const getAcoPoolWithdrawOpenPositionPenaltyHistory = async (pool) => {
       }
     }).catch((err) => reject(err));
   })
+};
+
+const getAcoPoolRestoreHistory = async (pool) => {
+  return new Promise((resolve, reject) => { 
+    callEthereum("eth_getLogs", {"address": [pool], "fromBlock": fromBlock, "topics": ["0x89c28f2814c3b5c029895975e6da754b1bfc82368bec347d2b2d14c5353dac99"]}, null).then((result) => {
+      const response = [];
+      if (result) {
+        for (let i = 0; i < result.length; ++i) {
+          response.push({
+            block: parseInt(result[i].blockNumber, 16),
+            tx: result[i].transactionHash,
+            txIndex: parseInt(result[i].transactionIndex, 16),
+            logIndex: parseInt(result[i].logIndex, 16),
+            amountOut: BigInt(result[i].data.substring(0, 66)),
+            collateralRestored: BigInt("0x" + result[i].data.substring(66))
+          });
+        }
+      }
+      resolve(response);
+    }).catch((err) => reject(err));
+  })
+};
+
+const getAcoPoolRedeemHistory = async (pool) => {
+  return new Promise((resolve, reject) => { 
+    callEthereum("eth_getLogs", {"address": [pool], "fromBlock": fromBlock, "topics": ["0x33e1adfc662275b6dd743c8c4aaf326f171ed89fc35dd4bd21dd608bb23b4d23"]}, null).then((result) => {
+      const response = [];
+      if (result) {
+        for (let i = 0; i < result.length; ++i) {
+          response.push({
+            block: parseInt(result[i].blockNumber, 16),
+            tx: result[i].transactionHash,
+            txIndex: parseInt(result[i].transactionIndex, 16),
+            logIndex: parseInt(result[i].logIndex, 16),
+            acoToken: ("0x" + result[i].topics[1].substring(26)),
+            valueSold: BigInt(result[i].data.substring(0, 66)),
+            collateralLocked: BigInt("0x" + result[i].data.substring(66, 130)),
+            collateralRedeemed: BigInt("0x" + result[i].data.substring(130))
+          });
+        }
+      }
+      resolve(response);
+    }).catch((err) => reject(err));
+  })
+};
+
+const getAcoPoolSwapHistory = async (pool) => {
+  return new Promise((resolve, reject) => { 
+    callEthereum("eth_getLogs", {"address": [pool], "fromBlock": fromBlock, "topics": ["0xe7525d00e88ec2fe4949364ebcdf61f80247212b853f121457da56e0df239589"]}, null).then((result) => {
+      const response = [];
+      if (result) {
+        for (let i = 0; i < result.length; ++i) {
+          response.push({
+            block: parseInt(result[i].blockNumber, 16),
+            tx: result[i].transactionHash,
+            txIndex: parseInt(result[i].transactionIndex, 16),
+            logIndex: parseInt(result[i].logIndex, 16),
+            account: ("0x" + result[i].topics[1].substring(26)),
+            acoToken: ("0x" + result[i].topics[2].substring(26)),
+            tokenAmount: BigInt(result[i].data.substring(0, 66)),
+            price: BigInt("0x" + result[i].data.substring(66, 130)),
+            protocolFee: BigInt("0x" + result[i].data.substring(130, 194)),
+            underlyingPrice: BigInt("0x" + result[i].data.substring(194, 258)),
+            volatility: 100 * parseInt(result[i].data.substring(258), 16) / parseInt(percentage)
+          });
+        }
+      }
+      resolve(response);
+    }).catch((err) => reject(err));
+  })
+};
+
+const getAcoPoolWithdrawHistory = async (pool) => {
+  return new Promise((resolve, reject) => { 
+    callEthereum("eth_getLogs", {"address": [pool], "fromBlock": fromBlock, "topics": ["0xf1afea1771c6751a98adbb8147f94b51ce1f9c6936aa48c35ae8e15f74e8bdb3"]}, null).then((result) => {
+      const response = [];
+      if (result) {
+        for (let i = 0; i < result.length; ++i) {
+          let acos = [];
+          let noLocked = (parseInt(result[i].data.substring(66, 130), 16) === 1);
+          if (!noLocked) {
+            let qty = parseInt(result[i].data.substring(386, 450), 16);
+            for (let j = 0, o = 450, o2 = 450 + (qty + 1) * 64; j < qty; ++j, o += 64, o2 += 64) {
+              acos.push({acoToken: "0x" + pureData.substring(o + 24, o + 64), amount: BigInt("0x" + pureData.substring(o2, o2 + 64))});
+            }
+          }
+          response.push({
+            block: parseInt(result[i].blockNumber, 16),
+            tx: result[i].transactionHash,
+            txIndex: parseInt(result[i].transactionIndex, 16),
+            logIndex: parseInt(result[i].logIndex, 16),
+            account: ("0x" + result[i].topics[1].substring(26)),
+            shares: BigInt(result[i].data.substring(0, 66)),
+            noLocked: noLocked,
+            underlyingWithdrawn: BigInt("0x" + result[i].data.substring(130, 194)),
+            strikeAssetWithdrawn: BigInt("0x" + result[i].data.substring(194, 258)),
+            acos: acos
+          });
+        }
+      }
+      resolve(response);
+    }).catch((err) => reject(err));
+  })
+};
+
+const getAcoPoolDepositHistory = async (pool) => {
+  return new Promise((resolve, reject) => { 
+    callEthereum("eth_getLogs", {"address": [pool], "fromBlock": fromBlock, "topics": ["0x90890809c654f11d6e72a28fa60149770a0d11ec6c92319d6ceb2bb0a4ea1a15"]}, null).then((result) => {
+      const response = [];
+      if (result) {
+        for (let i = 0; i < result.length; ++i) {
+          response.push({
+            block: parseInt(result[i].blockNumber, 16),
+            tx: result[i].transactionHash,
+            txIndex: parseInt(result[i].transactionIndex, 16),
+            logIndex: parseInt(result[i].logIndex, 16),
+            account: ("0x" + result[i].topics[1].substring(26)),
+            shares: BigInt(result[i].data.substring(0, 66)),
+            collateralAmount: BigInt("0x" + result[i].data.substring(66))
+          });
+        }
+      }
+      resolve(response);
+    }).catch((err) => reject(err));
+  })
+};
+
+const getAcoPoolExercisedHistory = async (pool, acos) => {
+  return new Promise((resolve, reject) => { 
+    if (acos.length) {
+      callEthereum("eth_getLogs", {"address": acos, "fromBlock": fromBlock, "topics": ["0x5f283076724262032199f54be27a9364634b895b3a37c1e66bfe47d5d0534769", "0x" + addressToData(pool)]}, null).then((result) => {
+        const response = [];
+        if (result) {
+          for (let i = 0; i < result.length; ++i) {
+            response.push({
+              block: parseInt(result[i].blockNumber, 16),
+              tx: result[i].transactionHash,
+              txIndex: parseInt(result[i].transactionIndex, 16),
+              logIndex: parseInt(result[i].logIndex, 16),
+              acoToken: result[i].address,
+              account: ("0x" + result[i].topics[2].substring(26)),
+              paidAmount: BigInt(result[i].data.substring(0, 66)),
+              tokenAmount: BigInt("0x" + result[i].data.substring(66))
+            });
+          }
+        }
+        resolve(response);
+      }).catch((err) => reject(err));
+    } else {
+      resolve([]);
+    }
+  });
 };
 
 const numberOfOpenAcoTokensOnAcoPool = (pool, block = "latest") => {
@@ -877,6 +1035,139 @@ module.exports.acoPoolHistoricalShares = (pool) => {
 
 module.exports.acoPoolHistoricalEvents = (pool) => {   
   return new Promise((resolve, reject) => { 
-    
+    getAcoPoolBasicData(pool).then((basicData) => {
+      Promise.all([
+        getTokenInfo(basicData.underlying),
+        getTokenInfo(basicData.strikeAsset),
+        getAcoPoolSwapHistory(pool),
+        getAcoPoolRestoreHistory(pool),
+        getAcoPoolRedeemHistory(pool),
+        getAcoPoolDepositHistory(pool),
+        getAcoPoolWithdrawHistory(pool)
+      ]).then((data) => {
+        const promises = [];
+        let acos = {};
+        for (let i = 0; i < data[2].length; ++i) {
+          if (acos[data[2][i].acoToken] === undefined) {
+            acos[data[2][i].acoToken] = promises.length;
+            promises.push(getAcoBasicData(data[2][i].acoToken));
+          }
+        }
+        promises.push(getAcoPoolExercisedHistory(pool, Object.keys(acos)));
+        Promise.all(promises).then((acosData) => {
+          const response = [];
+          for (let j = 0; j < data[2].length; ++j) {
+            response.push({
+              type: "swap",
+              block: data[2][j].block,
+              tx: data[2][j].tx,
+              txIndex: data[2][j].txIndex,
+              logIndex: data[2][j].logIndex,
+              data: {
+                account: data[2][j].account,
+                acoToken: data[2][j].acoToken,
+                acoName: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acosData[acos[data[2][j].acoToken]].strikePrice, acosData[acos[data[2][j].acoToken]].expiryTime, data[1].decimals),
+                tokenAmount: data[2][j].tokenAmount.toString(10),
+                collateralLocked: getAcoCollateralAmount(data[2][j].tokenAmount, basicData.isCall, acosData[acos[data[2][j].acoToken]].strikePrice, data[0].decimals).toString(10),
+                price: data[2][j].price.toString(10),
+                protocolFee: data[2][j].protocolFee.toString(10),
+                underlyingPrice: data[2][j].underlyingPrice.toString(10),
+                volatility: data[2][j].volatility
+              }
+            });
+          }
+          for (let k = 0; k < data[3].length; ++k) {
+            response.push({
+              type: "restore",
+              block: data[3][k].block,
+              tx: data[3][k].tx,
+              txIndex: data[3][k].txIndex,
+              logIndex: data[3][k].logIndex,
+              data: {
+                amountOut: data[3][k].amountOut.toString(10),
+                collateralRestored: data[3][k].collateralRestored.toString(10)
+              }
+            });
+          }
+          for (let w = 0; w < data[4].length; ++w) {
+            response.push({
+              type: "redeem",
+              block: data[4][w].block,
+              tx: data[4][w].tx,
+              txIndex: data[4][w].txIndex,
+              logIndex: data[4][w].logIndex,
+              data: {
+                acoToken: data[4][w].acoToken,
+                acoName: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acosData[acos[data[4][w].acoToken]].strikePrice, acosData[acos[data[4][w].acoToken]].expiryTime, data[1].decimals),
+                valueSold: data[4][w].valueSold.toString(10),
+                collateralLocked: data[4][w].collateralLocked.toString(10),
+                collateralRedeemed: data[4][w].collateralRedeemed.toString(10)
+              }
+            });
+          }
+          for (let q = 0; q < data[5].length; ++q) {
+            response.push({
+              type: "deposit",
+              block: data[5][q].block,
+              tx: data[5][q].tx,
+              txIndex: data[5][q].txIndex,
+              logIndex: data[5][q].logIndex,
+              data: {
+                account: data[5][q].account,
+                shares: data[5][q].shares.toString(10),
+                collateralDeposited: data[5][q].collateralAmount.toString(10)
+              }
+            });
+          }
+          for (let o = 0; o < data[6].length; ++o) {
+            let acosWithdrawn = [];
+            for (let o2 = 0; o2 < data[6][o].acos.length; ++o2) {
+              acosWithdrawn.push({
+                acoToken: data[6][o].acos[o2].acoToken, 
+                acoName: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acosData[acos[data[6][o].acos[o2].acoToken]].strikePrice, acosData[acos[data[6][o].acos[o2].acoToken]].expiryTime, data[1].decimals),
+                amount: data[6][o].acos[o2].amount.toString(10)
+              });
+            }
+            response.push({
+              type: "withdraw",
+              block: data[6][o].block,
+              tx: data[6][o].tx,
+              txIndex: data[6][o].txIndex,
+              logIndex: data[6][o].logIndex,
+              data: {
+                account: data[6][o].account,
+                shares: data[6][o].shares.toString(10),
+                underlyingWithdrawn: data[6][o].underlyingWithdrawn.toString(10),
+                strikeAssetWithdrawn: data[6][o].strikeAssetWithdrawn.toString(10),
+                noLocked: data[6][o].noLocked,
+                acos: acosWithdrawn
+              }
+            });
+          }
+          if (acosData.length > 0) {
+            const exerciseData = acosData[acosData.length-1];
+            for (let d = 0; d < exerciseData.length; ++d) {
+              response.push({
+                type: "exercise",
+                block: exerciseData[d].block,
+                tx: exerciseData[d].tx,
+                txIndex: exerciseData[d].txIndex,
+                logIndex: exerciseData[d].logIndex,
+                data: {
+                  acoToken: exerciseData[d].acoToken,
+                  acoName: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acosData[acos[exerciseData[d].acoToken]].strikePrice, acosData[acos[exerciseData[d].acoToken]].expiryTime, data[1].decimals),
+                  account: exerciseData[d].account,
+                  paidAmount: exerciseData[d].paidAmount.toString(10),
+                  tokenAmount: exerciseData[d].tokenAmount.toString(10),
+                  collateralAmount: getAcoCollateralAmount(exerciseData[d].tokenAmount, basicData.isCall, acosData[acos[exerciseData[d].acoToken]].strikePrice, data[0].decimals).toString(10)
+                }
+              });
+            }
+          }
+          response.sort((p,a)=>p.block>a.block?-1:p.block<a.block?1:p.txIndex>a.txIndex?-1:p.txIndex<a.txIndex?1:p.logIndex>a.logIndex?-1:p.logIndex<a.logIndex?1:0);
+          resolve(response);
+        }).catch((err) => reject(err));
+      }).catch((err) => reject(err));
+    }).catch((err) => reject(err));
   });
 };
