@@ -1090,20 +1090,22 @@ module.exports.acoPoolHistoricalEvents = (pool) => {
             });
           }
           for (let w = 0; w < data[4].length; ++w) {
-            response.push({
-              type: "redeem",
-              block: data[4][w].block,
-              tx: data[4][w].tx,
-              txIndex: data[4][w].txIndex,
-              logIndex: data[4][w].logIndex,
-              data: {
-                acoToken: data[4][w].acoToken,
-                acoName: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acosData[acos[data[4][w].acoToken]].strikePrice, acosData[acos[data[4][w].acoToken]].expiryTime, data[1].decimals),
-                valueSold: data[4][w].valueSold.toString(10),
-                collateralLocked: data[4][w].collateralLocked.toString(10),
-                collateralRedeemed: data[4][w].collateralRedeemed.toString(10)
-              }
-            });
+            if (data[4][w].collateralRedeemed > BigInt(0)) {
+              response.push({
+                type: "redeem",
+                block: data[4][w].block,
+                tx: data[4][w].tx,
+                txIndex: data[4][w].txIndex,
+                logIndex: data[4][w].logIndex,
+                data: {
+                  acoToken: data[4][w].acoToken,
+                  acoName: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acosData[acos[data[4][w].acoToken]].strikePrice, acosData[acos[data[4][w].acoToken]].expiryTime, data[1].decimals),
+                  valueSold: data[4][w].valueSold.toString(10),
+                  collateralLocked: data[4][w].collateralLocked.toString(10),
+                  collateralRedeemed: data[4][w].collateralRedeemed.toString(10)
+                }
+              });
+            }
           }
           for (let q = 0; q < data[5].length; ++q) {
             response.push({
