@@ -79,6 +79,18 @@ module.exports.pools = (event, context, callback) => {
   handle(web3Interface.acoPools(), callback, event, "pools");
 };
 
+module.exports.poolHistoricalShares = (event, context, callback) => {
+  handle(web3Interface.acoPoolHistoricalShares(event.pathParameters.pool), callback, event, "pool historical shares");
+};
+
+module.exports.poolSituation = (event, context, callback) => {
+  handle(web3Interface.acoPoolSituation(event.pathParameters.pool), callback, event, "pool open positions");
+};
+
+module.exports.poolHistoricalEvents = (event, context, callback) => {
+  handle(web3Interface.acoPoolHistoricalEvents(event.pathParameters.pool), callback, event, "pool historical events");
+};
+
 module.exports.deribitTicker = (event, context, callback) => {
   handle(deribitInterface.ticker(event.queryStringParameters), callback, event, "deribitTicker");
 };

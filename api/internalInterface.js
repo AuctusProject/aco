@@ -44,6 +44,23 @@ module.exports.createOrder = (body) => {
   });
 };
 
+module.exports.getAcoPoolData = (pool, start = null, end = null) => {   
+  return new Promise((resolve, reject) => { 
+    let queryStringParameters = null;
+    if (start) {
+      queryStringParameters = {start: start};
+    }
+    if (end) {
+      if (queryStringParameters) {
+        queryStringParameters.end = end;
+      } else {
+        queryStringParameters = {end: end};
+      }
+    }
+    callApi("pools/" + pool + getComplement(queryStringParameters), "GET", null).then((response) => resolve(response)).catch((err) => reject(err));
+  });
+};
+
 const getComplement = (queryStringParameters) => {
   let complement = "";
   if (!!queryStringParameters) {

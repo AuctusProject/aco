@@ -26,6 +26,42 @@ functions:
           path: /pools
           method: get
           cors: true
+  poolHistoricalShares:
+    handler: handler.poolHistoricalShares
+    timeout: 30
+    events:
+      - http:
+          path: /pools/{pool}/historical
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                pool: true
+  poolSituation:
+    handler: handler.poolSituation
+    timeout: 30
+    events:
+      - http:
+          path: /pools/{pool}/status
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                pool: true
+  poolHistoricalEvents:
+    handler: handler.poolHistoricalEvents
+    timeout: 30
+    events:
+      - http:
+          path: /pools/{pool}/events
+          method: get
+          cors: true
+          request:
+            parameters:
+              paths:
+                pool: true
   deribit:
     handler: handler.deribitTicker
     timeout: 30
