@@ -27,7 +27,7 @@ const callEthereum = (method, methodData, secondParam = "latest") => {
         } else {
           resolve(null);
         }
-      }).catch((err) => reject(new Error("web3 " + method + " " + methodData + " " + err.stack)));
+      }).catch((err) => reject(new Error("web3 " + method + " " + (methodData && typeof(methodData) === "object" ? JSON.stringify(methodData) : methodData) + " " + err.stack)));
   });
 };
 
