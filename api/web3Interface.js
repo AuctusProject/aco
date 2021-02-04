@@ -20,7 +20,7 @@ const callEthereum = (method, methodData, secondParam = "latest") => {
       {
         if (response && response.data) {
           if (response.data.error) {
-            reject(new Error(method + " " + methodData + " " + JSON.stringify(response.data.error)));
+            reject(new Error(method + " " + (methodData && typeof(methodData) === "object" ? JSON.stringify(methodData) : methodData) + " " + JSON.stringify(response.data.error)));
           } else {
             resolve(response.data.result);
           }
