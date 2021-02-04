@@ -5,7 +5,7 @@ const fromBlock = "0x" + parseInt(process.env.FROM_BLOCK).toString(16);
 const percentage = BigInt(100000);
 const oldPoolImplementation = "0x68153d392966d38b7ae4415bd5778d02a579a437";
 
-const callEthereum = (method, methodData, secondParam = "latest") => {
+const callEthereum = (method, methodData, secondParam = "latest", attempt = 0) => {
   return new Promise((resolve, reject) => {
     Axios.post("https://" + process.env.CHAIN + ".infura.io/v3/" + process.env.INFURA_ID, 
       {
@@ -20,7 +20,11 @@ const callEthereum = (method, methodData, secondParam = "latest") => {
       {
         if (response && response.data) {
           if (response.data.error) {
-            reject(new Error(method + " " + (methodData && typeof(methodData) === "object" ? JSON.stringify(methodData) : methodData) + " " + JSON.stringify(response.data.error)));
+            if (attempt === 0 && response.data.error.code && parseInt(response.data.error.code) === -32000) {
+              sleep(1000).then(() => callEthereum(method, methodData, secondParam, 1).then((res) => resolve(res)).catch((err) => reject(err))).catch((err) => reject(err));  
+            } else {
+              reject(new Error(method + " " + (methodData && typeof(methodData) === "object" ? JSON.stringify(methodData) : methodData) + " " + JSON.stringify(response.data.error)));
+            }
           } else {
             resolve(response.data.result);
           }
@@ -30,6 +34,8 @@ const callEthereum = (method, methodData, secondParam = "latest") => {
       }).catch((err) => reject(new Error("web3 " + method + " " + (methodData && typeof(methodData) === "object" ? JSON.stringify(methodData) : methodData) + " " + err.stack)));
   });
 };
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 const addressToData = (address) => {
   return address.substring(2).padStart(64, '0');
