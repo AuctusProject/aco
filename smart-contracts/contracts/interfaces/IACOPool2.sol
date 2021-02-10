@@ -8,23 +8,18 @@ interface IACOPool2 is IERC20 {
     struct InitData {
         address acoFactory;
         address chiToken;
+        address lendingPool;
         address underlying;
         address strikeAsset;
         bool isCall; 
-        address lendingPool;
-        uint16 lendingPoolReferral;
-		address assetConverter;
-        uint256 fee;
-        address feeDestination;
-        uint256 withdrawOpenPositionPenalty;
-        uint256 underlyingPriceAdjustPercentage;
-		uint256 maximumOpenAco;
         uint256 tolerancePriceBelow;
         uint256 tolerancePriceAbove; 
         uint256 minExpiration;
         uint256 maxExpiration;
-        address strategy;
-        uint256 baseVolatility;    
+        uint256 baseVolatility;  
+        address admin;
+        address strategy;  
+        PoolProtocolConfig config;
     }
 
 	struct AcoData {
@@ -34,6 +29,16 @@ interface IACOPool2 is IERC20 {
         uint256 collateralRedeemed;
         uint256 index;
 		uint256 openIndex;
+    }
+    
+    struct PoolProtocolConfig {
+        uint16 lendingPoolReferral;
+        uint256 withdrawOpenPositionPenalty;
+        uint256 underlyingPriceAdjustPercentage;
+        uint256 fee;
+        uint256 maximumOpenAco;
+        address feeDestination;
+        address assetConverter;
     }
     
 	function init(InitData calldata initData) external;
@@ -64,10 +69,13 @@ interface IACOPool2 is IERC20 {
 		uint256 strikeAssetBalance,
 		uint256 collateralLocked,
         uint256 collateralOnOpenPosition,
-        uint256 collateralLockedRedeemable
+        uint256 collateralLockedRedeemable,
+        uint256 poolSupply
     );
 	function setLendingPoolReferral(uint16 newLendingPoolReferral) external;
 	function setPoolDataForAcoPermission(uint256 newTolerancePriceBelow, uint256 newTolerancePriceAbove, uint256 newMinExpiration, uint256 newMaxExpiration) external;
+	function setPoolAdmin(uint256 newAdmin) external;
+	function setProtocolConfig(PoolProtocolConfig calldata newConfig) external;
 	function setFeeData(address newFeeDestination, uint256 newFee) external;
 	function setAssetConverter(address newAssetConverter) external;
     function setTolerancePriceBelow(uint256 newTolerancePriceBelow) external;
