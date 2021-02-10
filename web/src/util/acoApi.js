@@ -71,6 +71,51 @@ export function getAcoPools(forceRefresh) {
     })
 }
 
+export function getAcoPoolStatus(poolAddress) {
+    return new Promise(function(resolve,reject){
+        Axios.get(apiUrl + "pools/"+poolAddress+"/status")
+        .then(res => {
+            if (res && res.data) {
+                resolve(res.data)
+            }
+            else {
+                resolve(null)
+            }            
+        })
+        .catch(err => reject(err));
+    })
+}
+
+export function getAcoPoolEvents(poolAddress) {
+    return new Promise(function(resolve,reject){
+        Axios.get(apiUrl + "pools/"+poolAddress+"/events")
+        .then(res => {
+            if (res && res.data) {
+                resolve(res.data)
+            }
+            else {
+                resolve(null)
+            }            
+        })
+        .catch(err => reject(err));
+    })
+}
+
+export function getAcoPoolHistory(poolAddress) {
+    return new Promise(function(resolve,reject){
+        Axios.get(apiUrl + "pools/"+poolAddress+"/historical")
+        .then(res => {
+            if (res && res.data) {
+                resolve(res.data)
+            }
+            else {
+                resolve(null)
+            }            
+        })
+        .catch(err => reject(err));
+    })
+}
+
 export function getOtcOrder(orderId) {
     return new Promise(function(resolve,reject){
         Axios.get(apiUrl + "order/" + encodeURIComponent(orderId))

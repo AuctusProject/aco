@@ -1,0 +1,16 @@
+.pool-historical-chart-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: stretch;
+    align-items: stretch;
+    position: relative;
+}
+
+#pool-historical-chartjs-tooltip {
+    background-color: black;
+}
+
+.light-mode #pool-historical-chartjs-tooltip {
+    background-color: #e2e2e2;
+}

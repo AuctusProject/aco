@@ -20,6 +20,7 @@ import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 import Vaults from './pages/Vaults'
 import Otc from './pages/Otc'
+import PoolDashboard from './partials/Pool/PoolDashboard'
 
 class App extends Component {
   constructor() {
@@ -192,7 +193,16 @@ class App extends Component {
                     orderBooks={this.state.orderBooks}
                     loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                   /> }
-                />                
+                />
+                <Route 
+                  path={`/pools/details/:poolAddress?`}
+                  render={ routeProps => <PoolDashboard
+                    {...routeProps}
+                    darkMode={darkMode}
+                    signIn={this.showSignInModal}
+                    accountToggle={this.state.accountToggle}
+                  /> }
+                />
                 <Route 
                   path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/pools/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
                   render={ routeProps => <Simple 
