@@ -979,11 +979,21 @@ module.exports.acoPoolSituation = (pool) => {
           getAcoPoolAdmin(pool, blockNumber)
         ]).then((data) => {
           getAssetConverterPrice(data[9], basicData.underlying, basicData.strikeAsset, blockNumber).then((underlyingPrice) => {
-            let openPositionValue;
-            if (basicData.isCall) {
-              openPositionValue = data[3].collateralOnOpenPosition * underlyingPrice * (percentage - data[10]) / (BigInt(10) ** BigInt(data[0].decimals + 5));
-            } else {
-              openPositionValue = data[3].collateralOnOpenPosition;
+            let underlyingPerShare = BigInt(0);
+            let strikeAssetPerShare = BigInt(0);
+            let openPositionValue = BigInt(0);
+            if (data[2] > BigInt(0)) {
+              if (basicData.isCall) {
+                openPositionValue = data[3].collateralOnOpenPosition * underlyingPrice * (percentage - data[10]) / (BigInt(10) ** BigInt(data[0].decimals + 5));
+                let share = BigInt(10) ** BigInt(data[0].decimals);
+                underlyingPerShare = share * (data[3].underlyingBalance + data[3].collateralLocked - (openPositionValue * (percentage + data[5])) / percentage) / data[2];
+                strikeAssetPerShare = share * data[3].strikeAssetBalance / data[2];
+              } else {
+                openPositionValue = data[3].collateralOnOpenPosition;
+                let share = BigInt(10) ** BigInt(data[1].decimals);
+                underlyingPerShare = share * data[3].underlyingBalance / data[2];
+                strikeAssetPerShare = share * (data[3].strikeAssetBalance + data[3].collateralLocked - (openPositionValue * (percentage + data[5])) / percentage) / data[2];
+              }
             }
             const result = {
               name: getAcoPoolName(data[0].symbol, data[1].symbol, basicData.isCall),
@@ -997,6 +1007,8 @@ module.exports.acoPoolSituation = (pool) => {
               totalSupply: data[2].toString(10),
               underlyingBalance: data[3].underlyingBalance.toString(10),
               strikeAssetBalance: data[3].strikeAssetBalance.toString(10),
+              underlyingPerShare: underlyingPerShare.toString(10),
+              strikeAssetPerShare: strikeAssetPerShare.toString(10),
               collateralLocked: data[3].collateralLocked.toString(10),
               openPositionValue: openPositionValue.toString(10),
               openPositionNetValue: getPoolOpenNetValue(basicData.isCall, data[3].collateralLocked, openPositionValue, underlyingPrice, data[10], data[5], data[0].decimals).toString(10),
@@ -1081,7 +1093,7 @@ module.exports.acoPoolHistoricalShares = (pool) => {
                 } else {
                   collateral = BigInt(data[i].s);
                 }
-                let collateralPerShare = collateral + BigInt(data[i].l) - (BigInt(data[i].o) * (BigInt(100000) + openPositionPenalty)) / BigInt(100000);
+                let collateralPerShare = collateral + BigInt(data[i].l) - (BigInt(data[i].o) * (percentage + openPositionPenalty)) / percentage;
                 if (basicData.isCall) {
                   event.u = (share * collateralPerShare / totalSupply).toString(10);
                   event.s = (share * BigInt(data[i].s) / totalSupply).toString(10);
