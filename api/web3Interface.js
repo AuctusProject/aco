@@ -2,7 +2,6 @@ const Axios = require('axios');
 const internalApi = require('./internalInterface.js');
 
 const fromBlock = "0x" + parseInt(process.env.FROM_BLOCK).toString(16);
-const oldPoolImplementation = process.env.POOL_IMPLEMENTATIONS.split(',')[0].toLowerCase();
 const percentage = BigInt(100000);
 const generalErrorCode = -32000;
 
@@ -55,6 +54,15 @@ const booleanToData = (bool) => {
 const isEther = (token) => {
   return token === "0x0" || token === "0x0000000000000000000000000000000000000000";
 };
+
+const getOldPoolImplementations = () => {
+  const implementations = process.env.POOL_IMPLEMENTATIONS.split(',');
+  if (implementations.length === 4) {
+    return [implementations[0].toLowerCase(),implementations[1].toLowerCase()];
+  } else {
+    return [implementations[0].toLowerCase()];
+  }
+}
 
 const parseBlock = (block) => {
   if (typeof(block) === "number" || typeof(block) === "bigint") {
@@ -860,6 +868,7 @@ module.exports.acoPools = () => {
   return new Promise((resolve, reject) => { 
     listAcoPools().then((response) =>
     {
+      const oldPoolImplementations = getOldPoolImplementations();
       getLastBlockNumber().then((blockNumber) => {
         const promises = [];
         let added = {};
@@ -878,7 +887,7 @@ module.exports.acoPools = () => {
             added[response[i].strikeAsset] = promises.length;
             promises.push(getTokenInfo(response[i].strikeAsset, blockNumber));
           }
-          if (response[i].acoPoolImplementation === oldPoolImplementation) {
+          if (oldPoolImplementations.filter(c => c === response[i].acoPoolImplementation).length > 0) {
             added[(response[i].acoPool+"und")] = promises.length;
             promises.push(getBalance(response[i].underlying, response[i].acoPool, blockNumber));
             added[(response[i].acoPool+"str")] = promises.length;
@@ -904,7 +913,7 @@ module.exports.acoPools = () => {
             response[j].underlyingInfo = result[added[response[j].underlying]];
             response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
   
-            if (response[j].acoPoolImplementation === oldPoolImplementation) {
+            if (oldPoolImplementations.filter(c => c === response[j].acoPoolImplementation).length > 0) {
               response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
               response[j].strikeAssetBalance = (result[added[(response[j].acoPool+"str")]]).toString(10);
               shareDataIndex.push(j);
