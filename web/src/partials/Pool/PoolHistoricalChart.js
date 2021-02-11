@@ -1,7 +1,9 @@
 import './PoolHistoricalChart.css'
 import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 import PerShareChart from './PerShareChart'
 import SimpleDropdown from '../SimpleDropdown'
+import { fromDecimals } from '../../util/constants'
 
 class PoolHistoricalChart extends Component {
   constructor() {
@@ -10,15 +12,52 @@ class PoolHistoricalChart extends Component {
       isUnderlyingValue: false,
       lastPerShare: null
     }
-  }  
-
-  onReferenceChange = (option) => {
-    this.setState({isUnderlyingValue: (option && this.props.pool.underlyingInfo.symbol === option.value)})
+  } 
+  
+  componentDidMount() {
+    this.setState({lastPerShare: this.getLastPerShare(this.state.isUnderlyingValue)})
   }
 
-  onLastPerShareChange = (share) => {
-    const numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'))
-    this.setState({lastPerShare: (share ? numberFormat.format(share) : null)})
+  componentDidUpdate(prevProps) {
+    if ((!prevProps.pool && this.props.pool) 
+    || (prevProps.pool && !this.props.pool)
+    || (prevProps.pool.address !== this.props.pool.address)) {
+      this.setState({lastPerShare: this.getLastPerShare(this.state.isUnderlyingValue)})
+    }
+  }
+
+  getLastPerShare(isUnderlyingValue) {
+    if (this.props.pool) {
+      let underlying = parseFloat(fromDecimals(this.props.pool.underlyingPerShare, this.props.pool.underlyingInfo.decimals, 4, 0))
+      let strikeAsset = parseFloat(fromDecimals(this.props.pool.strikeAssetPerShare, this.props.pool.strikeAssetInfo.decimals, 4, 0))  
+      let price = this.getUnderlyingPrice()
+      if (isUnderlyingValue) {
+        return Math.round(10000 * (underlying + strikeAsset / price)) / 10000
+      } else {
+        return Math.round(10000 * (strikeAsset + underlying * price)) / 10000
+      }
+    } else {
+      return null
+    }
+  }
+
+  getUnderlyingPrice() {
+    let underlyingPrice = this.context.ticker && this.context.ticker[this.props.pool.underlyingInfo.symbol]
+    if (!underlyingPrice) {
+      underlyingPrice = 0
+    }
+    return underlyingPrice
+  }
+
+  onReferenceChange = (option) => {
+    let isUnderlyingValue = (option && this.props.pool.underlyingInfo.symbol === option.value)
+    let lastPerShare = this.getLastPerShare(isUnderlyingValue)
+    this.setState({isUnderlyingValue: isUnderlyingValue, lastPerShare: lastPerShare})
+  }
+
+  getLastPerShareFormatted = () => {
+    let numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'))
+    return numberFormat.format(this.state.lastPerShare)
   }
 
   render() {
@@ -39,13 +78,16 @@ class PoolHistoricalChart extends Component {
             {this.state.lastPerShare &&
             <div className="pool-historical-chart-share">
               1 SHARE =&nbsp;
-              <div>{this.state.lastPerShare}</div>
+              <div>{this.getLastPerShareFormatted()}</div>
               &nbsp;{(this.state.isUnderlyingValue ? references[1].value : references[0].value)}
             </div>}
           </div>
-          <PerShareChart pool={this.props.pool.address} isUnderlyingValue={this.state.isUnderlyingValue} underlyingInfo={this.props.pool.underlyingInfo} strikeAssetInfo={this.props.pool.strikeAssetInfo} setLastPerShare={this.onLastPerShareChange}></PerShareChart> 
+          <PerShareChart currentValue={this.state.lastPerShare} pool={this.props.pool.address} isUnderlyingValue={this.state.isUnderlyingValue} underlyingInfo={this.props.pool.underlyingInfo} strikeAssetInfo={this.props.pool.strikeAssetInfo}></PerShareChart> 
         </div>}
     </div>)
   }
+}
+PoolHistoricalChart.contextTypes = {
+  ticker: PropTypes.object
 }
 export default PoolHistoricalChart

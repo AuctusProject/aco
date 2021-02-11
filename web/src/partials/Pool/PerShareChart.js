@@ -39,6 +39,7 @@ class PerShareChart extends Component {
     const yAxe = JSON.parse(axesProperties)
     yAxe.ticks.maxTicksLimit = 4
     this.state = {
+      data: [],
       chart: this.getBaseChart(),
       xAxes: xAxe,
       yAxes: yAxe
@@ -64,43 +65,45 @@ class PerShareChart extends Component {
     if (!!this.props.pool) {
       getAcoPoolHistory(this.props.pool).then((data) => this.setState({data: data}, () => this.setChart())).catch((err) => {
         console.error(err)
-        this.setState({chart: this.getBaseChart()}, () => this.props.setLastPerShare(null))
+        this.setState({chart: this.getBaseChart(), data: []})
       })
     } else {
-      this.setState({chart: this.getBaseChart()}, () => this.props.setLastPerShare(null))
+      this.setState({chart: this.getBaseChart(), data: []})
     }
   }
 
   componentDidUpdate = (prevProps) => {
-    if (prevProps.pool !== this.props.pool) {
+    if ((!prevProps.pool && this.props.pool) 
+        || (prevProps.pool && !this.props.pool)
+        || (prevProps.pool.address !== this.props.pool.address)) {
       this.componentDidMount()
-    } else if (prevProps.isUnderlyingValue !== this.props.isUnderlyingValue) {
+    } else if (prevProps.isUnderlyingValue !== this.props.isUnderlyingValue
+      || prevProps.currentValue !== this.props.currentValue) {
       this.setChart()
     }
   }
 
   setChart() {
     let chart = this.getBaseChart()
-    const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
-    const underlyingPrecision = BigInt(10 ** parseInt(this.props.underlyingInfo.decimals))
-    for (let i = 0; i < this.state.data.length; ++i) {
-      let point = {x: new Date(this.state.data[i].t * 1000)}
-      let value
-      if (this.props.isUnderlyingValue) {
-        value = BigInt(this.state.data[i].u) + (BigInt(this.state.data[i].s) * underlyingPrecision / BigInt(this.state.data[i].p))
-      } else {
-        value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
+    if (this.state.data.length) {
+      const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
+      const underlyingPrecision = BigInt(10 ** parseInt(this.props.underlyingInfo.decimals))
+      if (this.props.currentValue) {
+        chart.datasets[0].data.push({x: Date.now(), y: this.props.currentValue})
       }
-      point.y = parseFloat(fromDecimals(value.toString(10), decimals))
-      chart.datasets[0].data.push(point)
+      for (let i = 0; i < this.state.data.length; ++i) {
+        let point = {x: new Date(this.state.data[i].t * 1000)}
+        let value
+        if (this.props.isUnderlyingValue) {
+          value = BigInt(this.state.data[i].u) + (BigInt(this.state.data[i].s) * underlyingPrecision / BigInt(this.state.data[i].p))
+        } else {
+          value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
+        }
+        point.y = parseFloat(fromDecimals(value.toString(10), decimals))
+        chart.datasets[0].data.push(point)
+      }
     }
-    this.setState({chart: chart}, () => {
-      if (this.state.chart.datasets[0].data.length > 0) {
-        this.props.setLastPerShare(this.state.chart.datasets[0].data[0].y)
-      } else {
-        this.props.setLastPerShare(null)
-      }
-    })
+    this.setState({chart: chart})
     Chart.pluginService.register({
       afterDraw: function(chart, easing) {
         if (chart.tooltip._active && chart.tooltip._active.length) {
