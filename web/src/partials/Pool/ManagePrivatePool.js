@@ -17,8 +17,8 @@ class ManagePrivatePool extends Component {
     let promises = []
     promises.push(minExpiration(pool.address).then(minExpiration => this.setState({minExpiration: minExpiration/86400})))
     promises.push(maxExpiration(pool.address).then(maxExpiration => this.setState({maxExpiration: maxExpiration/86400})))
-    promises.push(tolerancePriceAbove(pool.address).then(tolerancePriceAbove => this.setState({tolerancePriceAbove: 0.1})))
-    promises.push(tolerancePriceBelow(pool.address).then(tolerancePriceBelow => this.setState({tolerancePriceBelow: 0.2})))
+    promises.push(tolerancePriceAbove(pool.address).then(tolerancePriceAbove => this.setState({tolerancePriceAbove: tolerancePriceAbove/percentagePrecision})))
+    promises.push(tolerancePriceBelow(pool.address).then(tolerancePriceBelow => this.setState({tolerancePriceBelow: tolerancePriceBelow/percentagePrecision})))
 
     Promise.all(promises).then(() => {this.setState({loading:false})})
   }

@@ -60,7 +60,6 @@ class PoolDashboard extends Component {
           <div>
             <PoolHistoricalChart pool={pool}></PoolHistoricalChart>
           </div>
-          <ManagePrivatePool pool={pool}/>
           {this.isAdmin() && <div>
             <ManagePrivatePool pool={pool}/>
           </div>}
