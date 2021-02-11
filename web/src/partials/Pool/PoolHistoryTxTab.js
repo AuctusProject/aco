@@ -19,6 +19,90 @@ class PoolHistoryTxTab extends Component {
   componentDidUpdate = (prevProps) => {    
   }
 
+  getUnderlyingAmount = (event) => {
+    let pool = this.props.pool
+    if (event.type === "swap" && pool.isCall) {
+      return -fromDecimals(event.data.collateralLocked, pool.underlyingInfo.decimals)
+    }
+    if (event.type === "redeem" && pool.isCall) {
+      return fromDecimals(event.data.collateralRedeemed, pool.underlyingInfo.decimals)
+    }
+    if (event.type === "restore") {
+      if (pool.isCall) {
+        return fromDecimals(event.data.collateralRestored, pool.underlyingInfo.decimals)
+      }
+      else {
+        return -fromDecimals(event.data.amountOut, pool.underlyingInfo.decimals)
+      }
+    }
+    if (event.type === "exercise") {
+      if (!pool.isCall) {
+        return fromDecimals(event.data.paidAmount, pool.underlyingInfo.decimals)
+      }      
+    }
+    if (event.type === "deposit") {
+      if (pool.isCall) {
+        return fromDecimals(event.data.collateralDeposited, pool.underlyingInfo.decimals)
+      }      
+    }
+    if (event.type === "withdraw") {
+      return fromDecimals(event.data.underlyingWithdrawn, pool.underlyingInfo.decimals)
+    }
+  }
+
+  getStrikeAmount = (event) => {
+    let pool = this.props.pool    
+    let collateralInfo = getCollateralInfo(pool)
+    if (event.type === "swap") {
+      if (pool.isCall) {
+        return fromDecimals(event.data.price, pool.strikeAssetInfo.decimals)
+      }
+      else {
+        var amountIn = fromDecimals(event.data.price, pool.strikeAssetInfo.decimals)
+        var amountOut = fromDecimals(event.data.collateralLocked, pool.strikeAssetInfo.decimals)
+        return <>
+          <div>{-amountOut}</div>
+          <div>{amountIn}</div>
+        </>
+      }
+    }
+    if (event.type === "redeem" && !pool.isCall) {
+      return fromDecimals(event.data.collateralRedeemed, collateralInfo.decimals)
+    }
+    if (event.type === "restore") {
+      if (pool.isCall) {
+        return -fromDecimals(event.data.amountOut, pool.strikeAssetInfo.decimals)
+      }
+      else {
+        return fromDecimals(event.data.collateralRestored, collateralInfo.decimals)
+      }
+    }
+    if (event.type === "exercise") {
+      if (pool.isCall) {
+        return fromDecimals(event.data.paidAmount, pool.strikeAssetInfo.decimals)
+      }
+    }
+    if (event.type === "deposit") {
+      if (!pool.isCall) {
+        return fromDecimals(event.data.collateralDeposited, pool.strikeAssetInfo.decimals)
+      }      
+    }
+    if (event.type === "withdraw") {
+      return fromDecimals(event.data.strikeAssetWithdrawn, pool.strikeAssetInfo.decimals)
+    }
+  }
+
+  getCollateralAmount = (event) => {
+    let pool = this.props.pool
+    let collateralInfo = getCollateralInfo(pool)
+    if (event.type === "swap") {
+      return fromDecimals(event.data.collateralLocked, collateralInfo.decimals)
+    }
+    if (event.type === "exercise") {
+      return fromDecimals(event.data.collateralAmount, collateralInfo.decimals)
+    }
+  }
+
   render() {
     let pool = this.props.pool
     let collateralInfo = getCollateralInfo(pool)
@@ -46,9 +130,9 @@ class PoolHistoryTxTab extends Component {
                   <td>{event.type}</td>
                   <td className="value-highlight">{event.data.acoName}</td>
                   <td className="value-highlight">{fromDecimals(event.data.tokenAmount, pool.underlyingInfo.decimals, 4, 0)}</td>
-                  <td className="value-highlight"></td>
-                  <td className="value-highlight"></td>
-                  <td className="value-highlight"></td>
+                  <td className="value-highlight">{this.getUnderlyingAmount(event)}</td>
+                  <td className="value-highlight">{this.getStrikeAmount(event)}</td>
+                  <td className="value-highlight">{this.getCollateralAmount(event)}</td>
                   <td className="value-highlight"><a href={etherscanTxUrl + event.tx} target="_blank" rel="noopener noreferrer">View</a></td>
                 </tr>)}
             </tbody>
