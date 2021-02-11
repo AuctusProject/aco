@@ -2,15 +2,6 @@ import './PoolDashboard.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { formatPercentage, formatWithPrecision, fromDecimals, getBalanceOfAsset } from '../../util/constants'
-import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import DepositModal from './DepositModal'
-import WithdrawModal from './WithdrawModal'
-import { getAccountPoolPosition } from '../../util/acoPoolMethods'
-import BigNumber from 'bignumber.js'
-import { getCollateralInfo } from '../../util/acoTokenMethods'
-import { ASSETS_INFO } from '../../util/assets'
 import { getAcoPoolStatus } from '../../util/acoApi'
 import PoolHistoricalChart from './PoolHistoricalChart'
 import PoolCurrentTab from './PoolCurrentTab'
@@ -28,7 +19,7 @@ class PoolDashboard extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.match.params.poolAddress != prevProps.match.params.poolAddress) {
+    if (this.props.match.params.poolAddress !== prevProps.match.params.poolAddress) {
       this.updatePoolStatus()
     }
   }
