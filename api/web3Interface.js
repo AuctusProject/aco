@@ -778,14 +778,14 @@ const getAcoCurrentCollaterizedTokens = (aco, account, block = "latest") => {
 };
 
 const getPoolNetValue = (isCall, collateralLocked, openValue, underlyingPrice, withdrawOpenPenalty, underlyingDecimals) => {
-  return getPoolCollateralValue(isCall, collateralLocked, underlyingPrice, underlyingDecimals) - openValue * (percentage + withdrawOpenPenalty) / percentage;
+  return getPoolCollateralValue(collateralLocked, isCall, underlyingPrice, underlyingDecimals) - openValue * (percentage + withdrawOpenPenalty) / percentage;
 };
 
-const getPoolCollateralValue = (isCall, collateralLocked, underlyingPrice, underlyingDecimals) => {
+const getPoolCollateralValue = (collateral, isCall, underlyingPrice, underlyingDecimals) => {
   if (isCall) {
-    return collateralLocked * underlyingPrice / (BigInt(10) ** BigInt(underlyingDecimals));
+    return collateral * underlyingPrice / (BigInt(10) ** BigInt(underlyingDecimals));
   } else {
-    return collateralLocked;
+    return collateral;
   }
 };
 
@@ -991,13 +991,19 @@ module.exports.acoPoolSituation = (pool) => {
             let underlyingPerShare = BigInt(0);
             let strikeAssetPerShare = BigInt(0);
             let openPositionOptionsValue = BigInt(0);
+            let collateralValue = BigInt(0);
+            let notCollateralValue = BigInt(0);
             if (data[2] > BigInt(0)) {
               if (basicData.isCall) {
+                collateralValue = getPoolCollateralValue(data[3].underlyingBalance, basicData.isCall, underlyingPrice, data[0].decimals);
+                notCollateralValue = data[3].strikeAssetBalance;
                 openPositionOptionsValue = data[3].collateralOnOpenPosition * underlyingPrice * (percentage - data[10]) / (BigInt(10) ** BigInt(data[0].decimals + 5));
                 let share = BigInt(10) ** BigInt(data[0].decimals);
                 underlyingPerShare = share * (data[3].underlyingBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[5])) / percentage) / data[2];
                 strikeAssetPerShare = share * data[3].strikeAssetBalance / data[2];
               } else {
+                collateralValue = getPoolCollateralValue(data[3].strikeAssetBalance, basicData.isCall, underlyingPrice, data[0].decimals);
+                notCollateralValue = data[3].underlyingBalance * underlyingPrice / (BigInt(10) ** BigInt(data[0].decimals));
                 openPositionOptionsValue = data[3].collateralOnOpenPosition;
                 let share = BigInt(10) ** BigInt(data[1].decimals);
                 underlyingPerShare = share * data[3].underlyingBalance / data[2];
@@ -1022,7 +1028,7 @@ module.exports.acoPoolSituation = (pool) => {
               collateralLocked: data[3].collateralLocked.toString(10),
               openPositionOptionsValue: openPositionOptionsValue.toString(10),
               netValue: netValue.toString(10),
-              totalValue: ((basicData.isCall ? data[3].underlyingBalance : data[3].strikeAssetBalance) + netValue).toString(10),
+              totalValue: (notCollateralValue + collateralValue + netValue).toString(10),
               volatility: parseBigIntToNumber(data[6], 3),
               protocolFee: parseBigIntToNumber(data[7], 3),
               openAcos: []
@@ -1064,7 +1070,7 @@ module.exports.acoPoolSituation = (pool) => {
                     result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionOptionsValue), underlyingPrice, data[5], data[0].decimals).toString(10);
                     ++quoteIndex;
                   } else {
-                    result.openAcos[k].netValue = getPoolCollateralValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), underlyingPrice, data[0].decimals).toString(10);
+                    result.openAcos[k].netValue = getPoolCollateralValue(BigInt(result.openAcos[k].collateralLocked), basicData.isCall, underlyingPrice, data[0].decimals).toString(10);
                   }
                 }
                 resolve(result);
