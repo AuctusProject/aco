@@ -2,19 +2,15 @@ import './PoolCurrentTab.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { formatPercentage, formatWithPrecision, fromDecimals } from '../../util/constants'
-import { getCollateralInfo } from '../../util/acoTokenMethods'
+import { getCollateralInfo, getExerciseInfo } from '../../util/acoTokenMethods'
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 class PoolCurrentTab extends Component {
   constructor() {
     super()
-    this.state = {  
+    this.state = {
     }
-  }  
-
-  componentDidMount = () => {    
-  }
-
-  componentDidUpdate = (prevProps) => {    
   }
 
   getUnderlyingValue = (underlyingAmount) => {
@@ -31,10 +27,10 @@ class PoolCurrentTab extends Component {
   }
 
   getUnderlyingAndStrikeValue = (underlyingValue, strikeValue) => {
-    if (underlyingValue || strikeValue) {      
+    if (underlyingValue || strikeValue) {
       var underlyingConverted = fromDecimals(underlyingValue, this.props.pool.underlyingInfo.decimals, 4, 0)
       var strikeConverted = fromDecimals(strikeValue, this.props.pool.strikeAssetInfo.decimals, 4, 0)
-      
+
       return Number(this.getUnderlyingValue(underlyingConverted)) + Number(strikeConverted)
     }
     return null
@@ -70,7 +66,7 @@ class PoolCurrentTab extends Component {
   }
 
   formatDolarValue = (value) => {
-    if (value !== null) {      
+    if (value !== null) {
       return `$${formatWithPrecision(Number(value), 3)}`
     }
     return "-"
@@ -86,64 +82,94 @@ class PoolCurrentTab extends Component {
     return amount * price
   }
 
+  showConvertLiquidity = () => {
+    return this.props.isAdmin && ((this.props.pool.isCall && this.props.pool.strikeAssetBalance > 0) ||
+      (!this.props.pool.isCall && this.props.pool.underlyingBalance > 0))
+  }
+
+  showRedeem = () => {
+    return this.props.isAdmin
+  }
+
+  getRestoreButtonLabel = () => {
+    let pool = this.props.pool
+    var collateral = getCollateralInfo(pool).symbol
+    var exercise = getExerciseInfo(pool).symbol
+    return <>Convert {exercise} <FontAwesomeIcon icon={faArrowRight} /> {collateral}</>
+  }
+
+  onRedeemClick = () => {
+
+  }
+
+  onConvertLiquidityClick = () => {
+
+  }
+
   render() {
     let pool = this.props.pool
-    
+
     let underlyingBalance = fromDecimals(pool.underlyingBalance, pool.underlyingInfo.decimals, 4, 0)
     let underlyingBalanceFormatted = underlyingBalance
     let underlyingValueFormatted = this.formatDolarValue(this.getUnderlyingValue(underlyingBalance))
     let strikeBalanceFormatted = fromDecimals(pool.strikeAssetBalance, pool.strikeAssetInfo.decimals, 4, 0)
 
     return (
-    <div className="pool-current-tab">
-      <div className="pool-current-itens-row">
-        <div className="pool-current-item">
-          <div className="pool-current-item-label">Total net value</div>
-          <div className="pool-current-item-value">{this.getNetValue()}</div>
+      <div className="pool-current-tab">
+        <div className="pool-current-itens-row">
+          <div className="pool-current-item">
+            <div className="pool-current-item-label">Total net value</div>
+            <div className="pool-current-item-value">{this.getNetValue()}</div>
+          </div>
+          <div className="pool-current-item">
+            <div className="pool-current-item-label">Supply</div>
+            <div className="pool-current-item-value">{fromDecimals(pool.totalSupply, getCollateralInfo(pool).decimals)}</div>
+          </div>
+          <div className="pool-current-item">
+            <div className="pool-current-item-label">Value per share</div>
+            <div className="pool-current-item-value">{this.getValuePerShare()}</div>
+          </div>
+          <div className="pool-current-item">
+            <div className="pool-current-item-label">Utilization rate</div>
+            <div className="pool-current-item-value">{this.getUtilizationRate()}</div>
+          </div>
         </div>
-        <div className="pool-current-item">
-          <div className="pool-current-item-label">Supply</div>
-          <div className="pool-current-item-value">{fromDecimals(pool.totalSupply, getCollateralInfo(pool).decimals)}</div>
+        <div className="pool-item-details">
+          <div className="pool-item-details-label">Liquidity available</div>
+          <div className="pool-item-details-value">{this.getLiquidityAvailable()}</div>
         </div>
-        <div className="pool-current-item">
-          <div className="pool-current-item-label">Value per share</div>
-          <div className="pool-current-item-value">{this.getValuePerShare()}</div>
+        {this.showConvertLiquidity() && <div className="admin-button-wrapper">
+          <div className="aco-button action-btn btn-sm" onClick={this.onConvertLiquidityClick}>{this.getRestoreButtonLabel()}</div>
+        </div>}
+        <table className="aco-table mx-auto table-responsive-md">
+          <thead>
+            <tr>
+              <th>Asset</th>
+              <th className="value-highlight">Balance</th>
+              <th className="value-highlight">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{this.props.pool.underlyingInfo.symbol}</td>
+              <td className="value-highlight">{underlyingBalanceFormatted}</td>
+              <td className="value-highlight">{underlyingValueFormatted}</td>
+            </tr>
+            <tr>
+              <td>{this.props.pool.strikeAssetInfo.symbol}</td>
+              <td className="value-highlight">{strikeBalanceFormatted}</td>
+              <td className="value-highlight">{this.formatDolarValue(strikeBalanceFormatted)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="pool-item-details">
+          <div className="pool-item-details-label">Open positions</div>
+          <div className="pool-item-details-value">{this.getOpenPositions()}</div>
         </div>
-        <div className="pool-current-item">
-          <div className="pool-current-item-label">Utilization rate</div>
-          <div className="pool-current-item-value">{this.getUtilizationRate()}</div>
-        </div>
-      </div>
-      <div className="pool-item-details">
-        <div className="pool-item-details-label">Liquidity available</div>
-        <div className="pool-item-details-value">{this.getLiquidityAvailable()}</div>
-      </div>
-      <table className="aco-table mx-auto table-responsive-md">
-        <thead>
-          <tr>
-            <th>Asset</th>
-            <th className="value-highlight">Balance</th>
-            <th className="value-highlight">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>{this.props.pool.underlyingInfo.symbol}</td>
-            <td className="value-highlight">{underlyingBalanceFormatted}</td>
-            <td className="value-highlight">{underlyingValueFormatted}</td>
-          </tr>
-          <tr>
-            <td>{this.props.pool.strikeAssetInfo.symbol}</td>
-            <td className="value-highlight">{strikeBalanceFormatted}</td>
-            <td className="value-highlight">{this.formatDolarValue(strikeBalanceFormatted)}</td>
-          </tr>
-        </tbody>            
-      </table>
-      <div className="pool-item-details">
-        <div className="pool-item-details-label">Open positions</div>
-        <div className="pool-item-details-value">{this.getOpenPositions()}</div>
-      </div>
-      {pool.openAcos && pool.openAcos.length > 0 && 
+        {this.showRedeem() && <div className="admin-button-wrapper">
+          <div className="aco-button action-btn btn-sm" onClick={this.onRedeemClick}>Redeem collateral from expired options</div>
+        </div>}
+        {pool.openAcos && pool.openAcos.length > 0 &&
           <table className="aco-table mx-auto table-responsive-md">
             <thead>
               <tr>
@@ -155,17 +181,17 @@ class PoolCurrentTab extends Component {
               </tr>
             </thead>
             <tbody>
-            {pool.openAcos && pool.openAcos.map(openAco =>
-              <tr key={openAco.address}>
-                <td>{openAco.name}</td>
-                <td className="value-highlight">{fromDecimals(-openAco.tokenAmount, pool.underlyingInfo.decimals)}</td>
-                <td className="value-highlight">-{this.formatDolarValue(fromDecimals(openAco.openPositionOptionsValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
-                <td className="value-highlight">{this.formatDolarValue(this.getCollateralValue(fromDecimals(openAco.collateralLocked, getCollateralInfo(pool).decimals, 4, 0)))}</td>
-                <td className="value-highlight">{this.formatDolarValue(fromDecimals(openAco.netValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
-              </tr>)}
-            </tbody>            
+              {pool.openAcos && pool.openAcos.map(openAco =>
+                <tr key={openAco.address}>
+                  <td>{openAco.name}</td>
+                  <td className="value-highlight">{fromDecimals(-openAco.tokenAmount, pool.underlyingInfo.decimals)}</td>
+                  <td className="value-highlight">-{this.formatDolarValue(fromDecimals(openAco.openPositionOptionsValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
+                  <td className="value-highlight">{this.formatDolarValue(this.getCollateralValue(fromDecimals(openAco.collateralLocked, getCollateralInfo(pool).decimals, 4, 0)))}</td>
+                  <td className="value-highlight">{this.formatDolarValue(fromDecimals(openAco.netValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
+                </tr>)}
+            </tbody>
           </table>}
-    </div>)
+      </div>)
   }
 }
 

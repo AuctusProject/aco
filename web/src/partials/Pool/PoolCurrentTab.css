@@ -44,3 +44,8 @@
     text-align: center;
     color: #1782fc;
 }
+
+.admin-button-wrapper {    
+    text-align: center;
+    margin-bottom: 16px;
+}
