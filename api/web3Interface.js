@@ -777,8 +777,8 @@ const getAcoCurrentCollaterizedTokens = (aco, account, block = "latest") => {
   });
 };
 
-const getPoolNetValue = (isCall, collateralLocked, openValue, underlyingPrice, underlyingPriceAdjust, withdrawOpenPenalty, underlyingDecimals) => {
-  return getPoolCollateralValue(isCall, collateralLocked, underlyingPrice, underlyingDecimals) - openValue * (percentage + withdrawOpenPenalty + underlyingPriceAdjust) / percentage;
+const getPoolNetValue = (isCall, collateralLocked, openValue, underlyingPrice, withdrawOpenPenalty, underlyingDecimals) => {
+  return getPoolCollateralValue(isCall, collateralLocked, underlyingPrice, underlyingDecimals) - openValue * (percentage + withdrawOpenPenalty) / percentage;
 };
 
 const getPoolCollateralValue = (isCall, collateralLocked, underlyingPrice, underlyingDecimals) => {
@@ -995,13 +995,13 @@ module.exports.acoPoolSituation = (pool) => {
               if (basicData.isCall) {
                 openPositionValue = data[3].collateralOnOpenPosition * underlyingPrice * (percentage - data[10]) / (BigInt(10) ** BigInt(data[0].decimals + 5));
                 let share = BigInt(10) ** BigInt(data[0].decimals);
-                underlyingPerShare = share * (data[3].underlyingBalance + data[3].collateralLocked - (openPositionValue * (percentage + data[5])) / percentage) / data[2];
+                underlyingPerShare = share * (data[3].underlyingBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[5])) / percentage) / data[2];
                 strikeAssetPerShare = share * data[3].strikeAssetBalance / data[2];
               } else {
                 openPositionValue = data[3].collateralOnOpenPosition;
                 let share = BigInt(10) ** BigInt(data[1].decimals);
                 underlyingPerShare = share * data[3].underlyingBalance / data[2];
-                strikeAssetPerShare = share * (data[3].strikeAssetBalance + data[3].collateralLocked - (openPositionValue * (percentage + data[5])) / percentage) / data[2];
+                strikeAssetPerShare = share * (data[3].strikeAssetBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[5])) / percentage) / data[2];
               }
             }
             const result = {
@@ -1020,7 +1020,7 @@ module.exports.acoPoolSituation = (pool) => {
               strikeAssetPerShare: strikeAssetPerShare.toString(10),
               collateralLocked: data[3].collateralLocked.toString(10),
               openPositionValue: openPositionValue.toString(10),
-              netValue: getPoolNetValue(basicData.isCall, data[3].collateralLocked, openPositionValue, underlyingPrice, data[10], data[5], data[0].decimals).toString(10),
+              netValue: getPoolNetValue(basicData.isCall, data[3].collateralLocked, openPositionValue, underlyingPrice, data[5], data[0].decimals).toString(10),
               volatility: parseBigIntToNumber(data[6], 3),
               protocolFee: parseBigIntToNumber(data[7], 3),
               openAcos: []
@@ -1059,7 +1059,7 @@ module.exports.acoPoolSituation = (pool) => {
                     if (data[11]) {
                       result.openAcos[k].openPositionValue = (BigInt(result.openAcos[k].openPositionValue) * (percentage + data[7]) / percentage).toString(10);
                     }
-                    result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionValue), underlyingPrice, data[10], data[5], data[0].decimals).toString(10);
+                    result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionValue), underlyingPrice, data[5], data[0].decimals).toString(10);
                     ++quoteIndex;
                   } else {
                     result.openAcos[k].netValue = getPoolCollateralValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), underlyingPrice, data[0].decimals).toString(10);
