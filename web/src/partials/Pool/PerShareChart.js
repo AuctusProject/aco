@@ -28,6 +28,27 @@ const axesProperties = JSON.stringify({
   }
 })
 
+const chartPlugin = {
+  afterDraw: function(chart, easing) {
+    if (chart.tooltip._active && chart.tooltip._active.length && chart.scales['y-axis-0']) {
+      const activePoint = chart.controller.tooltip._active[0];
+      const ctx = chart.ctx;
+      const x = activePoint.tooltipPosition().x;
+      const topY = chart.scales['y-axis-0'].top;
+      const bottomY = chart.scales['y-axis-0'].bottom;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, topY);
+      ctx.lineTo(x, bottomY);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#a6a6a6';
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
 class PerShareChart extends Component { 
   constructor() {
     super()
@@ -63,7 +84,9 @@ class PerShareChart extends Component {
 
   componentDidMount = () => {
     if (!!this.props.pool) {
-      getAcoPoolHistory(this.props.pool).then((data) => this.setState({data: data}, () => this.setChart())).catch((err) => {
+      getAcoPoolHistory(this.props.pool).then((data) => this.setState({data: data}, () => {
+        this.setChart()
+      })).catch((err) => {
         console.error(err)
         this.setState({chart: this.getBaseChart(), data: []})
       })
@@ -72,18 +95,23 @@ class PerShareChart extends Component {
     }
   }
 
+  componentWillUnmount() {
+    Chart.pluginService.unregister(chartPlugin)
+  }
+
   componentDidUpdate = (prevProps) => {
     if ((!prevProps.pool && this.props.pool) 
         || (prevProps.pool && !this.props.pool)
         || (prevProps.pool.address !== this.props.pool.address)) {
       this.componentDidMount()
     } else if (prevProps.isUnderlyingValue !== this.props.isUnderlyingValue
-      || prevProps.currentValue !== this.props.currentValue) {
+      || (!prevProps.currentValue && this.props.currentValue)) {
       this.setChart()
     }
   }
 
   setChart() {
+    Chart.pluginService.unregister(chartPlugin)
     let chart = this.getBaseChart()
     if (this.state.data.length) {
       const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
@@ -103,27 +131,7 @@ class PerShareChart extends Component {
         chart.datasets[0].data.push(point)
       }
     }
-    this.setState({chart: chart})
-    Chart.pluginService.register({
-      afterDraw: function(chart, easing) {
-        if (chart.tooltip._active && chart.tooltip._active.length) {
-          const activePoint = chart.controller.tooltip._active[0];
-          const ctx = chart.ctx;
-          const x = activePoint.tooltipPosition().x;
-          const topY = chart.scales['y-axis-0'].top;
-          const bottomY = chart.scales['y-axis-0'].bottom;
-
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(x, topY);
-          ctx.lineTo(x, bottomY);
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = '#a6a6a6';
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
-    })
+    this.setState({chart: chart}, () => Chart.pluginService.register(chartPlugin))
   }
 
   render() {
