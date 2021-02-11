@@ -439,3 +439,7 @@ export const getLocalOrders = () => {
         return JSON.parse(localOrders)
     }
 }
+
+export const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}

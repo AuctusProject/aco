@@ -2,7 +2,7 @@ import './PoolHistoryTxTab.css'
 import React, { Component } from 'react'
 import { getAcoPoolEvents } from '../../util/acoApi'
 import { getCollateralInfo } from '../../util/acoTokenMethods'
-import { etherscanTxUrl, fromDecimals } from '../../util/constants'
+import { capitalizeFirstLetter, etherscanTxUrl, fromDecimals } from '../../util/constants'
 import Loading from '../Util/Loading'
 
 class PoolHistoryTxTab extends Component {
@@ -25,11 +25,11 @@ class PoolHistoryTxTab extends Component {
       return -fromDecimals(event.data.collateralLocked, pool.underlyingInfo.decimals)
     }
     if (event.type === "redeem" && pool.isCall) {
-      return fromDecimals(event.data.collateralRedeemed, pool.underlyingInfo.decimals)
+      return `+${fromDecimals(event.data.collateralRedeemed, pool.underlyingInfo.decimals)}`
     }
     if (event.type === "restore") {
       if (pool.isCall) {
-        return fromDecimals(event.data.collateralRestored, pool.underlyingInfo.decimals)
+        return `+${fromDecimals(event.data.collateralRestored, pool.underlyingInfo.decimals)}`
       }
       else {
         return -fromDecimals(event.data.amountOut, pool.underlyingInfo.decimals)
@@ -37,16 +37,16 @@ class PoolHistoryTxTab extends Component {
     }
     if (event.type === "exercise") {
       if (!pool.isCall) {
-        return fromDecimals(event.data.paidAmount, pool.underlyingInfo.decimals)
+        return `+${fromDecimals(event.data.paidAmount, pool.underlyingInfo.decimals)}`
       }      
     }
     if (event.type === "deposit") {
       if (pool.isCall) {
-        return fromDecimals(event.data.collateralDeposited, pool.underlyingInfo.decimals)
+        return `+${fromDecimals(event.data.collateralDeposited, pool.underlyingInfo.decimals)}`
       }      
     }
     if (event.type === "withdraw") {
-      return fromDecimals(event.data.underlyingWithdrawn, pool.underlyingInfo.decimals)
+      return `+${fromDecimals(event.data.underlyingWithdrawn, pool.underlyingInfo.decimals)}`
     }
   }
 
@@ -55,40 +55,40 @@ class PoolHistoryTxTab extends Component {
     let collateralInfo = getCollateralInfo(pool)
     if (event.type === "swap") {
       if (pool.isCall) {
-        return fromDecimals(event.data.price, pool.strikeAssetInfo.decimals)
+        return `+${fromDecimals(event.data.price, pool.strikeAssetInfo.decimals)}`
       }
       else {
         var amountIn = fromDecimals(event.data.price, pool.strikeAssetInfo.decimals)
         var amountOut = fromDecimals(event.data.collateralLocked, pool.strikeAssetInfo.decimals)
         return <>
           <div>{-amountOut}</div>
-          <div>{amountIn}</div>
+          <div>{`+${amountIn}`}</div>
         </>
       }
     }
     if (event.type === "redeem" && !pool.isCall) {
-      return fromDecimals(event.data.collateralRedeemed, collateralInfo.decimals)
+      return `+${fromDecimals(event.data.collateralRedeemed, collateralInfo.decimals)}`
     }
     if (event.type === "restore") {
       if (pool.isCall) {
         return -fromDecimals(event.data.amountOut, pool.strikeAssetInfo.decimals)
       }
       else {
-        return fromDecimals(event.data.collateralRestored, collateralInfo.decimals)
+        return `+${fromDecimals(event.data.collateralRestored, collateralInfo.decimals)}`
       }
     }
     if (event.type === "exercise") {
       if (pool.isCall) {
-        return fromDecimals(event.data.paidAmount, pool.strikeAssetInfo.decimals)
+        return `+${fromDecimals(event.data.paidAmount, pool.strikeAssetInfo.decimals)}`
       }
     }
     if (event.type === "deposit") {
       if (!pool.isCall) {
-        return fromDecimals(event.data.collateralDeposited, pool.strikeAssetInfo.decimals)
+        return `+${fromDecimals(event.data.collateralDeposited, pool.strikeAssetInfo.decimals)}`
       }      
     }
     if (event.type === "withdraw") {
-      return fromDecimals(event.data.strikeAssetWithdrawn, pool.strikeAssetInfo.decimals)
+      return `+${fromDecimals(event.data.strikeAssetWithdrawn, pool.strikeAssetInfo.decimals)}`
     }
   }
 
@@ -96,10 +96,13 @@ class PoolHistoryTxTab extends Component {
     let pool = this.props.pool
     let collateralInfo = getCollateralInfo(pool)
     if (event.type === "swap") {
-      return fromDecimals(event.data.collateralLocked, collateralInfo.decimals)
+      return `+${fromDecimals(event.data.collateralLocked, collateralInfo.decimals)}`
     }
     if (event.type === "exercise") {
-      return fromDecimals(event.data.collateralAmount, collateralInfo.decimals)
+      return -fromDecimals(event.data.collateralAmount, collateralInfo.decimals)
+    }
+    if (event.type === "redeem") {
+      return -fromDecimals(event.data.collateralRedeemed, collateralInfo.decimals)
     }
   }
 
@@ -127,7 +130,7 @@ class PoolHistoryTxTab extends Component {
             <tbody>
               {this.state.events && this.state.events.map(event => 
                 <tr key={event.tx}>
-                  <td>{event.type}</td>
+                  <td>{capitalizeFirstLetter(event.type)}</td>
                   <td className="value-highlight">{event.data.acoName}</td>
                   <td className="value-highlight">{fromDecimals(event.data.tokenAmount, pool.underlyingInfo.decimals, 4, 0)}</td>
                   <td className="value-highlight">{this.getUnderlyingAmount(event)}</td>
