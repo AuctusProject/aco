@@ -24,3 +24,23 @@
     text-align: center;
     color: #ffffff;
 }
+
+.pool-item-details {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.pool-item-details-label {
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    text-align: center;
+    color: #ffffff;
+}
+
+.pool-item-details-value {
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    text-align: center;
+    color: #1782fc;
+}

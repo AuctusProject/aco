@@ -1,5 +1,8 @@
 import './PoolCurrentTab.css'
 import React, { Component } from 'react'
+import PropTypes from 'prop-types'
+import { formatPercentage, formatWithPrecision, fromDecimals } from '../../util/constants'
+import { getCollateralInfo } from '../../util/acoTokenMethods'
 
 class PoolCurrentTab extends Component {
   constructor() {
@@ -14,36 +17,161 @@ class PoolCurrentTab extends Component {
   componentDidUpdate = (prevProps) => {    
   }
 
+  getUnderlyingValue = (underlyingAmount) => {
+    var underlyingPrice = this.context.ticker && this.context.ticker[this.props.pool.underlyingInfo.symbol]
+    if (!underlyingPrice) {
+      underlyingPrice = 0
+    }
+    return underlyingAmount * underlyingPrice
+  }
+
+  getUnderlyingAndStrikeFormattedValue = (underlyingValue, strikeValue) => {
+    var totalDollar = this.getUnderlyingAndStrikeValue(underlyingValue, strikeValue)
+    return this.formatDolarValue(totalDollar)
+  }
+
+  getUnderlyingAndStrikeValue = (underlyingValue, strikeValue) => {
+    if (underlyingValue || strikeValue) {      
+      var underlyingConverted = fromDecimals(underlyingValue, this.props.pool.underlyingInfo.decimals, 4, 0)
+      var strikeConverted = fromDecimals(strikeValue, this.props.pool.strikeAssetInfo.decimals, 4, 0)
+      
+      return Number(this.getUnderlyingValue(underlyingConverted)) + Number(strikeConverted)
+    }
+    return null
+  }
+
+  getValuePerShare = () => {
+    let pool = this.props.pool
+    return this.getUnderlyingAndStrikeFormattedValue(pool.underlyingPerShare, pool.strikeAssetPerShare)
+  }
+
+  getUtilizationRate = () => {
+    let pool = this.props.pool
+    var totalValue = fromDecimals(pool.totalValue, pool.strikeAssetInfo.decimals)
+    var openPosition = Number(fromDecimals(pool.netValue, pool.strikeAssetInfo.decimals))
+    return totalValue > 0 ? formatPercentage(openPosition / totalValue, 0) : "-"
+  }
+
+  getLiquidityAvailable = () => {
+    let pool = this.props.pool
+    return this.getUnderlyingAndStrikeFormattedValue(pool.underlyingBalance, pool.strikeAssetBalance)
+  }
+
+  getOpenPositions = () => {
+    let pool = this.props.pool
+    var openPosition = fromDecimals(pool.netValue, pool.strikeAssetInfo.decimals)
+    return this.formatDolarValue(openPosition)
+  }
+
+  getNetValue = () => {
+    let pool = this.props.pool
+    var totalValue = fromDecimals(pool.totalValue, pool.strikeAssetInfo.decimals)
+    return this.formatDolarValue(totalValue)
+  }
+
+  formatDolarValue = (value) => {
+    if (value !== null) {      
+      return `$${formatWithPrecision(Number(value), 3)}`
+    }
+    return "-"
+  }
+
+  getCollateralValue = (amount) => {
+    var pool = this.props.pool
+    var collateral = getCollateralInfo(pool)
+    var price = this.context.ticker && this.context.ticker[collateral.symbol]
+    if (!price) {
+      price = 0
+    }
+    return amount * price
+  }
+
   render() {
+    let pool = this.props.pool
+    
+    let underlyingBalance = fromDecimals(pool.underlyingBalance, pool.underlyingInfo.decimals, 4, 0)
+    let underlyingBalanceFormatted = underlyingBalance
+    let underlyingValueFormatted = this.formatDolarValue(this.getUnderlyingValue(underlyingBalance))
+    let strikeBalanceFormatted = fromDecimals(pool.strikeAssetBalance, pool.strikeAssetInfo.decimals, 4, 0)
+
     return (
     <div className="pool-current-tab">
       <div className="pool-current-itens-row">
         <div className="pool-current-item">
           <div className="pool-current-item-label">Total net value</div>
-          <div className="pool-current-item-value">{this.props.pool.openPositionNetValue}</div>
+          <div className="pool-current-item-value">{this.getNetValue()}</div>
         </div>
         <div className="pool-current-item">
           <div className="pool-current-item-label">Supply</div>
-          <div className="pool-current-item-value">{this.props.pool.totalSupply}</div>
+          <div className="pool-current-item-value">{fromDecimals(pool.totalSupply, getCollateralInfo(pool).decimals)}</div>
         </div>
         <div className="pool-current-item">
           <div className="pool-current-item-label">Value per share</div>
-          <div className="pool-current-item-value">0</div>
-        </div>
-        <div className="pool-current-item">
-          <div className="pool-current-item-label">Liquidity available</div>
-          <div className="pool-current-item-value">0</div>
-        </div>
-        <div className="pool-current-item">
-          <div className="pool-current-item-label">Open positions</div>
-          <div className="pool-current-item-value">0</div>
+          <div className="pool-current-item-value">{this.getValuePerShare()}</div>
         </div>
         <div className="pool-current-item">
           <div className="pool-current-item-label">Utilization rate</div>
-          <div className="pool-current-item-value">0</div>
+          <div className="pool-current-item-value">{this.getUtilizationRate()}</div>
         </div>
       </div>
+      <div className="pool-item-details">
+        <div className="pool-item-details-label">Liquidity available</div>
+        <div className="pool-item-details-value">{this.getLiquidityAvailable()}</div>
+      </div>
+      <table className="aco-table mx-auto table-responsive-md">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th className="value-highlight">Balance</th>
+            <th className="value-highlight">Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{this.props.pool.underlyingInfo.symbol}</td>
+            <td className="value-highlight">{underlyingBalanceFormatted}</td>
+            <td className="value-highlight">{underlyingValueFormatted}</td>
+          </tr>
+          <tr>
+            <td>{this.props.pool.strikeAssetInfo.symbol}</td>
+            <td className="value-highlight">{strikeBalanceFormatted}</td>
+            <td className="value-highlight">{this.formatDolarValue(strikeBalanceFormatted)}</td>
+          </tr>
+        </tbody>            
+      </table>
+      <div className="pool-item-details">
+        <div className="pool-item-details-label">Open positions</div>
+        <div className="pool-item-details-value">{this.getOpenPositions()}</div>
+      </div>
+      {pool.openAcos && pool.openAcos.length > 0 && 
+          <table className="aco-table mx-auto table-responsive-md">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th className="value-highlight">Open Position</th>
+                <th className="value-highlight">Options Value</th>
+                <th className="value-highlight">Collateral Locked</th>
+                <th className="value-highlight">Net Value</th>
+              </tr>
+            </thead>
+            <tbody>
+            {pool.openAcos && pool.openAcos.map(openAco =>
+              <tr key={openAco.address}>
+                <td>{openAco.name}</td>
+                <td className="value-highlight">{fromDecimals(-openAco.tokenAmount, pool.underlyingInfo.decimals)}</td>
+                <td className="value-highlight">-{this.formatDolarValue(fromDecimals(openAco.openPositionOptionsValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
+                <td className="value-highlight">{this.formatDolarValue(this.getCollateralValue(fromDecimals(openAco.collateralLocked, getCollateralInfo(pool).decimals, 4, 0)))}</td>
+                <td className="value-highlight">{this.formatDolarValue(fromDecimals(openAco.netValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
+              </tr>)}
+            </tbody>            
+          </table>}
     </div>)
   }
+}
+
+PoolCurrentTab.contextTypes = {
+  assetsImages: PropTypes.object,
+  web3: PropTypes.object,
+  ticker: PropTypes.object
 }
 export default PoolCurrentTab
