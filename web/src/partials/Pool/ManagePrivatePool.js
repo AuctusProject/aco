@@ -1,0 +1,74 @@
+import './ManagePrivatePool.css'
+import React, { Component } from 'react'
+import { maxExpiration, minExpiration, tolerancePriceAbove, tolerancePriceBelow } from '../../util/acoPoolMethods'
+import { formatPercentage, percentagePrecision } from '../../util/constants'
+import Loading from '../Util/Loading'
+
+class ManagePrivatePool extends Component {
+  constructor() {
+    super()
+    this.state = {  
+      loading:true
+    }
+  }
+
+  componentDidMount = () => {
+    let pool = this.props.pool
+    let promises = []
+    promises.push(minExpiration(pool.address).then(minExpiration => this.setState({minExpiration: minExpiration/86400})))
+    promises.push(maxExpiration(pool.address).then(maxExpiration => this.setState({maxExpiration: maxExpiration/86400})))
+    promises.push(tolerancePriceAbove(pool.address).then(tolerancePriceAbove => this.setState({tolerancePriceAbove: 0.1})))
+    promises.push(tolerancePriceBelow(pool.address).then(tolerancePriceBelow => this.setState({tolerancePriceBelow: 0.2})))
+
+    Promise.all(promises).then(() => {this.setState({loading:false})})
+  }
+
+  getStrikePriceConfig = () => {
+    if (this.state.tolerancePriceAbove === 0 && this.state.tolerancePriceBelow === 0) {
+      return "Any Strike Price"
+    }
+    else if (this.state.tolerancePriceBelow === 0) {
+      return "Strike Price > Current Price + "+ formatPercentage(this.state.tolerancePriceAbove, 0)
+    }
+    else if (this.state.tolerancePriceAbove === 0) {
+      return "Strike Price < Current Price - "+ formatPercentage(this.state.tolerancePriceBelow, 0)
+    }
+    return "Current Price - "+formatPercentage(this.state.tolerancePriceBelow, 0)+" <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAbove, 0)
+  }
+
+  getExpirationConfig = () => {
+    if (this.state.minExpiration === 0 && this.state.maxExpiration === 0) {
+      return "Any Expiration"
+    }
+    else if (this.state.maxExpiration === 0) {
+      return `Current Date + ${this.state.minExpiration} < Expiration Date`
+    }
+    else if (this.state.minExpiration === 0) {
+      return `Expiration Date < Current Date + ${this.state.maxExpiration} days`
+    }
+    return `Current Date + ${this.state.minExpiration} days < Expiration Date < Current Date + ${this.state.maxExpiration} days`
+  }
+
+  render() {
+    let pool = this.props.pool
+    return this.state.loading ? <Loading/> :
+    <div className="manage-private-pool">
+      <div className="manage-private-pool-title">Manage Private Pool</div>
+      <div className="manage-private-pool-item">
+        <div className="manage-private-pool-item-label">Current IV:</div>
+        <div className="manage-private-pool-item-value">{pool.volatility}%</div>
+        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateIV}>Update</div>
+      </div>
+      <div className="manage-private-pool-item">
+        <div className="manage-private-pool-item-label">Selling options:</div>
+        <div className="manage-private-pool-item-value">
+          <div>{this.getStrikePriceConfig()}</div>
+          <div>{this.getExpirationConfig()}</div>
+        </div>
+        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateIV}>Update</div>
+      </div>
+    </div>
+  }
+}
+
+export default ManagePrivatePool

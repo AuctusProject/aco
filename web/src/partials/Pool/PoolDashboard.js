@@ -7,6 +7,7 @@ import PoolHistoricalChart from './PoolHistoricalChart'
 import PoolCurrentTab from './PoolCurrentTab'
 import Loading from '../Util/Loading'
 import PoolHistoryTxTab from './PoolHistoryTxTab'
+import ManagePrivatePool from './ManagePrivatePool'
 
 class PoolDashboard extends Component {
   constructor(props) {
@@ -28,6 +29,10 @@ class PoolDashboard extends Component {
     getAcoPoolStatus(this.props.match.params.poolAddress).then(pool => 
       this.setState({pool: pool})
     )
+  }
+
+  isAdmin = () => {
+    return this.state.pool && this.isConnected() && this.state.pool.admin && this.state.pool.admin.toLowerCase() === this.context.web3.selectedAccount.toLowerCase()
   }
 
   isConnected = () => {
@@ -55,6 +60,10 @@ class PoolDashboard extends Component {
           <div>
             <PoolHistoricalChart pool={pool}></PoolHistoricalChart>
           </div>
+          <ManagePrivatePool pool={pool}/>
+          {this.isAdmin() && <div>
+            <ManagePrivatePool pool={pool}/>
+          </div>}
           <div className="pool-info-tabs">
             <div className="btn-group pill-button-group">
               <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>CURRENT</button>

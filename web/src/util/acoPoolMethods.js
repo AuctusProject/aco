@@ -128,6 +128,26 @@ export const getWithdrawNoLockedData = (acoPoolAddress, shares) => {
     return acoPoolContract.methods.getWithdrawNoLockedData(shares).call()
 }
 
+export const minExpiration = (acoPoolAddress) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.minExpiration().call()
+}
+
+export const maxExpiration = (acoPoolAddress) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.maxExpiration().call()
+}
+
+export const tolerancePriceAbove = (acoPoolAddress) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.tolerancePriceAbove().call()
+}
+
+export const tolerancePriceBelow = (acoPoolAddress) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.tolerancePriceBelow().call()
+}
+
 export const deposit = (from, acoPoolAddress, amount, minShares, isEther, nonce) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
     var data = acoPoolContract.methods.deposit(amount, minShares, from).encodeABI()

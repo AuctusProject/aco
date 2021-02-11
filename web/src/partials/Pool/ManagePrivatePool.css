@@ -1,0 +1,35 @@
+.manage-private-pool {
+    margin: auto;
+    margin-top: 16px;
+}
+
+.manage-private-pool-title {
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+    color: #ffffff;
+    margin-bottom: 16px;
+}
+
+.manage-private-pool-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.manage-private-pool-item-label {
+    width: 90px;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.6px;
+    color: #e6e6e6;
+}
+
+.manage-private-pool-item-value {
+    font-size: 12px;
+    letter-spacing: 0.6px;
+    color: #ffffff;
+    margin-left: 16px;
+    margin-right: 16px;
+}
