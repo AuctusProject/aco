@@ -3,21 +3,50 @@ import React, { Component } from 'react'
 import { Chart, Line } from 'react-chartjs-2'
 import { getAcoPoolHistory } from '../../util/acoApi'
 import { fromDecimals } from '../../util/constants'
-  
+
+const axesProperties = JSON.stringify({
+  display: true,
+  gridLines: {
+    display:false
+  },
+  scaleLabel: {
+    display: true,
+    fontFamily: "Roboto",
+    fontColor: "#a6a6a6",
+    lineHeight: 1.15,
+    fontSize: 10
+  },
+  ticks: {
+    autoSkip: true,
+    maxTicksLimit: 8,
+    maxRotation: 0,
+    minRotation: 0,
+    fontFamily: "Roboto",
+    fontColor: "#a6a6a6",
+    lineHeight: 1.1,
+    fontSize: 10
+  }
+})
+
 class PerShareChart extends Component { 
   constructor() {
     super()
     this.chartReference = React.createRef()
+    const xAxe = JSON.parse(axesProperties)
+    xAxe.type = 'time'
+    xAxe.distribution = 'series'
+    xAxe.time = { unit: 'day' }
+    const yAxe = JSON.parse(axesProperties)
+    yAxe.ticks.maxTicksLimit = 4
     this.state = {
       chart: this.getBaseChart(),
-      xAxes: {display: false},
-      yAxes: {display: false}
+      xAxes: xAxe,
+      yAxes: yAxe
     }
   }
 
   getBaseChart = () => {
     return {
-      labels: [],
       datasets: [{
         fill: true,
         borderColor: '#1782fc',
@@ -52,23 +81,22 @@ class PerShareChart extends Component {
 
   setChart() {
     let chart = this.getBaseChart()
-    const lang = (navigator.language || navigator.languages[0] || 'en')
-    const dataFormat = new Intl.DateTimeFormat(lang,{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'})
     const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
     const underlyingPrecision = BigInt(10 ** parseInt(this.props.underlyingInfo.decimals))
     for (let i = 0; i < this.state.data.length; ++i) {
-      chart.labels.push(dataFormat.format(new Date(this.state.data[i].t * 1000)))
+      let point = {x: new Date(this.state.data[i].t * 1000)}
       let value
       if (this.props.isUnderlyingValue) {
         value = BigInt(this.state.data[i].u) + (BigInt(this.state.data[i].s) * underlyingPrecision / BigInt(this.state.data[i].p))
       } else {
         value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
       }
-      chart.datasets[0].data.push(parseFloat(fromDecimals(value.toString(10), decimals)))
+      point.y = parseFloat(fromDecimals(value.toString(10), decimals))
+      chart.datasets[0].data.push(point)
     }
     this.setState({chart: chart}, () => {
       if (this.state.chart.datasets[0].data.length > 0) {
-        this.props.setLastPerShare(this.state.chart.datasets[0].data[this.state.chart.datasets[0].data.length - 1])
+        this.props.setLastPerShare(this.state.chart.datasets[0].data[0].y)
       } else {
         this.props.setLastPerShare(null)
       }
@@ -109,6 +137,7 @@ class PerShareChart extends Component {
             xAxes: [this.state.xAxes],
             yAxes: [this.state.yAxes]
           },
+          layout: {padding: {left: -20, right: -20, top: 0, bottom: -20}},
           tooltips: {
             enabled: true,
             bodyFontFamily: 'Roboto',
@@ -120,6 +149,10 @@ class PerShareChart extends Component {
               label: function(tooltipItem, data) {
                 var numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'));
                 return numberFormat.format(tooltipItem.yLabel);
+              },
+              title: function(tooltipItem, data) {
+                var dateFormat = new Intl.DateTimeFormat((navigator.language || navigator.languages[0] || 'en'),{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+                return dateFormat.format(tooltipItem.xLabel);
               }
             }
           }

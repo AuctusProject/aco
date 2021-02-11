@@ -24,7 +24,7 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .pool-historical-chart-title {
@@ -38,7 +38,7 @@
 }
 
 .pool-historical-chart-title > div:first-child {
-    margin-right: 10px;
+    margin-right: 15px;
 }
 
 .pool-historical-chart-share {
@@ -53,4 +53,5 @@
 
 .pool-historical-chart-share > div:first-child {
     font-size: 14px;
+    font-weight: bold;
 }
