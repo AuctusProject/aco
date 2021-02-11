@@ -163,7 +163,7 @@ class PerShareChart extends Component {
               },
               title: function(tooltipItem, data) {
                 var dateFormat = new Intl.DateTimeFormat((navigator.language || navigator.languages[0] || 'en'),{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-                return dateFormat.format(tooltipItem.xLabel);
+                return dateFormat.format(new Date(tooltipItem[0].xLabel));
               }
             }
           }
