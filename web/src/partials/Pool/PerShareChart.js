@@ -35,10 +35,10 @@ class PerShareChart extends Component {
     if (!!this.props.pool) {
       getAcoPoolHistory(this.props.pool).then((data) => this.setState({data: data}, () => this.setChart())).catch((err) => {
         console.error(err)
-        this.setState({chart: this.getBaseChart()})
+        this.setState({chart: this.getBaseChart()}, () => this.props.setLastPerShare(null))
       })
     } else {
-      this.setState({chart: this.getBaseChart()})
+      this.setState({chart: this.getBaseChart()}, () => this.props.setLastPerShare(null))
     }
   }
 
@@ -54,10 +54,8 @@ class PerShareChart extends Component {
     let chart = this.getBaseChart()
     const lang = (navigator.language || navigator.languages[0] || 'en')
     const dataFormat = new Intl.DateTimeFormat(lang,{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'})
-    const numberFormat = new Intl.NumberFormat(lang)
     const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
     const underlyingPrecision = BigInt(10 ** parseInt(this.props.underlyingInfo.decimals))
-    const suffix = (this.props.isUnderlyingValue ? this.props.underlyingInfo.symbol : this.props.strikeAssetInfo.symbol)
     for (let i = 0; i < this.state.data.length; ++i) {
       chart.labels.push(dataFormat.format(new Date(this.state.data[i].t * 1000)))
       let value
@@ -66,9 +64,15 @@ class PerShareChart extends Component {
       } else {
         value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
       }
-      chart.datasets[0].data.push(numberFormat.format(parseFloat(fromDecimals(value.toString(10), decimals))) + " " + suffix)
+      chart.datasets[0].data.push(parseFloat(fromDecimals(value.toString(10), decimals)))
     }
-    this.setState({chart: chart})
+    this.setState({chart: chart}, () => {
+      if (this.state.chart.datasets[0].data.length > 0) {
+        this.props.setLastPerShare(this.state.chart.datasets[0].data[this.state.chart.datasets[0].data.length - 1])
+      } else {
+        this.props.setLastPerShare(null)
+      }
+    })
     Chart.pluginService.register({
       afterDraw: function(chart, easing) {
         if (chart.tooltip._active && chart.tooltip._active.length) {
@@ -107,9 +111,17 @@ class PerShareChart extends Component {
           },
           tooltips: {
             enabled: true,
+            bodyFontFamily: 'Roboto',
+            titleFontFamily: 'Roboto',
 						mode: 'x-axis',
             displayColors: false,
-						position: 'nearest'
+						position: 'nearest',
+            callbacks: {
+              label: function(tooltipItem, data) {
+                var numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'));
+                return numberFormat.format(tooltipItem.yLabel);
+              }
+            }
           }
         }} />
     </div>)
