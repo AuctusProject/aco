@@ -15,7 +15,7 @@ Links:
 ## Directories
 
 ## Smart-Contracts
-All smart contracts in Solidity. Tests using [Buidler](https://github.com/nomiclabs/buidler)
+All smart contracts in Solidity. Tests using [Hardhat](https://github.com/nomiclabs/hardhat)
 
 ## Web
 ACO website, that you can check on [aco.finance](https://aco.finance).

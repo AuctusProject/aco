@@ -259,56 +259,7 @@ contract ACOPoolFactory2 {
     receive() external payable virtual {
         revert();
     }
-
-    /**
-     * @dev Function to create a new ACO pool.
-     * It deploys a minimal proxy for the ACO pool implementation address. 
-     * @param underlying Address of the underlying asset (0x0 for Ethereum).
-     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
-     * @param isCall True if the type is CALL, false for PUT.
-     * @param tolerancePriceBelow The below tolerance price percentage for ACO tokens.
-     * @param tolerancePriceAbove The above tolerance price percentage for ACO tokens.
-     * @param minExpiration The minimum expiration seconds after the current time for ACO tokens.
-     * @param maxExpiration The maximum expiration seconds after the current time for ACO tokens.
-     * @param strategy Address of the pool strategy to be used.
-     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
-     * @return The created ACO pool address.
-     */
-    function createAcoPool(
-        address underlying, 
-        address strikeAsset, 
-        bool isCall,
-        uint256 tolerancePriceBelow,
-        uint256 tolerancePriceAbove,
-        uint256 minExpiration,
-        uint256 maxExpiration,
-        address strategy,
-        uint256 baseVolatility
-    ) onlyFactoryAdmin external virtual returns(address) {
-        _validateStrategy(strategy);
-        return _createAcoPool(IACOPool2.InitData(
-            acoFactory,
-            chiToken,
-            underlying, 
-            strikeAsset,
-            isCall,
-            address(0),
-            0,
-			assetConverterHelper,
-            acoPoolFee,
-            acoPoolFeeDestination,
-			acoPoolWithdrawOpenPositionPenalty,
-			acoPoolUnderlyingPriceAdjustPercentage,
-            acoPoolMaximumOpenAco,
-            tolerancePriceBelow,
-            tolerancePriceAbove,
-            minExpiration,
-            maxExpiration,
-            strategy,
-            baseVolatility
-        ));
-    }
-
+    
     /**
      * @dev Function to set the factory admin address.
      * Only can be called by the factory admin.
@@ -620,8 +571,8 @@ contract ACOPoolFactory2 {
     }
     
     /**
-     * @dev Internal function to set the ACO Pool destination address.
-     * @param newAcoPoolFeeDestination Address of the new ACO Pool destination.
+     * @dev Internal function to set the ACO Pool fee destination address.
+     * @param newAcoPoolFeeDestination Address of the new ACO Pool fee destination.
      */
     function _setAcoPoolFeeDestination(address newAcoPoolFeeDestination) internal virtual {
         require(newAcoPoolFeeDestination != address(0), "ACOFactory::_setAcoPoolFeeDestination: Invalid ACO Pool fee destination");
@@ -832,55 +783,6 @@ contract ACOPoolFactory2V2 is ACOPoolFactory2 {
     }
     
     /**
-     * @dev Function to create a new ACO pool.
-     * It deploys a minimal proxy for the ACO pool implementation address. 
-     * @param underlying Address of the underlying asset (0x0 for Ethereum).
-     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
-     * @param isCall True if the type is CALL, false for PUT.
-     * @param tolerancePriceBelow The below tolerance price percentage for ACO tokens.
-     * @param tolerancePriceAbove The above tolerance price percentage for ACO tokens.
-     * @param minExpiration The minimum expiration seconds after the current time for ACO tokens.
-     * @param maxExpiration The maximum expiration seconds after the current time for ACO tokens.
-     * @param strategy Address of the pool strategy to be used.
-     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
-     * @return The created ACO pool address.
-     */
-    function createAcoPool(
-        address underlying, 
-        address strikeAsset, 
-        bool isCall,
-        uint256 tolerancePriceBelow,
-        uint256 tolerancePriceAbove,
-        uint256 minExpiration,
-        uint256 maxExpiration,
-        address strategy,
-        uint256 baseVolatility
-    ) onlyFactoryAdmin external override virtual returns(address) {
-        _validateStrategy(strategy);
-        return _createAcoPool(IACOPool2.InitData(
-            acoFactory,
-            chiToken,
-            underlying, 
-            strikeAsset,
-            isCall,
-            lendingPool,
-            lendingPoolReferral,
-			assetConverterHelper,
-            acoPoolFee,
-            acoPoolFeeDestination,
-			acoPoolWithdrawOpenPositionPenalty,
-			acoPoolUnderlyingPriceAdjustPercentage,
-            acoPoolMaximumOpenAco,
-            tolerancePriceBelow,
-            tolerancePriceAbove,
-            minExpiration,
-            maxExpiration,
-            strategy,
-            baseVolatility
-        ));
-    }
-    
-    /**
      * @dev Function to change the ACO pools fee data.
      * Only can be called by a pool admin.
      * @param feeDestinations Array of the fee destinations addresses.
@@ -892,7 +794,7 @@ contract ACOPoolFactory2V2 is ACOPoolFactory2 {
     }
     
      /**
-     * @dev Function to change the ACO pools fee data.
+     * @dev Function to change the ACO pools restrictons for an ACO data.
      * Only can be called by a pool admin.
      * @param tolerancePricesBelow Array of the below tolerance price percentages.
      * @param tolerancePricesAbove Array of the above tolerance price percentages.
@@ -960,5 +862,207 @@ contract ACOPoolFactory2V2 is ACOPoolFactory2 {
 			(bool success,) = acoPools[i].call(abi.encodeWithSelector(selector, addresses[i], numbers[i]));
 			require(success, "ACOPoolFactory::_setAcoPoolAddressUint256Data");
         }
+    }
+}
+
+contract ACOPoolFactory2V3 is ACOPoolFactory2V2 {
+
+    /**
+     * @dev Emitted when the operator address permission has been changed.
+     * @param operator Address of the operator.
+     * @param previousPermission Whether the operator was authorized.
+     * @param newPermission Whether the operator will be authorized.
+     */
+    event SetOperator(address indexed operator, bool indexed previousPermission, bool indexed newPermission);
+    
+    /**
+     * @dev Emitted when a ACO creator address permission has been changed.
+     * @param acoCreator Address of the ACO creator.
+     * @param previousPermission Whether the creator was authorized.
+     * @param newPermission Whether the creator will be authorized.
+     */
+    event SetAuthorizedAcoCreator(address indexed acoCreator, bool indexed previousPermission, bool indexed newPermission);
+
+    /**
+     * @dev A map to register the ACO Fool Factory operators permissions.
+     */
+    mapping(address => bool) public operators;
+    
+    /**
+     * @dev A map to register the ACO Pool creator.
+     */
+    mapping(address => address) public creators;
+    
+    /**
+     * @dev Addresses of authorized ACO creators for a pool.
+     */
+    address[] internal acoAuthorizedCreators;
+    
+    /**
+     * @dev Function to get the number of ACO creators authorized for a pool.
+     * @return The number of ACO creators authorized.
+     */
+    function getNumberOfAcoCreatorsAuthorized() view external virtual returns(uint256) {
+        return acoAuthorizedCreators.length;
+    }
+    
+    /**
+     * @dev Function to get the address of ACO creators authorized.
+     * @param index The index of the ACO creator.
+     * @return The address of ACO creators authorized.
+     */
+    function getAcoCreatorAuthorized(uint256 index) view external virtual returns(address) {
+        return acoAuthorizedCreators[index];
+    }
+    
+    /**
+     * @dev Function to set the operator permission.
+     * @param operator Address of the operator.
+     * @param newPermission Whether the operator will be authorized.
+     */
+    function setOperator(address operator, bool newPermission) onlyFactoryAdmin external virtual {
+        _setOperator(operator, newPermission);
+    }
+    
+    /**
+     * @dev Function to set the ACO creator permission.
+     * @param acoCreator Address of the ACO creator.
+     * @param newPermission Whether the creator will be authorized.
+     */
+    function setAuthorizedAcoCreator(address acoCreator, bool newPermission) onlyFactoryAdmin external virtual {
+        _setAuthorizedAcoCreator(acoCreator, newPermission);
+    }
+
+    /**
+     * @dev Function to change the ACO pools protocol config.
+     * Only can be called by a pool admin.
+     * @param lendingPoolReferral The value of the lending pool referral.
+     * @param withdrawOpenPositionPenalty Value of the ACO Pool penalty percentage on withdrawing open positions. It is a percentage value (100000 is 100%).
+     * @param underlyingPriceAdjustPercentage Value of the ACO Pool underlying price percentage adjust. It is a percentage value (100000 is 100%).
+     * @param fee Value of the ACO Pool fee percentage. It is a percentage value (100000 is 100%).
+     * @param maximumOpenAco Value of the ACO Pool maximum number of open ACOs allowed.
+     * @param feeDestination Address of the ACO Pool fee destination.
+     * @param assetConverter Address of the asset converter helper.
+     */
+    function setProtocolConfigOnAcoPool(
+        uint16 lendingPoolReferral,
+        uint256 withdrawOpenPositionPenalty,
+        uint256 underlyingPriceAdjustPercentage,
+        uint256 fee,
+        uint256 maximumOpenAco,
+        address feeDestination,
+        address assetConverter, 
+        address[] calldata acoPools
+    ) onlyPoolAdmin external virtual {
+        IACOPool2.PoolProtocolConfig memory config = IACOPool2.PoolProtocolConfig(lendingPoolReferral, withdrawOpenPositionPenalty, underlyingPriceAdjustPercentage, fee, maximumOpenAco, feeDestination, assetConverter);
+        for (uint256 i = 0; i < acoPools.length; ++i) {
+            IACOPool2(acoPools[i]).setProtocolConfig(config);
+        }
+    }
+    
+    /**
+     * @dev Function to create a new ACO pool.
+     * It deploys a minimal proxy for the ACO pool implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall True if the type is CALL, false for PUT.
+     * @param tolerancePriceBelow The below tolerance price percentage for ACO tokens.
+     * @param tolerancePriceAbove The above tolerance price percentage for ACO tokens.
+     * @param minExpiration The minimum expiration seconds after the current time for ACO tokens.
+     * @param maxExpiration The maximum expiration seconds after the current time for ACO tokens.
+     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
+     * @param poolAdmin Address of the pool admin.
+     * @param strategy Address of the pool strategy to be used.
+     * @return The created ACO pool address.
+     */
+    function createAcoPool(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 tolerancePriceBelow,
+        uint256 tolerancePriceAbove,
+        uint256 minExpiration,
+        uint256 maxExpiration,
+        uint256 baseVolatility,
+        address poolAdmin,
+        address strategy
+    ) external virtual returns(address) {
+        require(operators[msg.sender], "ACOPoolFactory2::createAcoPool: Only authorized operators");
+        return _createAcoPool(IACOPool2.InitData(
+            acoFactory,
+            chiToken,
+            lendingPool,
+            underlying, 
+            strikeAsset,
+            isCall,
+            tolerancePriceBelow,
+            tolerancePriceAbove,
+            minExpiration,
+            maxExpiration,
+            baseVolatility,
+            poolAdmin,
+            strategy,
+            IACOPool2.PoolProtocolConfig(
+                lendingPoolReferral,
+                acoPoolWithdrawOpenPositionPenalty,
+                acoPoolUnderlyingPriceAdjustPercentage,
+                acoPoolFee,
+                acoPoolMaximumOpenAco,
+                acoPoolFeeDestination,
+                assetConverterHelper
+            )
+        ));
+    }
+    
+    /**
+     * @dev Internal function to create a new ACO pool.
+     * @param initData Data to initialize o ACO Pool.
+     * @return Address of the new minimal proxy deployed for the ACO pool.
+     */
+    function _createAcoPool(IACOPool2.InitData memory initData) internal override virtual returns(address) {
+        address acoPool  = _deployAcoPool(initData);
+        acoPoolBasicData[acoPool] = ACOPoolBasicData(initData.underlying, initData.strikeAsset, initData.isCall);
+        creators[acoPool] = msg.sender;
+        for (uint256 i = 0; i < acoAuthorizedCreators.length; ++i) {
+            IACOPool2(acoPool).setValidAcoCreator(acoAuthorizedCreators[i], true);
+        }
+        emit NewAcoPool(initData.underlying, initData.strikeAsset, initData.isCall, acoPool, acoPoolImplementation);
+        return acoPool;
+    }
+    
+    /**
+     * @dev Internal function to set the operator permission.
+     * @param operator Address of the operator.
+     * @param newPermission Whether the operator will be authorized.
+     */
+    function _setOperator(address operator, bool newPermission) internal virtual {
+        emit SetOperator(operator, operators[operator], newPermission);
+        operators[operator] = newPermission;
+    }
+    
+    /**
+     * @dev Internal function to set the ACO creator permission.
+     * @param acoCreator Address of the ACO creator.
+     * @param newPermission Whether the creator will be authorized.
+     */
+    function _setAuthorizedAcoCreator(address acoCreator, bool newPermission) internal virtual {
+        bool previousPermission = false;
+        uint256 size = acoAuthorizedCreators.length;
+        for (uint256 i = size; i > 0; --i) {
+            if (acoAuthorizedCreators[i - 1] == acoCreator) {
+                previousPermission = true;
+                if (!newPermission) {
+                    if (i < size) {
+                        acoAuthorizedCreators[i - 1] = acoAuthorizedCreators[(size - 1)];
+                    }
+                    acoAuthorizedCreators.pop();
+                }
+                break;
+            }
+        }
+        if (newPermission && !previousPermission) {
+            acoAuthorizedCreators.push(acoCreator);
+        }
+        emit SetAuthorizedAcoCreator(acoCreator, previousPermission, newPermission);
     }
 }

@@ -14,6 +14,7 @@ library ACOPoolLib {
         uint256 underlyingPrice;
         uint256 baseVolatility;
         uint256 underlyingPriceAdjustPercentage;
+        uint256 fee;
         uint256 underlyingPrecision;
         address strategy;
         address acoFactory;
@@ -332,6 +333,9 @@ library ACOPoolLib {
         
         if (extraData.expiryTime > block.timestamp) {
     		(uint256 price,) = _strategyQuote(data.strategy, extraData.underlying, extraData.strikeAsset, extraData.isCall, extraData.strikePrice, extraData.expiryTime, data.underlyingPrice, data.baseVolatility, 0, 1);
+    		if (data.fee > 0) {
+    		    price = price.mul(PERCENTAGE_PRECISION.add(data.fee)).div(PERCENTAGE_PRECISION);
+    		}
     		if (extraData.isCall) {
     			uint256 priceAdjusted = _getUnderlyingPriceAdjusted(data.underlyingPrice, data.underlyingPriceAdjustPercentage, false); 
     			collateralOnOpenPosition = price.mul(extraData.tokenAmount).div(priceAdjusted);
