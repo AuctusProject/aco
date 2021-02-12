@@ -6,7 +6,7 @@ import { getAcoPools } from '../util/acoApi'
 import Loading from '../partials/Util/Loading'
 import PoolDetails from '../partials/Pool/PoolDetails'
 import DiscontinuedPoolDetails from '../partials/Pool/DiscontinuedPoolDetails'
-import { deprecatedPoolImplementation } from '../util/constants'
+import { defaultPoolAdmin, deprecatedPoolImplementation } from '../util/constants'
 
 class Pools extends Component {
   constructor() {
@@ -18,10 +18,16 @@ class Pools extends Component {
     this.refreshPoolData(false)
   }
 
+  getCurrentAccount = () => {
+    return (this.context && this.context.web3 && this.context.web3.selectedAccount) ? this.context.web3.selectedAccount.toLowerCase() : null
+  }
+
   refreshPoolData = (forceRefresh) => {
     getAcoPools(forceRefresh).then(pools => {
       var discontinuedPools = pools.filter(p => p.acoPoolImplementation.toLowerCase() === deprecatedPoolImplementation.toLowerCase())
-      var availablePools = pools.filter(p => p.acoPoolImplementation.toLowerCase() !== deprecatedPoolImplementation.toLowerCase())
+      var availablePools = pools.filter(p => p.acoPoolImplementation.toLowerCase() !== deprecatedPoolImplementation.toLowerCase() && 
+        (p.admin === null || p.admin === undefined || p.admin.toLowerCase() === defaultPoolAdmin || p.admin.toLowerCase() === this.getCurrentAccount())
+      )
       this.setState({pools: availablePools, discontinuedPools: discontinuedPools, loading: false})
     })
   }
