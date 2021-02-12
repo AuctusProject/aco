@@ -253,6 +253,10 @@ export function formatWithPrecision(number, significantDigits = 4) {
     }
 }
 
+export function numberWithCommas(x) {
+    return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+}
+
 export function getNumberWithSignal(number) {
     if(number > 0){
         return "+" + number;
