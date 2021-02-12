@@ -32,9 +32,9 @@ class PoolHistoricalChart extends Component {
       let strikeAsset = parseFloat(fromDecimals(this.props.pool.strikeAssetPerShare, this.props.pool.strikeAssetInfo.decimals, 4, 0))  
       let price = this.getUnderlyingPrice()
       if (isUnderlyingValue) {
-        return Math.round(10000 * (underlying + strikeAsset / price)) / 10000
+        return (underlying + strikeAsset / price)
       } else {
-        return Math.round(10000 * (strikeAsset + underlying * price)) / 10000
+        return (strikeAsset + underlying * price)
       }
     } else {
       return null
@@ -56,7 +56,7 @@ class PoolHistoricalChart extends Component {
   }
 
   getLastPerShareFormatted = () => {
-    let numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'))
+    let numberFormat = new Intl.NumberFormat(undefined,{style:'decimal',notation:'standard',minimumIntegerDigits:1,minimumFractionDigits:0,minimumSignificantDigits:1,maximumFractionDigits:6,maximumSignificantDigits:8})
     return numberFormat.format(this.state.lastPerShare)
   }
 

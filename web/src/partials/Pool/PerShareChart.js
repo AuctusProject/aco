@@ -128,7 +128,7 @@ class PerShareChart extends Component {
         } else {
           value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
         }
-        point.y = parseFloat(fromDecimals(value.toString(10), decimals))
+        point.y = parseFloat(fromDecimals(value.toString(10), decimals, 4, 1))
         chart.datasets[0].data.push(point)
       }
     }
@@ -159,7 +159,7 @@ class PerShareChart extends Component {
 						position: 'nearest',
             callbacks: {
               label: function(tooltipItem, data) {
-                var numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'));
+                var numberFormat = new Intl.NumberFormat(undefined,{style:'decimal',notation:'standard',minimumIntegerDigits:1,minimumFractionDigits:0,minimumSignificantDigits:1,maximumFractionDigits:6,maximumSignificantDigits:8});
                 return numberFormat.format(tooltipItem.yLabel);
               },
               title: function(tooltipItem, data) {
