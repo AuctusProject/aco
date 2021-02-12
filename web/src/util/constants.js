@@ -22,6 +22,7 @@ export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE)
 export const deprecatedPoolImplementation = process.env.REACT_APP_DEPRECATED_POOL_DEPRECATED_IMPLEMENTATION;
 export const acoVaults = JSON.parse(process.env.REACT_APP_ACO_VAULTS);
 export const acoVaultsV2 = JSON.parse(process.env.REACT_APP_ACO_VAULTS_V2);
+export const defaultPoolAdmin = process.env.REACT_APP_ACO_DEFAULT_POOL_ADMIN;
 export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
