@@ -15,7 +15,8 @@ export const acoOtcAddress = process.env.REACT_APP_ACO_OTC_ADDRESS;
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
-export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL;
+export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL + "address/";
+export const etherscanTxUrl = process.env.REACT_APP_ETHERSCAN_URL + "tx/";
 export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
 export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
 export const deprecatedPoolImplementation = process.env.REACT_APP_DEPRECATED_POOL_DEPRECATED_IMPLEMENTATION;
@@ -27,7 +28,7 @@ export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
 export const wssInfuraAddress = process.env.REACT_APP_INFURA_WSS;
 export const swapQuoteBuySize = "1000";
-export const acoFeePrecision = 100000;
+export const percentagePrecision = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS;
 export const wethAddress = process.env.REACT_APP_WETH_ADDRESS;
@@ -436,4 +437,8 @@ export const getLocalOrders = () => {
     else {
         return JSON.parse(localOrders)
     }
+}
+
+export const capitalizeFirstLetter = (string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }

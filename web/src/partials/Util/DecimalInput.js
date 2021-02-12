@@ -11,7 +11,7 @@ class DecimalInput extends Component {
 
   componentDidMount = () => {
     var value = ""
-    if (this.props.value > 0) {
+    if (this.props.value >= 0) {
       value = this.props.value
     }
     this.setState({value: value})

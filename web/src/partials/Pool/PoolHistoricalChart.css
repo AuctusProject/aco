@@ -1,0 +1,70 @@
+.pool-historical-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: stretch;
+    align-items: stretch;
+}
+
+.pool-historical-chart-wrapper {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+    position: relative;
+    padding: 10px 25px 15px 25px;
+    background-color: #22262a;
+    border-radius: 4px;       
+    border: solid 0.5px #22262a;
+}
+
+.light-mode .pool-historical-chart-wrapper {
+    background-color: #ffffff;    
+    border: solid 0.5px #666666;
+}
+
+.pool-historical-chart-top {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.pool-historical-chart-title {
+    display: flex;
+    flex-direction: row;
+    justify-content: stretch;
+    align-items: center;
+    font-size: 16px;
+    letter-spacing: 0.4px;
+    
+}
+
+.dark-mode .pool-historical-chart-title {
+    color: #ffffff;
+}
+
+.pool-historical-chart-title > div:first-child {
+    margin-right: 15px;
+}
+
+.pool-historical-chart-share {
+    display: flex;
+    flex-direction: row;
+    justify-content: stretch;
+    align-items: center;
+    font-size: 12px;
+    letter-spacing: 0.4px;
+}
+
+.dark-mode .pool-historical-chart-share {
+    color: #ffffff;
+}
+
+.pool-historical-chart-share > div:first-child {
+    font-size: 14px;
+    font-weight: bold;
+}

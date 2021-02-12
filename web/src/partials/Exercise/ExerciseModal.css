@@ -101,6 +101,21 @@
     cursor: default !important;
 }
 
+.light-mode .pill-button {
+    background-color: #e6e6e6;
+    color: #666666;
+}
+
+.light-mode .pill-button:not(.active):hover {
+    opacity: 1;
+    background-color: #b3b3b3;
+}
+
+.light-mode .pill-button.active {
+    background-color: #858585;
+    color: #333333;
+}
+
 .coin-symbol {
     border-radius: 2px;
     font-size: 10px;

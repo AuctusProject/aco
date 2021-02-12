@@ -1,0 +1,27 @@
+.aco-modal.update-selling-options-modal .modal-dialog {
+    width: 600px;
+    max-width: 100%;
+}
+
+.update-selling-options-modal .confirm-card {
+    width: auto;
+}
+
+.aco-modal.update-selling-options-modal .input-field.input-field-sm {
+    width: 80px;
+}
+
+.aco-modal.update-selling-options-modal .input-row{
+    justify-content: center;
+}
+
+.label-input-row {
+    display: flex;
+    flex-direction: row;
+    margin: 4px;
+    align-items: center;
+}
+
+.input-row > div {
+    margin: 4px;
+}

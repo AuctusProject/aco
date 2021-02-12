@@ -54,6 +54,7 @@
     color: #1782fc;
     font-size: 18px;
     font-weight: 500;
+    min-width: 50px;
 }
 
 
@@ -140,4 +141,45 @@
 .accordion .card-body .action-btn {
     margin-left: auto;
     margin-right: auto;
+}
+
+.view-details-link {    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+    cursor: pointer;
+}
+
+.view-details-icon {
+    background-image: url("/images/icon_details_w.svg");
+    width: 40px;
+    height: 22px;
+}
+
+.light-mode .view-details-icon {
+    background-image: url("/images/icon_details_b.svg");
+}
+
+.view-details-link:hover .view-details-icon {
+    background-image: url("/images/icon_details_h.svg");
+}
+
+.view-details-label {
+    font-size: 10px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.25px;
+    text-align: center;
+    color: #ffffff;
+    margin-top: 4px;
+}
+
+.light-mode .view-details-label {
+    color: #191919;
+}
+
+.view-details-link:hover .view-details-label {
+    color: #1782fc;    
 }

@@ -23,6 +23,28 @@ const axesProprerties = JSON.stringify({
   }
 })
 
+const pluginEvent = {
+  id: "option-chart",
+  afterDraw: function(chart, easing) {
+    if (chart.tooltip._active && chart.tooltip._active.length && chart.scales['y-axis-1']) {
+      const activePoint = chart.controller.tooltip._active[0];
+      const ctx = chart.ctx;
+      const x = activePoint.tooltipPosition().x;
+      const topY = chart.scales['y-axis-1'].top;
+      const bottomY = chart.scales['y-axis-1'].bottom;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, topY);
+      ctx.lineTo(x, bottomY);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#a6a6a6';
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
 class OptionChart extends Component {
   constructor() {
     super()
@@ -63,6 +85,8 @@ class OptionChart extends Component {
     if (!!this.props.optionPrice && !isNaN(this.props.optionPrice) && !!this.props.strikePrice && !isNaN(this.props.strikePrice) 
     && !!this.props.quantity && !isNaN(this.props.quantity) && !!this.props.volatility && !isNaN(this.props.volatility) 
     && !!this.props.currentPrice && !isNaN(this.props.currentPrice)) {
+      
+      Chart.pluginService.unregister(pluginEvent)
       var chart = this.getBaseChart()
       
       var precision
@@ -104,31 +128,15 @@ class OptionChart extends Component {
       const yAxes = JSON.parse(axesProprerties)
       yAxes.scaleLabel.labelString = "Profit / Loss"
       yAxes.gridLines.borderDash = [5, 5]
-      this.setState({chart: chart, xAxes: xAxes, yAxes: yAxes})
+      this.setState({chart: chart, xAxes: xAxes, yAxes: yAxes}, () => Chart.pluginService.register(pluginEvent))
     }
     else {
       this.setState({chart: this.getBaseChart(), xAxes: {}, yAxes: {}})
     }
-    Chart.pluginService.register({
-      afterDraw: function(chart, easing) {
-        if (chart.tooltip._active && chart.tooltip._active.length) {
-          const activePoint = chart.controller.tooltip._active[0];
-          const ctx = chart.ctx;
-          const x = activePoint.tooltipPosition().x;
-          const topY = chart.scales['y-axis-1'].top;
-          const bottomY = chart.scales['y-axis-1'].bottom;
-
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(x, topY);
-          ctx.lineTo(x, bottomY);
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = '#a6a6a6';
-          ctx.stroke();
-          ctx.restore();
-        }
-      }
-    });
+  }
+  
+  componentWillUnmount() {
+    Chart.pluginService.unregister(pluginEvent)
   }
 
   componentDidUpdate = (prevProps) => {

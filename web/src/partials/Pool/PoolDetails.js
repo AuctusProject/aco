@@ -177,6 +177,10 @@ class PoolDetails extends Component {
     }
   }
 
+  viewDetails = (pool) => (event) => {
+    this.props.history.push("/pools/details/"+pool.acoPool)
+  }
+
   render() {
     let pool = this.props.pool
     let poolAddress = pool.acoPool
@@ -208,6 +212,10 @@ class PoolDetails extends Component {
             Total Pool Net Value: {this.getTotalNetValue(pool.underlyingTotalShare, pool.strikeAssetTotalShare)}
           </div>
         </div>
+      </div>
+      <div className="view-details-link" onClick={this.viewDetails(pool)}>
+        <div className="view-details-icon"></div>
+        <div className="view-details-label">View Details</div>
       </div>
       <div className="header-separator"></div>
       <div className="pool-header-iv-info">
