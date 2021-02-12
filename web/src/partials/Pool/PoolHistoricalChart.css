@@ -16,7 +16,13 @@
     position: relative;
     padding: 10px 25px 15px 25px;
     background-color: #22262a;
-    border-radius: 4px;
+    border-radius: 4px;       
+    border: solid 0.5px #22262a;
+}
+
+.light-mode .pool-historical-chart-wrapper {
+    background-color: #ffffff;    
+    border: solid 0.5px #666666;
 }
 
 .pool-historical-chart-top {
@@ -34,6 +40,10 @@
     align-items: center;
     font-size: 16px;
     letter-spacing: 0.4px;
+    
+}
+
+.dark-mode .pool-historical-chart-title {
     color: #ffffff;
 }
 
@@ -48,6 +58,9 @@
     align-items: center;
     font-size: 12px;
     letter-spacing: 0.4px;
+}
+
+.dark-mode .pool-historical-chart-share {
     color: #ffffff;
 }
 

@@ -20,7 +20,6 @@ export const etherscanTxUrl = process.env.REACT_APP_ETHERSCAN_URL + "tx/";
 export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
 export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
 export const deprecatedPoolImplementation = process.env.REACT_APP_DEPRECATED_POOL_DEPRECATED_IMPLEMENTATION;
-export const poolV3Implementation = process.env.REACT_APP_DEPRECATED_POOL_V3_IMPLEMENTATION;
 export const acoVaults = JSON.parse(process.env.REACT_APP_ACO_VAULTS);
 export const acoVaultsV2 = JSON.parse(process.env.REACT_APP_ACO_VAULTS_V2);
 export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
