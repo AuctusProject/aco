@@ -28,6 +28,27 @@ const axesProperties = JSON.stringify({
   }
 })
 
+const chartPlugin = {
+  afterDraw: function(chart, easing) {
+    if (chart.tooltip._active && chart.tooltip._active.length && chart.scales['y-axis-0']) {
+      const activePoint = chart.controller.tooltip._active[0];
+      const ctx = chart.ctx;
+      const x = activePoint.tooltipPosition().x;
+      const topY = chart.scales['y-axis-0'].top;
+      const bottomY = chart.scales['y-axis-0'].bottom;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, topY);
+      ctx.lineTo(x, bottomY);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#a6a6a6';
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
 class PerShareChart extends Component { 
   constructor() {
     super()
@@ -39,6 +60,7 @@ class PerShareChart extends Component {
     const yAxe = JSON.parse(axesProperties)
     yAxe.ticks.maxTicksLimit = 4
     this.state = {
+      data: [],
       chart: this.getBaseChart(),
       xAxes: xAxe,
       yAxes: yAxe
@@ -62,65 +84,54 @@ class PerShareChart extends Component {
 
   componentDidMount = () => {
     if (!!this.props.pool) {
-      getAcoPoolHistory(this.props.pool).then((data) => this.setState({data: data}, () => this.setChart())).catch((err) => {
+      getAcoPoolHistory(this.props.pool).then((data) => this.setState({data: data}, () => {
+        this.setChart()
+      })).catch((err) => {
         console.error(err)
-        this.setState({chart: this.getBaseChart()}, () => this.props.setLastPerShare(null))
+        this.setState({chart: this.getBaseChart(), data: []})
       })
     } else {
-      this.setState({chart: this.getBaseChart()}, () => this.props.setLastPerShare(null))
+      this.setState({chart: this.getBaseChart(), data: []})
     }
   }
 
+  componentWillUnmount() {
+    Chart.pluginService.unregister(chartPlugin)
+  }
+
   componentDidUpdate = (prevProps) => {
-    if (prevProps.pool !== this.props.pool) {
+    if ((!prevProps.pool && this.props.pool) 
+        || (prevProps.pool && !this.props.pool)
+        || (prevProps.pool.address !== this.props.pool.address)) {
       this.componentDidMount()
-    } else if (prevProps.isUnderlyingValue !== this.props.isUnderlyingValue) {
+    } else if (prevProps.isUnderlyingValue !== this.props.isUnderlyingValue
+      || (!prevProps.currentValue && this.props.currentValue)) {
       this.setChart()
     }
   }
 
   setChart() {
+    Chart.pluginService.unregister(chartPlugin)
     let chart = this.getBaseChart()
-    const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
-    const underlyingPrecision = BigInt(10 ** parseInt(this.props.underlyingInfo.decimals))
-    for (let i = 0; i < this.state.data.length; ++i) {
-      let point = {x: new Date(this.state.data[i].t * 1000)}
-      let value
-      if (this.props.isUnderlyingValue) {
-        value = BigInt(this.state.data[i].u) + (BigInt(this.state.data[i].s) * underlyingPrecision / BigInt(this.state.data[i].p))
-      } else {
-        value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
+    if (this.state.data.length) {
+      const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
+      const underlyingPrecision = BigInt(10 ** parseInt(this.props.underlyingInfo.decimals))
+      if (this.props.currentValue) {
+        chart.datasets[0].data.push({x: Date.now(), y: this.props.currentValue})
       }
-      point.y = parseFloat(fromDecimals(value.toString(10), decimals))
-      chart.datasets[0].data.push(point)
-    }
-    this.setState({chart: chart}, () => {
-      if (this.state.chart.datasets[0].data.length > 0) {
-        this.props.setLastPerShare(this.state.chart.datasets[0].data[0].y)
-      } else {
-        this.props.setLastPerShare(null)
-      }
-    })
-    Chart.pluginService.register({
-      afterDraw: function(chart, easing) {
-        if (chart.tooltip._active && chart.tooltip._active.length) {
-          const activePoint = chart.controller.tooltip._active[0];
-          const ctx = chart.ctx;
-          const x = activePoint.tooltipPosition().x;
-          const topY = chart.scales['y-axis-0'].top;
-          const bottomY = chart.scales['y-axis-0'].bottom;
-
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(x, topY);
-          ctx.lineTo(x, bottomY);
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = '#a6a6a6';
-          ctx.stroke();
-          ctx.restore();
+      for (let i = 0; i < this.state.data.length; ++i) {
+        let point = {x: new Date(this.state.data[i].t * 1000)}
+        let value
+        if (this.props.isUnderlyingValue) {
+          value = BigInt(this.state.data[i].u) + (BigInt(this.state.data[i].s) * underlyingPrecision / BigInt(this.state.data[i].p))
+        } else {
+          value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
         }
+        point.y = parseFloat(fromDecimals(value.toString(10), decimals))
+        chart.datasets[0].data.push(point)
       }
-    })
+    }
+    this.setState({chart: chart}, () => Chart.pluginService.register(chartPlugin))
   }
 
   render() {
@@ -152,7 +163,7 @@ class PerShareChart extends Component {
               },
               title: function(tooltipItem, data) {
                 var dateFormat = new Intl.DateTimeFormat((navigator.language || navigator.languages[0] || 'en'),{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'});
-                return dateFormat.format(tooltipItem.xLabel);
+                return dateFormat.format(new Date(tooltipItem[0].xLabel));
               }
             }
           }
