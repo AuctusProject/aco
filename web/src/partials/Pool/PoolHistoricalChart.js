@@ -56,8 +56,8 @@ class PoolHistoricalChart extends Component {
   }
 
   getLastPerShareFormatted = () => {
-    let numberFormat = new Intl.NumberFormat(undefined,{style:'decimal',notation:'standard',minimumIntegerDigits:1,minimumFractionDigits:0,minimumSignificantDigits:1,maximumFractionDigits:6,maximumSignificantDigits:8})
-    return numberFormat.format(this.state.lastPerShare)
+    let numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'))
+    return numberFormat.format(parseFloat(fromDecimals(Math.round(this.state.lastPerShare * 1000000), 6, 5, 1)))
   }
 
   render() {

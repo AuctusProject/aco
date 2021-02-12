@@ -111,6 +111,11 @@ class PerShareChart extends Component {
     }
   }
 
+  formatNumber = (value) => {
+    const precision = 1000000
+    return parseFloat(fromDecimals(Math.round(value * precision), 6, 4, 1))
+  }
+
   setChart() {
     Chart.pluginService.unregister(chartPlugin)
     let chart = this.getBaseChart()
@@ -118,7 +123,7 @@ class PerShareChart extends Component {
       const decimals = parseInt(this.props.isUnderlyingValue ? this.props.underlyingInfo.decimals : this.props.strikeAssetInfo.decimals)
       const underlyingPrecision = BigInt(10 ** parseInt(this.props.underlyingInfo.decimals))
       if (this.props.currentValue) {
-        chart.datasets[0].data.push({x: Date.now(), y: this.props.currentValue})
+        chart.datasets[0].data.push({x: Date.now(), y: this.formatNumber(this.props.currentValue)})
       }
       for (let i = 0; i < this.state.data.length; ++i) {
         let point = {x: new Date(this.state.data[i].t * 1000)}
@@ -128,7 +133,7 @@ class PerShareChart extends Component {
         } else {
           value = BigInt(this.state.data[i].s) + (BigInt(this.state.data[i].u) * BigInt(this.state.data[i].p) / underlyingPrecision)
         }
-        point.y = parseFloat(fromDecimals(value.toString(10), decimals, 4, 1))
+        point.y = parseFloat(fromDecimals(value.toString(10), decimals, 5, 1))
         chart.datasets[0].data.push(point)
       }
     }
@@ -159,7 +164,7 @@ class PerShareChart extends Component {
 						position: 'nearest',
             callbacks: {
               label: function(tooltipItem, data) {
-                var numberFormat = new Intl.NumberFormat(undefined,{style:'decimal',notation:'standard',minimumIntegerDigits:1,minimumFractionDigits:0,minimumSignificantDigits:1,maximumFractionDigits:6,maximumSignificantDigits:8});
+                var numberFormat = new Intl.NumberFormat((navigator.language || navigator.languages[0] || 'en'));
                 return numberFormat.format(tooltipItem.yLabel);
               },
               title: function(tooltipItem, data) {
