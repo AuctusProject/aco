@@ -24,6 +24,7 @@ const axesProprerties = JSON.stringify({
 })
 
 const pluginEvent = {
+  id: "option-chart",
   afterDraw: function(chart, easing) {
     if (chart.tooltip._active && chart.tooltip._active.length && chart.scales['y-axis-1']) {
       const activePoint = chart.controller.tooltip._active[0];
