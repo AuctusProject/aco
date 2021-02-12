@@ -897,6 +897,8 @@ module.exports.acoPools = () => {
             promises.push(getOpenPositionPenaltyPercentage(response[i].acoPool, blockNumber));
             added[(response[i].acoPool+"ged")] = promises.length;
             promises.push(getGeneralData(response[i].acoPool, blockNumber));
+            added[(response[i].acoPool+"adm")] = promises.length;
+            promises.push(getAcoPoolAdmin(response[i].acoPool, blockNumber));
           }
         }
         Promise.all(promises).then((result) =>
@@ -912,6 +914,7 @@ module.exports.acoPools = () => {
             response[j].acoPoolInfo = result[added[response[j].acoPool]];
             response[j].underlyingInfo = result[added[response[j].underlying]];
             response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
+            response[j].admin = null;
   
             if (oldPoolImplementations.filter(c => c === response[j].acoPoolImplementation).length > 0) {
               response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
@@ -922,6 +925,7 @@ module.exports.acoPools = () => {
               let openPositionPenalty = result[added[(response[j].acoPool+"pen")]];
               let generalData = result[added[(response[j].acoPool+"ged")]];
   
+              response[j].admin = result[added[(response[j].acoPool+"adm")]];
               response[j].underlyingBalance = generalData.underlyingBalance.toString(10);
               response[j].strikeAssetBalance = generalData.strikeAssetBalance.toString(10);
   
