@@ -1,7 +1,7 @@
 import './PoolCurrentTab.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { formatPercentage, formatWithPrecision, fromDecimals } from '../../util/constants'
+import { formatPercentage, fromDecimals, numberWithCommas } from '../../util/constants'
 import { getCollateralInfo, getExerciseInfo } from '../../util/acoTokenMethods'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -68,8 +68,9 @@ class PoolCurrentTab extends Component {
   }
 
   formatDolarValue = (value) => {
+    
     if (value !== null) {
-      return `$${formatWithPrecision(Number(value), 3)}`
+      return `$${numberWithCommas(Number(value).toFixed(2))}`
     }
     return "-"
   }

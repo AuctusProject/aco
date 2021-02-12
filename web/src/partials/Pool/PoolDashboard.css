@@ -10,3 +10,12 @@
     border: solid 0.5px #666666;
     margin-top: 16px;
 }
+
+.pool-dashboard .page-title {
+    position: relative;
+}
+
+.back-link {
+    position: absolute;
+    left: 4px;
+}

@@ -8,6 +8,8 @@ import PoolCurrentTab from './PoolCurrentTab'
 import Loading from '../Util/Loading'
 import PoolHistoryTxTab from './PoolHistoryTxTab'
 import ManagePrivatePool from './ManagePrivatePool'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 
 class PoolDashboard extends Component {
   constructor(props) {
@@ -48,6 +50,10 @@ class PoolDashboard extends Component {
     this.setState({ selectedTab: selectedTab })
   }
 
+  goToPools = () => {
+    this.props.history.push("/pools")
+  }
+
   render() {
     let pool = this.state.pool
     
@@ -55,6 +61,7 @@ class PoolDashboard extends Component {
       {!pool ? <Loading></Loading> :
         <>
           <div className="page-title">
+            <div className="back-link clickable" onClick={this.goToPools}><FontAwesomeIcon icon={faArrowLeft}/> Pools</div>            
             {this.getFormattedPoolName()}
           </div>
           <div>
