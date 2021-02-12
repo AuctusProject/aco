@@ -61,14 +61,14 @@ class PoolDashboard extends Component {
             <PoolHistoricalChart pool={pool}></PoolHistoricalChart>
           </div>
           {this.isAdmin() && <div>
-            <ManagePrivatePool pool={pool}/>
+            <ManagePrivatePool pool={pool} refresh={this.updatePoolStatus}/>
           </div>}
           <div className="pool-info-tabs">
             <div className="btn-group pill-button-group">
               <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>CURRENT</button>
               <button onClick={this.selectTab(2)} type="button" className={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>HISTORY TX</button>
             </div>
-            {this.state.selectedTab === 1 && <PoolCurrentTab isAdmin={this.isAdmin()} pool={pool}/>}
+            {this.state.selectedTab === 1 && <PoolCurrentTab isAdmin={this.isAdmin()} pool={pool} refresh={this.updatePoolStatus}/>}
             {this.state.selectedTab === 2 && <PoolHistoryTxTab pool={pool}/>}
 
           </div>

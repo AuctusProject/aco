@@ -3,6 +3,8 @@ import React, { Component } from 'react'
 import { maxExpiration, minExpiration, tolerancePriceAbove, tolerancePriceBelow } from '../../util/acoPoolMethods'
 import { formatPercentage, percentagePrecision } from '../../util/constants'
 import Loading from '../Util/Loading'
+import UpdateIVModal from './UpdateIVModal'
+import UpdateSellingOptionsModal from './UpdateSellingOptionsModal'
 
 class ManagePrivatePool extends Component {
   constructor() {
@@ -49,6 +51,28 @@ class ManagePrivatePool extends Component {
     return `Current Date + ${this.state.minExpiration} days < Expiration Date < Current Date + ${this.state.maxExpiration} days`
   }
 
+  onUpdateIVClick = () => {
+    this.setState({showUpdateIVModal: true})
+  }
+
+  onHideUpdateIVModal = (refresh) => {
+    if (refresh) {
+      this.props.refresh()
+    }
+    this.setState({showUpdateIVModal: false})
+  }
+
+  onUpdateSellingOptionsClick = () => {
+    this.setState({showUpdateSellingOptionsModal: true})
+  }
+
+  onHideUpdateSellingOptionsModal = (refresh) => {
+    if (refresh) {
+      this.componentDidMount()
+    }
+    this.setState({showUpdateSellingOptionsModal: false})
+  }
+
   render() {
     let pool = this.props.pool
     return this.state.loading ? <Loading/> :
@@ -57,7 +81,7 @@ class ManagePrivatePool extends Component {
       <div className="manage-private-pool-item">
         <div className="manage-private-pool-item-label">Current IV:</div>
         <div className="manage-private-pool-item-value">{pool.volatility}%</div>
-        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateIV}>Update</div>
+        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateIVClick}>Update</div>
       </div>
       <div className="manage-private-pool-item">
         <div className="manage-private-pool-item-label">Selling options:</div>
@@ -65,8 +89,10 @@ class ManagePrivatePool extends Component {
           <div>{this.getStrikePriceConfig()}</div>
           <div>{this.getExpirationConfig()}</div>
         </div>
-        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateIV}>Update</div>
+        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateSellingOptionsClick}>Update</div>
       </div>
+      {this.state.showUpdateIVModal && <UpdateIVModal onHide={this.onHideUpdateIVModal} pool={pool}/>}
+      {this.state.showUpdateSellingOptionsModal && <UpdateSellingOptionsModal onHide={this.onHideUpdateSellingOptionsModal} pool={pool} minExpiration={this.state.minExpiration} maxExpiration={this.state.maxExpiration} tolerancePriceAbove={this.state.tolerancePriceAbove} tolerancePriceBelow={this.state.tolerancePriceBelow}/>}
     </div>
   }
 }

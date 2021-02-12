@@ -5,6 +5,8 @@ import { formatPercentage, formatWithPrecision, fromDecimals } from '../../util/
 import { getCollateralInfo, getExerciseInfo } from '../../util/acoTokenMethods'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import RestoreModal from './RestoreModal'
+import RedeemModal from './RedeemModal'
 
 class PoolCurrentTab extends Component {
   constructor() {
@@ -88,7 +90,8 @@ class PoolCurrentTab extends Component {
   }
 
   showRedeem = () => {
-    return this.props.isAdmin
+    let pool = this.props.pool
+    return this.props.isAdmin && pool.openAcos && pool.openAcos.length > 0
   }
 
   getRestoreButtonLabel = () => {
@@ -99,11 +102,25 @@ class PoolCurrentTab extends Component {
   }
 
   onRedeemClick = () => {
+    this.setState({showRedeemModal: true})
+  }
 
+  onHideRedeemModal = (refresh) => {
+    if (refresh) {
+      this.props.refresh()
+    }
+    this.setState({showRedeemModal: false})
   }
 
   onConvertLiquidityClick = () => {
+    this.setState({showRestoreModal: true})
+  }
 
+  onHideRestoreModal = (refresh) => {
+    if (refresh) {
+      this.props.refresh()
+    }
+    this.setState({showRestoreModal: false})
   }
 
   render() {
@@ -191,6 +208,8 @@ class PoolCurrentTab extends Component {
                 </tr>)}
             </tbody>
           </table>}
+          {this.state.showRestoreModal && <RestoreModal onHide={this.onHideRestoreModal} title={this.getRestoreButtonLabel()} pool={pool}/>}
+          {this.state.showRedeemModal && <RedeemModal onHide={this.onHideRedeemModal} pool={pool}/>}
       </div>)
   }
 }

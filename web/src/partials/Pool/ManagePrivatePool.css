@@ -7,8 +7,11 @@
     font-size: 16px;
     font-weight: bold;
     letter-spacing: 0.4px;
-    color: #ffffff;
     margin-bottom: 16px;
+}
+
+.dark-mode .manage-private-pool-title {
+    color: #ffffff;
 }
 
 .manage-private-pool-item {
@@ -23,13 +26,19 @@
     font-size: 12px;
     font-weight: 300;
     letter-spacing: 0.6px;
+}
+
+.dark-mode .manage-private-pool-item-label {
     color: #e6e6e6;
 }
 
 .manage-private-pool-item-value {
     font-size: 12px;
     letter-spacing: 0.6px;
-    color: #ffffff;
     margin-left: 16px;
     margin-right: 16px;
+}
+
+.dark-mode .manage-private-pool-item-value {
+    color: #ffffff;
 }
