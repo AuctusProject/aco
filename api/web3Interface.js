@@ -22,8 +22,9 @@ const callEthereum = (method, methodData, secondParam = "latest", attempt = 0, r
           if (response.data.error) {
             if (resolveIfError && response.data.error.code) {
               resolve(response.data.error);
-            } else if (attempt === 0 && response.data.error.code && parseInt(response.data.error.code) === generalErrorCode) {
-              sleep(1000).then(() => callEthereum(method, methodData, secondParam, 1).then((res) => resolve(res)).catch((err) => reject(err))).catch((err) => reject(err));  
+            } else if (attempt < 2 && response.data.error.code && parseInt(response.data.error.code) === generalErrorCode) {
+              ++attempt;
+              sleep(1000).then(() => callEthereum(method, methodData, secondParam, attempt).then((res) => resolve(res)).catch((err) => reject(err))).catch((err) => reject(err));  
             } else {
               reject(new Error(method + " " + (methodData && typeof(methodData) === "object" ? JSON.stringify(methodData) : methodData) + " " + JSON.stringify(response.data.error)));
             }
@@ -339,12 +340,15 @@ const getPoolNetData = (acoPool, totalSupply, poolDecimals, block = "latest") =>
   });
 };
 
-const getAcoPoolAdmin = (acoPool, block = "latest") => {
+const getAcoPoolAdmin = (acoPool, block = "latest", attempt = 0) => {
   return new Promise((resolve, reject) => {
     callEthereum("eth_call", {"to": acoPool, "data": "0xf851a440"}, parseBlock(block), 0, true).then((result) => {
       if (result.code) {
         if (result.message && result.message.indexOf("execution") >= 0) {
           resolve(null);
+        } else if (attempt < 2 && result.code === generalErrorCode) {
+          ++attempt;
+          sleep(1000).then(() => this.getAcoPoolAdmin(acoPool, block, attempt).then((res) => resolve(res)).catch((err) => reject(err)));
         } else {
           reject(new Error("Invalid error code on pool admin: " + JSON.stringify(result)));
         }

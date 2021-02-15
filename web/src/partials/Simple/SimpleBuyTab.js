@@ -565,8 +565,7 @@ class SimpleBuyTab extends Component {
           <div className="separator"></div>
           <div className="input-column">
             <div className="input-label">Prices per option:</div>
-            <div className="price-value"><div className="price-origin">Auctus:</div><div>{this.formatPrice(optionPrice)}</div></div>
-            <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
+            <div className="price-value">{this.formatPrice(optionPrice)}</div>
           </div>
           <div className="separator"></div>
           <div className="input-column configurations-column">
