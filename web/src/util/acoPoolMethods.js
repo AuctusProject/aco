@@ -53,7 +53,7 @@ export const getBestPoolQuote = (option, amount) => {
                     if (!isNaN(result[i][0])) {
                         let swapPrice = new BigNumber(fromDecimals(result[i][0], option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals))
                         let unitPrice = swapPrice.div(new BigNumber(fromDecimals(amount, option.underlyingInfo.decimals, option.underlyingInfo.decimals, option.underlyingInfo.decimals)))
-                        if (!bestResult || !bestResult.swapPrice || swapPrice < bestResult.swapPrice) {
+                        if (!bestResult || !bestResult.price || unitPrice < bestResult.price) {
                             bestResult = {isPoolQuote: true, price: unitPrice, poolAddress: acoPoolAddresses[i].acoPool}
                         }
                     }
