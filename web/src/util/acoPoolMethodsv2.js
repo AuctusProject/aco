@@ -27,3 +27,8 @@ export const withdrawWithLocked = (from, acoPoolAddress, shares) => {
     var data = acoPoolContract.methods.withdrawWithLocked(shares, from, false).encodeABI()
     return sendTransaction(null, null, from, acoPoolAddress, null, data)
 }
+
+export const getGeneralData = (acoPoolAddress) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.getGeneralData().call()
+}
