@@ -44,6 +44,7 @@ contract ACOBuyer {
     ) 
         nonReentrant 
         external 
+        payable
     {
         _buy(acoToken, to, deadline, acoPools, amounts, restrictions);
     }
@@ -59,6 +60,7 @@ contract ACOBuyer {
         discountCHI
         nonReentrant 
         external 
+        payable
     {
         _buy(acoToken, to, deadline, acoPools, amounts, restrictions);
     }
@@ -77,28 +79,58 @@ contract ACOBuyer {
         
         (,address strikeAsset,,,) = acoFactory.acoTokenData(acoToken);
         
-        uint256 amount = 0;
-        for (uint256 i = 0; i < acoPools.length; ++i) {
+        uint256 amount = _getAssetAmount(acoAmounts, restrictions);
+        (uint256 previousBalance, uint256 extraAmount) = _receiveAsset(strikeAsset, amount);
+        
+        _poolSwap(strikeAsset, acoToken, to, deadline, acoPools, acoAmounts, restrictions);
+        
+        uint256 afterBalance = ACOAssetHelper._getAssetBalanceOf(strikeAsset, address(this));
+        uint256 remaining = SafeMath.add(extraAmount, SafeMath.sub(afterBalance, previousBalance));
+        if (remaining > 0) {
+            ACOAssetHelper._transferAsset(strikeAsset, msg.sender, remaining);
+        }
+    }
+
+    function _getAssetAmount(uint256[] memory acoAmounts, uint256[] memory restrictions) internal pure returns(uint256 amount) {
+        amount = 0;
+        for (uint256 i = 0; i < acoAmounts.length; ++i) {
             require(acoAmounts[i] > 0, "ACOBuyer::buy: Invalid amount");
             require(restrictions[i] > 0, "ACOBuyer::buy: Invalid restriction");
             amount = SafeMath.add(amount, restrictions[i]);
         }
-        
-        ACOAssetHelper._receiveAsset(strikeAsset, amount);
-        
-        address _this = address(this);
-        uint256 previousBalance = ACOAssetHelper._getAssetBalanceOf(strikeAsset, _this);
-        previousBalance = SafeMath.sub(previousBalance, amount);
-        
-        for (uint256 j = 0; j < acoPools.length; ++j) {
-            ACOAssetHelper._setAssetInfinityApprove(strikeAsset, _this, acoPools[j], restrictions[j]);
-            IACOPool2(acoPools[j]).swap(acoToken, acoAmounts[j], restrictions[j], to, deadline);
+    }
+
+    function _receiveAsset(address strikeAsset, uint256 amount) internal returns(uint256 previousBalance, uint256 extraAmount) {
+        previousBalance = ACOAssetHelper._getAssetBalanceOf(strikeAsset, address(this));
+
+        extraAmount = 0;
+        if (ACOAssetHelper._isEther(strikeAsset)) {
+            require(msg.value >= amount, "ACOBuyer::buy:Invalid ETH amount");
+            previousBalance = SafeMath.sub(previousBalance, msg.value);
+            extraAmount = SafeMath.sub(msg.value, amount);
+        } else {
+            require(msg.value == 0, "ACOBuyer::buy:No payable");
+            ACOAssetHelper._callTransferFromERC20(strikeAsset, msg.sender, address(this), amount);
         }
-        
-        uint256 afterBalance = ACOAssetHelper._getAssetBalanceOf(strikeAsset, _this);
-        uint256 remaining = SafeMath.sub(afterBalance, previousBalance);
-        if (remaining > 0) {
-            ACOAssetHelper._transferAsset(strikeAsset, msg.sender, remaining);
+    } 
+
+    function _poolSwap(
+        address strikeAsset, 
+        address acoToken, 
+        address to,
+        uint256 deadline,
+        address[] memory acoPools,
+        uint256[] memory acoAmounts,
+        uint256[] memory restrictions
+    ) internal {
+        for (uint256 i = 0; i < acoPools.length; ++i) {
+            uint256 etherAmount = 0; 
+            if (ACOAssetHelper._isEther(strikeAsset)) {
+                etherAmount = restrictions[i];
+            } else {
+                ACOAssetHelper._setAssetInfinityApprove(strikeAsset, address(this), acoPools[i], restrictions[i]);
+            }
+            IACOPool2(acoPools[i]).swap{value: etherAmount}(acoToken, acoAmounts[i], restrictions[i], to, deadline);
         }
     }
 }

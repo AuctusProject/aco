@@ -113,8 +113,8 @@ interface IACOPool2 is IERC20 {
 		address[] memory acos,
 		uint256[] memory acosAmount
 	);
-    function swap(address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) external;
-    function swapWithGasToken(address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) external;
+    function swap(address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) external payable;
+    function swapWithGasToken(address acoToken, uint256 tokenAmount, uint256 restriction, address to, uint256 deadline) external payable;
     function redeemACOTokens() external;
 	function redeemACOToken(address acoToken) external;
     function restoreCollateral() external;
