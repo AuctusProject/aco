@@ -975,6 +975,7 @@ contract ACOPoolFactory2V3 is ACOPoolFactory2V2 {
      * @param strategy Address of the pool strategy to be used.
      * @return The created ACO pool address.
      */
+     /*
     function createAcoPool(
         address underlying, 
         address strikeAsset, 
@@ -1012,7 +1013,7 @@ contract ACOPoolFactory2V3 is ACOPoolFactory2V2 {
                 assetConverterHelper
             )
         ));
-    }
+    }*/
     
     /**
      * @dev Internal function to create a new ACO pool.
