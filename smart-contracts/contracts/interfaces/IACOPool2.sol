@@ -29,10 +29,10 @@ interface IACOPool2 is IERC20 {
     }
     
     struct PoolAcoPermissionConfig {
-        uint256 tolerancePriceBelowMax;
         uint256 tolerancePriceBelowMin;
-        uint256 tolerancePriceAboveMax;
+        uint256 tolerancePriceBelowMax;
         uint256 tolerancePriceAboveMin;
+        uint256 tolerancePriceAboveMax;
         uint256 minExpiration;
         uint256 maxExpiration;
     }

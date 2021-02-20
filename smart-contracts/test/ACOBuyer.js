@@ -40,8 +40,8 @@ describe("ACOBuyer", function() {
   let chiToken;
   let converterHelper;
   let acoBuyer;
-  let toleranceBelow = 5000;
-  let toleranceAbove = 5000;
+  let toleranceBelowMax = 5000;
+  let toleranceAboveMax = 5000;
   let minExpiration = 0;
   let maxExpiration = (30*86400);
 
@@ -52,14 +52,20 @@ describe("ACOBuyer", function() {
   let acoEthToken2PutPrice = ethers.BigNumber.from("400000000");
   let acoToken1Token2CallPrice = ethers.BigNumber.from("10000000000");
   let acoToken1Token2PutPrice = ethers.BigNumber.from("10000000000");
+  let acoToken1EthCallPrice = ethers.BigNumber.from("25000000");
+  let acoToken1EthPutPrice = ethers.BigNumber.from("25000000");
   let ethToken2BaseVolatility = 85000;
   let ethToken2BaseVolatility2 = 105000;
   let token1Token2BaseVolatility = 70000;
   let token1Token2BaseVolatility2 = 90000;
+  let token1EthBaseVolatility = 170000;
+  let token1EthBaseVolatility2 = 190000;
   let ACOEthToken2Call;
   let ACOEthToken2Put;
   let ACOToken1Token2Call;
   let ACOToken1Token2Put;
+  let ACOToken1EthCall;
+  let ACOToken1EthPut;
   let ACOPoolEthToken2Call;
   let ACOPoolEthToken2Call2;
   let ACOPoolEthToken2Put;
@@ -68,6 +74,10 @@ describe("ACOBuyer", function() {
   let ACOPoolToken1Token2Call2;
   let ACOPoolToken1Token2Put;
   let ACOPoolToken1Token2Put2;
+  let ACOPoolToken1EthCall;
+  let ACOPoolToken1EthCall2;
+  let ACOPoolToken1EthPut;
+  let ACOPoolToken1EthPut2;
   let atoken;
 
   beforeEach(async function () {
@@ -130,7 +140,7 @@ describe("ACOBuyer", function() {
     ACOPoolTemp = await (await ethers.getContractFactory("ACOPool2", {libraries:{ACOPoolLib:poolLib.address}})).deploy();
     await ACOPoolTemp.deployed();
 
-    let ACOPoolFactoryTemp = await (await ethers.getContractFactory("ACOPoolFactory2V3")).deploy();
+    let ACOPoolFactoryTemp = await (await ethers.getContractFactory("ACOPoolFactory2V4")).deploy();
     await ACOPoolFactoryTemp.deployed();
     
     let poolFactoryInterface = new ethers.utils.Interface(poolFactoryABI.abi);
@@ -171,36 +181,60 @@ describe("ACOBuyer", function() {
     let result6 = tx6.events[tx6.events.length - 1].args;
     ACOEthToken2Put = await ethers.getContractAt("ACOToken", result6.acoToken);
 
-    let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address)).wait();
+    let tx3 = await (await ACOFactory.createAcoToken(token1.address, AddressZero, true, acoToken1EthCallPrice, expiration, maxExercisedAccounts)).wait();
+    let result3 = tx3.events[tx3.events.length - 1].args;
+    ACOToken1EthCall = await ethers.getContractAt("ACOToken", result3.acoToken);
+
+    let tx5 = await (await ACOFactory.createAcoToken(token1.address, AddressZero, false, acoToken1EthPutPrice, expiration, maxExercisedAccounts)).wait();
+    let result5 = tx5.events[tx5.events.length - 1].args;
+    ACOToken1EthPut = await ethers.getContractAt("ACOToken", result5.acoToken);
+
+    let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     let result8 = tx8.events[tx8.events.length - 1].args;
     ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool2", result8.acoPool);
-    tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, token1Token2BaseVolatility2, await owner.getAddress(), defaultStrategy.address)).wait();
+    tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, token1Token2BaseVolatility2, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     result8 = tx8.events[tx8.events.length - 1].args;
     ACOPoolToken1Token2Call2 = await ethers.getContractAt("ACOPool2", result8.acoPool);
 
-    let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address)).wait();
+    let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     let result9 = tx9.events[tx9.events.length - 1].args;
     ACOPoolToken1Token2Put = await ethers.getContractAt("ACOPool2", result9.acoPool);
-    tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, token1Token2BaseVolatility2, await owner.getAddress(), defaultStrategy.address)).wait();
+    tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, token1Token2BaseVolatility2, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     result9 = tx9.events[tx9.events.length - 1].args;
     ACOPoolToken1Token2Put2 = await ethers.getContractAt("ACOPool2", result9.acoPool);
     
-    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address)).wait();
+    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     let result10 = tx10.events[tx10.events.length - 1].args;
     ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool2", result10.acoPool);
-    tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, ethToken2BaseVolatility2, await owner.getAddress(), defaultStrategy.address)).wait();
+    tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, ethToken2BaseVolatility2, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     result10 = tx10.events[tx10.events.length - 1].args;
     ACOPoolEthToken2Call2 = await ethers.getContractAt("ACOPool2", result10.acoPool);
 
-    let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address)).wait();
+    let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     let result11 = tx11.events[tx11.events.length - 1].args;
     ACOPoolEthToken2Put = await ethers.getContractAt("ACOPool2", result11.acoPool);
-    tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, toleranceBelow, toleranceAbove, minExpiration, maxExpiration, ethToken2BaseVolatility2, await owner.getAddress(), defaultStrategy.address)).wait();
+    tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, ethToken2BaseVolatility2, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
     result11 = tx11.events[tx11.events.length - 1].args;
     ACOPoolEthToken2Put2 = await ethers.getContractAt("ACOPool2", result11.acoPool);
 
+    let tx12 = await (await ACOPoolFactory.createAcoPool(token1.address, AddressZero, false, token1EthBaseVolatility, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
+    let result12 = tx12.events[tx12.events.length - 1].args;
+    ACOPoolToken1EthPut = await ethers.getContractAt("ACOPool2", result12.acoPool);
+    tx12 = await (await ACOPoolFactory.createAcoPool(token1.address, AddressZero, false, token1EthBaseVolatility2, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
+    result12 = tx12.events[tx12.events.length - 1].args;
+    ACOPoolToken1EthPut2 = await ethers.getContractAt("ACOPool2", result12.acoPool);
+
+    let tx13 = await (await ACOPoolFactory.createAcoPool(token1.address, AddressZero, true, token1EthBaseVolatility, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
+    let result13 = tx13.events[tx13.events.length - 1].args;
+    ACOPoolToken1EthCall = await ethers.getContractAt("ACOPool2", result13.acoPool);
+    tx13 = await (await ACOPoolFactory.createAcoPool(token1.address, AddressZero, true, token1EthBaseVolatility2, await owner.getAddress(), defaultStrategy.address, [0, toleranceBelowMax, 0, toleranceBelowMax, minExpiration, maxExpiration])).wait();
+    result13 = tx13.events[tx13.events.length - 1].args;
+    ACOPoolToken1EthCall2 = await ethers.getContractAt("ACOPool2", result13.acoPool);
+
     await token1.approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
     await token1.approve(ACOPoolToken1Token2Call2.address, token1TotalSupply);
+    await token1.approve(ACOPoolToken1EthCall.address, token1TotalSupply);
+    await token1.approve(ACOPoolToken1EthCall2.address, token1TotalSupply);
     await token2.approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
     await token2.approve(ACOPoolToken1Token2Put2.address, token2TotalSupply);
     await token2.approve(ACOPoolEthToken2Put.address, token2TotalSupply);
@@ -231,6 +265,10 @@ describe("ACOBuyer", function() {
     await ACOPoolEthToken2Call2.deposit(ethers.BigNumber.from("100000000000000000000"), 1, await owner.getAddress(), false, {value: ethers.BigNumber.from("100000000000000000000")});
     await ACOPoolEthToken2Put.deposit(ethers.BigNumber.from("1000000000000"), 1, await owner.getAddress(), false);
     await ACOPoolEthToken2Put2.deposit(ethers.BigNumber.from("1000000000000"), 1, await owner.getAddress(), false);
+    await ACOPoolToken1EthPut.deposit(ethers.BigNumber.from("100000000000000000000"), 1, await owner.getAddress(), false, {value: ethers.BigNumber.from("100000000000000000000")});
+    await ACOPoolToken1EthPut2.deposit(ethers.BigNumber.from("100000000000000000000"), 1, await owner.getAddress(), false, {value: ethers.BigNumber.from("100000000000000000000")});
+    await ACOPoolToken1EthCall.deposit(ethers.BigNumber.from("10000000000"), 1, await owner.getAddress(), false);
+    await ACOPoolToken1EthCall2.deposit(ethers.BigNumber.from("10000000000"), 1, await owner.getAddress(), false);
 
     acoBuyer = await (await ethers.getContractFactory("ACOBuyer")).deploy(ACOFactory.address, chiToken.address);
     await acoBuyer.deployed();
