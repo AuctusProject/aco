@@ -1027,11 +1027,40 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
     
     /**
      * @dev Function to set the pool proxy admin address.
-     * Only can be called by the pool proxy admin.
+     * Only can be called by the factory admin.
      * @param newPoolProxyAdmin Address of the new pool proxy admin.
      */
     function setPoolProxyAdmin(address newPoolProxyAdmin) onlyFactoryAdmin external virtual {
         _setPoolProxyAdmin(newPoolProxyAdmin);
+    }
+
+    /**
+     * @dev Function to update the pool implementation address.
+     * Only can be called by the pool proxy admin.
+     * @param pools Addresses of the new pools.
+     * @param initData Init data for the pool implementation.
+     */
+    function updatePoolsImplementation(
+        address payable[] calldata pools,
+        bytes calldata initData
+    ) external virtual {
+        require(poolProxyAdmin == msg.sender, "ACOPoolFactory::onlyPoolProxyAdmin");
+        for (uint256 i = 0; i < pools.length; ++i) {
+            ACOProxy(pools[i]).setImplementation(acoPoolImplementation, initData);
+        }
+    }
+
+    /**
+     * @dev Function to transfer the pool proxy admin.
+     * Only can be called by the pool proxy admin.
+     * @param newPoolProxyAdmin Address of the new pool proxy admin.
+     * @param pools Addresses of the new pools.
+     */
+    function transferPoolProxyAdmin(address newPoolProxyAdmin, address payable[] calldata pools) external virtual {
+        require(poolProxyAdmin == msg.sender, "ACOPoolFactory::onlyPoolProxyAdmin");
+        for (uint256 i = 0; i < pools.length; ++i) {
+            ACOProxy(pools[i]).transferProxyAdmin(newPoolProxyAdmin);
+        }
     }
 
     /**
@@ -1111,7 +1140,7 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
      * @return Address of the new proxy deployed for the ACO pool.
      */
     function _deployAcoPool(IACOPool2.InitData memory initData) internal override virtual returns(address) {
-        ACOProxy proxy = new ACOProxy(poolProxyAdmin, acoPoolImplementation, abi.encodeWithSelector(IACOPool2.init.selector, initData));
+        ACOProxy proxy = new ACOProxy(address(this), acoPoolImplementation, abi.encodeWithSelector(IACOPool2.init.selector, initData));
         return address(proxy);
     }
     

@@ -2,7 +2,6 @@ pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
 import '../../util/Ownable.sol';
-import '../../libs/Address.sol';
 import '../../libs/ACOAssetHelper.sol';
 import '../../libs/ACOPoolLib.sol';
 import '../../core/ERC20.sol';
@@ -26,10 +25,6 @@ import '../../interfaces/ILendingPool.sol';
  * E00  | init                                | SC is already initialized                   *
  *------------------------------------------------------------------------------------------*
  * E01  | init                                | Underlying and strike asset are the same    *
- *------------------------------------------------------------------------------------------*
- * E02  | init                                | Invalid underlying address                  *
- *------------------------------------------------------------------------------------------*
- * E03  | init                                | Invalid strike asset address                *
  *------------------------------------------------------------------------------------------*
  * E10  | _deposit                            | Invalid collateral amount                   *
  *------------------------------------------------------------------------------------------*
@@ -101,7 +96,6 @@ import '../../interfaces/ILendingPool.sol';
  ********************************************************************************************
  */
 contract ACOPool2 is Ownable, ERC20 {
-    using Address for address;
     
     uint256 internal constant PERCENTAGE_PRECISION = 100000;
 
@@ -180,10 +174,7 @@ contract ACOPool2 is Ownable, ERC20 {
 
     function init(IACOPool2.InitData calldata initData) external {
 		require(underlying == address(0) && strikeAsset == address(0), "E00");
-        
         require(initData.underlying != initData.strikeAsset, "E01");
-        require(ACOAssetHelper._isEther(initData.underlying) || initData.underlying.isContract(), "E02");
-        require(ACOAssetHelper._isEther(initData.strikeAsset) || initData.strikeAsset.isContract(), "E03");
         
         super.init();
 
@@ -863,8 +854,8 @@ contract ACOPool2 is Ownable, ERC20 {
 
     function _setAcoPermissionConfig(IACOPool2.PoolAcoPermissionConfig memory newConfig) internal {
         require(newConfig.tolerancePriceBelowMax < PERCENTAGE_PRECISION, "E81");
-        require(newConfig.tolerancePriceBelowMin <= newConfig.tolerancePriceBelowMax, "E82");
-        require(newConfig.tolerancePriceAboveMin <= newConfig.tolerancePriceAboveMax, "E83");
+        require(newConfig.tolerancePriceBelowMin <= newConfig.tolerancePriceBelowMax || newConfig.tolerancePriceBelowMax == 0, "E82");
+        require(newConfig.tolerancePriceAboveMin <= newConfig.tolerancePriceAboveMax || newConfig.tolerancePriceAboveMax == 0, "E83");
         require(newConfig.minExpiration <= newConfig.maxExpiration, "E84");
         
         emit SetAcoPermissionConfig(acoPermissionConfig, newConfig);

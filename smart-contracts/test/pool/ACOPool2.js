@@ -662,7 +662,7 @@ describe("ACOPool2", function() {
       
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("E43");
+      ).to.be.revertedWith("E45");
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolToken1Token2Call.address]);
 
@@ -768,7 +768,7 @@ describe("ACOPool2", function() {
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("E43");
+      ).to.be.revertedWith("E45");
       
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolToken1Token2Put.address]);
       
@@ -872,7 +872,7 @@ describe("ACOPool2", function() {
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("E43");
+      ).to.be.revertedWith("E45");
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolEthToken2Call.address]);
 
@@ -982,7 +982,7 @@ describe("ACOPool2", function() {
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("E43");
+      ).to.be.revertedWith("E45");
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolEthToken2Put.address]);
 
