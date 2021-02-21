@@ -1059,7 +1059,7 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
         address strategy,
         IACOPool2.PoolAcoPermissionConfig calldata acoPermissionConfig
     ) external virtual returns(address) {
-        require(operators[msg.sender], "ACOPoolFactory2::createAcoPool: Only authorized operators");
+        require((operators[address(0)] || operators[msg.sender]), "ACOPoolFactory2::createAcoPool: Only authorized operators");
         return _createAcoPool(IACOPool2.InitData(
             acoFactory,
             chiToken,
