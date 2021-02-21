@@ -34,6 +34,10 @@ contract ACOBuyer {
         _notEntered = true;
     }
 
+    receive() external payable {
+        require(tx.origin != msg.sender, "ACOBuyer:: Not allowed");
+    }
+
     function buy(
         address acoToken, 
         address to,
