@@ -1,6 +1,7 @@
 pragma solidity ^0.6.6;
 pragma experimental ABIEncoderV2;
 
+import "../../core/ACOProxy.sol";
 import "../../libs/Address.sol";
 import "../../interfaces/IACOPool2.sol";
 
@@ -1000,6 +1001,13 @@ contract ACOPoolFactory2V3 is ACOPoolFactory2V2 {
 contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
 
     /**
+     * @dev Emitted when the pool proxy admin address has been changed.
+     * @param previousPoolProxyAdmin Address of the previous pool proxy admin.
+     * @param newPoolProxyAdmin Address of the new pool proxy admin.
+     */
+    event SetPoolProxyAdmin(address indexed previousPoolProxyAdmin, address indexed newPoolProxyAdmin);
+
+    /**
      * @dev Emitted when a ACO creator address forbidden status has been changed.
      * @param acoCreator Address of the ACO creator.
      * @param previousStatus Whether the creator was forbidden.
@@ -1008,10 +1016,24 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
     event SetForbiddenAcoCreator(address indexed acoCreator, bool indexed previousStatus, bool indexed newStatus);
 
     /**
+     * @dev The factory admin address.
+     */
+    address public poolProxyAdmin;
+
+    /**
      * @dev Addresses of forbidden ACO creators for a pool.
      */
     address[] internal acoForbiddenCreators;
     
+    /**
+     * @dev Function to set the pool proxy admin address.
+     * Only can be called by the pool proxy admin.
+     * @param newPoolProxyAdmin Address of the new pool proxy admin.
+     */
+    function setPoolProxyAdmin(address newPoolProxyAdmin) onlyFactoryAdmin external virtual {
+        _setPoolProxyAdmin(newPoolProxyAdmin);
+    }
+
     /**
      * @dev Function to get the number of ACO creators forbidden for a pool.
      * @return The number of ACO creators forbidden.
@@ -1082,6 +1104,16 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
             )
         ));
     }
+
+    /**
+     * @dev Internal function to deploy a proxy using ACO pool implementation.
+     * @param initData Data to initialize o ACO Pool.
+     * @return Address of the new proxy deployed for the ACO pool.
+     */
+    function _deployAcoPool(IACOPool2.InitData memory initData) internal override virtual returns(address) {
+        ACOProxy proxy = new ACOProxy(poolProxyAdmin, acoPoolImplementation, abi.encodeWithSelector(IACOPool2.init.selector, initData));
+        return address(proxy);
+    }
     
     /**
      * @dev Internal function to create a new ACO pool.
@@ -1100,6 +1132,16 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
         }
         emit NewAcoPool(initData.underlying, initData.strikeAsset, initData.isCall, acoPool, acoPoolImplementation);
         return acoPool;
+    }
+
+    /**
+     * @dev Internal function to set the pool proxy admin address.
+     * @param newPoolProxyAdmin Address of the new pool proxy admin.
+     */
+    function _setPoolProxyAdmin(address newPoolProxyAdmin) internal virtual {
+        require(newPoolProxyAdmin != address(0), "ACOPoolFactory::_setPoolProxyAdmin: Invalid pool proxy admin");
+        emit SetPoolProxyAdmin(poolProxyAdmin, newPoolProxyAdmin);
+        poolProxyAdmin = newPoolProxyAdmin;
     }
 
     /**

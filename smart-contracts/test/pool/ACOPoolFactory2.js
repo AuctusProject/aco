@@ -11,7 +11,7 @@ describe("ACOPoolFactory2", function() {
   let poolFactoryInterface;
   let ACOPool;
   let ACOPoolFactory;
-  let ACOPoolFactoryV3;
+  let ACOPoolFactoryV4;
   let owner;
   let addr1;
   let addr2;
@@ -110,12 +110,18 @@ describe("ACOPoolFactory2", function() {
     await lendingPool.setAsset(token2.address, token2TotalSupply/4);
     await buidlerACOPoolFactory.setAcoPoolLendingPool(lendingPool.address);
 
-    ACOPoolFactoryV3 = await (await ethers.getContractFactory("ACOPoolFactory2V3")).deploy();
+    let ACOPoolFactoryV3 = await (await ethers.getContractFactory("ACOPoolFactory2V3")).deploy();
     await ACOPoolFactoryV3.deployed();
     await buidlerACOPoolFactoryProxy.setImplementation(ACOPoolFactoryV3.address, []);
     buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactory2V3", buidlerACOPoolFactoryProxy.address);
     await buidlerACOPoolFactory.setAuthorizedAcoCreator(await owner.getAddress(), true);
     await buidlerACOPoolFactory.setOperator(await owner.getAddress(), true);
+
+    ACOPoolFactoryV4 = await (await ethers.getContractFactory("ACOPoolFactory2V4")).deploy();
+    await ACOPoolFactoryV4.deployed();
+    await buidlerACOPoolFactoryProxy.setImplementation(ACOPoolFactoryV4.address, []);
+    buidlerACOPoolFactory = await ethers.getContractAt("ACOPoolFactory2V4", buidlerACOPoolFactoryProxy.address);
+    await buidlerACOPoolFactory.setPoolProxyAdmin(await owner.getAddress());
   });
   
   describe("Proxy Deployment", function () {
@@ -123,7 +129,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerACOPoolFactoryProxy.admin()).to.equal(await owner.getAddress());
     });
     it("Should set the right proxy implementation", async function () {
-      expect(await buidlerACOPoolFactoryProxy.implementation()).to.equal(ACOPoolFactoryV3.address);
+      expect(await buidlerACOPoolFactoryProxy.implementation()).to.equal(ACOPoolFactoryV4.address);
     });
     it("Should set the right factory admin", async function () {
       expect(await buidlerACOPoolFactory.factoryAdmin()).to.equal(await owner.getAddress());
