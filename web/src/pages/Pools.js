@@ -24,8 +24,8 @@ class Pools extends Component {
 
   refreshPoolData = (forceRefresh) => {
     getAcoPools(forceRefresh).then(pools => {
-      var discontinuedPools = pools.filter(p => p.acoPoolImplementation.toLowerCase() === deprecatedPoolImplementation.toLowerCase())
-      var availablePools = pools.filter(p => p.acoPoolImplementation.toLowerCase() !== deprecatedPoolImplementation.toLowerCase() && 
+      var discontinuedPools = pools.filter(p => deprecatedPoolImplementation.filter(c => c.toLowerCase() === p.acoPoolImplementation.toLowerCase()).length > 0)
+      var availablePools = pools.filter(p => deprecatedPoolImplementation.filter(c => c.toLowerCase() === p.acoPoolImplementation.toLowerCase()).length === 0 && 
         (p.admin === null || p.admin === undefined || p.admin.toLowerCase() === defaultPoolAdmin || p.admin.toLowerCase() === this.getCurrentAccount())
       )
       this.setState({pools: availablePools, discontinuedPools: discontinuedPools, loading: false})
