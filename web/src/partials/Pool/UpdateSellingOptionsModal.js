@@ -11,7 +11,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { setPoolDataForAcoPermission } from '../../util/acoPoolMethodsv3'
+import { setAcoPermissionConfig } from '../../util/acoPoolMethodsv4'
 import SimpleDropdown from '../SimpleDropdown'
 
 const strikePriceOptions = [
@@ -86,7 +86,7 @@ class UpdateSellingOptionsModal extends Component {
       let minExpiration = this.state.minExpiration * 86400
       let maxExpiration = this.state.maxExpiration * 86400
       this.setStepsModalInfo(++stepNumber)
-      setPoolDataForAcoPermission(this.context.web3.selectedAccount, pool.address, tolerancePriceBelow, tolerancePriceAbove, minExpiration, maxExpiration)
+      setAcoPermissionConfig(this.context.web3.selectedAccount, pool.address, 0, tolerancePriceBelow, 0, tolerancePriceAbove, minExpiration, maxExpiration)
         .then(result => {
           if (result) {
             this.setStepsModalInfo(++stepNumber)
