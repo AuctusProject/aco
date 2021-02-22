@@ -64,11 +64,11 @@ import '../../interfaces/ILendingPool.sol';
  *------------------------------------------------------------------------------------------*
  * E80  | withdrawStuckToken                  | The token is forbidden to withdraw          *
  *------------------------------------------------------------------------------------------*
- * E81  | _setAcoPermissionConfig             | Invalid maximum below tolerance percentage  *
+ * E81  | _setAcoPermissionConfig             | Invalid below tolerance percentage          *
  *------------------------------------------------------------------------------------------*
  * E82  | _setAcoPermissionConfig             | Invalid minimum below tolerance percentage  *
  *------------------------------------------------------------------------------------------*
- * E83  | _setAcoPermissionConfig             | Invalid above tolerance percentage          *
+ * E83  | _setAcoPermissionConfig             | Invalid minimum above tolerance percentage  *
  *------------------------------------------------------------------------------------------*
  * E84  | _setAcoPermissionConfig             | Invalid expiration range                    *
  *------------------------------------------------------------------------------------------*
@@ -853,7 +853,7 @@ contract ACOPool2 is Ownable, ERC20 {
     }
 
     function _setAcoPermissionConfig(IACOPool2.PoolAcoPermissionConfig memory newConfig) internal {
-        require(newConfig.tolerancePriceBelowMax < PERCENTAGE_PRECISION, "E81");
+        require(newConfig.tolerancePriceBelowMax < PERCENTAGE_PRECISION && newConfig.tolerancePriceBelowMin < PERCENTAGE_PRECISION, "E81");
         require(newConfig.tolerancePriceBelowMin <= newConfig.tolerancePriceBelowMax || newConfig.tolerancePriceBelowMax == 0, "E82");
         require(newConfig.tolerancePriceAboveMin <= newConfig.tolerancePriceAboveMax || newConfig.tolerancePriceAboveMax == 0, "E83");
         require(newConfig.minExpiration <= newConfig.maxExpiration, "E84");

@@ -1090,6 +1090,17 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
     }
 
     /**
+     * @dev Function to change the ACO pools ACO creator forbidden situation.
+     * Only can be called by a pool admin.
+     * @param acoCreator Address of the ACO creator.
+	 * @param status Forbidden situation.
+     * @param acoPools Array of ACO pools addresses.
+     */
+	function setForbiddenAcoCreatorOnAcoPool(address acoCreator, bool status, address[] calldata acoPools) onlyPoolAdmin external virtual {
+		_setForbiddenAcoCreatorOnAcoPool(acoCreator, status, acoPools);
+	}
+
+    /**
      * @dev Function to create a new ACO pool.
      * It deploys a minimal proxy for the ACO pool implementation address. 
      * @param underlying Address of the underlying asset (0x0 for Ethereum).
@@ -1197,5 +1208,17 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
             acoForbiddenCreators.push(acoCreator);
         }
         emit SetForbiddenAcoCreator(acoCreator, previousStatus, newStatus);
+    }
+
+    /**
+     * @dev Internal function to change the ACO pools ACO creator forbidden situation.
+     * @param acoCreator Address of the ACO creator.
+	 * @param status Forbidden situation.
+     * @param acoPools Array of ACO pools addresses.
+     */
+    function _setForbiddenAcoCreatorOnAcoPool(address acoCreator, bool status, address[] memory acoPools) internal virtual {
+        for (uint256 i = 0; i < acoPools.length; ++i) {
+            IACOPool2(acoPools[i]).setForbiddenAcoCreator(acoCreator, status);
+        }
     }
 }
