@@ -58,12 +58,12 @@ const isEther = (token) => {
 
 const getOldPoolImplementations = () => {
   const implementations = process.env.POOL_IMPLEMENTATIONS.split(',');
-  if (implementations.length === 4) {
-    return [implementations[0].toLowerCase(),implementations[1].toLowerCase()];
-  } else {
-    return [implementations[0].toLowerCase()];
+  const old = [];
+  for (let i = 0; i < implementations.length - 1; ++i) {
+    old.push(implementations[i].toLowerCase());
   }
-}
+  return old;
+};
 
 const parseBlock = (block) => {
   if (typeof(block) === "number" || typeof(block) === "bigint") {
@@ -132,7 +132,28 @@ const getAcoPoolBaseVolatility = (pool, block = "latest") => {
   });
 };
 
-const getAcoPoolFee = (pool, block = "latest") => {
+const getAcoProtocolConfig = (pool, block = "latest") => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0xf5efbb4f"}, parseBlock(block)).then((result) => {
+      if (result) {
+        const pureData = result.substring(2);
+        resolve({
+          lendingPoolReferral: parseInt(pureData.substring(0, 64), 16),
+          withdrawOpenPositionPenalty: BigInt("0x" + pureData.substring(64, 128)),
+          underlyingPriceAdjustPercentage: BigInt("0x" + pureData.substring(128, 192)),
+          fee: BigInt("0x" + pureData.substring(192, 256)),
+          maximumOpenAco: parseInt(pureData.substring(256, 320), 16),
+          feeDestination: "0x" + pureData.substring(344, 384),
+          assetConverter: "0x" + pureData.substring(408, 448)
+        });
+      } else {
+        reject(new Error("Invalid pool protocol config"));
+      }
+    }).catch((err) => reject(err));
+  });
+};
+
+const getAcoPoolFeeDeprecated = (pool, block = "latest") => {
   return new Promise((resolve, reject) => {
     callEthereum("eth_call", {"to": pool, "data": "0xddca3f43"}, parseBlock(block)).then((result) => 
       {
@@ -145,7 +166,7 @@ const getAcoPoolFee = (pool, block = "latest") => {
   });
 };
 
-const getAcoPoolUnderlyingPriceAdjustPercentage = (pool, block = "latest") => {
+const getAcoPoolUnderlyingPriceAdjustPercentageDeprecated = (pool, block = "latest") => {
   return new Promise((resolve, reject) => {
     callEthereum("eth_call", {"to": pool, "data": "0x0b5256af"}, parseBlock(block)).then((result) => 
       {
@@ -155,6 +176,31 @@ const getAcoPoolUnderlyingPriceAdjustPercentage = (pool, block = "latest") => {
           reject(new Error("Invalid pool underlying price adjust"));
         }
       }).catch((err) => reject(err));
+  });
+};
+
+const getOpenPositionPenaltyPercentageDeprecated = (pool, block = "latest") => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0x9a4ed023"}, parseBlock(block)).then((result) => 
+      {
+        if (result) {
+          resolve(BigInt(result));
+        } else {
+          reject(new Error("Invalid open position penalty"));
+        }
+      }).catch((err) => reject(err));
+  });
+};
+
+const getAcoPoolAssetConverterDeprecated = (pool, block = "latest") => {
+  return new Promise((resolve, reject) => {
+    callEthereum("eth_call", {"to": pool, "data": "0x5d73efce"}, parseBlock(block)).then((result) => {
+      if (result) {
+        resolve("0x" + result.substring(26));
+      } else {
+        reject(new Error("Invalid converter for ACO pool"));
+      }
+    }).catch((err) => reject(err));
   });
 };
 
@@ -170,18 +216,6 @@ const getAcoPoolStrategy = (pool, block = "latest") => {
   });
 };
 
-const getAcoPoolAssetConverter = (pool, block = "latest") => {
-  return new Promise((resolve, reject) => {
-    callEthereum("eth_call", {"to": pool, "data": "0x5d73efce"}, parseBlock(block)).then((result) => {
-      if (result) {
-        resolve("0x" + result.substring(26));
-      } else {
-        reject(new Error("Invalid converter for ACO pool"));
-      }
-    }).catch((err) => reject(err));
-  });
-};
-
 const getAssetConverterPrice = (assetConverter, underlying, strikeAsset, block = "latest") => {
   return new Promise((resolve, reject) => {
     callEthereum("eth_call", {"to": assetConverter, "data": "0xac41865a" + addressToData(underlying) + addressToData(strikeAsset)}, parseBlock(block)).then((result) => {
@@ -191,19 +225,6 @@ const getAssetConverterPrice = (assetConverter, underlying, strikeAsset, block =
         reject(new Error("Invalid price for converter"));
       }
     }).catch((err) => reject(err));
-  });
-};
-
-const getOpenPositionPenaltyPercentage = (pool, block = "latest") => {
-  return new Promise((resolve, reject) => {
-    callEthereum("eth_call", {"to": pool, "data": "0x9a4ed023"}, parseBlock(block)).then((result) => 
-      {
-        if (result) {
-          resolve(BigInt(result));
-        } else {
-          reject(new Error("Invalid open position penalty"));
-        }
-      }).catch((err) => reject(err));
   });
 };
 
@@ -340,21 +361,10 @@ const getPoolNetData = (acoPool, totalSupply, poolDecimals, block = "latest") =>
   });
 };
 
-const getAcoPoolAdmin = (acoPool, block = "latest", attempt = 0) => {
+const getAcoPoolAdmin = (acoPool, block = "latest") => {
   return new Promise((resolve, reject) => {
-    callEthereum("eth_call", {"to": acoPool, "data": "0xf851a440"}, parseBlock(block), 0, true).then((result) => {
-      if (result.code) {
-        if (result.message && result.message.indexOf("execution") >= 0) {
-          resolve(null);
-        } else if (attempt < 2 && result.code === generalErrorCode) {
-          ++attempt;
-          sleep(1000).then(() => this.getAcoPoolAdmin(acoPool, block, attempt).then((res) => resolve(res)).catch((err) => reject(err)));
-        } else {
-          reject(new Error("Invalid error code on pool admin: " + JSON.stringify(result)));
-        }
-      } else {
-        resolve("0x" + result.substring(26));
-      }
+    callEthereum("eth_call", {"to": acoPool, "data": "0xb782cc49"}, parseBlock(block)).then((result) => {
+      resolve("0x" + result.substring(26));
     }).catch((err) => reject(err));
   });
 };
@@ -534,7 +544,7 @@ const getAcoTokensByEvent = async (eventTopic) => {
   })
 };
 
-const getAcoPoolWithdrawOpenPositionPenaltyHistory = async (pool) => {
+const getAcoPoolWithdrawOpenPositionPenaltyHistoryDeprecated = async (pool) => {
   return new Promise((resolve, reject) => { 
     callEthereum("eth_getLogs", {"address": [pool], "fromBlock": fromBlock, "topics": ["0xd352239c19dc57bad583cde39eb95d7bf6cccc6acc47e7016b8fea01cb84215a"]}, null).then((result) => {
       if (result) {
@@ -877,10 +887,6 @@ module.exports.acoPools = () => {
         const promises = [];
         let added = {};
         for (let i = 0; i < response.length; ++i) {
-          added[(response[i].acoPool+"vol")] = promises.length;
-          promises.push(getAcoPoolBaseVolatility(response[i].acoPool, blockNumber));
-          added[(response[i].acoPool+"tol")] = promises.length;
-          promises.push(getTotalSupply(response[i].acoPool, blockNumber));
           added[response[i].acoPool] = promises.length;
           promises.push(getTokenInfo(response[i].acoPool, blockNumber));
           if (added[response[i].underlying] === undefined) {
@@ -891,14 +897,11 @@ module.exports.acoPools = () => {
             added[response[i].strikeAsset] = promises.length;
             promises.push(getTokenInfo(response[i].strikeAsset, blockNumber));
           }
-          if (oldPoolImplementations.filter(c => c === response[i].acoPoolImplementation).length > 0) {
-            added[(response[i].acoPool+"und")] = promises.length;
-            promises.push(getBalance(response[i].underlying, response[i].acoPool, blockNumber));
-            added[(response[i].acoPool+"str")] = promises.length;
-            promises.push(getBalance(response[i].strikeAsset, response[i].acoPool, blockNumber));
-          } else {
-            added[(response[i].acoPool+"pen")] = promises.length;
-            promises.push(getOpenPositionPenaltyPercentage(response[i].acoPool, blockNumber));
+          if (oldPoolImplementations.filter(c => c === response[i].acoPoolImplementation).length === 0) {
+            added[(response[i].acoPool+"vol")] = promises.length;
+            promises.push(getAcoPoolBaseVolatility(response[i].acoPool, blockNumber));
+            added[(response[i].acoPool+"pro")] = promises.length;
+            promises.push(getAcoProtocolConfig(response[i].acoPool, blockNumber));
             added[(response[i].acoPool+"ged")] = promises.length;
             promises.push(getGeneralData(response[i].acoPool, blockNumber));
             added[(response[i].acoPool+"adm")] = promises.length;
@@ -907,49 +910,38 @@ module.exports.acoPools = () => {
         }
         Promise.all(promises).then((result) =>
         {
-          const shareDataPromises = [];
-          const shareDataIndex = [];
           for (let j = 0; j < response.length; ++j) {
-            let totalSupply = result[added[(response[j].acoPool+"tol")]];
-            let poolDecimals = result[added[response[j].acoPool]].decimals;
-  
-            response[j].volatility = parseFloat(result[added[(response[j].acoPool+"vol")]]);
-            response[j].totalSupply = totalSupply.toString(10);
             response[j].acoPoolInfo = result[added[response[j].acoPool]];
             response[j].underlyingInfo = result[added[response[j].underlying]];
             response[j].strikeAssetInfo = result[added[response[j].strikeAsset]];
-            response[j].admin = null;
   
-            if (oldPoolImplementations.filter(c => c === response[j].acoPoolImplementation).length > 0) {
-              response[j].underlyingBalance = (result[added[(response[j].acoPool+"und")]]).toString(10);
-              response[j].strikeAssetBalance = (result[added[(response[j].acoPool+"str")]]).toString(10);
-              shareDataIndex.push(j);
-              shareDataPromises.push(getPoolNetData(response[j].acoPool, totalSupply, poolDecimals, blockNumber));
-            } else {
-              let openPositionPenalty = result[added[(response[j].acoPool+"pen")]];
+            if (oldPoolImplementations.filter(c => c === response[j].acoPoolImplementation).length === 0) {
+              let protocolConfig = result[added[(response[j].acoPool+"pro")]];
               let generalData = result[added[(response[j].acoPool+"ged")]];
   
+              response[j].volatility = parseFloat(result[added[(response[j].acoPool+"vol")]]);
               response[j].admin = result[added[(response[j].acoPool+"adm")]];
               response[j].underlyingBalance = generalData.underlyingBalance.toString(10);
               response[j].strikeAssetBalance = generalData.strikeAssetBalance.toString(10);
+              response[j].totalSupply = generalData.poolSupply.toString(10);
   
-              if (totalSupply > BigInt(0)) {
+              if (generalData.poolSupply > BigInt(0)) {
                 let collateral;
                 if (response[j].isCall) {
                   collateral = generalData.underlyingBalance;
                 } else {
                   collateral = generalData.strikeAssetBalance;
                 }
-                let collateralPerShare = collateral + generalData.collateralLocked - (generalData.collateralOnOpenPosition * (percentage + openPositionPenalty)) / percentage;
-                let share = BigInt(10) ** BigInt(poolDecimals);
+                let collateralPerShare = collateral + generalData.collateralLocked - (generalData.collateralOnOpenPosition * (percentage + protocolConfig.withdrawOpenPositionPenalty)) / percentage;
+                let share = BigInt(10) ** BigInt(result[added[response[j].acoPool]].decimals);
                 if (response[j].isCall) {
-                  response[j].underlyingPerShare = (share * collateralPerShare / totalSupply).toString(10);
-                  response[j].strikeAssetPerShare = (share * generalData.strikeAssetBalance / totalSupply).toString(10);
+                  response[j].underlyingPerShare = (share * collateralPerShare / generalData.poolSupply).toString(10);
+                  response[j].strikeAssetPerShare = (share * generalData.strikeAssetBalance / generalData.poolSupply).toString(10);
                   response[j].underlyingTotalShare = collateralPerShare.toString(10);
                   response[j].strikeAssetTotalShare = generalData.strikeAssetBalance.toString(10);
                 } else {
-                  response[j].underlyingPerShare = (share * generalData.underlyingBalance / totalSupply).toString(10);
-                  response[j].strikeAssetPerShare = (share * collateralPerShare / totalSupply).toString(10);
+                  response[j].underlyingPerShare = (share * generalData.underlyingBalance / generalData.poolSupply).toString(10);
+                  response[j].strikeAssetPerShare = (share * collateralPerShare / generalData.poolSupply).toString(10);
                   response[j].underlyingTotalShare = generalData.underlyingBalance.toString(10);
                   response[j].strikeAssetTotalShare = collateralPerShare.toString(10);
                 }
@@ -961,16 +953,7 @@ module.exports.acoPools = () => {
               }
             }
           }
-          Promise.all(shareDataPromises).then((data) => 
-          {
-            for (let k = 0; k < shareDataIndex.length; ++k) {
-              response[shareDataIndex[k]].underlyingPerShare = data[k].underlyingPerShare;
-              response[shareDataIndex[k]].strikeAssetPerShare = data[k].strikeAssetPerShare;
-              response[shareDataIndex[k]].underlyingTotalShare = data[k].underlyingTotalShare;
-              response[shareDataIndex[k]].strikeAssetTotalShare = data[k].strikeAssetTotalShare;
-            }
-            resolve(response);
-          }).catch((err) => reject(err));
+          resolve(response);
         }).catch((err) => reject(err));
       }).catch((err) => reject(err));
     }).catch((err) => reject(err));
@@ -987,15 +970,12 @@ module.exports.acoPoolSituation = (pool) => {
           getTotalSupply(pool, blockNumber),
           getGeneralData(pool, blockNumber), 
           listOpenAcoTokensOnAcoPool(pool, blockNumber),
-          getOpenPositionPenaltyPercentage(pool, blockNumber),
           getAcoPoolBaseVolatility(pool, blockNumber),
-          getAcoPoolFee(pool, blockNumber),
           getAcoPoolStrategy(pool, blockNumber),
-          getAcoPoolAssetConverter(pool, blockNumber),
-          getAcoPoolUnderlyingPriceAdjustPercentage(pool, blockNumber),
-          getAcoPoolAdmin(pool, blockNumber)
+          getAcoPoolAdmin(pool, blockNumber),
+          getAcoProtocolConfig(pool, blockNumber)
         ]).then((data) => {
-          getAssetConverterPrice(data[9], basicData.underlying, basicData.strikeAsset, blockNumber).then((underlyingPrice) => {
+          getAssetConverterPrice(data[8].assetConverter, basicData.underlying, basicData.strikeAsset, blockNumber).then((underlyingPrice) => {
             let underlyingPerShare = BigInt(0);
             let strikeAssetPerShare = BigInt(0);
             let openPositionOptionsValue = BigInt(0);
@@ -1005,9 +985,9 @@ module.exports.acoPoolSituation = (pool) => {
               if (basicData.isCall) {
                 collateralValue = getPoolCollateralValue(data[3].underlyingBalance, basicData.isCall, underlyingPrice, data[0].decimals);
                 notCollateralValue = data[3].strikeAssetBalance;
-                openPositionOptionsValue = data[3].collateralOnOpenPosition * underlyingPrice * (percentage - data[10]) / (BigInt(10) ** BigInt(data[0].decimals + 5));
+                openPositionOptionsValue = data[3].collateralOnOpenPosition * underlyingPrice * (percentage - data[8].underlyingPriceAdjustPercentage) / (BigInt(10) ** BigInt(data[0].decimals + 5));
                 let share = BigInt(10) ** BigInt(data[0].decimals);
-                underlyingPerShare = share * (data[3].underlyingBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[5])) / percentage) / data[2];
+                underlyingPerShare = share * (data[3].underlyingBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[8].withdrawOpenPositionPenalty)) / percentage) / data[2];
                 strikeAssetPerShare = share * data[3].strikeAssetBalance / data[2];
               } else {
                 collateralValue = getPoolCollateralValue(data[3].strikeAssetBalance, basicData.isCall, underlyingPrice, data[0].decimals);
@@ -1015,14 +995,14 @@ module.exports.acoPoolSituation = (pool) => {
                 openPositionOptionsValue = data[3].collateralOnOpenPosition;
                 let share = BigInt(10) ** BigInt(data[1].decimals);
                 underlyingPerShare = share * data[3].underlyingBalance / data[2];
-                strikeAssetPerShare = share * (data[3].strikeAssetBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[5])) / percentage) / data[2];
+                strikeAssetPerShare = share * (data[3].strikeAssetBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[8].withdrawOpenPositionPenalty)) / percentage) / data[2];
               }
             }
-            let netValue = getPoolNetValue(basicData.isCall, data[3].collateralLocked, openPositionOptionsValue, underlyingPrice, data[5], data[0].decimals);
+            let netValue = getPoolNetValue(basicData.isCall, data[3].collateralLocked, openPositionOptionsValue, underlyingPrice, data[8].withdrawOpenPositionPenalty, data[0].decimals);
             const result = {
               name: getAcoPoolName(data[0].symbol, data[1].symbol, basicData.isCall),
               address: pool.toLowerCase(),
-              admin: data[11],
+              admin: data[7],
               underlying: basicData.underlying, 
               strikeAsset: basicData.strikeAsset,
               isCall: basicData.isCall,
@@ -1037,8 +1017,8 @@ module.exports.acoPoolSituation = (pool) => {
               openPositionOptionsValue: openPositionOptionsValue.toString(10),
               netValue: netValue.toString(10),
               totalValue: (notCollateralValue + collateralValue + netValue).toString(10),
-              volatility: parseBigIntToNumber(data[6], 3),
-              protocolFee: parseBigIntToNumber(data[7], 3),
+              volatility: parseBigIntToNumber(data[5], 3),
+              protocolFee: parseBigIntToNumber(data[8].fee, 3),
               openAcos: []
             };
             const acoPromises = [];
@@ -1063,7 +1043,7 @@ module.exports.acoPoolSituation = (pool) => {
                   netValue: "0"
                 });
                 if (amount > BigInt(0)) {
-                  quotePromises.push(quoteOnAcoStrategy(data[8], basicData.underlying, basicData.strikeAsset, basicData.isCall, acoData[index].strikePrice, acoData[index].expiryTime, data[6], underlyingPrice, blockNumber));
+                  quotePromises.push(quoteOnAcoStrategy(data[6], basicData.underlying, basicData.strikeAsset, basicData.isCall, acoData[index].strikePrice, acoData[index].expiryTime, data[5], underlyingPrice, blockNumber));
                 }
                 index = index + 3;
               }
@@ -1072,10 +1052,8 @@ module.exports.acoPoolSituation = (pool) => {
                 for (let k = 0; k < data[4].length; ++k) {
                   if (result.openAcos[k].tokenAmount !== "0") {
                     result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].tokenAmount) * quotes[quoteIndex].price / (BigInt(10) ** BigInt(data[0].decimals))).toString(10);
-                    if (data[11]) {
-                      result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].openPositionOptionsValue) * (percentage + data[7]) / percentage).toString(10);
-                    }
-                    result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionOptionsValue), underlyingPrice, data[5], data[0].decimals).toString(10);
+                    result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].openPositionOptionsValue) * (percentage + data[8].underlyingPriceAdjustPercentage) / percentage).toString(10);
+                    result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionOptionsValue), underlyingPrice, data[8].withdrawOpenPositionPenalty, data[0].decimals).toString(10);
                     ++quoteIndex;
                   } else {
                     result.openAcos[k].netValue = getPoolCollateralValue(BigInt(result.openAcos[k].collateralLocked), basicData.isCall, underlyingPrice, data[0].decimals).toString(10);
@@ -1094,15 +1072,8 @@ module.exports.acoPoolSituation = (pool) => {
 module.exports.acoPoolHistoricalShares = (pool) => {   
   return new Promise((resolve, reject) => { 
     getAcoPoolBasicData(pool).then((basicData) => {
-      Promise.all([getAcoPoolWithdrawOpenPositionPenaltyHistory(pool),getAcoPoolProtocolConfigHistory(pool)]).then((penaltiesData) => {
+      getAcoPoolProtocolConfigHistory(pool).then((penaltiesData) => {
         getDecimals(pool).then((decimals) => {
-          const penalties = [];
-          for (let k = 0; k < penaltiesData[0].length; ++k) {
-            penalties.push({block: penaltiesData[0][k].block, value: penaltiesData[0][k].value});
-          }
-          for (let d = 0; d < penaltiesData[1].length; ++d) {
-            penalties.push({block: penaltiesData[1][d].block, value: penaltiesData[1][d].withdrawOpenPositionPenalty});
-          }
           const share = BigInt(10) ** BigInt(decimals);
           const now = Math.ceil(Date.now() / 1000);
           internalApi.getAcoPoolData(pool, now - 7776000).then((data) => {
@@ -1111,7 +1082,7 @@ module.exports.acoPoolHistoricalShares = (pool) => {
               let event = {t: data[i].t, p: data[i].p, u: "0", s: "0"};
               let totalSupply = BigInt(data[i].a);
               if (totalSupply > BigInt(0)) {
-                let openPositionPenalty = penalties.filter(c=>c.block<=data[i].b).reduce((a,b)=>a.block>b.block?a:b).value;
+                let openPositionPenalty = penaltiesData.filter(c=>c.block<=data[i].b).reduce((a,b)=>a.block>b.block?a:b).withdrawOpenPositionPenalty;
                 let collateral;
                 if (basicData.isCall) {
                   collateral = BigInt(data[i].u);
