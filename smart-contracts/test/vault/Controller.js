@@ -123,7 +123,7 @@ describe("Controller", function() {
       started = true;
     }
 
-    let ACOFactoryTemp = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
+    let ACOFactoryTemp = await (await ethers.getContractFactory("ACOFactoryV4")).deploy();
     await ACOFactoryTemp.deployed();
 
     let ACOTokenTemp = await (await ethers.getContractFactory("ACOToken")).deploy();
@@ -133,7 +133,7 @@ describe("Controller", function() {
     let factoryInitData = factoryInterface.encodeFunctionData("init", [await owner.getAddress(), ACOTokenTemp.address, 0, await addr3.getAddress()]);
     let buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOFactoryTemp.address, factoryInitData);
     await buidlerACOFactoryProxy.deployed();
-    ACOFactory = await ethers.getContractAt("ACOFactoryV3", buidlerACOFactoryProxy.address);
+    ACOFactory = await ethers.getContractAt("ACOFactoryV4", buidlerACOFactoryProxy.address);
     await ACOFactory.setOperator(await owner.getAddress(), true);
 
     uniswapFactory = await (await ethers.getContractFactory("UniswapV2Factory")).deploy(await owner.getAddress());

@@ -418,14 +418,23 @@ contract ACOOTC {
 			ACOAssetHelper._callTransferFromERC20(collateral, from, address(this), collateralAmount);
 		}
 		
-		address aco = acoFactory.createAcoToken(
+		address aco = acoFactory.getAcoToken(
 			data.underlying, 
 			data.strikeAsset, 
 			data.isCall, 
 			data.strikePrice, 
-			data.expiryTime, 
-			uint256(100)
+			data.expiryTime
 		);
+		if (aco == address(0)) {
+			aco = acoFactory.createAcoToken(
+				data.underlying, 
+				data.strikeAsset, 
+				data.isCall, 
+				data.strikePrice, 
+				data.expiryTime, 
+				uint256(100)
+			);
+		}
 		
 		if (ACOAssetHelper._isEther(collateral)) {
 			IACOToken(aco).mintToPayable{value: collateralAmount}(from);

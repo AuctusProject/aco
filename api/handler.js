@@ -95,6 +95,17 @@ module.exports.deribitTicker = (event, context, callback) => {
   handle(deribitInterface.ticker(event.queryStringParameters), callback, event, "deribitTicker");
 };
 
+module.exports.deribitInstruments = (event, context, callback) => {
+  let asset = event.queryStringParameters["asset"];
+  let type = event.queryStringParameters["isCall"] !== undefined ? event.queryStringParameters["isCall"] === "true" ? true : event.queryStringParameters["isCall"] === "false" ? false : undefined : undefined;
+  let expiration = event.queryStringParameters["expiration"] ? isNaN(event.queryStringParameters["expiration"]) ? undefined : parseInt(event.queryStringParameters["expiration"]) : null;
+  if (asset === undefined || type === undefined || expiration === undefined) {
+    callback(null, getResponse(null, 400));
+  } else {
+    handle(deribitInterface.instruments(asset, type, expiration), callback, event, "deribitInstruments");
+  }
+};
+
 module.exports.opynQuote = (event, context, callback) => {
   handle(web3Interface.opynQuote(event.queryStringParameters), callback, event, "opynQuote");
 };

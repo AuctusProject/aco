@@ -9,6 +9,8 @@ interface IACOFactory {
     function acoTokenData(address acoToken) external view returns(address, address, bool, uint256, uint256);
     function creators(address acoToken) external view returns(address);
     function createAcoToken(address underlying, address strikeAsset, bool isCall, uint256 strikePrice, uint256 expiryTime, uint256 maxExercisedAccounts) external returns(address);
+    function newAcoToken(address underlying, address strikeAsset, bool isCall, uint256 strikePrice, uint256 expiryTime) external returns(address);
+    function getAcoToken(address underlying, address strikeAsset, bool isCall, uint256 strikePrice, uint256 expiryTime) external view returns(address);
     function setFactoryAdmin(address newFactoryAdmin) external;
     function setAcoTokenImplementation(address newAcoTokenImplementation) external;
     function setAcoFee(uint256 newAcoFee) external;

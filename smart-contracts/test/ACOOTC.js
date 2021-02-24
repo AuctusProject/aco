@@ -70,8 +70,8 @@ describe("ACOOTC", function() {
   beforeEach(async function () {
     [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
     
-    let ACOFactoryV3 = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
-    await ACOFactoryV3.deployed();
+    let ACOFactoryV4 = await (await ethers.getContractFactory("ACOFactoryV4")).deploy();
+    await ACOFactoryV4.deployed();
     
     let factoryInterface = new ethers.utils.Interface(factoryABI.abi);
 
@@ -81,7 +81,7 @@ describe("ACOOTC", function() {
     let ownerAddr = await owner.getAddress();
     let addr2Addr = await addr2.getAddress();
     let initData = factoryInterface.encodeFunctionData("init", [ownerAddr, ACOToken.address, fee, addr2Addr]);
-    let buidlerProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactoryV3.address, initData);
+    let buidlerProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(ownerAddr, ACOFactoryV4.address, initData);
     await buidlerProxy.deployed();
 
     token1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token1Name, token1Symbol, token1Decimals, token1TotalSupply);
@@ -103,7 +103,7 @@ describe("ACOOTC", function() {
     acoOtc = await (await ethers.getContractFactory("ACOOTC")).deploy(buidlerProxy.address, weth.address);
     await acoOtc.deployed(); 
 
-    buidlerFactory = await ethers.getContractAt("ACOFactoryV3", buidlerProxy.address);
+    buidlerFactory = await ethers.getContractAt("ACOFactoryV4", buidlerProxy.address);
     await buidlerFactory.setOperator(await owner.getAddress(), true);
     await buidlerFactory.setOperator(acoOtc.address, true);
   });
@@ -252,8 +252,8 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.add(senderAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.sub(senderAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
-      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount * 2);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount * 2);
 
       let affiliateAmount = 1000000;
       const affiliate1 = getPartyToken(await addr3.getAddress(),affiliateAmount,token2.address);
@@ -282,8 +282,8 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.sub(senderAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
-      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount * 3);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount * 3);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
@@ -312,8 +312,8 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.sub(senderAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
-      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount * 4);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount * 4);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
@@ -345,8 +345,8 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
-      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount * 5);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount * 4);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
@@ -375,10 +375,10 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
-      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount * 6);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount * 4);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
       ++nonce;
@@ -440,12 +440,12 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(signerAmount * 2);
 
       ++nonce;
       let collateralAmount = Math.floor(signerAmount * strikePrice / 100000000);
@@ -504,11 +504,11 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount);
-      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount * 2);
+      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(0);
 
@@ -572,13 +572,13 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(senderAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount);
-      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(collateralAmount * 2);
+      expect(await aco.assignableTokens(await addr1.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
-      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount);
+      expect(await aco.balanceOf(await addr3.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
-      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.signerToken,"latest"]))).to.equal(collateralAmount * 2);
   });
     it("Swap ask order with signer permission", async function () { 
       let expiryTime = 1699999999;
@@ -643,10 +643,10 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23);
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(bal20.sub(senderAmount));
       expect(await aco.balanceOf(await addr1.getAddress())).to.equal(0);
-      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
+      expect(await aco.balanceOf(await addr2.getAddress())).to.equal(signerAmount);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await owner.getAddress())).to.equal(signerAmount);
-      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount);
+      expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(signerAmount * 2);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await owner.getAddress())).to.equal(0);
@@ -890,10 +890,10 @@ describe("ACOOTC", function() {
       expect(await token1.balanceOf(await addr2.getAddress())).to.equal(bal12.sub(senderAmount));
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(signerAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 2);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount * 2);
 
       let affiliateAmount = 1000000;
       const affiliate1 = getPartyToken(await addr3.getAddress(),affiliateAmount,token2.address);
@@ -920,10 +920,10 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(signerAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 3);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount * 3);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
@@ -949,10 +949,10 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(signerAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(affiliateAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 4);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount * 4);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
 
@@ -981,10 +981,10 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 5);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount * 4);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
 
@@ -1010,12 +1010,12 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 6);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount * 4);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount * 2);
 
       ++nonce;
       const sender3 = getPartyAco(await addr3.getAddress(),senderAmount,ethers.constants.AddressZero,token2.address,true,strikePrice,expiryTime);
@@ -1073,13 +1073,13 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 2);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(senderAmount * 2);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(senderAmount * 2);
 
       ++nonce;
       let collateralAmount = Math.floor(senderAmount * strikePrice / 100000000);
@@ -1137,13 +1137,13 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.sub(collateralAmount).add(signerAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 2);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
-      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount * 2);
+      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount * 2);
       expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(0);
       
       ++nonce;
@@ -1203,14 +1203,14 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr1.getAddress())).to.equal(bal21.sub(signerAmount + affiliateAmount));
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22.add(affiliateAmount));
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23.add(signerAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 2);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount);
-      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount);
-      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount);
+      expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(collateralAmount * 2);
+      expect(await aco.assignableTokens(await addr3.getAddress())).to.equal(senderAmount * 2);
+      expect(ethers.BigNumber.from(await network.provider.send("eth_getBalance", [result.senderToken,"latest"]))).to.equal(collateralAmount * 2);
     });
     it("Swap bid order with signer permission", async function () { 
       let expiryTime = 1699999999;
@@ -1275,12 +1275,12 @@ describe("ACOOTC", function() {
       expect(await token2.balanceOf(await addr2.getAddress())).to.equal(bal22);
       expect(await token2.balanceOf(await addr3.getAddress())).to.equal(bal23);
       expect(await token2.balanceOf(await owner.getAddress())).to.equal(bal20.add(signerAmount));
-      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount);
+      expect(await aco.balanceOf(await addr1.getAddress())).to.equal(senderAmount * 2);
       expect(await aco.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await aco.balanceOf(await owner.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await addr1.getAddress())).to.equal(0);
-      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(0);
+      expect(await aco.assignableCollateral(await addr2.getAddress())).to.equal(senderAmount);
       expect(await aco.assignableCollateral(await addr3.getAddress())).to.equal(0);
       expect(await aco.assignableCollateral(await owner.getAddress())).to.equal(senderAmount);
     }); 

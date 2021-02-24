@@ -90,7 +90,7 @@ describe("ACOPool2", function() {
       started = true;
     }
 
-    let ACOFactoryTemp = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
+    let ACOFactoryTemp = await (await ethers.getContractFactory("ACOFactoryV4")).deploy();
     await ACOFactoryTemp.deployed();
 
     let ACOTokenTemp = await (await ethers.getContractFactory("ACOToken")).deploy();
@@ -100,7 +100,7 @@ describe("ACOPool2", function() {
     let factoryInitData = factoryInterface.encodeFunctionData("init", [await owner.getAddress(), ACOTokenTemp.address, fee, await addr3.getAddress()]);
     let buidlerACOFactoryProxy = await (await ethers.getContractFactory("ACOProxy")).deploy(await owner.getAddress(), ACOFactoryTemp.address, factoryInitData);
     await buidlerACOFactoryProxy.deployed();
-    ACOFactory = await ethers.getContractAt("ACOFactoryV3", buidlerACOFactoryProxy.address);
+    ACOFactory = await ethers.getContractAt("ACOFactoryV4", buidlerACOFactoryProxy.address);
     await ACOFactory.setOperator(await owner.getAddress(), true);
 
     uniswapFactory = await (await ethers.getContractFactory("UniswapV2Factory")).deploy(await owner.getAddress());
@@ -672,6 +672,22 @@ describe("ACOPool2", function() {
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolToken1Token2Call.address]);
 
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolToken1Token2Call.address]);
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(AddressZero, false, [ACOPoolToken1Token2Call.address]);
+
+      await expect(
+        ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolToken1Token2Call.address]);
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolToken1Token2Call.address]);
+      
+      await expect(
+        ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolToken1Token2Call.address]);
+
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await token2.balanceOf(ACOPoolToken1Token2Call.address);
       let quote4 = await ACOPoolToken1Token2Call.quote(ACOToken1Token2Call2.address, swapAmount);
@@ -784,6 +800,22 @@ describe("ACOPool2", function() {
       
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolToken1Token2Put.address]);
       
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolToken1Token2Put.address]);
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(AddressZero, false, [ACOPoolToken1Token2Put.address]);
+
+      await expect(
+        ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolToken1Token2Put.address]);
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolToken1Token2Put.address]);
+      
+      await expect(
+        ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolToken1Token2Put.address]);
+
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await atoken.balanceOf(ACOPoolToken1Token2Put.address);
       let quote4 = await ACOPoolToken1Token2Put.quote(ACOToken1Token2Put2.address, swapAmount);
@@ -893,6 +925,22 @@ describe("ACOPool2", function() {
       ).to.be.revertedWith("E45");
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolEthToken2Call.address]);
+      
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolEthToken2Call.address]);
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(AddressZero, false, [ACOPoolEthToken2Call.address]);
+
+      await expect(
+        ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolEthToken2Call.address]);
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolEthToken2Call.address]);
+      
+      await expect(
+        ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolEthToken2Call.address]);
 
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await token2.balanceOf(ACOPoolEthToken2Call.address);
@@ -1009,6 +1057,22 @@ describe("ACOPool2", function() {
       ).to.be.revertedWith("E45");
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,2,await addr3.getAddress(),converterHelper.address,[ACOPoolEthToken2Put.address]);
+      
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolEthToken2Put.address]);
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(AddressZero, false, [ACOPoolEthToken2Put.address]);
+
+      await expect(
+        ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setValidAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolEthToken2Put.address]);
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), true, [ACOPoolEthToken2Put.address]);
+      
+      await expect(
+        ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
+      ).to.be.revertedWith("E51");
+
+      await ACOPoolFactory.setForbiddenAcoCreatorOnAcoPool(await owner.getAddress(), false, [ACOPoolEthToken2Put.address]);
 
       prevAddr3Bal = await token2.balanceOf(await addr3.getAddress());
       prevPoolBal = await atoken.balanceOf(ACOPoolEthToken2Put.address);
@@ -2008,13 +2072,13 @@ describe("ACOPool2", function() {
       await token2.connect(addr3).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
       await atoken.connect(owner).approve(ACOPoolToken1Token2Put.address, token2TotalSupply);
 
-      let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration, maxExercisedAccounts)).wait();
+      let tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+1, maxExercisedAccounts)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let aco2 = await ethers.getContractAt("ACOToken", result.acoToken);
       tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+86400, maxExercisedAccounts)).wait();
       result = tx.events[tx.events.length - 1].args;
       let aco3 = await ethers.getContractAt("ACOToken", result.acoToken);
-      tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+86400, maxExercisedAccounts)).wait();
+      tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+86401, maxExercisedAccounts)).wait();
       result = tx.events[tx.events.length - 1].args;
       let aco4 = await ethers.getContractAt("ACOToken", result.acoToken);
       tx = await (await ACOFactory.createAcoToken(token1.address, token2.address, false, acoToken1Token2PutPrice, expiration+2*86400, maxExercisedAccounts)).wait();

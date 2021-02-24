@@ -5,7 +5,7 @@ service: aco
 provider:
   name: aws
   runtime: nodejs12.x
-  stage: prod
+  stage: dev
   region: us-east-1
   environment: ${ssm:/aws/reference/secretsmanager/aco/lambda/${opt:stage, self:provider.stage}.env.json~true}
 
@@ -68,6 +68,14 @@ functions:
     events:
       - http:
           path: /deribit/ticker
+          method: get
+          cors: true
+  deribitInstruments:
+    handler: handler.deribitInstruments
+    timeout: 30
+    events:
+      - http:
+          path: /deribit/instruments
           method: get
           cors: true
   opynQuote:
