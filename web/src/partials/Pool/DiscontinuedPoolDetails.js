@@ -1,12 +1,11 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { formatPercentage, formatWithPrecision, fromDecimals, getBalanceOfAsset } from '../../util/constants'
+import { formatWithPrecision, fromDecimals, getBalanceOfAsset } from '../../util/constants'
 import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import WithdrawModal from './WithdrawModal'
 import { getAccountPoolPosition } from '../../util/acoPoolMethods'
-import BigNumber from 'bignumber.js'
 import { getCollateralInfo } from '../../util/acoTokenMethods'
 import { ASSETS_INFO } from '../../util/assets'
 
@@ -35,13 +34,10 @@ class DiscontinuedPoolDetails extends Component {
   }
 
   updateBalances = () => {    
-    this.setState({withdrawBalance:null, depositBalance:null})
+    this.setState({withdrawBalance:null})
     if (this.isConnected() && this.props.pool) {
       getBalanceOfAsset(this.props.pool.acoPool, this.context.web3.selectedAccount).then(withdrawBalance => {
         this.setState({withdrawBalance: withdrawBalance}, this.getCurrentAccountPosition)
-      })
-      getBalanceOfAsset(this.getPoolCollateralAddress(), this.context.web3.selectedAccount).then(depositBalance => {
-        this.setState({depositBalance: depositBalance})
       })
     }
   }
@@ -55,24 +51,6 @@ class DiscontinuedPoolDetails extends Component {
     }
   }
 
-  getPoolCollateralAddress = () => {
-    var pool = this.props.pool
-    if (pool.isCall) {
-        return pool.underlying;
-    } else {
-        return pool.strikeAsset;
-    }
-  }
-
-  getFormattedDepositBalance = () => {
-    if (this.state.depositBalance) {
-      return fromDecimals(this.state.depositBalance, this.getPoolCollateral().decimals) + " " + this.getPoolCollateral().symbol
-    }
-    else {
-      return <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>
-    }
-  }
-
   getFormattedWithdrawBalance = () => {
     if (this.state.withdrawBalance) {
       return fromDecimals(this.state.withdrawBalance, this.props.pool.acoPoolInfo.decimals) + " SHARES"
@@ -80,14 +58,6 @@ class DiscontinuedPoolDetails extends Component {
     else {
       return <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>
     }
-  }
-
-  formatVolatility = (pool) => {
-    return formatPercentage(pool.volatility/100000.0,0)
-  }
-
-  formatAssetValue = (assetInfo, value) => {
-    return (fromDecimals(value, assetInfo.decimals, 4, 0) ?? 0) + " " + assetInfo.symbol
   }
 
   getTotalNetValue = (underlyingValue, strikeValue) => {
@@ -146,22 +116,6 @@ class DiscontinuedPoolDetails extends Component {
         })
       }
     })
-  }
-
-  getAccountTotalNetValue = () => {  
-    return this.getTotalNetValue(this.getValueTimesShares(this.props.pool.underlyingPerShare), this.getValueTimesShares(this.props.pool.strikeAssetPerShare))
-  }
-
-  getValueTimesShares = (value) => {
-    var convertedShares = this.state.withdrawBalance ? fromDecimals(this.state.withdrawBalance, this.props.pool.acoPoolInfo.decimals) : 0
-    return new BigNumber(convertedShares).times(new BigNumber(value))
-  }
-  
-  getTotalAcoPositionBalance = (tokenPosition) => {
-    if (tokenPosition.value) {
-      return tokenPosition.value.toString()
-    }
-    return ""
   }
 
   getAssetIconUrl = () => {
@@ -229,9 +183,6 @@ class DiscontinuedPoolDetails extends Component {
         :
         <div className="vault-position">
           <div className="vault-position-title">Your position:</div>
-          <div className="pool-net-value mb-3">
-            Total Net Value: {this.getAccountTotalNetValue()}
-          </div>
           <table className="aco-table mx-auto table-responsive-md">
             <thead>
               <tr>

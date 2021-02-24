@@ -25,8 +25,10 @@ class UpdateSellingOptionsModal extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      tolerancePriceBelow: "",
-      tolerancePriceAbove: "",
+      tolerancePriceBelowMin: "",
+      tolerancePriceBelowMax: "",
+      tolerancePriceAboveMin: "",
+      tolerancePriceAboveMax: "",
       minExpiration: "",
       maxExpiration: "",
       priceSettingsType: ""
@@ -36,13 +38,14 @@ class UpdateSellingOptionsModal extends Component {
   componentDidMount = () => {
     let pool = this.props.pool
     let priceSettingsType = null
-    if (this.props.tolerancePriceAbove === 0 && this.props.tolerancePriceBelow === 0) {
+    if (this.props.tolerancePriceAboveMin === null && this.props.tolerancePriceBelowMin === null && 
+      this.props.tolerancePriceAboveMax === null && this.props.tolerancePriceBelowMax === null) {
       priceSettingsType = strikePriceOptions[0]
     }
-    else if (this.props.tolerancePriceBelow === 0) {
+    else if (this.props.tolerancePriceBelowMin === null && this.props.tolerancePriceBelowMax === null) {
       priceSettingsType = pool.isCall ? strikePriceOptions[1] : strikePriceOptions[2]
     }
-    else if (this.props.tolerancePriceAbove === 0) {
+    else if (this.props.tolerancePriceAboveMin === null && this.props.tolerancePriceAboveMax === null) {
       priceSettingsType = pool.isCall ? strikePriceOptions[2] : strikePriceOptions[1]
     }
     else {
@@ -50,12 +53,22 @@ class UpdateSellingOptionsModal extends Component {
     }
 
     this.setState({
-      tolerancePriceBelow: this.props.tolerancePriceBelow * 100,
-      tolerancePriceAbove: this.props.tolerancePriceAbove * 100,
+      tolerancePriceBelowMin: this.getTolerance(this.props.tolerancePriceBelowMin),
+      tolerancePriceBelowMax: this.getTolerance(this.props.tolerancePriceBelowMax),
+      tolerancePriceAboveMin: this.getTolerance(this.props.tolerancePriceAboveMin),      
+      tolerancePriceAboveMax: this.getTolerance(this.props.tolerancePriceAboveMax),
       minExpiration: this.props.minExpiration,
       maxExpiration: this.props.maxExpiration,
+      noMax: this.props.tolerancePriceAboveMax === null,
       priceSettingsType: priceSettingsType
     })
+  }
+
+  getTolerance = (value) => {
+    if (value !== null) {
+      return value * 100
+    }
+    return ""
   }
 
   componentDidUpdate = (prevProps) => {
@@ -64,29 +77,54 @@ class UpdateSellingOptionsModal extends Component {
     }
   }
 
+  getToleranceDecimals = (stateValue) => {
+    if (stateValue === null) {
+      return "0"
+    }
+    else if (Number(stateValue) === 0) {
+      return "1"
+    }
+    else {
+      return toDecimals(stateValue / 100.0, 5).toString()
+    }
+  }
+
   onConfirmClick = () => {
     if (this.canConfirm()) {
       var stepNumber = 0
       let pool = this.props.pool
-      let tolerancePriceBelow = toDecimals(this.state.tolerancePriceBelow / 100.0, 5)
-      let tolerancePriceAbove = toDecimals(this.state.tolerancePriceAbove / 100.0, 5)
+      let tolerancePriceBelowMin = this.getToleranceDecimals(this.state.tolerancePriceBelowMin)
+      let tolerancePriceBelowMax = this.getToleranceDecimals(this.state.tolerancePriceBelowMax)
+      let tolerancePriceAboveMin = this.getToleranceDecimals(this.state.tolerancePriceAboveMin)
+      let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
       if (this.state.priceSettingsType === strikePriceOptions[0]) {
-        tolerancePriceBelow = 0
-        tolerancePriceAbove = 0
+        tolerancePriceBelowMin = 0
+        tolerancePriceBelowMax = 0
+        tolerancePriceAboveMin = 0
+        tolerancePriceAboveMax = 0
       }
       else if ((this.state.priceSettingsType === strikePriceOptions[1] && pool.isCall) || 
         (this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall)) {
-        tolerancePriceBelow = 0
+        tolerancePriceBelowMin = 0
+        tolerancePriceBelowMax = 0
+        if (this.state.noMax) {
+          tolerancePriceAboveMax = 0
+        }
       }
       else if ((this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
         (this.state.priceSettingsType === strikePriceOptions[2] && pool.isCall)) {
-          tolerancePriceAbove = 0
+          tolerancePriceAboveMin = 0
+          tolerancePriceAboveMax = 0
+      }
+      else if (this.state.priceSettingsType === strikePriceOptions[3]) {
+        tolerancePriceBelowMin = 0
+        tolerancePriceAboveMin = 0
       }
 
       let minExpiration = this.state.minExpiration * 86400
       let maxExpiration = this.state.maxExpiration * 86400
       this.setStepsModalInfo(++stepNumber)
-      setAcoPermissionConfig(this.context.web3.selectedAccount, pool.address, 0, tolerancePriceBelow, 0, tolerancePriceAbove, minExpiration, maxExpiration)
+      setAcoPermissionConfig(this.context.web3.selectedAccount, pool.address, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minExpiration, maxExpiration)
         .then(result => {
           if (result) {
             this.setStepsModalInfo(++stepNumber)
@@ -168,17 +206,38 @@ class UpdateSellingOptionsModal extends Component {
     if (this.state.priceSettingsType === null || this.state.priceSettingsType === "") {
       return "Select strike price option"
     }
-    if ((this.state.tolerancePriceBelow === null || this.state.tolerancePriceBelow === "" || this.state.tolerancePriceBelow <= 0) && 
-      ((this.state.priceSettingsType === strikePriceOptions[3]) ||
-      (this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
+    if ((this.state.tolerancePriceBelowMin === null || this.state.tolerancePriceBelowMin === "") && 
+      ((this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
         (this.state.priceSettingsType === strikePriceOptions[2] && pool.isCall))) {
-      return "Enter tolerance price below"
+      return "Enter tolerance"
     }
-    if ((this.state.tolerancePriceAbove === null || this.state.tolerancePriceAbove === "" || this.state.tolerancePriceAbove <= 0) && 
-      ((this.state.priceSettingsType === strikePriceOptions[3]) ||
-      (this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall) || 
+    if ((this.state.tolerancePriceBelowMax === null || this.state.tolerancePriceBelowMax === "") && 
+      ((this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
+        (this.state.priceSettingsType === strikePriceOptions[2] && pool.isCall) || 
+        this.state.priceSettingsType === strikePriceOptions[3])) {
+      return "Enter tolerance"
+    }
+    if ((this.state.tolerancePriceAboveMin === null || this.state.tolerancePriceAboveMin === "") && 
+      ((this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall) || 
         (this.state.priceSettingsType === strikePriceOptions[1] && pool.isCall))) {
-      return "Enter tolerance price above"
+      return "Enter tolerance"
+    }
+    if ((this.state.tolerancePriceAboveMax === null || this.state.tolerancePriceAboveMax === "") && 
+      ((this.state.priceSettingsType === strikePriceOptions[3]) ||
+      (((this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall) || 
+        (this.state.priceSettingsType === strikePriceOptions[1] && pool.isCall)) && 
+        !this.state.noMax))) {
+      return "Enter tolerance"
+    }
+    if (this.state.tolerancePriceBelowMin !== null && this.state.tolerancePriceBelowMin !== "" && 
+      this.state.tolerancePriceBelowMax !== null && this.state.tolerancePriceBelowMax !== "" && 
+      Number(this.state.tolerancePriceBelowMin) > Number(this.state.tolerancePriceBelowMax)) {
+      return "Invalid interval"
+    }
+    if (this.state.tolerancePriceAboveMin !== null && this.state.tolerancePriceAboveMin !== "" && 
+      this.state.tolerancePriceAboveMax !== null && this.state.tolerancePriceAboveMax !== "" && 
+      Number(this.state.tolerancePriceAboveMin) > Number(this.state.tolerancePriceAboveMax)) {
+      return "Invalid interval"
     }
     return null
   }
@@ -199,16 +258,28 @@ class UpdateSellingOptionsModal extends Component {
     this.setState({ maxExpiration: value })
   }
 
-  onTolerancePriceAboveChange = (value) => {
-    this.setState({ tolerancePriceAbove: value })
+  onTolerancePriceAboveMinChange = (value) => {
+    this.setState({ tolerancePriceAboveMin: value })
   }
 
-  onTolerancePriceBelowChange = (value) => {
-    this.setState({ tolerancePriceBelow: value })
+  onTolerancePriceAboveMaxChange = (value) => {
+    this.setState({ tolerancePriceAboveMax: value })
+  }
+
+  onTolerancePriceBelowMinChange = (value) => {
+    this.setState({ tolerancePriceBelowMin: value })
+  }
+
+  onTolerancePriceBelowMaxChange = (value) => {
+    this.setState({ tolerancePriceBelowMax: value })
   }
 
   priceSettingsTypeChange = (option) => {
     this.setState({priceSettingsType: option})
+  }
+
+  onNoMaxChange = (event) => {
+    this.setState({noMax: event.target.checked, tolerancePriceAboveMax: ""})
   }
 
   render() {
@@ -251,26 +322,50 @@ class UpdateSellingOptionsModal extends Component {
               {this.state.priceSettingsType && <>
                 {((this.state.priceSettingsType.value === 2 && pool.isCall) || 
                   (this.state.priceSettingsType.value === 3 && !pool.isCall)) &&
-                <div className="input-row mt-2">
-                  <div>Strike Price</div>
-                  <div>&gt;</div>
+                <div className="input-row mt-2 no-max-input-row">
                   <div className="label-input-row">
                     <div>Current Price +&nbsp;</div>
                     <div className="input-field input-field-sm">
-                      <DecimalInput onChange={this.onTolerancePriceAboveChange} value={this.state.tolerancePriceAbove}></DecimalInput>
+                      <DecimalInput onChange={this.onTolerancePriceAboveMinChange} value={this.state.tolerancePriceAboveMin}></DecimalInput>
                       <div className="coin-symbol">%</div>
+                    </div>
+                  </div>
+                  <div>&lt;=</div>
+                  <div>Strike Price</div>
+                  <div className={(this.state.noMax ? " no-max-checked" : "")}>&lt;=</div>
+                  <div className={"label-input-column"+(this.state.noMax ? " no-max-checked" : "")}>
+                    <div className="form-group form-check">
+                      <input type="checkbox" onChange={this.onNoMaxChange} checked={this.state.noMax} className="form-check-input clickable" id="noMaxCheck"/>
+                      <label className="form-check-label clickable" htmlFor="noMaxCheck">
+                        No max
+                      </label>
+                    </div>
+                    <div className="label-input-row">
+                      <div>Current Price +&nbsp;</div>
+                      <div className="input-field input-field-sm">
+                        <DecimalInput disabled={this.state.noMax} onChange={this.onTolerancePriceAboveMaxChange} value={this.state.tolerancePriceAboveMax}></DecimalInput>
+                        <div className="coin-symbol">%</div>
+                      </div>
                     </div>
                   </div>
                 </div>}
                 {((this.state.priceSettingsType.value === 2 && !pool.isCall) || 
                   (this.state.priceSettingsType.value === 3 && pool.isCall)) &&
                 <div className="input-row mt-2">
-                  <div>Strike Price</div>
-                  <div>&lt;</div>
                   <div className="label-input-row">
                     <div>Current Price -&nbsp;</div>
                     <div className="input-field input-field-sm">
-                      <DecimalInput onChange={this.onTolerancePriceBelowChange} value={this.state.tolerancePriceBelow}></DecimalInput>
+                      <DecimalInput onChange={this.onTolerancePriceBelowMaxChange} value={this.state.tolerancePriceBelowMax}></DecimalInput>
+                      <div className="coin-symbol">%</div>
+                    </div>
+                  </div>
+                  <div>&lt;=</div>
+                  <div>Strike Price</div>
+                  <div>&lt;=</div>
+                  <div className="label-input-row">
+                    <div>Current Price -&nbsp;</div>
+                    <div className="input-field input-field-sm">
+                      <DecimalInput onChange={this.onTolerancePriceBelowMinChange} value={this.state.tolerancePriceBelowMin}></DecimalInput>
                       <div className="coin-symbol">%</div>
                     </div>
                   </div>
@@ -279,17 +374,17 @@ class UpdateSellingOptionsModal extends Component {
                   <div className="label-input-row">
                     <div>Current Price -&nbsp;</div>
                     <div className="input-field input-field-sm">
-                      <DecimalInput onChange={this.onTolerancePriceBelowChange} value={this.state.tolerancePriceBelow}></DecimalInput>
+                      <DecimalInput onChange={this.onTolerancePriceBelowMaxChange} value={this.state.tolerancePriceBelowMax}></DecimalInput>
                       <div className="coin-symbol">%</div>
                     </div>
                   </div>
-                  <div>&lt;</div>
+                  <div>&lt;=</div>
                   <div>Strike Price</div>
-                  <div>&lt;</div>
+                  <div>&lt;=</div>
                   <div className="label-input-row">
                     <div>Current Price +&nbsp;</div>
                     <div className="input-field input-field-sm">
-                      <DecimalInput onChange={this.onTolerancePriceAboveChange} value={this.state.tolerancePriceAbove}></DecimalInput>
+                      <DecimalInput onChange={this.onTolerancePriceAboveMaxChange} value={this.state.tolerancePriceAboveMax}></DecimalInput>
                       <div className="coin-symbol">%</div>
                     </div>
                   </div>

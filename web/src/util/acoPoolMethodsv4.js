@@ -14,3 +14,8 @@ export const setAcoPermissionConfig = (from, acoPoolAddress, newTolerancePriceBe
     var data = acoPoolContract.methods.setAcoPermissionConfig([newTolerancePriceBelowMin, newTolerancePriceBelowMax, newTolerancePriceAboveMin, newTolerancePriceAboveMax, newMinExpiration, newMaxExpiration]).encodeABI()
     return sendTransaction(null, null, from, acoPoolAddress, null, data)
 }
+
+export const acoPermissionConfig = (acoPoolAddress) => {
+    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+    return acoPoolContract.methods.acoPermissionConfig().call()
+}
