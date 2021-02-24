@@ -9,6 +9,8 @@
 /smart-contracts/contracts/core/artifacts
 /smart-contracts/contracts/libs/artifacts
 /smart-contracts/contracts/interfaces/artifacts
+/smart-contracts/contracts/periphery/vault/artifacts
 /smart-contracts/contracts/periphery/pool/artifacts
+/smart-contracts/contracts/periphery/artifacts
 /smart-contracts/contracts/only-for-tests/artifacts
 /smart-contracts/contracts/util/artifacts
