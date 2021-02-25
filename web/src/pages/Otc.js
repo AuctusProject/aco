@@ -9,7 +9,7 @@ import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import OtcOrdersModal from '../partials/Otc/OtcOrdersModal'
 import { getLocalOrders } from '../util/constants'
 
-class Simple extends Component {
+class Otc extends Component {
   constructor() {
     super()
     this.state = {
@@ -76,7 +76,7 @@ class Simple extends Component {
   }
 }
 
-Simple.contextTypes = {
+Otc.contextTypes = {
   web3: PropTypes.object
 }
-export default withRouter(Simple)
+export default withRouter(Otc)

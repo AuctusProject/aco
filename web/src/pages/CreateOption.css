@@ -1,0 +1,19 @@
+
+.create-option-content .inputs-wrapper {
+    display: flex;
+    justify-content: space-between;
+}
+
+.liquidity-info {
+    font-size: 14px;
+    font-weight: bold;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.light-mode .liquidity-info {
+    color: #262626;
+}

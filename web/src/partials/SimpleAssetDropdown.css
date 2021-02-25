@@ -1,0 +1,13 @@
+.asset-select-option {
+    display: flex;
+    align-items: center;
+}
+
+.asset-select-option img,
+.asset-select-option svg {
+    height: 24px;
+    width: 24px;
+    font-size: 24px; 
+    margin-right: 6px;
+    border-radius: 50%;
+}

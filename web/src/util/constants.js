@@ -30,10 +30,11 @@ export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
 export const wssInfuraAddress = process.env.REACT_APP_INFURA_WSS;
 export const swapQuoteBuySize = "1000";
-export const percentagePrecision = 100000;
+export const PERCENTAGE_PRECISION = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS;
 export const wethAddress = process.env.REACT_APP_WETH_ADDRESS;
+export const wbtcAddress = process.env.REACT_APP_WBTC_ADDRESS;
 export const ethTransactionTolerance = 0.01;
 export const gwei = 1000000000;
 export const ONE_SECOND = 1000;

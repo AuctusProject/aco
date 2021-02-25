@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { apiUrl, removeOptionsToIgnore, removeOtcOptions } from './constants';
+import { apiUrl, ONE_SECOND, removeOptionsToIgnore, removeOtcOptions } from './constants';
 
 var apiTokenList = null
 export function getTokensList() {
@@ -43,6 +43,21 @@ export function getAcoAsset(address) {
         getAcoAssets().then(acoAssets => {
             for (var i = 0; i < acoAssets.length; ++i) {
                 if (acoAssets[i].address.toLowerCase() === address.toLowerCase()) {
+                    resolve(acoAssets[i])
+                    return;
+                }
+            }
+            resolve(null)
+        })
+        .catch(err => reject(err));
+    })
+}
+
+export function getAcoAssetBySymbol(symbol) {
+    return new Promise(function(resolve,reject){
+        getAcoAssets().then(acoAssets => {
+            for (var i = 0; i < acoAssets.length; ++i) {
+                if (acoAssets[i].symbol.toLowerCase() === symbol.toLowerCase()) {
                     resolve(acoAssets[i])
                     return;
                 }
@@ -104,6 +119,27 @@ export function getAcoPoolEvents(poolAddress) {
 export function getAcoPoolHistory(poolAddress) {
     return new Promise(function(resolve,reject){
         Axios.get(apiUrl + "pools/"+poolAddress+"/historical")
+        .then(res => {
+            if (res && res.data) {
+                resolve(res.data)
+            }
+            else {
+                resolve(null)
+            }            
+        })
+        .catch(err => reject(err));
+    })
+}
+
+export function getDeribitOptions(asset, isCall, expiration) {
+    return new Promise(function(resolve,reject){
+        var assetSymbol = asset !== "TBTC" && asset !== "WBTC" ? asset : "BTC"
+        var url = apiUrl + "deribit/instruments?asset="+assetSymbol+"&isCall="+isCall
+        if (expiration) {
+            var unixExpiration = expiration.getTime()/ONE_SECOND 
+            url = url + "&expiration="+unixExpiration
+        }
+        Axios.get(url)
         .then(res => {
             if (res && res.data) {
                 resolve(res.data)

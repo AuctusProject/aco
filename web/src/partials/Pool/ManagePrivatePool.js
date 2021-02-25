@@ -1,7 +1,7 @@
 import './ManagePrivatePool.css'
 import React, { Component } from 'react'
 import { acoPermissionConfig } from '../../util/acoPoolMethodsv4'
-import { formatPercentage, percentagePrecision } from '../../util/constants'
+import { formatPercentage, PERCENTAGE_PRECISION } from '../../util/constants'
 import Loading from '../Util/Loading'
 import UpdateIVModal from './UpdateIVModal'
 import UpdateSellingOptionsModal from './UpdateSellingOptionsModal'
@@ -38,7 +38,7 @@ class ManagePrivatePool extends Component {
     if (tolerance === "1") {
       return 0
     }
-    return tolerance/percentagePrecision
+    return tolerance/PERCENTAGE_PRECISION
   }
 
   getStrikePriceConfig = () => {

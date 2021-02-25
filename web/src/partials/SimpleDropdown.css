@@ -15,3 +15,8 @@
 .simple-dropdown .dropdown-toggle.empty-select::after {
     color: #4c4c4c;
 }
+
+.dropdown-menu.show {
+    max-height: calc(100vh - 40px);
+    overflow: auto;
+}

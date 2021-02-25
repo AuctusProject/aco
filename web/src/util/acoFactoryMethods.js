@@ -1,4 +1,4 @@
-import { getWeb3 } from './web3Methods'
+import { getWeb3, sendTransaction } from './web3Methods'
 import { acoFactoryAddress, getOtcOptions, ONE_SECOND, removeOptionsToIgnore, removeOtcOptions, sortByDesc, sortByFn } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
@@ -34,6 +34,11 @@ function getAllAvailableOptions() {
             }).catch((err) => reject(err))
         }
     })
+}
+
+export function refreshAllOptions() {
+    availableOptions = null
+    return getAllAvailableOptions()
 }
 
 function getAllAvailableOptionsWithoutOtc() {
@@ -269,4 +274,10 @@ function getPositionForOption(option, userAccount) {
             resolve(position)
         })
     })
+}
+
+export function newAcoToken(from, underlying, strikeAsset, isCall, strikePrice, expiryTime) {
+    const contract = getAcoFactoryContract()
+    var data = contract.methods.newAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime).encodeABI()
+    return sendTransaction(null, null, from, acoFactoryAddress, null, data)
 }
