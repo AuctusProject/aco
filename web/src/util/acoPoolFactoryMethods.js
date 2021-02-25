@@ -139,20 +139,20 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
     return getAvailablePoolsForOptionWithCustomCanSwap(option, (pool, option) => {
         return new Promise((resolve, reject) => {
             acoPermissionConfig(pool.acoPool).then(poolConfig => {
-                var now = new Date().getTime()/ONE_SECOND
-                var isValidExpiration = option.expiryTime >= (now + poolConfig.minExpiration) &&
-                    option.expiryTime <= (now + poolConfig.maxExpiration)
+                var now = parseInt(new Date().getTime()/ONE_SECOND)
+                var isValidExpiration = Number(option.expiryTime) >= (now + Number(poolConfig.minExpiration)) &&
+                    Number(option.expiryTime) <= (now + Number(poolConfig.maxExpiration))
 
                 if (!isValidExpiration) {
                     resolve(false)
                     return
 
                 }
-                var strikePrice = fromDecimals(option.strikePrice, 6)
-                var isValidStrikePrice = (poolConfig.tolerancePriceBelowMin === 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
-                    && (poolConfig.tolerancePriceBelowMax === 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
-                    && (poolConfig.tolerancePriceAboveMin === 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
-                    && (poolConfig.tolerancePriceAboveMax === 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
+                var strikePrice = Number(fromDecimals(option.strikePrice, 6))
+                var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) === 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceBelowMax) === 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMin) === 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMax) === 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
 
                 resolve(isValidStrikePrice)
             })

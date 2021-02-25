@@ -109,8 +109,8 @@ class CreateOption extends Component {
       for (let index = 0; index < pools.length; index++) {
         const pool = pools[index];
         totalLiquidity = totalLiquidity.plus(new BigNumber(this.state.selectedType === 1 ? 
-          pool.strikeAssetBalance : 
-          pool.underlyingBalance))
+          pool.underlyingBalance : 
+          pool.strikeAssetBalance))
       }
       this.setState({totalLiquidity: totalLiquidity, loadingLiquidity: false})
     })
