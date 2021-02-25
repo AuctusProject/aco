@@ -17,3 +17,8 @@
 .light-mode .liquidity-info {
     color: #262626;
 }
+
+.dark-mode .create-option-content .expiration-column input::placeholder{
+    color: white;
+    opacity: 1;
+}

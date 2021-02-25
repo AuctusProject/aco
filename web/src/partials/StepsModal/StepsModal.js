@@ -38,7 +38,7 @@ class StepsModal extends Component {
               {isDone && <div className="done-button-wrapper">
                 <div className="aco-button action-btn" onClick={onDoneButtonClick}>{doneLabel ? doneLabel: "OK"}</div>
                 </div>}
-              {!isDone && <div className="steps">
+              {!isDone && steps && steps.length > 0 && <div className="steps">
                 <div className="start-dot"></div>
                 {steps.map((step, index) => (
                   <div className="step-item" key={index}>

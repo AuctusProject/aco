@@ -7,7 +7,7 @@ import MetamaskLargeIcon from './Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from './Util/SpinnerLargeIcon'
 import DoneLargeIcon from './Util/DoneLargeIcon'
 import ErrorLargeIcon from './Util/ErrorLargeIcon'
-import { newAcoToken } from '../util/acoFactoryMethods'
+import { newAcoToken, refreshAllOptions } from '../util/acoFactoryMethods'
 
 class CreateOptionModal extends Component {
   constructor(props) {
@@ -69,6 +69,10 @@ class CreateOptionModal extends Component {
       subtitle = "You have successfully created the option."
       img = <DoneLargeIcon />
     }
+    else if (stepNumber === 4) {
+      title = "Refreshing data..."
+      img = <SpinnerLargeIcon />
+    }
     else if (stepNumber === -1) {
       title = ""
       subtitle = "An error ocurred. Please try again."
@@ -76,7 +80,9 @@ class CreateOptionModal extends Component {
     }
 
     var steps = []
-    steps.push({ title: "Create", progress: stepNumber > 2 ? 100 : 0, active: true })
+    if (stepNumber < 4) {
+      steps.push({ title: "Create", progress: stepNumber > 2 ? 100 : 0, active: true })
+    }    
     this.setState({
       stepsModalInfo: {
         title: title,
@@ -90,8 +96,17 @@ class CreateOptionModal extends Component {
   }
 
   onHideStepsModal = (completed) => () => {
-    this.setState({ stepsModalInfo: null })
-    this.props.onHide(completed)
+    if (completed) {
+      this.setStepsModalInfo(4)      
+      refreshAllOptions().then(() => {
+        this.setState({ stepsModalInfo: null})
+        this.props.onHide(completed)
+      })
+    }
+    else {
+      this.setState({ stepsModalInfo: null})
+      this.props.onHide(completed)
+    }    
   }
 
   render() {

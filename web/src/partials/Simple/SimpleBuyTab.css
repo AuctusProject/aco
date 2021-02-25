@@ -194,3 +194,15 @@
     max-width: 300px;
     text-align: left;
 }
+
+.create-link-wrapper {
+    justify-content: flex-end;
+    align-items: flex-end;
+    display: flex;
+}
+
+.create-link-wrapper .nav-link {    
+    margin: 6px 10px;
+    padding: 0;
+    letter-spacing: 0.3px;
+}

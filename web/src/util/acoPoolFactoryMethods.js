@@ -138,7 +138,7 @@ export const getAvailablePoolsForOption = (option) => {
 export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) => {
     return getAvailablePoolsForOptionWithCustomCanSwap(option, (pool, option) => {
         return new Promise((resolve, reject) => {
-            acoPermissionConfig(pool).then(poolConfig => {
+            acoPermissionConfig(pool.acoPool).then(poolConfig => {
                 var now = new Date().getTime()/ONE_SECOND
                 var isValidExpiration = option.expiryTime >= (now + poolConfig.minExpiration) &&
                     option.expiryTime <= (now + poolConfig.maxExpiration)

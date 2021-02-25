@@ -1,6 +1,6 @@
 import './SimpleBuyTab.css'
 import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
+import { NavLink, withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
@@ -566,6 +566,9 @@ class SimpleBuyTab extends Component {
             
           </div>
         </div>
+      </div>
+      <div className="create-link-wrapper">
+        <NavLink className="nav-link" to="/new-option">Want more flexibility? Create your custom option!</NavLink>
       </div>
       <div className="chart-and-prices">
         <div className="option-chart-wrapper">

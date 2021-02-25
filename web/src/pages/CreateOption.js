@@ -7,7 +7,7 @@ import OptionBadge from '../partials/OptionBadge'
 import { ONE_SECOND, toDecimals, fromDecimals, usdcAddress, ethAddress, wbtcAddress } from '../util/constants'
 import SimpleAssetDropdown from '../partials/SimpleAssetDropdown'
 import StrikeValueInput from '../partials/Util/StrikeValueInput'
-import { listOptions, refreshAllOptions } from '../util/acoFactoryMethods'
+import { listOptions } from '../util/acoFactoryMethods'
 import { getAvailablePoolsForNonCreatedOption } from '../util/acoPoolFactoryMethods'
 import BigNumber from 'bignumber.js'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -194,7 +194,6 @@ class CreateOption extends Component {
   onCreateOptionHide = (completed) => {
     this.setState({ createOption: null })
     if (completed) {
-      refreshAllOptions()
       this.props.history.push('/buy')
     }
   }
