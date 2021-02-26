@@ -40,7 +40,7 @@ class StrikeValueInput extends Component {
         var grouppedOptions = groupBy(result, "strikePrice")
         var hasCurrentSelectedStrikePrice = false
         var strikeOptions = sortBy(Object.keys(grouppedOptions).map((strikePrice) => {
-          if (this.props.selectedStrike && this.props.selectedStrike.value === strikePrice) {
+          if (this.props.selectedStrike && this.props.selectedStrike.value === Number(strikePrice)) {
             hasCurrentSelectedStrikePrice = true
           }
           return { value: Number(strikePrice), name: strikePrice + " USDC"}
@@ -69,7 +69,7 @@ class StrikeValueInput extends Component {
   }
 
   onHideModal = () => {
-    this.setState({showModal:false})
+    this.setState({showModal:false, filter: ""})
   }
 
   onShowModal = () => {

@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ReactDatePicker from 'react-datepicker'
 import OptionBadge from '../partials/OptionBadge'
-import { ONE_SECOND, toDecimals, fromDecimals, usdcAddress, ethAddress, wbtcAddress } from '../util/constants'
+import { ONE_SECOND, toDecimals, fromDecimals, usdcAddress, ethAddress, wbtcAddress, formatWithPrecision } from '../util/constants'
 import SimpleAssetDropdown from '../partials/SimpleAssetDropdown'
 import StrikeValueInput from '../partials/Util/StrikeValueInput'
 import { listOptions } from '../util/acoFactoryMethods'
@@ -83,7 +83,7 @@ class CreateOption extends Component {
       })
     }
     else {
-      this.setState({selectedOption: null, totalLiquidity: null})
+      this.setState({selectedOption: null, optionsLiquidity: null})
     }    
   }
 
@@ -103,7 +103,8 @@ class CreateOption extends Component {
   }
 
   checkLiquidity = () => {
-    this.setState({loadingLiquidity: true, totalLiquidity: null})
+    this.setState({loadingLiquidity: true, optionsLiquidity: null})
+    var optionData = this.getOptionData()
     getAvailablePoolsForNonCreatedOption(this.getOptionData(), this.getCurrentUnderlyingPrice()).then(pools => {
       var totalLiquidity = new BigNumber(0)
       for (let index = 0; index < pools.length; index++) {
@@ -112,7 +113,10 @@ class CreateOption extends Component {
           pool.underlyingBalance : 
           pool.strikeAssetBalance))
       }
-      this.setState({totalLiquidity: totalLiquidity, loadingLiquidity: false})
+      var convertedTotalLiquidity = Number(fromDecimals(totalLiquidity, this.getPoolLiquidityDecimals()))
+      var optionsLiquidity = this.state.selectedType === 1 ? convertedTotalLiquidity : 
+        convertedTotalLiquidity/Number(fromDecimals(optionData.strikePrice, 6))
+      this.setState({optionsLiquidity: optionsLiquidity, loadingLiquidity: false})
     })
   }
 
@@ -121,8 +125,8 @@ class CreateOption extends Component {
       return <FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>
     }
     var formattedLiquidity = "-"
-    if (this.state.totalLiquidity) {
-      formattedLiquidity = fromDecimals(this.state.totalLiquidity, this.getPoolLiquidityDecimals()) + " " + this.getPoolLiquiditySymbol()
+    if (this.state.optionsLiquidity) {
+      formattedLiquidity = formatWithPrecision(this.state.optionsLiquidity, 2) + " options"
     }    
     return formattedLiquidity 
   }
@@ -230,7 +234,7 @@ class CreateOption extends Component {
               <div className="input-label">Strike</div>
               <div className="input-field">
                 {(this.state.selectedUnderlying) ? 
-                  <StrikeValueInput selectedUnderlying={this.state.selectedUnderlying} selectedType={this.state.selectedType} onStrikeSelected={this.onStrikeSelected}/>
+                  <StrikeValueInput selectedUnderlying={this.state.selectedUnderlying} selectedType={this.state.selectedType} selectedStrike={this.state.selectedStrike} onStrikeSelected={this.onStrikeSelected}/>
                   :
                   <span className="simple-dropdown-placeholder">Select underlying first</span>
                 }
