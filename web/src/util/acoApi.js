@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { apiUrl, ONE_SECOND, removeNotWhitelisted, removeOptionsToIgnore } from './constants';
+import { apiUrl, ONE_SECOND, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore } from './constants';
 
 var apiTokenList = null
 export function getTokensList() {
@@ -12,7 +12,8 @@ export function getTokensList() {
         .then(res => {
             if (res && res.data) {
                 apiTokenList = removeOptionsToIgnore(res.data)
-                apiTokenList = removeNotWhitelisted(apiTokenList)
+                apiTokenList = removeNotWhitelistedOptions(apiTokenList)
+                apiTokenList = removeExpiredOptions(apiTokenList)
             }
             resolve(apiTokenList)
         })

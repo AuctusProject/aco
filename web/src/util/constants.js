@@ -411,14 +411,46 @@ export const removeOtcOptions = (options) => {
     return options.filter(o => !o.creator || (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length === 0))
 }
 
-export const removeNotWhitelisted = (options) => {
-    return options.filter(o => o.strikeAsset === usdcAddress && 
-        (o.underlying === wbtcAddress || o.underlying === ethAddress || !o.creator ||
-            defaultAcoCreator.filter(c => c === o.creator).length > 0))
+export const removeNotWhitelistedOptions = (options) => {
+    return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
+        (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
+            defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0))
+}
+
+export const isExpired = (expiryTime) => {
+    return ((expiryTime * ONE_SECOND) <= Date.now())
+}
+
+export const removeExpiredOptions = (options) => {
+    return options.filter(o => !isExpired(o.expiryTime))
 }
 
 export const getOtcOptions = (options) => {
     return options.filter(o => o.creator && (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length > 0))
+}
+
+export const baseEthPair = () => {
+    return {
+        id: "ETH_USDC",
+        underlying: ethAddress,
+        underlyingInfo: {symbol: "ETH", decimals: 18},
+        underlyingSymbol: "ETH",
+        strikeAsset: usdcAddress,
+        strikeAssetInfo: {symbol: "USDC", decimals: 6},
+        strikeAssetSymbol: "USDC"
+    }
+}
+
+export const baseWbtcPair = () => {
+    return {
+        id: "WBTC_USDC",
+        underlying: wbtcAddress,
+        underlyingInfo: {symbol: "WBTC", decimals: 8},
+        underlyingSymbol: "WBTC",
+        strikeAsset: usdcAddress,
+        strikeAssetInfo: {symbol: "USDC", decimals: 6},
+        strikeAssetSymbol: "USDC"
+    }
 }
 
 export const getByAddress = (address) => {
