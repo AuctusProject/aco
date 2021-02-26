@@ -11,7 +11,8 @@ export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_
 export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
 export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
 export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS; 
-export const acoOtcAddress = process.env.REACT_APP_ACO_OTC_ADDRESS; 
+export const allAcoOtcAddresses = process.env.REACT_APP_ACO_OTC_ADDRESS.split(',');
+export const acoOtcAddress = allAcoOtcAddresses[allAcoOtcAddresses.length-1];
 export const acoBuyerAddress = process.env.REACT_APP_ACO_BUYER_ADDRESS;
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
@@ -406,11 +407,11 @@ export const removeOptionsToIgnore = (options) => {
 }
 
 export const removeOtcOptions = (options) => {
-    return options.filter(o => !o.creator || (o.creator.toLowerCase() !== acoOtcAddress.toLowerCase()))
+    return options.filter(o => !o.creator || (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length === 0))
 }
 
 export const getOtcOptions = (options) => {
-    return options.filter(o => o.creator && (o.creator.toLowerCase() === acoOtcAddress.toLowerCase()))
+    return options.filter(o => o.creator && (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length > 0))
 }
 
 export const getByAddress = (address) => {
