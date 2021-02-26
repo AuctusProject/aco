@@ -3,6 +3,7 @@ import { acoPoolFactoryAddress, deprecatedPoolImplementation, getBalanceOfAsset,
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
+import { getGeneralData } from './acoPoolMethodsv2';
 
 var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {
@@ -16,10 +17,14 @@ function getAcoPoolFactoryContract() {
 }
 
 var availablePools = null
-export const getAllAvailablePools = () => {
+var availablePoolsWithExtraData = null
+export const getAllAvailablePools = (fillExtraData = true) => {
     return new Promise((resolve, reject) => {
-        if (availablePools != null) {
+        if (availablePools != null && !fillExtraData) {
             resolve(availablePools)
+        }
+        else if (availablePoolsWithExtraData != null) {
+            resolve(availablePoolsWithExtraData)
         }
         else {
             const acoPoolFactoryContract = getAcoPoolFactoryContract()
@@ -43,12 +48,18 @@ export const getAllAvailablePools = () => {
                             }
                         }
                     }
-                    fillTokensInformations(pools, assetsAddresses)
-                    .then(pools => {
-                        availablePools = pools
+                    availablePools = pools
+                    if (fillExtraData) {
+                        var poolsWithExtra = JSON.parse(JSON.stringify(pools))
+                        fillTokensInformations(poolsWithExtra, assetsAddresses)
+                        .then(poolsWithExtra => {
+                            availablePoolsWithExtraData = poolsWithExtra
+                            resolve(availablePoolsWithExtraData)
+                        })
+                        .catch(err => reject(err))
+                    } else {
                         resolve(availablePools)
-                    })
-                    .catch(err => reject(err))
+                    }
                 })
                 .catch(err => reject(err))
             }
@@ -119,23 +130,40 @@ function fillTokensInformations(pools, assetsAddresses) {
 
 export const getAvailablePoolsForOption = (option) => {
     return new Promise((resolve, reject) => {
-        getAllAvailablePools().then(pools => {
+        getAllAvailablePools(false).then(pools => {
             let canSwapPromises = []
             let filteredPools = []
             for (let i = 0; i < pools.length; i++) {
                 const pool = pools[i];
-                let canSwapPromise = canSwap(pool.acoPool, option.acoToken)
-                canSwapPromises.push(canSwapPromise)
-                canSwapPromise.then(result => {
-                    if (result) {
-                        filteredPools.push(pool)
-                    }
-                })                
-                .catch(err => reject(err))
+                if (pool.underlying.toLowerCase() === option.underlying.toLowerCase() && 
+                    pool.strikeAsset.toLowerCase() === option.strikeAsset.toLowerCase() && 
+                    pool.isCall === option.isCall) {
+                    let canSwapPromise = canSwap(pool.acoPool, option.acoToken)
+                    canSwapPromises.push(canSwapPromise)
+                    canSwapPromise.then(result => {
+                        if (result) {
+                            filteredPools.push(pool)
+                        }
+                    })                
+                    .catch(err => reject(err))
+                }
             }
-            
             Promise.all(canSwapPromises).then(() => {
-                resolve(filteredPools)
+                let extraPromises = []
+                for (let j = 0; j < filteredPools.length; ++j) {
+                    extraPromises.push(getGeneralData(filteredPools[j].acoPool))
+                }
+                Promise.all(extraPromises).then((extras) => {
+                    for (let k = 0; k < filteredPools.length; ++k) {
+                        filteredPools[k].collateralLocked = extras[k].collateralLocked
+                        filteredPools[k].collateralLockedRedeemable = extras[k].collateralLockedRedeemable
+                        filteredPools[k].collateralOnOpenPosition = extras[k].collateralOnOpenPosition
+                        filteredPools[k].underlyingBalance = extras[k].underlyingBalance
+                        filteredPools[k].strikeAssetBalance = extras[k].strikeAssetBalance
+                    }
+                    resolve(filteredPools)
+                })            
+                .catch(err => reject(err))
             })            
             .catch(err => reject(err))
         })

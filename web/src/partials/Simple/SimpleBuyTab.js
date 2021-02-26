@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy, acoBuyerAddress } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
@@ -25,6 +25,7 @@ import SlippageModal from '../SlippageModal'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import ReactTooltip from 'react-tooltip'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { buy } from '../../util/acoBuyerMethods'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -272,10 +273,25 @@ class SimpleBuyTab extends Component {
 
   sendQuotedTransaction = (nonce) => {
     if (this.state.swapQuote.isPoolQuote) {
-      var amount = toDecimals(this.state.qtyValue, this.state.selectedOption.acoTokenInfo.decimals)
-      var restriction = this.getMaxToPay()
-      var deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
-      return swap(this.context.web3.selectedAccount, this.state.swapQuote.poolAddress, this.state.selectedOption.acoToken, amount.toString(), restriction.toString(), deadline, nonce)
+      const deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
+      if (this.state.swapQuote.poolData.length === 1) {
+        const amount = toDecimals(this.state.qtyValue, this.state.selectedOption.acoTokenInfo.decimals)
+        const poolAddress = this.state.swapQuote.poolData[0].acoPool
+        const restriction = this.getMaxToPay()
+        return swap(this.context.web3.selectedAccount, poolAddress, this.state.selectedOption.acoToken, amount.toString(), restriction.toString(), deadline, nonce)
+      }
+      else {
+        let pools = []
+        let amounts = []
+        let restrictions = []
+        for (let i = 0; i < this.state.swapQuote.poolData.length; ++i) {
+          pools.push(this.state.swapQuote.poolData[i].acoPool)
+          amounts.push(this.state.swapQuote.poolData[i].amount.toString())
+          let restrictionForPool = this.state.swapQuote.poolData[i].swapPrice.times(new BigNumber(1+this.state.maxSlippage))
+          restrictions.push(toDecimals(restrictionForPool, this.state.selectedOption.strikeAssetInfo.decimals).toString())
+        }
+        return buy(this.context.web3.selectedAccount, this.state.selectedOption.acoToken, pools, amounts, restrictions, deadline, nonce)
+      }
     }
     else {
       return sendTransactionWithNonce(this.state.swapQuote.gasPrice, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
@@ -393,7 +409,7 @@ class SimpleBuyTab extends Component {
   }
 
   getAllowanceAddress = () => {
-    return this.state.swapQuote.isPoolQuote ? this.state.swapQuote.poolAddress : erc20Proxy
+    return this.state.swapQuote.isPoolQuote ? this.state.swapQuote.poolData.length === 1 ? this.state.swapQuote.poolData[0].acoPool : acoBuyerAddress : erc20Proxy
   }
   
   isPayEth = () => {
