@@ -1,5 +1,5 @@
 import { getWeb3, sendTransaction } from './web3Methods'
-import { acoFactoryAddress, getOtcOptions, ONE_SECOND, removeOptionsToIgnore, removeOtcOptions, sortByDesc, sortByFn } from './constants';
+import { acoFactoryAddress, getOtcOptions, ONE_SECOND, removeNotWhitelisted, removeOptionsToIgnore, sortByDesc, sortByFn } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
@@ -41,12 +41,12 @@ export function refreshAllOptions() {
     return getAllAvailableOptions()
 }
 
-function getAllAvailableOptionsWithoutOtc() {
+function getAllAvailableOptionsWhitelisted() {
     return new Promise((resolve, reject) => {
         getAllAvailableOptions()
         .then(allOptions => {
-            var optionsWithoutOtc = removeOtcOptions(allOptions)
-            resolve(optionsWithoutOtc)
+            var optionsWhitelisted = removeNotWhitelisted(allOptions)
+            resolve(optionsWhitelisted)
         })
         .catch((err) => reject(err))
     })
@@ -121,7 +121,7 @@ function fillTokensInformations(options, assetsAddresses) {
 
 export const listPairs = () => {
     return new Promise((resolve, reject) => {
-        getAllAvailableOptionsWithoutOtc().then(options => {
+        getAllAvailableOptionsWhitelisted().then(options => {
             var pairs = getPairsFromOptions(options)
             resolve(pairs)
         })
@@ -153,9 +153,9 @@ export const getOptionsFromPair = (options, selectedPair) => {
         o.strikeAssetInfo.symbol === selectedPair.strikeAssetSymbol) : []
 }
 
-export const listOptions = (pair, optionType = null, removeExpired = false, otcOptions = false) => {
+export const listOptions = (pair, optionType = null, removeExpired = false, onlyOtcOptions = false) => {
     return new Promise((resolve, reject) => {
-        var optionsMethod = !otcOptions ? getAllAvailableOptionsWithoutOtc : getOtcAvailableOptions
+        var optionsMethod = !onlyOtcOptions ? getAllAvailableOptionsWhitelisted : getOtcAvailableOptions
         optionsMethod().then(availableOptions => {
             var options = []
             for (let i = 0; i < availableOptions.length; i++) {
@@ -172,7 +172,6 @@ export const listOptions = (pair, optionType = null, removeExpired = false, otcO
         })
     })
 }
-
 
 export const getOption = (address, removeExpired=true) => {
     return new Promise((resolve, reject) => {
