@@ -35,7 +35,7 @@ export const getAllAvailablePools = (fillExtraData = true) => {
                     var pools = []
                     for (let i = 0; i < events.length; i++) {
                         const eventValues = events[i].returnValues;
-                        if (eventValues.acoPoolImplementation.toLowerCase() !== deprecatedPoolImplementation.toLowerCase()) {                        
+                        if (deprecatedPoolImplementation.filter(c => c.toLowerCase() === eventValues.acoPoolImplementation.toLowerCase()).length === 0) {                       
                             pools.push(eventValues)
                             if (!assetsAddresses.includes(eventValues.strikeAsset)) {
                                 assetsAddresses.push(eventValues.strikeAsset)
