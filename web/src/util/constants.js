@@ -21,20 +21,22 @@ export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL + "address/";
 export const etherscanTxUrl = process.env.REACT_APP_ETHERSCAN_URL + "tx/";
 export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
 export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
-export const deprecatedPoolImplementation = process.env.REACT_APP_DEPRECATED_POOL_DEPRECATED_IMPLEMENTATION.split(',');
+export const deprecatedPoolImplementation = process.env.REACT_APP_DEPRECATED_POOL_DEPRECATED_IMPLEMENTATION.toLowerCase().split(',');
 export const acoVaults = JSON.parse(process.env.REACT_APP_ACO_VAULTS);
 export const acoVaultsV2 = JSON.parse(process.env.REACT_APP_ACO_VAULTS_V2);
-export const defaultPoolAdmin = process.env.REACT_APP_ACO_DEFAULT_POOL_ADMIN;
+export const defaultPoolAdmin = process.env.REACT_APP_ACO_DEFAULT_POOL_ADMIN.toLowerCase();
+export const defaultAcoCreator = process.env.REACT_APP_ACO_DEFAULT_CREATOR.toLowerCase().split(',');
 export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
 export const wssInfuraAddress = process.env.REACT_APP_INFURA_WSS;
 export const swapQuoteBuySize = "1000";
-export const percentagePrecision = 100000;
+export const PERCENTAGE_PRECISION = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
-export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS;
-export const wethAddress = process.env.REACT_APP_WETH_ADDRESS;
+export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS.toLowerCase();
+export const wethAddress = process.env.REACT_APP_WETH_ADDRESS.toLowerCase();
+export const wbtcAddress = process.env.REACT_APP_WBTC_ADDRESS.toLowerCase();
 export const ethTransactionTolerance = 0.01;
 export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
@@ -409,8 +411,46 @@ export const removeOtcOptions = (options) => {
     return options.filter(o => !o.creator || (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length === 0))
 }
 
+export const removeNotWhitelistedOptions = (options) => {
+    return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
+        (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
+            defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0))
+}
+
+export const isExpired = (expiryTime) => {
+    return ((expiryTime * ONE_SECOND) <= Date.now())
+}
+
+export const removeExpiredOptions = (options) => {
+    return options.filter(o => !isExpired(o.expiryTime))
+}
+
 export const getOtcOptions = (options) => {
     return options.filter(o => o.creator && (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length > 0))
+}
+
+export const baseEthPair = () => {
+    return {
+        id: "ETH_USDC",
+        underlying: ethAddress,
+        underlyingInfo: {symbol: "ETH", decimals: 18},
+        underlyingSymbol: "ETH",
+        strikeAsset: usdcAddress,
+        strikeAssetInfo: {symbol: "USDC", decimals: 6},
+        strikeAssetSymbol: "USDC"
+    }
+}
+
+export const baseWbtcPair = () => {
+    return {
+        id: "WBTC_USDC",
+        underlying: wbtcAddress,
+        underlyingInfo: {symbol: "WBTC", decimals: 8},
+        underlyingSymbol: "WBTC",
+        strikeAsset: usdcAddress,
+        strikeAssetInfo: {symbol: "USDC", decimals: 6},
+        strikeAssetSymbol: "USDC"
+    }
 }
 
 export const getByAddress = (address) => {

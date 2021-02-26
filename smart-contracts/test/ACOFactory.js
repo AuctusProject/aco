@@ -6,10 +6,12 @@ describe("ACOFactory", function() {
   let buidlerFactory;
   let buidlerFactoryV2;
   let buidlerFactoryV3;
+  let buidlerFactoryV4;
   let factoryInterface;
   let ACOFactory;
   let ACOFactoryV2;
   let ACOFactoryV3;
+  let ACOFactoryV4;
   let ACOToken;
   let owner;
   let addr1;
@@ -36,7 +38,10 @@ describe("ACOFactory", function() {
     await ACOFactoryV2.deployed();
 
     ACOFactoryV3 = await (await ethers.getContractFactory("ACOFactoryV3")).deploy();
-    await ACOFactoryV2.deployed();
+    await ACOFactoryV3.deployed();
+
+    ACOFactoryV4 = await (await ethers.getContractFactory("ACOFactoryV4")).deploy();
+    await ACOFactoryV4.deployed();
     
     factoryInterface = new ethers.utils.Interface(factoryABI.abi);
 
@@ -52,6 +57,7 @@ describe("ACOFactory", function() {
     buidlerFactory = await ethers.getContractAt("ACOFactory", buidlerProxy.address);
     buidlerFactoryV2 = await ethers.getContractAt("ACOFactoryV2", buidlerProxy.address);
     buidlerFactoryV3 = await ethers.getContractAt("ACOFactoryV3", buidlerProxy.address);
+    buidlerFactoryV4 = await ethers.getContractAt("ACOFactoryV4", buidlerProxy.address);
 
     token1 = await (await ethers.getContractFactory("ERC20ForTest")).deploy(token1Name, token1Symbol, token1Decimals, token1TotalSupply);
     await token1.deployed();
@@ -333,10 +339,6 @@ describe("ACOFactory", function() {
 
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await addr1.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await addr1.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -345,10 +347,6 @@ describe("ACOFactory", function() {
       await buidlerFactoryV2.connect(addr1).setFactoryAdmin(await addr2.getAddress());
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await addr2.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -358,14 +356,6 @@ describe("ACOFactory", function() {
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await addr2.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -373,18 +363,27 @@ describe("ACOFactory", function() {
 
       await buidlerFactoryV3.connect(addr2).setFactoryAdmin(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
       expect(await buidlerFactoryV3.acoTokenImplementation()).to.equal(ACOToken.address);
+      
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+      
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
+
+      await buidlerFactoryV4.connect(owner).setFactoryAdmin(await addr2.getAddress());
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
     });
     it("Check fail to set factory admin", async function () {
       await expect(
@@ -400,16 +399,6 @@ describe("ACOFactory", function() {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV2.address, []);
 
       await expect(
-        buidlerFactory.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setFactoryAdmin: Invalid factory admin");
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-
-      await expect(
-        buidlerFactory.connect(addr1).setFactoryAdmin(await addr1.getAddress())
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      
-      await expect(
         buidlerFactoryV2.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOFactory::_setFactoryAdmin: Invalid factory admin");
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
@@ -422,26 +411,6 @@ describe("ACOFactory", function() {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV3.address, []);
 
       await expect(
-        buidlerFactory.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setFactoryAdmin: Invalid factory admin");
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-
-      await expect(
-        buidlerFactory.connect(addr1).setFactoryAdmin(await addr1.getAddress())
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      
-      await expect(
-        buidlerFactoryV2.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setFactoryAdmin: Invalid factory admin");
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-
-      await expect(
-        buidlerFactoryV2.connect(addr1).setFactoryAdmin(await addr1.getAddress())
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      
-      await expect(
         buidlerFactoryV3.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOFactory::_setFactoryAdmin: Invalid factory admin");
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
@@ -450,6 +419,18 @@ describe("ACOFactory", function() {
         buidlerFactoryV3.connect(addr1).setFactoryAdmin(await addr1.getAddress())
       ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      await expect(
+        buidlerFactoryV4.connect(owner).setFactoryAdmin(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOFactory::_setFactoryAdmin: Invalid factory admin");
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).setFactoryAdmin(await addr1.getAddress())
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
     });
     it("Check set ACO token implementation", async function () {
       let newACOToken = await (await ethers.getContractFactory("ACOToken")).deploy();
@@ -467,10 +448,6 @@ describe("ACOFactory", function() {
 
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(newACOToken.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -482,10 +459,6 @@ describe("ACOFactory", function() {
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(newACOToken2.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -495,14 +468,6 @@ describe("ACOFactory", function() {
 
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(newACOToken2.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(newACOToken2.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -514,18 +479,30 @@ describe("ACOFactory", function() {
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(newACOToken3.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(newACOToken3.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
       expect(await buidlerFactoryV3.acoTokenImplementation()).to.equal(newACOToken3.address);
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(newACOToken3.address);
+
+      let newACOToken4 = await (await ethers.getContractFactory("ACOToken")).deploy();
+      await newACOToken4.deployed();
+      await buidlerFactoryV4.setAcoTokenImplementation(newACOToken4.address);
+      
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(newACOToken4.address);
     });
     it("Check fail to set ACO token implementation", async function () {
       await expect(
@@ -539,17 +516,7 @@ describe("ACOFactory", function() {
       expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
 
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV2.address, []);
-      
-      await expect(
-        buidlerFactory.connect(owner).setAcoTokenImplementation(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setAcoTokenImplementation: Invalid ACO token implementation");
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
 
-      await expect(
-        buidlerFactory.connect(addr1).setAcoTokenImplementation(ACOToken.address)
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      
       await expect(
         buidlerFactoryV2.connect(owner).setAcoTokenImplementation(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOFactory::_setAcoTokenImplementation: Invalid ACO token implementation");
@@ -563,26 +530,6 @@ describe("ACOFactory", function() {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV3.address, []);
       
       await expect(
-        buidlerFactory.connect(owner).setAcoTokenImplementation(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setAcoTokenImplementation: Invalid ACO token implementation");
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-
-      await expect(
-        buidlerFactory.connect(addr1).setAcoTokenImplementation(ACOToken.address)
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      
-      await expect(
-        buidlerFactoryV2.connect(owner).setAcoTokenImplementation(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setAcoTokenImplementation: Invalid ACO token implementation");
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
-
-      await expect(
-        buidlerFactoryV2.connect(addr1).setAcoTokenImplementation(ACOToken.address)
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
-      
-      await expect(
         buidlerFactoryV3.connect(owner).setAcoTokenImplementation(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOFactory::_setAcoTokenImplementation: Invalid ACO token implementation");
       expect(await buidlerFactoryV3.acoTokenImplementation()).to.equal(ACOToken.address);
@@ -591,6 +538,18 @@ describe("ACOFactory", function() {
         buidlerFactoryV3.connect(addr1).setAcoTokenImplementation(ACOToken.address)
       ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
       expect(await buidlerFactoryV3.acoTokenImplementation()).to.equal(ACOToken.address);
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+      
+      await expect(
+        buidlerFactoryV4.connect(owner).setAcoTokenImplementation(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOFactory::_setAcoTokenImplementation: Invalid ACO token implementation");
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).setAcoTokenImplementation(ACOToken.address)
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
     });
     it("Check set ACO fee", async function () {
       await buidlerFactory.setAcoFee(fee * 2);
@@ -605,10 +564,6 @@ describe("ACOFactory", function() {
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee * 2);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee * 2);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -617,10 +572,6 @@ describe("ACOFactory", function() {
       await buidlerFactoryV2.setAcoFee(fee * 3);
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee * 3);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee * 3);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -630,14 +581,6 @@ describe("ACOFactory", function() {
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee * 3);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee * 3);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee * 3);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -646,18 +589,27 @@ describe("ACOFactory", function() {
       await buidlerFactoryV3.setAcoFee(fee);
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
       expect(await buidlerFactoryV3.acoTokenImplementation()).to.equal(ACOToken.address);
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+      
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
+
+      await buidlerFactoryV4.setAcoFee(fee * 5);
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee * 5);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
     });
     it("Check fail to set ACO fee", async function () {
       await expect(
@@ -668,11 +620,6 @@ describe("ACOFactory", function() {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV2.address, []);
 
       await expect(
-        buidlerFactory.connect(addr1).setAcoFee(fee * 2)
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-
-      await expect(
         buidlerFactoryV2.connect(addr1).setAcoFee(fee * 2)
       ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
@@ -680,19 +627,16 @@ describe("ACOFactory", function() {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV3.address, []);
 
       await expect(
-        buidlerFactory.connect(addr1).setAcoFee(fee * 2)
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-
-      await expect(
-        buidlerFactoryV2.connect(addr1).setAcoFee(fee * 2)
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      
-      await expect(
         buidlerFactoryV3.connect(addr1).setAcoFee(fee * 2)
       ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).setAcoFee(fee * 2)
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
     });
     it("Check set ACO fee destination", async function () {
       await buidlerFactory.setAcoFeeDestination(await owner.getAddress());
@@ -707,10 +651,6 @@ describe("ACOFactory", function() {
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await owner.getAddress());
@@ -720,10 +660,6 @@ describe("ACOFactory", function() {
 
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV2.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr1.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr1.getAddress());
@@ -733,14 +669,6 @@ describe("ACOFactory", function() {
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr1.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr1.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr1.getAddress());
@@ -750,18 +678,28 @@ describe("ACOFactory", function() {
 
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
       expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV3.address);
-      expect(await buidlerFactory.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoFee()).to.equal(fee);
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await owner.getAddress());
-      expect(await buidlerFactory.acoTokenImplementation()).to.equal(ACOToken.address);
-      expect(await buidlerFactoryV2.factoryAdmin()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoFee()).to.equal(fee);
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await owner.getAddress());
-      expect(await buidlerFactoryV2.acoTokenImplementation()).to.equal(ACOToken.address);
       expect(await buidlerFactoryV3.factoryAdmin()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoFee()).to.equal(fee);
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await owner.getAddress());
       expect(await buidlerFactoryV3.acoTokenImplementation()).to.equal(ACOToken.address);
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+      
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
+
+      await buidlerFactoryV4.setAcoFeeDestination(await addr2.getAddress());
+
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(ACOToken.address);
     });
     it("Check fail to set ACO fee destination", async function () {
       await expect(
@@ -777,16 +715,6 @@ describe("ACOFactory", function() {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV2.address, []);
 
       await expect(
-        buidlerFactory.connect(owner).setAcoFeeDestination(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setAcoFeeDestination: Invalid ACO fee destination");
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-
-      await expect(
-        buidlerFactory.connect(addr1).setAcoFeeDestination(await owner.getAddress())
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-
-      await expect(
         buidlerFactoryV2.connect(owner).setAcoFeeDestination(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOFactory::_setAcoFeeDestination: Invalid ACO fee destination");
       expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -799,26 +727,6 @@ describe("ACOFactory", function() {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV3.address, []);
 
       await expect(
-        buidlerFactory.connect(owner).setAcoFeeDestination(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setAcoFeeDestination: Invalid ACO fee destination");
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-
-      await expect(
-        buidlerFactory.connect(addr1).setAcoFeeDestination(await owner.getAddress())
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactory.acoFeeDestination()).to.equal(await addr2.getAddress());
-
-      await expect(
-        buidlerFactoryV2.connect(owner).setAcoFeeDestination(ethers.constants.AddressZero)
-      ).to.be.revertedWith("ACOFactory::_setAcoFeeDestination: Invalid ACO fee destination");
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-
-      await expect(
-        buidlerFactoryV2.connect(addr1).setAcoFeeDestination(await owner.getAddress())
-      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
-      expect(await buidlerFactoryV2.acoFeeDestination()).to.equal(await addr2.getAddress());
-
-      await expect(
         buidlerFactoryV3.connect(owner).setAcoFeeDestination(ethers.constants.AddressZero)
       ).to.be.revertedWith("ACOFactory::_setAcoFeeDestination: Invalid ACO fee destination");
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
@@ -827,6 +735,18 @@ describe("ACOFactory", function() {
         buidlerFactoryV3.connect(addr1).setAcoFeeDestination(await owner.getAddress())
       ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
       expect(await buidlerFactoryV3.acoFeeDestination()).to.equal(await addr2.getAddress());
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      await expect(
+        buidlerFactoryV4.connect(owner).setAcoFeeDestination(ethers.constants.AddressZero)
+      ).to.be.revertedWith("ACOFactory::_setAcoFeeDestination: Invalid ACO fee destination");
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).setAcoFeeDestination(await owner.getAddress())
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
     });
     it("Set operator", async function () {
       await buidlerProxy.connect(owner).setImplementation(ACOFactoryV3.address, []);
@@ -861,8 +781,36 @@ describe("ACOFactory", function() {
       expect(await buidlerFactoryV3.operators(await owner.getAddress())).to.equal(true);
       expect(await buidlerFactoryV3.operators(await addr1.getAddress())).to.equal(false);
       expect(await buidlerFactoryV3.operators(await addr2.getAddress())).to.equal(true);
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      expect(await buidlerFactoryV4.operators(await owner.getAddress())).to.equal(true);
+      expect(await buidlerFactoryV4.operators(await addr1.getAddress())).to.equal(false);
+      expect(await buidlerFactoryV4.operators(await addr2.getAddress())).to.equal(true);
+
+      await buidlerFactoryV4.setOperator(await addr2.getAddress(), false);
+      await buidlerFactoryV4.setOperator(await addr1.getAddress(), true);
+
+      expect(await buidlerFactoryV4.operators(await owner.getAddress())).to.equal(true);
+      expect(await buidlerFactoryV4.operators(await addr1.getAddress())).to.equal(true);
+      expect(await buidlerFactoryV4.operators(await addr2.getAddress())).to.equal(false);
     });
-    it("Check ACO token creation", async function () {
+    it("Check fail to set operator", async function () {
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV3.address, []);
+
+      await expect(
+        buidlerFactoryV3.connect(addr1).setOperator(await addr1.getAddress(), true)
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect(await buidlerFactoryV3.operators(await addr1.getAddress())).to.equal(false);
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).setAcoFeeDestination(await owner.getAddress())
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect(await buidlerFactoryV4.operators(await addr1.getAddress())).to.equal(false);
+    });
+    it("Check ACO token admin creation", async function () {
       const maxExercisedAccounts = 120;
       let time = Math.round(new Date().getTime() / 1000) + 86400;
       let price = 3 * 10 ** token2Decimals;
@@ -1101,29 +1049,30 @@ describe("ACOFactory", function() {
       expect(data[3]).to.equal(price);
       expect(data[4]).to.equal(time);
 
-      time = Math.round(new Date().getTime() / 1000) + 86400;
-      price = 3 * 10 ** token2Decimals;
-      tx = await (await buidlerFactoryV3.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)).wait();
+      let time2 = Math.round(new Date().getTime() / 1000) + 86400;
+      let price2 = 3 * 10 ** token2Decimals;
+      tx = await (await buidlerFactoryV3.createAcoToken(token1.address, token2.address, false, price2, time2, maxExercisedAccounts)).wait();
       result = tx.events[tx.events.length - 1].args;
       expect(result.underlying).to.equal(token1.address);
       expect(result.strikeAsset).to.equal(token2.address);
       expect(result.isCall).to.equal(false);
-      expect(result.strikePrice).to.equal(price);
-      expect(result.expiryTime).to.equal(time);
+      expect(result.strikePrice).to.equal(price2);
+      expect(result.expiryTime).to.equal(time2);
       expect(result.acoTokenImplementation).to.equal(newACOToken2.address);
+      let aco3 = result.acoToken;
       data = await buidlerFactoryV3.acoTokenData(result.acoToken);
       expect(data[0]).to.equal(token1.address);
       expect(data[1]).to.equal(token2.address);
       expect(data[2]).to.equal(false);
-      expect(data[3]).to.equal(price);
-      expect(data[4]).to.equal(time);
+      expect(data[3]).to.equal(price2);
+      expect(data[4]).to.equal(time2);
 
       buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
       expect(await buidlerToken.underlying()).to.equal(token1.address);    
       expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
       expect(await buidlerToken.isCall()).to.equal(false); 
-      expect(await buidlerToken.strikePrice()).to.equal(price); 
-      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.strikePrice()).to.equal(price2); 
+      expect(await buidlerToken.expiryTime()).to.equal(time2); 
       expect(await buidlerToken.acoFee()).to.equal(fee); 
       expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
       expect(await buidlerToken.totalCollateral()).to.equal(0); 
@@ -1133,28 +1082,29 @@ describe("ACOFactory", function() {
       expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
       expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
 
-      price = 2 * 10 ** token2Decimals;
-      tx = await (await buidlerFactoryV3.createAcoToken(ethers.constants.AddressZero, token2.address, true, price, time, maxExercisedAccounts)).wait();
+      let price3 = 2 * 10 ** token2Decimals;
+      tx = await (await buidlerFactoryV3.createAcoToken(ethers.constants.AddressZero, token2.address, true, price3, time2, maxExercisedAccounts)).wait();
       result = tx.events[tx.events.length - 1].args;
       expect(result.underlying).to.equal(ethers.constants.AddressZero);
       expect(result.strikeAsset).to.equal(token2.address);
       expect(result.isCall).to.equal(true);
-      expect(result.strikePrice).to.equal(price);
-      expect(result.expiryTime).to.equal(time);
+      expect(result.strikePrice).to.equal(price3);
+      expect(result.expiryTime).to.equal(time2);
       expect(result.acoTokenImplementation).to.equal(newACOToken2.address);
+      let aco4 = result.acoToken;
       data = await buidlerFactoryV3.acoTokenData(result.acoToken);
       expect(data[0]).to.equal(ethers.constants.AddressZero);
       expect(data[1]).to.equal(token2.address);
       expect(data[2]).to.equal(true);
-      expect(data[3]).to.equal(price);
-      expect(data[4]).to.equal(time);
+      expect(data[3]).to.equal(price3);
+      expect(data[4]).to.equal(time2);
 
       buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
       expect(await buidlerToken.underlying()).to.equal(ethers.constants.AddressZero);    
       expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
       expect(await buidlerToken.isCall()).to.equal(true); 
-      expect(await buidlerToken.strikePrice()).to.equal(price); 
-      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.strikePrice()).to.equal(price3); 
+      expect(await buidlerToken.expiryTime()).to.equal(time2); 
       expect(await buidlerToken.acoFee()).to.equal(fee); 
       expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
       expect(await buidlerToken.totalCollateral()).to.equal(0); 
@@ -1167,27 +1117,28 @@ describe("ACOFactory", function() {
       let newACOToken3 = await (await ethers.getContractFactory("ACOToken")).deploy();
       await newACOToken3.deployed();
       await buidlerFactoryV3.setAcoTokenImplementation(newACOToken3.address);
-      tx = await (await buidlerFactoryV3.createAcoToken(token1.address, token2.address, true, price, time, maxExercisedAccounts)).wait();
+      tx = await (await buidlerFactoryV3.createAcoToken(token1.address, token2.address, true, price3, time2, maxExercisedAccounts)).wait();
       result = tx.events[tx.events.length - 1].args;
       expect(result.underlying).to.equal(token1.address);
       expect(result.strikeAsset).to.equal(token2.address);
       expect(result.isCall).to.equal(true);
-      expect(result.strikePrice).to.equal(price);
-      expect(result.expiryTime).to.equal(time);
+      expect(result.strikePrice).to.equal(price3);
+      expect(result.expiryTime).to.equal(time2);
       expect(result.acoTokenImplementation).to.equal(newACOToken3.address);
+      let aco5 = result.acoToken;
       data = await buidlerFactoryV3.acoTokenData(result.acoToken);
       expect(data[0]).to.equal(token1.address);
       expect(data[1]).to.equal(token2.address);
       expect(data[2]).to.equal(true);
-      expect(data[3]).to.equal(price);
-      expect(data[4]).to.equal(time);
+      expect(data[3]).to.equal(price3);
+      expect(data[4]).to.equal(time2);
 
       buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
       expect(await buidlerToken.underlying()).to.equal(token1.address);    
       expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
       expect(await buidlerToken.isCall()).to.equal(true); 
-      expect(await buidlerToken.strikePrice()).to.equal(price); 
-      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.strikePrice()).to.equal(price3); 
+      expect(await buidlerToken.expiryTime()).to.equal(time2); 
       expect(await buidlerToken.acoFee()).to.equal(fee); 
       expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
       expect(await buidlerToken.totalCollateral()).to.equal(0); 
@@ -1198,7 +1149,7 @@ describe("ACOFactory", function() {
       expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
 
       await expect(
-        buidlerToken.init(token1.address, token2.address, false, price, time, fee, await addr2.getAddress(), maxExercisedAccounts)
+        buidlerToken.init(token1.address, token2.address, false, price3, time2, fee, await addr2.getAddress(), maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Already initialized");
       
       expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
@@ -1226,8 +1177,175 @@ describe("ACOFactory", function() {
       expect(data[2]).to.equal(false);
       expect(data[3]).to.equal(0);
       expect(data[4]).to.equal(0);
+
+            
+
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+
+      
+      data = await buidlerFactoryV4.acoTokenData(aco1);
+      expect(data[0]).to.equal(ethers.constants.AddressZero);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(true);
+      expect(data[3]).to.equal(price);
+      expect(data[4]).to.equal(time);
+      data = await buidlerFactoryV4.acoTokenData(aco2);
+      expect(data[0]).to.equal(token1.address);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(true);
+      expect(data[3]).to.equal(price);
+      expect(data[4]).to.equal(time);
+      data = await buidlerFactoryV4.acoTokenData(aco3);
+      expect(data[0]).to.equal(token1.address);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(false);
+      expect(data[3]).to.equal(price2);
+      expect(data[4]).to.equal(time2);
+      data = await buidlerFactoryV4.acoTokenData(aco4);
+      expect(data[0]).to.equal(ethers.constants.AddressZero);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(true);
+      expect(data[3]).to.equal(price3);
+      expect(data[4]).to.equal(time2);
+      data = await buidlerFactoryV4.acoTokenData(aco5);
+      expect(data[0]).to.equal(token1.address);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(true);
+      expect(data[3]).to.equal(price3);
+      expect(data[4]).to.equal(time2);
+
+      time = Math.round(new Date().getTime() / 1000) + 86400;
+      price = 3 * 10 ** token2Decimals;
+      tx = await (await buidlerFactoryV4.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      expect(result.underlying).to.equal(token1.address);
+      expect(result.strikeAsset).to.equal(token2.address);
+      expect(result.isCall).to.equal(false);
+      expect(result.strikePrice).to.equal(price);
+      expect(result.expiryTime).to.equal(time);
+      expect(result.acoTokenImplementation).to.equal(newACOToken3.address);
+      data = await buidlerFactoryV4.acoTokenData(result.acoToken);
+      expect(data[0]).to.equal(token1.address);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(false);
+      expect(data[3]).to.equal(price);
+      expect(data[4]).to.equal(time);
+
+      buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
+      expect(await buidlerToken.underlying()).to.equal(token1.address);    
+      expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
+      expect(await buidlerToken.isCall()).to.equal(false); 
+      expect(await buidlerToken.strikePrice()).to.equal(price); 
+      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.acoFee()).to.equal(fee); 
+      expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
+      expect(await buidlerToken.totalCollateral()).to.equal(0); 
+      expect(await buidlerToken.underlyingSymbol()).to.equal(token1Symbol);
+      expect(await buidlerToken.underlyingDecimals()).to.equal(token1Decimals);
+      expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
+      expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
+      expect(await buidlerFactoryV4.getAcoToken(token1.address, token2.address, false, price, time)).to.equal(result.acoToken);
+
+      price = 2 * 10 ** token2Decimals;
+      tx = await (await buidlerFactoryV4.createAcoToken(ethers.constants.AddressZero, token2.address, true, price, time, maxExercisedAccounts)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      expect(result.underlying).to.equal(ethers.constants.AddressZero);
+      expect(result.strikeAsset).to.equal(token2.address);
+      expect(result.isCall).to.equal(true);
+      expect(result.strikePrice).to.equal(price);
+      expect(result.expiryTime).to.equal(time);
+      expect(result.acoTokenImplementation).to.equal(newACOToken3.address);
+      data = await buidlerFactoryV4.acoTokenData(result.acoToken);
+      expect(data[0]).to.equal(ethers.constants.AddressZero);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(true);
+      expect(data[3]).to.equal(price);
+      expect(data[4]).to.equal(time);
+
+      buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
+      expect(await buidlerToken.underlying()).to.equal(ethers.constants.AddressZero);    
+      expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
+      expect(await buidlerToken.isCall()).to.equal(true); 
+      expect(await buidlerToken.strikePrice()).to.equal(price); 
+      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.acoFee()).to.equal(fee); 
+      expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
+      expect(await buidlerToken.totalCollateral()).to.equal(0); 
+      expect(await buidlerToken.underlyingSymbol()).to.equal("ETH");
+      expect(await buidlerToken.underlyingDecimals()).to.equal(18);
+      expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
+      expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
+      expect(await buidlerFactoryV4.getAcoToken(ethers.constants.AddressZero, token2.address, true, price, time)).to.equal(result.acoToken);
+
+      let newACOToken4 = await (await ethers.getContractFactory("ACOToken")).deploy();
+      await newACOToken4.deployed();
+      await buidlerFactoryV4.setAcoTokenImplementation(newACOToken4.address);
+      tx = await (await buidlerFactoryV4.createAcoToken(token1.address, token2.address, true, price, time, maxExercisedAccounts)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      expect(result.underlying).to.equal(token1.address);
+      expect(result.strikeAsset).to.equal(token2.address);
+      expect(result.isCall).to.equal(true);
+      expect(result.strikePrice).to.equal(price);
+      expect(result.expiryTime).to.equal(time);
+      expect(result.acoTokenImplementation).to.equal(newACOToken4.address);
+      data = await buidlerFactoryV4.acoTokenData(result.acoToken);
+      expect(data[0]).to.equal(token1.address);
+      expect(data[1]).to.equal(token2.address);
+      expect(data[2]).to.equal(true);
+      expect(data[3]).to.equal(price);
+      expect(data[4]).to.equal(time);
+
+      buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
+      expect(await buidlerToken.underlying()).to.equal(token1.address);    
+      expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
+      expect(await buidlerToken.isCall()).to.equal(true); 
+      expect(await buidlerToken.strikePrice()).to.equal(price); 
+      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.acoFee()).to.equal(fee); 
+      expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
+      expect(await buidlerToken.totalCollateral()).to.equal(0); 
+      expect(await buidlerToken.underlyingSymbol()).to.equal(token1Symbol);
+      expect(await buidlerToken.underlyingDecimals()).to.equal(token1Decimals);
+      expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
+      expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
+      expect(await buidlerFactoryV4.getAcoToken(token1.address, token2.address, true, price, time)).to.equal(result.acoToken);
+
+      await expect(
+        buidlerToken.init(token1.address, token2.address, false, price, time, fee, await addr2.getAddress(), maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::init: Already initialized");
+      
+      expect(await buidlerProxy.admin()).to.equal(await owner.getAddress());
+      expect(await buidlerProxy.implementation()).to.equal(ACOFactoryV4.address);
+      expect(await buidlerFactoryV4.factoryAdmin()).to.equal(await owner.getAddress());
+      expect(await buidlerFactoryV4.acoFee()).to.equal(fee);
+      expect(await buidlerFactoryV4.acoFeeDestination()).to.equal(await addr2.getAddress());
+      expect(await buidlerFactoryV4.acoTokenImplementation()).to.equal(newACOToken4.address);
+
+      data = await buidlerFactoryV4.acoTokenData(result1.acoToken);
+      expect(data[0]).to.equal(ethers.constants.AddressZero);
+      expect(data[1]).to.equal(ethers.constants.AddressZero);
+      expect(data[2]).to.equal(false);
+      expect(data[3]).to.equal(0);
+      expect(data[4]).to.equal(0);
+      data = await buidlerFactoryV4.acoTokenData(result2.acoToken);
+      expect(data[0]).to.equal(ethers.constants.AddressZero);
+      expect(data[1]).to.equal(ethers.constants.AddressZero);
+      expect(data[2]).to.equal(false);
+      expect(data[3]).to.equal(0);
+      expect(data[4]).to.equal(0);
+      data = await buidlerFactoryV4.acoTokenData(result3.acoToken);
+      expect(data[0]).to.equal(ethers.constants.AddressZero);
+      expect(data[1]).to.equal(ethers.constants.AddressZero);
+      expect(data[2]).to.equal(false);
+      expect(data[3]).to.equal(0);
+      expect(data[4]).to.equal(0);
     });
-    it("Check fail to ACO token creation", async function () {
+    it("Check fail to ACO token admin creation", async function () {
       const maxExercisedAccounts = 120;
       let time = Math.round(new Date().getTime() / 1000) + 86400;
       let price = 3 * 10 ** token2Decimals;
@@ -1352,6 +1470,256 @@ describe("ACOFactory", function() {
         buidlerFactoryV3.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)
       ).to.be.revertedWith("ACOToken::init: Invalid ACO fee");   
 
+
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+      await buidlerFactoryV4.setAcoFee(100);
+      await buidlerFactoryV4.setOperator(await owner.getAddress(), false);
+
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOFactory::createAcoToken: Only authorized operators");
+
+      await buidlerFactoryV4.setOperator(await owner.getAddress(), true);
+      
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, token2.address, false, price, 0, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::init: Invalid expiry");
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, token2.address, false, 0, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::init: Invalid strike price");
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, token1.address, false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::init: Same assets");
+      await expect(
+        buidlerFactoryV4.createAcoToken(await owner.getAddress(), token2.address, false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::init: Invalid underlying");
+      await expect(
+        buidlerFactoryV4.createAcoToken(token2.address, await owner.getAddress(), false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::init: Invalid strike asset");
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, ACOFactory.address, false, price, time, 1)
+      ).to.be.revertedWith("ACOToken::init: Invalid number to max exercised accounts");
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, ACOFactory.address, false, price, time, 200)
+      ).to.be.revertedWith("ACOToken::init: Invalid number to max exercised accounts");
+      await expect(
+        buidlerFactoryV4.createAcoToken(ACOFactory.address, token1.address, false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::_getAssetDecimals: Invalid asset decimals");
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, ACOFactory.address, false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::_getAssetDecimals: Invalid asset decimals");
+
+      await buidlerFactoryV4.setAcoFee(501);
+      expect(await buidlerFactoryV4.acoFee()).to.equal(501);
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOToken::init: Invalid ACO fee");   
+
+      await buidlerFactoryV4.setAcoFee(100);
+      await buidlerFactoryV4.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts);
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, token2.address, false, price, time, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOFactory::_createAcoToken: ACO already exists");
+
+      await expect(
+        buidlerFactoryV4.createAcoToken(token1.address, token2.address, true, price, time + 200000000, maxExercisedAccounts)
+      ).to.be.revertedWith("ACOFactory::_createAcoToken: Invalid expiry time");
+    });
+    it("Check set ACO strike asset permitted", async function () {
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      expect(await buidlerFactoryV4.strikeAssets(token1.address)).to.equal(false);  
+      expect(await buidlerFactoryV4.strikeAssets(token2.address)).to.equal(false); 
+      await buidlerFactoryV4.setStrikeAssetPermission(token2.address, true);
+      await buidlerFactoryV4.setStrikeAssetPermission(token1.address, true);
+      expect(await buidlerFactoryV4.strikeAssets(token1.address)).to.equal(true); 
+      expect(await buidlerFactoryV4.strikeAssets(token2.address)).to.equal(true); 
+      
+      await buidlerFactoryV4.setStrikeAssetPermission(token1.address, false);
+      expect(await buidlerFactoryV4.strikeAssets(token1.address)).to.equal(false); 
+      expect(await buidlerFactoryV4.strikeAssets(token2.address)).to.equal(true); 
+    });
+    it("Check fail to set ACO strike asset permitted", async function () {
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).setStrikeAssetPermission(token1.address, true)
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect(await buidlerFactoryV4.strikeAssets(token1.address)).to.equal(false); 
+    });
+    it("Check set asset specific data", async function () {
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxSignificantDigits).to.equal(0); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxExercisedAccounts).to.equal(0); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token2.address)).maxSignificantDigits).to.equal(0); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token2.address)).maxExercisedAccounts).to.equal(0);  
+      expect(await buidlerFactoryV4.setAssetSpecificData(token1.address, 5, 90)); 
+      expect(await buidlerFactoryV4.setAssetSpecificData(token2.address, 4, 0)); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxSignificantDigits).to.equal(5); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxExercisedAccounts).to.equal(90); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token2.address)).maxSignificantDigits).to.equal(4); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token2.address)).maxExercisedAccounts).to.equal(0);  
+      
+      expect(await buidlerFactoryV4.setAssetSpecificData(token1.address, 0, 90)); 
+      expect(await buidlerFactoryV4.setAssetSpecificData(token2.address, 0, 0)); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxSignificantDigits).to.equal(0); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxExercisedAccounts).to.equal(90); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token2.address)).maxSignificantDigits).to.equal(0); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token2.address)).maxExercisedAccounts).to.equal(0);  
+    });
+    it("Check fail to set asset specific data", async function () {
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).setAssetSpecificData(token1.address, 5, 90)
+      ).to.be.revertedWith("ACOFactory::onlyFactoryAdmin");
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxSignificantDigits).to.equal(0); 
+      expect((await buidlerFactoryV4.assetsSpecificData(token1.address)).maxExercisedAccounts).to.equal(0);  
+    });
+    it("Check ACO token open creation", async function () {
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      await buidlerFactoryV4.setStrikeAssetPermission(token2.address, true);
+
+      const maxExercisedAccounts = 100;
+      let now = new Date();
+      now.setMonth(now.getMonth()+1);
+      let time = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0)/1000;
+      
+      let price = 3 * 10 ** token2Decimals;
+      let tx = await (await buidlerFactoryV4.connect(addr2).newAcoToken(token1.address, token2.address, false, price, time)).wait();
+      let result = tx.events[tx.events.length - 1].args;
+      expect(result.underlying).to.equal(token1.address);
+      expect(result.strikeAsset).to.equal(token2.address);
+      expect(result.isCall).to.equal(false);
+      expect(result.strikePrice).to.equal(price);
+      expect(result.expiryTime).to.equal(time);
+      expect(result.acoTokenImplementation).to.equal(ACOToken.address);
+
+      let buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
+      expect(await buidlerToken.underlying()).to.equal(token1.address);    
+      expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
+      expect(await buidlerToken.isCall()).to.equal(false); 
+      expect(await buidlerToken.strikePrice()).to.equal(price); 
+      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.acoFee()).to.equal(fee); 
+      expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
+      expect(await buidlerToken.totalCollateral()).to.equal(0); 
+      expect(await buidlerToken.underlyingSymbol()).to.equal(token1Symbol);
+      expect(await buidlerToken.underlyingDecimals()).to.equal(token1Decimals);
+      expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
+      expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(maxExercisedAccounts);
+      expect(await buidlerFactoryV4.getAcoToken(token1.address, token2.address, false, price, time)).to.equal(result.acoToken);
+      
+      expect(await buidlerFactoryV4.setAssetSpecificData(token1.address, 0, 90)); 
+      expect(await buidlerFactoryV4.setAssetSpecificData(token2.address, 0, 80)); 
+    
+      tx = await (await buidlerFactoryV4.connect(addr2).newAcoToken(token1.address, token2.address, true, price, time)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      expect(result.underlying).to.equal(token1.address);
+      expect(result.strikeAsset).to.equal(token2.address);
+      expect(result.isCall).to.equal(true);
+      expect(result.strikePrice).to.equal(price);
+      expect(result.expiryTime).to.equal(time);
+      expect(result.acoTokenImplementation).to.equal(ACOToken.address);
+
+      buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
+      expect(await buidlerToken.underlying()).to.equal(token1.address);    
+      expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
+      expect(await buidlerToken.isCall()).to.equal(true); 
+      expect(await buidlerToken.strikePrice()).to.equal(price); 
+      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.acoFee()).to.equal(fee); 
+      expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
+      expect(await buidlerToken.totalCollateral()).to.equal(0); 
+      expect(await buidlerToken.underlyingSymbol()).to.equal(token1Symbol);
+      expect(await buidlerToken.underlyingDecimals()).to.equal(token1Decimals);
+      expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
+      expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(90);
+      expect(await buidlerFactoryV4.getAcoToken(token1.address, token2.address, true, price, time)).to.equal(result.acoToken);
+
+      tx = await (await buidlerFactoryV4.connect(addr2).newAcoToken(token1.address, token2.address, false, price * 1.01, time)).wait();
+      result = tx.events[tx.events.length - 1].args;
+      expect(result.underlying).to.equal(token1.address);
+      expect(result.strikeAsset).to.equal(token2.address);
+      expect(result.isCall).to.equal(false);
+      expect(result.strikePrice).to.equal(price * 1.01);
+      expect(result.expiryTime).to.equal(time);
+      expect(result.acoTokenImplementation).to.equal(ACOToken.address);
+
+      buidlerToken = await ethers.getContractAt("ACOToken", result.acoToken);     
+      expect(await buidlerToken.underlying()).to.equal(token1.address);    
+      expect(await buidlerToken.strikeAsset()).to.equal(token2.address);    
+      expect(await buidlerToken.isCall()).to.equal(false); 
+      expect(await buidlerToken.strikePrice()).to.equal(price * 1.01); 
+      expect(await buidlerToken.expiryTime()).to.equal(time); 
+      expect(await buidlerToken.acoFee()).to.equal(fee); 
+      expect(await buidlerToken.feeDestination()).to.equal(await addr2.getAddress()); 
+      expect(await buidlerToken.totalCollateral()).to.equal(0); 
+      expect(await buidlerToken.underlyingSymbol()).to.equal(token1Symbol);
+      expect(await buidlerToken.underlyingDecimals()).to.equal(token1Decimals);
+      expect(await buidlerToken.strikeAssetSymbol()).to.equal(token2Symbol);
+      expect(await buidlerToken.strikeAssetDecimals()).to.equal(token2Decimals);
+      expect(await buidlerToken.maxExercisedAccounts()).to.equal(80);
+      expect(await buidlerFactoryV4.getAcoToken(token1.address, token2.address, false, price * 1.01, time)).to.equal(result.acoToken);
+    });
+    it("Check fail to ACO token open creation", async function () {
+      await buidlerProxy.connect(owner).setImplementation(ACOFactoryV4.address, []);
+
+      let now = new Date();
+      now.setMonth(now.getMonth()+1);
+      let time = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0)/1000;
+      let price = 3 * 10 ** token2Decimals;
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, false, price, time)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid strike asset");
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, true, price, time)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid strike asset");
+      
+      await buidlerFactoryV4.setStrikeAssetPermission(token2.address, true);
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, false, price, time+1)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid expiry time");
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, true, price, time+1)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid expiry time");
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, false, price, time+43200)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid expiry time");
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, true, price, time+43200)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid expiry time");
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, false, Math.round(price * 1.001), time)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid strike price");
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, true, Math.round(price * 1.001), time)
+      ).to.be.revertedWith("ACOFactory::newAcoToken: Invalid strike price");
+
+      await buidlerFactoryV4.setAssetSpecificData(token2.address, 4, 0);
+      await buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, false, Math.round(price * 1.001), time);
+      await buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, true, Math.round(price * 1.001), time);
+
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, false, Math.round(price * 1.001), time)
+      ).to.be.revertedWith("ACOFactory::_createAcoToken: ACO already exists");
+      await expect(
+        buidlerFactoryV4.connect(addr1).newAcoToken(token1.address, token2.address, true, Math.round(price * 1.001), time)
+      ).to.be.revertedWith("ACOFactory::_createAcoToken: ACO already exists");
+
+      await expect(
+        buidlerFactoryV4.newAcoToken(token1.address, token2.address, true, price, time + 158025600)
+      ).to.be.revertedWith("ACOFactory::_createAcoToken: Invalid expiry time");
+      await expect(
+        buidlerFactoryV4.newAcoToken(token1.address, token2.address, false, price, time + 158025600)
+      ).to.be.revertedWith("ACOFactory::_createAcoToken: Invalid expiry time");
     });
   });
 });

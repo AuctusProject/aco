@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/acoTokenMethods'
-import { zero, formatDate, fromDecimals, toDecimals, isEther, percentagePrecision, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
+import { zero, formatDate, fromDecimals, toDecimals, isEther, PERCENTAGE_PRECISION, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -296,7 +296,7 @@ class ExerciseModal extends Component {
 
   getExerciseFee = (optionsAmount) => {
     var totalCollateralValue = this.getTotalCollateralValue(optionsAmount)
-    return (totalCollateralValue * (this.props.position.option.acoFee / percentagePrecision))
+    return (totalCollateralValue * (this.props.position.option.acoFee / PERCENTAGE_PRECISION))
   }
 
   getPayValue = (optionsAmount) => {

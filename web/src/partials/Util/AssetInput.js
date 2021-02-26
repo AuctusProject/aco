@@ -132,7 +132,7 @@ class AssetInput extends Component {
                   <div className="token-name-title">Token Name</div>
                 </div>
               </div>
-              <div className="row overflow-auto">
+              <div className="overflow-auto">
                 {this.state.filteredAssets.map(asset => (
                   <div key={asset.address} className="col-md-12 asset-option" onClick={this.onAssetSelect(asset)}>
                     {this.getAssetIcon(asset)}

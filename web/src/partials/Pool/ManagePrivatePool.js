@@ -1,7 +1,7 @@
 import './ManagePrivatePool.css'
 import React, { Component } from 'react'
-import { maxExpiration, minExpiration, tolerancePriceAbove, tolerancePriceBelow } from '../../util/acoPoolMethods'
-import { formatPercentage, percentagePrecision } from '../../util/constants'
+import { acoPermissionConfig } from '../../util/acoPoolMethodsv4'
+import { formatPercentage, PERCENTAGE_PRECISION } from '../../util/constants'
 import Loading from '../Util/Loading'
 import UpdateIVModal from './UpdateIVModal'
 import UpdateSellingOptionsModal from './UpdateSellingOptionsModal'
@@ -16,26 +16,78 @@ class ManagePrivatePool extends Component {
 
   componentDidMount = () => {
     let pool = this.props.pool
-    let promises = []
-    promises.push(minExpiration(pool.address).then(minExpiration => this.setState({minExpiration: minExpiration/86400})))
-    promises.push(maxExpiration(pool.address).then(maxExpiration => this.setState({maxExpiration: maxExpiration/86400})))
-    promises.push(tolerancePriceAbove(pool.address).then(tolerancePriceAbove => this.setState({tolerancePriceAbove: tolerancePriceAbove/percentagePrecision})))
-    promises.push(tolerancePriceBelow(pool.address).then(tolerancePriceBelow => this.setState({tolerancePriceBelow: tolerancePriceBelow/percentagePrecision})))
+    acoPermissionConfig(pool.address).then(acoPermissionConfig => this.setConfig(acoPermissionConfig))
+  }
 
-    Promise.all(promises).then(() => {this.setState({loading:false})})
+  setConfig = (acoPermissionConfig) => {
+    this.setState({
+      minExpiration: acoPermissionConfig.minExpiration/86400,
+      maxExpiration: acoPermissionConfig.maxExpiration/86400,
+      tolerancePriceBelowMin: this.getTolerance(acoPermissionConfig.tolerancePriceBelowMin),
+      tolerancePriceBelowMax: this.getTolerance(acoPermissionConfig.tolerancePriceBelowMax),
+      tolerancePriceAboveMin: this.getTolerance(acoPermissionConfig.tolerancePriceAboveMin),
+      tolerancePriceAboveMax: this.getTolerance(acoPermissionConfig.tolerancePriceAboveMax),
+      loading:false
+    })
+  }
+
+  getTolerance = (tolerance) => {
+    if (tolerance === "0") {
+      return null
+    }
+    if (tolerance === "1") {
+      return 0
+    }
+    return tolerance/PERCENTAGE_PRECISION
   }
 
   getStrikePriceConfig = () => {
-    if (this.state.tolerancePriceAbove === 0 && this.state.tolerancePriceBelow === 0) {
+    if (this.state.tolerancePriceAboveMin === null && this.state.tolerancePriceAboveMax === null && this.state.tolerancePriceBelowMin === null && this.state.tolerancePriceBelowMax === null) {
       return "Any Strike Price"
     }
-    else if (this.state.tolerancePriceBelow === 0) {
-      return "Strike Price > Current Price + "+ formatPercentage(this.state.tolerancePriceAbove, 0)
+    else if (((this.state.tolerancePriceAboveMin !== null ? 1 : 0) +
+      (this.state.tolerancePriceAboveMax !== null ? 1 : 0) +
+      (this.state.tolerancePriceBelowMin !== null ? 1 : 0) +
+      (this.state.tolerancePriceBelowMax !== null ? 1 : 0)) > 2
+    ) {
+      return "Invalid Strike Price Configuration"
     }
-    else if (this.state.tolerancePriceAbove === 0) {
-      return "Strike Price < Current Price - "+ formatPercentage(this.state.tolerancePriceBelow, 0)
+    else if (this.state.tolerancePriceBelowMax !== null) {
+      if (this.state.tolerancePriceBelowMin !== null) {
+        return "Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
+          " <= Strike Price <= Current Price - "+ formatPercentage(this.state.tolerancePriceBelowMin, 0)
+      }
+      else if (this.state.tolerancePriceAboveMax !== null) {
+        return "Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
+          " <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
+      }
+      else if (this.state.tolerancePriceAboveMin !== null) {
+        return "Invalid Strike Price Configuration"
+      }
+      else {
+        return "Strike Price >= Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0)
+      }
     }
-    return "Current Price - "+formatPercentage(this.state.tolerancePriceBelow, 0)+" <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAbove, 0)
+    else if (this.state.tolerancePriceBelowMin !== null) {
+      if (this.state.tolerancePriceAboveMin !== null || this.state.tolerancePriceAboveMax !== null) {
+        return "Invalid Strike Price Configuration"
+      }
+      else {
+        return "Strike Price <= Current Price - " + formatPercentage(this.state.tolerancePriceBelowMin, 0)
+      }
+    }
+    else if (this.state.tolerancePriceAboveMin !== null) {
+      if (this.state.tolerancePriceAboveMax !== null) {
+        return "Current Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0) + 
+          " <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
+      }
+      else {
+        return "Strike Price >= Current Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0)
+      }
+    }
+    else if (this.state.tolerancePriceAboveMax !== null) {
+      return "Strike Price <= Current Price + " + formatPercentage(this.state.tolerancePriceAboveMax, 0)
+    }
   }
 
   getExpirationConfig = () => {
@@ -92,7 +144,15 @@ class ManagePrivatePool extends Component {
         <div className="aco-button action-btn btn-sm" onClick={this.onUpdateSellingOptionsClick}>Update</div>
       </div>
       {this.state.showUpdateIVModal && <UpdateIVModal onHide={this.onHideUpdateIVModal} pool={pool}/>}
-      {this.state.showUpdateSellingOptionsModal && <UpdateSellingOptionsModal onHide={this.onHideUpdateSellingOptionsModal} pool={pool} minExpiration={this.state.minExpiration} maxExpiration={this.state.maxExpiration} tolerancePriceAbove={this.state.tolerancePriceAbove} tolerancePriceBelow={this.state.tolerancePriceBelow}/>}
+      {this.state.showUpdateSellingOptionsModal && <UpdateSellingOptionsModal 
+        onHide={this.onHideUpdateSellingOptionsModal} 
+        pool={pool} 
+        minExpiration={this.state.minExpiration} 
+        maxExpiration={this.state.maxExpiration} 
+        tolerancePriceAboveMin={this.state.tolerancePriceAboveMin} 
+        tolerancePriceAboveMax={this.state.tolerancePriceAboveMax}
+        tolerancePriceBelowMin={this.state.tolerancePriceBelowMin}
+        tolerancePriceBelowMax={this.state.tolerancePriceBelowMax}/>}
     </div>
   }
 }

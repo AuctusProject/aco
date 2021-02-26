@@ -18,10 +18,29 @@
 .label-input-row {
     display: flex;
     flex-direction: row;
-    margin: 4px;
     align-items: center;
 }
 
 .input-row > div {
     margin: 4px;
+}
+
+.label-input-column .form-group.form-check {
+    margin-bottom: 4px;
+}
+
+.no-max-input-row > div:not(.label-input-column) {
+    margin-top: 26px;
+}
+
+.no-max-checked {
+    color: #4a4a4a;
+}
+
+.no-max-checked .input-field {
+    border-color: #383838;
+}
+
+.no-max-checked .coin-symbol {
+    color: #4a4a4a;
 }

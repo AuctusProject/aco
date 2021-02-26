@@ -357,7 +357,7 @@ contract ACOFactoryV3 is ACOFactoryV2 {
         uint256 strikePrice, 
         uint256 expiryTime,
         uint256 maxExercisedAccounts
-    ) external override returns(address) {
+    ) external override virtual returns(address) {
         require(operators[msg.sender], "ACOFactory::createAcoToken: Only authorized operators");
         address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
         acoTokenData[acoToken] = ACOTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime);
@@ -374,5 +374,296 @@ contract ACOFactoryV3 is ACOFactoryV2 {
     function _setOperator(address operator, bool newPermission) internal virtual {
         emit SetOperator(operator, operators[operator], newPermission);
         operators[operator] = newPermission;
+    }
+}
+
+contract ACOFactoryV4 is ACOFactoryV3 {
+
+    uint256 public constant MAX_EXPIRATION = 157852800;
+    uint256 public constant DEFAULT_MAX_EXERCISED_ACCOUNTS = 100;
+    uint256 public constant DEFAULT_MAX_SIGNIFICANT_DIGITS = 3;
+
+    struct AssetData {
+        /*
+         * The maximum significant digits on the strike to ACO creation.
+         */
+        uint256 maxSignificantDigits;
+        
+        /*
+         * The maximum number of accounts that can be exercised by transaction.
+         */
+        uint256 maxExercisedAccounts;
+    }
+
+    /**
+     * @dev Emitted when the strike asset address permission has been changed.
+     * @param strikeAsset Address of the strike asset.
+     * @param previousPermission Whether the strike asset was authorized.
+     * @param newPermission Whether the strike asset will be authorized.
+     */
+    event SetStrikeAssetPermission(address indexed strikeAsset, bool indexed previousPermission, bool indexed newPermission);
+
+    /**
+     * @dev Emitted when the asset specific data has been changed.
+     * @param asset Address of the asset.
+     * @param previousMaxSignificantDigits Previous value of the maximum significant digits on the strike to ACO creation.
+     * @param previousMaxExercisedAccounts Previous value of the maximum number of accounts that can be exercised by transaction.
+     * @param newMaxSignificantDigits New value of the maximum significant digits on the strike to ACO creation.
+     * @param newMaxExercisedAccounts New value of the maximum number of accounts that can be exercised by transaction.
+     */
+    event SetAssetSpecificData(address indexed asset, uint256 previousMaxSignificantDigits, uint256 previousMaxExercisedAccounts, uint256 newMaxSignificantDigits, uint256 newMaxExercisedAccounts);
+    
+    /**
+     * @dev A map to register the strike assets permissions.
+     */
+    mapping(address => bool) public strikeAssets;
+    
+    /**
+     * @dev A map to register the ACOs by their hash.
+     */
+    mapping(bytes32 => address) public acoHashes;
+    
+    /**
+     * @dev A map to register the assets specific data.
+     */
+    mapping(address => AssetData) public assetsSpecificData;
+
+    /**
+     * @dev Function to set the strike asset permission.
+     * @param strikeAsset Address of the strike asset.
+     * @param newPermission Whether the strike asset will be authorized.
+     */
+    function setStrikeAssetPermission(address strikeAsset, bool newPermission) onlyFactoryAdmin external virtual {
+        _setStrikeAssetPermission(strikeAsset, newPermission);
+    }
+    
+    /**
+     * @dev Function to set the asset specific data.
+     * @param asset Address of the asset.
+     * @param maxSignificantDigits The maximum significant digits on the strike to create an ACO.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
+     */
+    function setAssetSpecificData(
+        address asset, 
+        uint256 maxSignificantDigits,
+        uint256 maxExercisedAccounts
+    ) onlyFactoryAdmin external virtual {
+        _setAssetSpecificData(asset, maxSignificantDigits, maxExercisedAccounts);
+    }
+    
+    /**
+     * @dev Function to get the ACO token by the parameters.
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @return The ACO address or 0x0 if it does not exist.
+     */
+    function getAcoToken(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 strikePrice, 
+        uint256 expiryTime
+    ) external virtual view returns(address) {
+        bytes32 acoHash = _getAcoHash(underlying, strikeAsset, isCall, strikePrice, expiryTime);
+        return acoHashes[acoHash];
+    }
+
+	/**
+     * @dev Function to create a new ACO token.
+     * It deploys a minimal proxy for the ACO token implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
+     * @return The created ACO token address.
+     */
+    function createAcoToken(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 strikePrice, 
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
+    ) external override virtual returns(address) {
+        require(operators[msg.sender], "ACOFactory::createAcoToken: Only authorized operators");
+        return _createAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
+    }
+    
+    /**
+     * @dev Function to create a new ACO token.
+     * It deploys a minimal proxy for the ACO token implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @return The created ACO token address.
+     */
+    function newAcoToken(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 strikePrice, 
+        uint256 expiryTime
+    ) external virtual returns(address) {
+        require(strikeAssets[strikeAsset], "ACOFactory::newAcoToken: Invalid strike asset");
+        require(_isValidTime(expiryTime), "ACOFactory::newAcoToken: Invalid expiry time");
+        
+        AssetData storage strikeAssetData = assetsSpecificData[strikeAsset];
+        uint256 maxSignificantDigits = _getMaxSignificantDigits(strikeAssetData);
+        require(_isValidStrikePrice(strikePrice, maxSignificantDigits), "ACOFactory::newAcoToken: Invalid strike price");
+        
+        uint256 maxExercisedAccounts = _getMaxExercisedAccounts(underlying, isCall, strikeAssetData);
+        return _createAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
+    }
+    
+    /**
+     * @dev Internal function to create a new ACO token.
+     * It deploys a minimal proxy for the ACO token implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
+     * @return The created ACO token address.
+     */
+    function _createAcoToken(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 strikePrice, 
+        uint256 expiryTime,
+        uint256 maxExercisedAccounts
+    ) internal virtual returns(address) {
+        require(expiryTime <= (block.timestamp + MAX_EXPIRATION), "ACOFactory::_createAcoToken: Invalid expiry time");
+        
+        bytes32 acoHash = _getAcoHash(underlying, strikeAsset, isCall, strikePrice, expiryTime);
+        require(acoHashes[acoHash] == address(0), "ACOFactory::_createAcoToken: ACO already exists");
+        
+        address acoToken = _deployAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime, maxExercisedAccounts);
+        acoTokenData[acoToken] = ACOTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime);
+        creators[acoToken] = msg.sender;
+        acoHashes[acoHash] = acoToken;
+        emit NewAcoTokenData(underlying, strikeAsset, isCall, strikePrice, expiryTime, acoToken, acoTokenImplementation, msg.sender);
+        return acoToken;
+    }
+    
+    /**
+     * @dev Internal function to get the ACO hash.
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @return The ACO hash.
+     */
+    function _getAcoHash(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 strikePrice, 
+        uint256 expiryTime
+    ) internal pure virtual returns(bytes32) {
+        return keccak256(abi.encodePacked(underlying, strikeAsset, isCall, strikePrice, expiryTime));
+    }
+    
+    /**
+     * @dev Internal function to get the maximum number of accounts that can be exercised by transaction for an ACO creation.
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param isCall Whether the ACO token is the Call type.
+     * @param strikeAssetData The strike asset specific data.
+     * @return The maximum number of accounts that can be exercised by transaction for an ACO creation.
+     */
+    function _getMaxExercisedAccounts(
+        address underlying, 
+        bool isCall,
+        AssetData storage strikeAssetData
+    ) internal view virtual returns(uint256) {
+        if (isCall) {
+            AssetData storage underlyingData = assetsSpecificData[underlying];
+            if (underlyingData.maxExercisedAccounts > 0) {
+                return underlyingData.maxExercisedAccounts;
+            }
+        } else if (strikeAssetData.maxExercisedAccounts > 0) {
+            return strikeAssetData.maxExercisedAccounts;
+        }
+        return DEFAULT_MAX_EXERCISED_ACCOUNTS;
+    }
+    
+    /**
+     * @dev Internal function to get the maximum significant digits on the strike to ACO creation.
+     * @param strikeAssetData The strike asset specific data.
+     * @return The maximum significant digits on the strike to ACO creation.
+     */
+    function _getMaxSignificantDigits(AssetData storage strikeAssetData) internal view virtual returns(uint256) {
+        if (strikeAssetData.maxSignificantDigits > 0) {
+            return strikeAssetData.maxSignificantDigits;
+        }
+        return DEFAULT_MAX_SIGNIFICANT_DIGITS;
+    }
+
+    /**
+     * @dev Internal function to check if the expiry time is 8:00 AM.
+     * @param expiryTime The UNIX time for the ACO token expiration.
+     * @return TRUE if it is 8:00 AM else FALSE.
+     */
+    function _isValidTime(uint256 expiryTime) internal pure virtual returns(bool) {
+        return ((expiryTime % 60) == 0 && ((expiryTime % 3600) / 60) == 0 && ((expiryTime % 86400) / 3600) == 8);
+    }
+    
+    /**
+     * @dev Internal function to check if the strike price respect the maximum significant digits allowed.
+     * @param strikePrice The strike price with the strike asset precision.
+     * @param maxSignificantDigits The maximum significant digits on the strike to ACO creation.
+     * @return TRUE if it is valid else FALSE.
+     */
+    function _isValidStrikePrice(uint256 strikePrice, uint256 maxSignificantDigits) internal pure virtual returns(bool) {
+        uint256 i = strikePrice;
+        uint256 len;
+        while (i != 0) {
+            len++;
+            i /= 10;
+        }
+        if (len <= maxSignificantDigits) {
+            return true;
+        }
+        uint256 diff = len - maxSignificantDigits;
+        if (diff < 78) {
+            uint256 nonSignificant = 10 ** diff;
+            return ((strikePrice / nonSignificant) * nonSignificant) == strikePrice;
+        }
+        return false;
+    }
+
+    /**
+     * @dev Internal function to set the strike asset permission.
+     * @param strikeAsset Address of the strike asset.
+     * @param newPermission Whether the strike asset will be authorized.
+     */
+    function _setStrikeAssetPermission(address strikeAsset, bool newPermission) internal virtual {
+        emit SetStrikeAssetPermission(strikeAsset, strikeAssets[strikeAsset], newPermission);
+        strikeAssets[strikeAsset] = newPermission;
+    }
+    
+    /**
+     * @dev Internal function to set the asset specific data.
+     * @param asset Address of the asset.
+     * @param maxSignificantDigits The maximum significant digits on the strike to ACO creation.
+     * @param maxExercisedAccounts The maximum number of accounts that can be exercised by transaction.
+     */
+    function _setAssetSpecificData(
+        address asset, 
+        uint256 maxSignificantDigits,
+        uint256 maxExercisedAccounts
+    ) internal virtual {
+        AssetData storage previousData = assetsSpecificData[asset];
+        emit SetAssetSpecificData(asset, previousData.maxSignificantDigits, previousData.maxExercisedAccounts, maxSignificantDigits, maxExercisedAccounts);
+        assetsSpecificData[asset] = AssetData(maxSignificantDigits, maxExercisedAccounts);
     }
 }

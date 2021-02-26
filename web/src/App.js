@@ -21,6 +21,7 @@ import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 import Vaults from './pages/Vaults'
 import Otc from './pages/Otc'
 import PoolDashboard from './partials/Pool/PoolDashboard'
+import CreateOption from './pages/CreateOption'
 
 class App extends Component {
   constructor() {
@@ -230,6 +231,15 @@ class App extends Component {
                 <Route 
                   path={[`/otc/trade/:orderId?`, `/otc/manage`]}
                   render={ routeProps => <Otc
+                    {...routeProps}
+                    darkMode={darkMode}
+                    signIn={this.showSignInModal}
+                    accountToggle={this.state.accountToggle}
+                  /> }
+                />
+                <Route 
+                  path={`/new-option`}
+                  render={ routeProps => <CreateOption
                     {...routeProps}
                     darkMode={darkMode}
                     signIn={this.showSignInModal}

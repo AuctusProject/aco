@@ -1,9 +1,10 @@
 import { getWeb3 } from './web3Methods'
-import { acoPoolFactoryAddress, deprecatedPoolImplementation, getBalanceOfAsset, toDecimals } from './constants';
+import { acoPoolFactoryAddress, deprecatedPoolImplementation, fromDecimals, getBalanceOfAsset, ONE_SECOND, toDecimals, PERCENTAGE_PRECISION } from './constants';
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 import { getGeneralData } from './acoPoolMethodsv2';
+import { acoPermissionConfig } from './acoPoolMethodsv4';
 
 var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {
@@ -129,6 +130,37 @@ function fillTokensInformations(pools, assetsAddresses) {
 }
 
 export const getAvailablePoolsForOption = (option) => {
+    return getAvailablePoolsForOptionWithCustomCanSwap(option, (pool, option) => {
+        return canSwap(pool.acoPool, option.acoToken)
+    })
+}
+
+export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) => {
+    return getAvailablePoolsForOptionWithCustomCanSwap(option, (pool, option) => {
+        return new Promise((resolve, reject) => {
+            acoPermissionConfig(pool.acoPool).then(poolConfig => {
+                var now = parseInt(new Date().getTime()/ONE_SECOND)
+                var isValidExpiration = Number(option.expiryTime) >= (now + Number(poolConfig.minExpiration)) &&
+                    Number(option.expiryTime) <= (now + Number(poolConfig.maxExpiration))
+
+                if (!isValidExpiration) {
+                    resolve(false)
+                    return
+
+                }
+                var strikePrice = Number(fromDecimals(option.strikePrice, 6))
+                var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) === 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceBelowMax) === 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMin) === 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMax) === 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
+
+                resolve(isValidStrikePrice)
+            })
+        })
+    })
+}
+
+export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwapPromise) => {
     return new Promise((resolve, reject) => {
         getAllAvailablePools(false).then(pools => {
             let canSwapPromises = []
@@ -138,7 +170,7 @@ export const getAvailablePoolsForOption = (option) => {
                 if (pool.underlying.toLowerCase() === option.underlying.toLowerCase() && 
                     pool.strikeAsset.toLowerCase() === option.strikeAsset.toLowerCase() && 
                     pool.isCall === option.isCall) {
-                    let canSwapPromise = canSwap(pool.acoPool, option.acoToken)
+                    let canSwapPromise = customCanSwapPromise(pool, option)
                     canSwapPromises.push(canSwapPromise)
                     canSwapPromise.then(result => {
                         if (result) {

@@ -100,4 +100,6 @@
     max-height: calc(100vh - 105px);
     height: 360px;
     align-items: flex-start;
+    margin-right: -15px;
+    margin-left: -15px;
 }

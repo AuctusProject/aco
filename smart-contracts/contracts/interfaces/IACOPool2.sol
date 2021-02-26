@@ -12,14 +12,11 @@ interface IACOPool2 is IERC20 {
         address underlying;
         address strikeAsset;
         bool isCall; 
-        uint256 tolerancePriceBelow;
-        uint256 tolerancePriceAbove; 
-        uint256 minExpiration;
-        uint256 maxExpiration;
         uint256 baseVolatility;  
         address admin;
         address strategy;  
-        PoolProtocolConfig config;
+        PoolAcoPermissionConfig acoPermissionConfig;
+        PoolProtocolConfig protocolConfig;
     }
 
 	struct AcoData {
@@ -29,6 +26,15 @@ interface IACOPool2 is IERC20 {
         uint256 collateralRedeemed;
         uint256 index;
 		uint256 openIndex;
+    }
+    
+    struct PoolAcoPermissionConfig {
+        uint256 tolerancePriceBelowMin;
+        uint256 tolerancePriceBelowMax;
+        uint256 tolerancePriceAboveMin;
+        uint256 tolerancePriceAboveMax;
+        uint256 minExpiration;
+        uint256 maxExpiration;
     }
     
     struct PoolProtocolConfig {
@@ -74,6 +80,7 @@ interface IACOPool2 is IERC20 {
     );
 	function setLendingPoolReferral(uint16 newLendingPoolReferral) external;
 	function setPoolDataForAcoPermission(uint256 newTolerancePriceBelow, uint256 newTolerancePriceAbove, uint256 newMinExpiration, uint256 newMaxExpiration) external;
+	function setAcoPermissionConfig(PoolAcoPermissionConfig calldata newConfig) external;
 	function setPoolAdmin(uint256 newAdmin) external;
 	function setProtocolConfig(PoolProtocolConfig calldata newConfig) external;
 	function setFeeData(address newFeeDestination, uint256 newFee) external;
@@ -89,7 +96,8 @@ interface IACOPool2 is IERC20 {
 	function setMaximumOpenAco(uint256 newMaximumOpenAco) external;
 	function setStrategy(address newStrategy) external;
 	function setBaseVolatility(uint256 newBaseVolatility) external;
-	function setValidAcoCreator(address newAcoCreator, bool newPermission) external;
+	function setValidAcoCreator(address acoCreator, bool newPermission) external;
+	function setForbiddenAcoCreator(address acoCreator, bool newStatus) external;
     function withdrawStuckToken(address token, address destination) external;
     function deposit(uint256 collateralAmount, uint256 minShares, address to, bool isLendingToken) external payable returns(uint256 acoPoolTokenAmount);
 	function depositWithGasToken(uint256 collateralAmount, uint256 minShares, address to, bool isLendingToken) external payable returns(uint256 acoPoolTokenAmount);

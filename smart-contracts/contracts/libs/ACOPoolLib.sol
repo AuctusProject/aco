@@ -6,41 +6,39 @@ import "../interfaces/IACOPoolStrategy.sol";
 import "../interfaces/IACOFactory.sol";
 import "../interfaces/IACOToken.sol";
 import "../interfaces/ILendingPool.sol";
+import "../interfaces/IACOPool2.sol";
 
 library ACOPoolLib {
 	using SafeMath for uint256;
 	
 	struct OpenPositionData {
-        uint256 underlyingPrice;
-        uint256 baseVolatility;
-        uint256 underlyingPriceAdjustPercentage;
-        uint256 fee;
-        uint256 underlyingPrecision;
-        address strategy;
-        address acoFactory;
-	    address acoToken;
+	    bool isDeposit;
+	    bool isCall;
+	    uint256 underlyingPrice;
+	    uint256 baseVolatility;
+	    uint256 underlyingPriceAdjustPercentage;
+	    uint256 withdrawOpenPositionPenalty;
+	    uint256 fee;
+	    uint256 underlyingPrecision;
+	    address underlying;
+	    address strikeAsset;
+	    address strategy;
+	    address acoFactory;
+	    address lendingToken;
 	}
 	
 	struct QuoteData {
-		bool isCall;
-        uint256 tokenAmount; 
-		address underlying;
-		address strikeAsset;
-		uint256 strikePrice; 
-		uint256 expiryTime;
 		address lendingToken;
 		address strategy;
 		uint256 baseVolatility;
 		uint256 fee;
-		uint256 minExpiration;
-		uint256 maxExpiration;
-		uint256 tolerancePriceBelow;
-		uint256 tolerancePriceAbove;
 		uint256 underlyingPrice;
 		uint256 underlyingPrecision;
+		AcoData acoData;
+		IACOPool2.PoolAcoPermissionConfig acoPermissionConfig;
 	}
 	
-	struct OpenPositionExtraData {
+	struct AcoData {
         bool isCall;
         uint256 strikePrice; 
         uint256 expiryTime;
@@ -62,22 +60,14 @@ library ACOPoolLib {
         ));
     }
     
-	function acoStrikePriceIsValid(
-		uint256 tolerancePriceBelow,
-		uint256 tolerancePriceAbove,
+    function acoStrikeAndExpirationIsValid(
 		uint256 strikePrice, 
-		uint256 price
-	) public pure returns(bool) {
-		return (tolerancePriceBelow == 0 && tolerancePriceAbove == 0) ||
-			(tolerancePriceBelow == 0 && strikePrice > price.mul(PERCENTAGE_PRECISION.add(tolerancePriceAbove)).div(PERCENTAGE_PRECISION)) ||
-			(tolerancePriceAbove == 0 && strikePrice < price.mul(PERCENTAGE_PRECISION.sub(tolerancePriceBelow)).div(PERCENTAGE_PRECISION)) ||
-			(strikePrice >= price.mul(PERCENTAGE_PRECISION.sub(tolerancePriceBelow)).div(PERCENTAGE_PRECISION) && 
-			 strikePrice <= price.mul(PERCENTAGE_PRECISION.add(tolerancePriceAbove)).div(PERCENTAGE_PRECISION));
-	}
-
-	function acoExpirationIsValid(uint256 acoExpiryTime, uint256 minExpiration, uint256 maxExpiration) public view returns(bool) {
-		return acoExpiryTime >= block.timestamp.add(minExpiration) && acoExpiryTime <= block.timestamp.add(maxExpiration);
-	}
+        uint256 acoExpiryTime, 
+		uint256 underlyingPrice,
+        IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig
+    ) public view returns(bool) {
+        return _acoExpirationIsValid(acoExpiryTime, acoPermissionConfig) && _acoStrikePriceIsValid(strikePrice, underlyingPrice, acoPermissionConfig);
+    }
 
     function getBaseAssetsWithdrawWithLocked(
         uint256 shares,
@@ -177,16 +167,54 @@ library ACOPoolLib {
 		}
     }
     
-	function getBaseCollateralData(
-	    address lendingToken,
+    function quote(QuoteData memory data) public view returns(
+        uint256 swapPrice, 
+        uint256 protocolFee, 
+        uint256 volatility, 
+        uint256 collateralAmount
+    ) {
+        AcoData memory acoData = data.acoData;
+        require(_acoExpirationIsValid(acoData.expiryTime, data.acoPermissionConfig), "ACOPoolLib: Invalid ACO token expiration");
+		require(_acoStrikePriceIsValid(acoData.strikePrice, data.underlyingPrice, data.acoPermissionConfig), "ACOPoolLib: Invalid ACO token strike price");
+
+        uint256 collateralAvailable;
+        (collateralAmount, collateralAvailable) = _getOrderSizeData(data.lendingToken, data.underlyingPrecision, acoData);
+        uint256 calcPrice;
+        (calcPrice, volatility) = _strategyQuote(data.strategy, data.underlyingPrice, data.baseVolatility, collateralAmount, collateralAvailable, acoData);
+        (swapPrice, protocolFee) = _setSwapPriceAndFee(calcPrice, acoData.tokenAmount, data.fee, data.underlyingPrecision);
+    }
+
+	function getCollateralData(OpenPositionData memory data, address[] memory openAcos) public view returns(
+        uint256 underlyingBalance, 
+        uint256 strikeAssetBalance, 
+        uint256 collateralBalance,
+        uint256 collateralLocked,
+        uint256 collateralOnOpenPosition,
+        uint256 collateralLockedRedeemable
+    ) {
+		(underlyingBalance, strikeAssetBalance, collateralBalance) = _getBaseCollateralData(
+            data.isDeposit, 
+            data.underlying,
+            data.strikeAsset,
+            data.isCall,
+            data.underlyingPrice,
+            data.lendingToken,
+            data.underlyingPriceAdjustPercentage,
+            data.underlyingPrecision);
+            
+		(collateralLocked, collateralOnOpenPosition, collateralLockedRedeemable) = _poolOpenPositionCollateralBalance(data, openAcos);
+	}
+	
+	function _getBaseCollateralData(
+	    bool isDeposit,
 	    address underlying,
 	    address strikeAsset,
 	    bool isCall,
 	    uint256 underlyingPrice,
+	    address lendingToken,
 	    uint256 underlyingPriceAdjustPercentage,
-	    uint256 underlyingPrecision,
-	    bool isDeposit
-    ) public view returns(
+	    uint256 underlyingPrecision
+	) internal view returns(
         uint256 underlyingBalance, 
         uint256 strikeAssetBalance, 
         uint256 collateralBalance
@@ -209,33 +237,66 @@ library ACOPoolLib {
 			}
 		}
 	}
-	
-	function getOpenPositionCollateralBalance(OpenPositionData memory data) public view returns(
+
+	function _poolOpenPositionCollateralBalance(OpenPositionData memory data, address[] memory openAcos) internal view returns(
         uint256 collateralLocked, 
         uint256 collateralOnOpenPosition,
         uint256 collateralLockedRedeemable
     ) {
-        OpenPositionExtraData memory extraData = _getOpenPositionCollateralExtraData(data.acoToken, data.acoFactory);
-        (collateralLocked, collateralOnOpenPosition, collateralLockedRedeemable) = _getOpenPositionCollateralBalance(data, extraData);
-    }
-    
-    function quote(QuoteData memory data) public view returns(
-        uint256 swapPrice, 
-        uint256 protocolFee, 
-        uint256 volatility, 
-        uint256 collateralAmount
+		for (uint256 i = 0; i < openAcos.length; ++i) {
+			address acoToken = openAcos[i];
+            
+            (uint256 locked, uint256 openPosition, uint256 lockedRedeemable) = _getOpenPositionCollateralBalance(acoToken, data);
+            
+            collateralLocked = collateralLocked.add(locked);
+            collateralOnOpenPosition = collateralOnOpenPosition.add(openPosition);
+            collateralLockedRedeemable = collateralLockedRedeemable.add(lockedRedeemable);
+		}
+		if (!data.isDeposit) {
+			collateralOnOpenPosition = collateralOnOpenPosition.mul(PERCENTAGE_PRECISION.add(data.withdrawOpenPositionPenalty)).div(PERCENTAGE_PRECISION);
+		}
+	}
+	
+	function _getOpenPositionCollateralBalance(address acoToken, OpenPositionData memory data) internal view returns(
+        uint256 collateralLocked, 
+        uint256 collateralOnOpenPosition,
+        uint256 collateralLockedRedeemable
     ) {
-        require(data.expiryTime > block.timestamp, "ACOPoolLib: ACO token expired");
-        require(acoExpirationIsValid(data.expiryTime, data.minExpiration, data.maxExpiration), "ACOPoolLib: Invalid ACO token expiration");
-		require(acoStrikePriceIsValid(data.tolerancePriceBelow, data.tolerancePriceAbove, data.strikePrice, data.underlyingPrice), "ACOPoolLib: Invalid ACO token strike price");
-
-        uint256 collateralAvailable;
-        (collateralAmount, collateralAvailable) = _getOrderSizeData(data.tokenAmount, data.underlying, data.isCall, data.strikePrice, data.lendingToken, data.underlyingPrecision);
-        uint256 calcPrice;
-        (calcPrice, volatility) = _strategyQuote(data.strategy, data.underlying, data.strikeAsset, data.isCall, data.strikePrice, data.expiryTime, data.underlyingPrice, data.baseVolatility, collateralAmount, collateralAvailable);
-        (swapPrice, protocolFee) = _setSwapPriceAndFee(calcPrice, data.tokenAmount, data.fee, data.underlyingPrecision);
+        AcoData memory acoData = _getOpenPositionCollateralExtraData(acoToken, data.acoFactory);
+        collateralLocked = _getCollateralAmount(acoData.tokenAmount, acoData.strikePrice, acoData.isCall, data.underlyingPrecision);
+        
+        if (acoData.expiryTime > block.timestamp) {
+    		(uint256 price,) = _strategyQuote(data.strategy, data.underlyingPrice, data.baseVolatility, 0, 1, acoData);
+    		if (data.fee > 0) {
+    		    price = price.mul(PERCENTAGE_PRECISION.add(data.fee)).div(PERCENTAGE_PRECISION);
+    		}
+    		if (acoData.isCall) {
+    			uint256 priceAdjusted = _getUnderlyingPriceAdjusted(data.underlyingPrice, data.underlyingPriceAdjustPercentage, false); 
+    			collateralOnOpenPosition = price.mul(acoData.tokenAmount).div(priceAdjusted);
+    		} else {
+    			collateralOnOpenPosition = price.mul(acoData.tokenAmount).div(data.underlyingPrecision);
+    		}
+        } else {
+            collateralLockedRedeemable = collateralLocked;
+        }
     }
     
+	function _acoStrikePriceIsValid(
+		uint256 strikePrice, 
+		uint256 underlyingPrice,
+		IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig
+	) internal pure returns(bool) {
+	    return (
+	        (acoPermissionConfig.tolerancePriceBelowMin == 0 || strikePrice <= underlyingPrice.mul(PERCENTAGE_PRECISION.sub(acoPermissionConfig.tolerancePriceBelowMin)).div(PERCENTAGE_PRECISION))
+	        && (acoPermissionConfig.tolerancePriceBelowMax == 0 || strikePrice >= underlyingPrice.mul(PERCENTAGE_PRECISION.sub(acoPermissionConfig.tolerancePriceBelowMax)).div(PERCENTAGE_PRECISION))
+	        && (acoPermissionConfig.tolerancePriceAboveMin == 0 || strikePrice >= underlyingPrice.mul(PERCENTAGE_PRECISION.add(acoPermissionConfig.tolerancePriceAboveMin)).div(PERCENTAGE_PRECISION))
+	        && (acoPermissionConfig.tolerancePriceAboveMax == 0 || strikePrice <= underlyingPrice.mul(PERCENTAGE_PRECISION.add(acoPermissionConfig.tolerancePriceAboveMax)).div(PERCENTAGE_PRECISION))
+        );
+	}
+
+	function _acoExpirationIsValid(uint256 acoExpiryTime, IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig) internal view returns(bool) {
+		return acoExpiryTime >= block.timestamp.add(acoPermissionConfig.minExpiration) && acoExpiryTime <= block.timestamp.add(acoPermissionConfig.maxExpiration);
+	}
     
     function _getCollateralAmount(
 		uint256 tokenAmount,
@@ -253,22 +314,19 @@ library ACOPoolLib {
     }
     
     function _getOrderSizeData(
-        uint256 tokenAmount,
-        address underlying,
-        bool isCall,
-        uint256 strikePrice,
         address lendingToken,
-        uint256 underlyingPrecision
+        uint256 underlyingPrecision,
+        AcoData memory acoData
     ) private view returns(
         uint256 collateralAmount, 
         uint256 collateralAvailable
     ) {
-        if (isCall) {
-            collateralAvailable = _getPoolBalanceOf(underlying);
-            collateralAmount = tokenAmount; 
+        if (acoData.isCall) {
+            collateralAvailable = _getPoolBalanceOf(acoData.underlying);
+            collateralAmount = acoData.tokenAmount; 
         } else {
             collateralAvailable = _getPoolBalanceOf(lendingToken);
-            collateralAmount = _getCollateralAmount(tokenAmount, strikePrice, isCall, underlyingPrecision);
+            collateralAmount = _getCollateralAmount(acoData.tokenAmount, acoData.strikePrice, acoData.isCall, underlyingPrecision);
             require(collateralAmount > 0, "ACOPoolLib: The token amount is too small");
         }
         require(collateralAmount <= collateralAvailable, "ACOPoolLib: Insufficient liquidity");
@@ -276,23 +334,19 @@ library ACOPoolLib {
     
 	function _strategyQuote(
         address strategy,
-		address underlying,
-		address strikeAsset,
-		bool isCall,
-		uint256 strikePrice,
-        uint256 expiryTime,
         uint256 underlyingPrice,
 		uint256 baseVolatility,
         uint256 collateralAmount,
-        uint256 collateralAvailable
+        uint256 collateralAvailable,
+        AcoData memory acoData
     ) private view returns(uint256 swapPrice, uint256 volatility) {
         (swapPrice, volatility) = IACOPoolStrategy(strategy).quote(IACOPoolStrategy.OptionQuote(
 			underlyingPrice,
-            underlying, 
-            strikeAsset, 
-            isCall, 
-            strikePrice, 
-            expiryTime, 
+            acoData.underlying, 
+            acoData.strikeAsset, 
+            acoData.isCall, 
+            acoData.strikePrice, 
+            acoData.expiryTime, 
             baseVolatility, 
             collateralAmount, 
             collateralAvailable
@@ -315,38 +369,12 @@ library ACOPoolLib {
         require(swapPrice > 0, "ACOPoolLib: Invalid quoted price");
     }
     
-    function _getOpenPositionCollateralExtraData(address acoToken, address acoFactory) private view returns(OpenPositionExtraData memory extraData) {
+    function _getOpenPositionCollateralExtraData(address acoToken, address acoFactory) private view returns(AcoData memory acoData) {
         (address underlying, address strikeAsset, bool isCall, uint256 strikePrice, uint256 expiryTime) = IACOFactory(acoFactory).acoTokenData(acoToken);
         uint256 tokenAmount = IACOToken(acoToken).currentCollateralizedTokens(address(this));
-        extraData = OpenPositionExtraData(isCall, strikePrice, expiryTime, tokenAmount, underlying, strikeAsset);
+        acoData = AcoData(isCall, strikePrice, expiryTime, tokenAmount, underlying, strikeAsset);
     }
     
-	function _getOpenPositionCollateralBalance(
-		OpenPositionData memory data,
-		OpenPositionExtraData memory extraData
-	) private view returns(
-	    uint256 collateralLocked, 
-        uint256 collateralOnOpenPosition,
-        uint256 collateralLockedRedeemable
-    ) {
-        collateralLocked = _getCollateralAmount(extraData.tokenAmount, extraData.strikePrice, extraData.isCall, data.underlyingPrecision);
-        
-        if (extraData.expiryTime > block.timestamp) {
-    		(uint256 price,) = _strategyQuote(data.strategy, extraData.underlying, extraData.strikeAsset, extraData.isCall, extraData.strikePrice, extraData.expiryTime, data.underlyingPrice, data.baseVolatility, 0, 1);
-    		if (data.fee > 0) {
-    		    price = price.mul(PERCENTAGE_PRECISION.add(data.fee)).div(PERCENTAGE_PRECISION);
-    		}
-    		if (extraData.isCall) {
-    			uint256 priceAdjusted = _getUnderlyingPriceAdjusted(data.underlyingPrice, data.underlyingPriceAdjustPercentage, false); 
-    			collateralOnOpenPosition = price.mul(extraData.tokenAmount).div(priceAdjusted);
-    		} else {
-    			collateralOnOpenPosition = price.mul(extraData.tokenAmount).div(data.underlyingPrecision);
-    		}
-        } else {
-            collateralLockedRedeemable = collateralLocked;
-        }
-	}
-	
 	function _getUnderlyingPriceAdjusted(uint256 underlyingPrice, uint256 underlyingPriceAdjustPercentage, bool isMaximum) private pure returns(uint256) {
 		if (isMaximum) {
 			return underlyingPrice.mul(PERCENTAGE_PRECISION.add(underlyingPriceAdjustPercentage)).div(PERCENTAGE_PRECISION);

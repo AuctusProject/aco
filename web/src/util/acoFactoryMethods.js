@@ -1,5 +1,5 @@
-import { getWeb3 } from './web3Methods'
-import { acoFactoryAddress, getOtcOptions, ONE_SECOND, removeOptionsToIgnore, removeOtcOptions, sortByDesc, sortByFn } from './constants';
+import { getWeb3, sendTransaction } from './web3Methods'
+import { acoFactoryAddress, getOtcOptions, isExpired, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore, sortByDesc, sortByFn, baseEthPair, baseWbtcPair } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
@@ -36,12 +36,17 @@ function getAllAvailableOptions() {
     })
 }
 
-function getAllAvailableOptionsWithoutOtc() {
+export function refreshAllOptions() {
+    availableOptions = null
+    return getAllAvailableOptions()
+}
+
+function getAllAvailableOptionsWhitelisted() {
     return new Promise((resolve, reject) => {
         getAllAvailableOptions()
         .then(allOptions => {
-            var optionsWithoutOtc = removeOtcOptions(allOptions)
-            resolve(optionsWithoutOtc)
+            var optionsWhitelisted = removeNotWhitelistedOptions(allOptions)
+            resolve(optionsWhitelisted)
         })
         .catch((err) => reject(err))
     })
@@ -116,8 +121,9 @@ function fillTokensInformations(options, assetsAddresses) {
 
 export const listPairs = () => {
     return new Promise((resolve, reject) => {
-        getAllAvailableOptionsWithoutOtc().then(options => {
-            var pairs = getPairsFromOptions(options)
+        getAllAvailableOptionsWhitelisted().then(options => {
+            var opt = removeExpiredOptions(options)
+            var pairs = getPairsFromOptions(opt)
             resolve(pairs)
         })
     })
@@ -139,6 +145,14 @@ export const getPairsFromOptions = (options) => {
             }
         }
     }
+    var ethPair = baseEthPair()
+    if (!pairs[ethPair.id]) {
+        pairs[ethPair.id] = ethPair
+    }
+    var wbtcPair = baseWbtcPair()
+    if (!pairs[wbtcPair.id]) {
+        pairs[wbtcPair.id] = wbtcPair
+    }
     return Object.values(pairs);
 }
   
@@ -148,9 +162,9 @@ export const getOptionsFromPair = (options, selectedPair) => {
         o.strikeAssetInfo.symbol === selectedPair.strikeAssetSymbol) : []
 }
 
-export const listOptions = (pair, optionType = null, removeExpired = false, otcOptions = false) => {
+export const listOptions = (pair, optionType = null, removeExpired = false, onlyOtcOptions = false) => {
     return new Promise((resolve, reject) => {
-        var optionsMethod = !otcOptions ? getAllAvailableOptionsWithoutOtc : getOtcAvailableOptions
+        var optionsMethod = !onlyOtcOptions ? getAllAvailableOptionsWhitelisted : getOtcAvailableOptions
         optionsMethod().then(availableOptions => {
             var options = []
             for (let i = 0; i < availableOptions.length; i++) {
@@ -158,7 +172,7 @@ export const listOptions = (pair, optionType = null, removeExpired = false, otcO
                 if ((!pair || (option.underlyingInfo.symbol === pair.underlyingSymbol && 
                     option.strikeAssetInfo.symbol === pair.strikeAssetSymbol)) && 
                     (!optionType || (optionType === 1 ? option.isCall : !option.isCall)) && 
-                    (!removeExpired || ((option.expiryTime * ONE_SECOND) > new Date().getTime()))) {
+                    (!removeExpired || !isExpired(option.expiryTime))) {
                     options.push(option)
                 }
             }
@@ -168,14 +182,13 @@ export const listOptions = (pair, optionType = null, removeExpired = false, otcO
     })
 }
 
-
 export const getOption = (address, removeExpired=true) => {
     return new Promise((resolve, reject) => {
         getAllAvailableOptions().then(availableOptions => {
             for (let i = 0; i < availableOptions.length; i++) {
                 const option = availableOptions[i];
                 if (option.acoToken.toLowerCase() === address.toLowerCase() && 
-                    (!removeExpired || ((option.expiryTime * ONE_SECOND) > new Date().getTime()))) {
+                    (!removeExpired || !isExpired(option.expiryTime))) {
                     resolve(option)
                     return
                 }
@@ -269,4 +282,10 @@ function getPositionForOption(option, userAccount) {
             resolve(position)
         })
     })
+}
+
+export function newAcoToken(from, underlying, strikeAsset, isCall, strikePrice, expiryTime) {
+    const contract = getAcoFactoryContract()
+    var data = contract.methods.newAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime).encodeABI()
+    return sendTransaction(null, null, from, acoFactoryAddress, null, data)
 }
