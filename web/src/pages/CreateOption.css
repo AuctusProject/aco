@@ -14,6 +14,10 @@
     margin-top: 20px;
 }
 
+.liquidity-info.no-liquidity {
+    color: #de001e;
+}
+
 .light-mode .liquidity-info {
     color: #262626;
 }

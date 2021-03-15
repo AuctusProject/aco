@@ -13,6 +13,7 @@ import BigNumber from 'bignumber.js'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
+import { confirm } from '../util/sweetalert'
 
 export const CREATE_OPTION_UNDERLYING_OPTIONS = [{
   value: "ETH",
@@ -192,7 +193,17 @@ class CreateOption extends Component {
   }
 
   onCreateClick = () => {
-    this.setState({createOption: true})
+    if (this.state.optionsLiquidity > 0) {
+      this.setState({createOption: true})
+    }
+    else {
+      var alertText = "There's no liquidity for the option you would create, are you sure you want to proceed?"
+      confirm(null, (result) => {
+        if (result) {
+          this.setState({createOption: true})
+        }
+      }, null, "ALERT", "Yes", "No", alertText)
+    }    
   }
 
   onCreateOptionHide = (completed) => {
@@ -241,7 +252,7 @@ class CreateOption extends Component {
               </div>
             </div>
           </div>
-          <div className="liquidity-info">
+          <div className={"liquidity-info" + (this.state.optionsLiquidity === 0 ? " no-liquidity" : "")} >
             Liquidity Available: {this.getTotalLiquidityFormatted()}
           </div>
           <div className="action-button-wrapper">
