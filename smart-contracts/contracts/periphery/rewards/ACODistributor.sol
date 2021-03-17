@@ -6,13 +6,15 @@ import '../../libs/ACOAssetHelper.sol';
 contract ACODistributor is Ownable {
 
     event Claim(uint256 indexed id, address indexed account, address indexed aco, uint256 amount);
+    event WithdrawToken(address indexed token, uint256 amount, address destination);
+    event Halt(bool previousHalted, bool newHalted);
 	
     address immutable public signer;
     
-    mapping(address => uint256) public acosAmount;
     address[] public acos;
+    mapping(address => uint256) public acosAmount;
     
-    bool public finished;
+    bool public halted;
     
     mapping(uint256 => bool) public claimed;
     
@@ -25,24 +27,38 @@ contract ACODistributor is Ownable {
 		_;
 	}
     
-    constructor (address _signer, address[] memory _acos, uint256[] memory _amounts) public {
+    constructor (address _signer, address[] memory _acos) public {
         super.init();
         
         signer = _signer;
-        finished = false;
+        halted = false;
         
         for (uint256 i = 0; i < _acos.length; ++i) {
-            acosAmount[_acos[i]] = _amounts[i];
             acos.push(_acos[i]);
         }
     }
     
-    function withdrawStuckToken(address token, uint256 amount, address destination) onlyOwner external {
+    function withdrawToken(address token, uint256 amount, address destination) onlyOwner external {
         uint256 _balance = ACOAssetHelper._getAssetBalanceOf(token, address(this));
         if (_balance < amount) {
             amount = _balance;
         }
+        if (acosAmount[token] > 0) {
+            acosAmount[token] = _balance - amount;    
+        }
         ACOAssetHelper._transferAsset(token, destination, amount);
+        emit WithdrawToken(token, amount, destination);
+    }
+
+    function setAcoBalances() onlyOwner external {
+        for (uint256 i = 0; i < acos.length; ++i) {
+            acosAmount[acos[i]] = ACOAssetHelper._getAssetBalanceOf(acos[i], address(this));
+        }
+    }
+
+    function setHalt(bool _halted) onlyOwner external {
+        emit Halt(halted, _halted);
+        halted = _halted;
     }
     
     function acosLength() view external returns(uint256) {
@@ -64,6 +80,7 @@ contract ACODistributor is Ownable {
                 }
             }
         }
+
         _acos = new address[](qty);
         _amounts = new uint256[](qty);
         
@@ -88,32 +105,33 @@ contract ACODistributor is Ownable {
         }
     }
     
-    function claim(uint256 id, address account, uint256 amount, uint8 v, bytes32 r, bytes32 s) isValidMessage(id, account, amount, v, r, s) external {
+    function claim(
+        uint256 id, 
+        address account, 
+        uint256 amount, 
+        uint8 v, 
+        bytes32 r, 
+        bytes32 s
+    ) isValidMessage(id, account, amount, v, r, s) external {
+        require(!halted, "Halted");
         require(!claimed[id], "Claimed");
-        require(!finished, "Finished");
         
         claimed[id] = true;
-        
-        uint256 remaining = _claim(id, account, amount);
-        if (remaining > 0) {
-            finished = true;
-        }
+        _claim(id, account, amount);
     }
     
-    function _claim(uint256 id, address account, uint256 amount) internal returns(uint256 remaining) {
-        remaining = amount;
+    function _claim(uint256 id, address account, uint256 amount) internal {
         for (uint256 i = 0; i < acos.length; ++i) {
             address _aco = acos[i];
             uint256 available = acosAmount[_aco];
             if (available > 0) {
-                if (available >= remaining) {
-                    acosAmount[_aco] = available - remaining;
-                    ACOAssetHelper._callTransferERC20(_aco, account, remaining);
-		            emit Claim(id, account, _aco, remaining);
-                    remaining = 0;
+                if (available >= amount) {
+                    acosAmount[_aco] = available - amount;
+                    ACOAssetHelper._callTransferERC20(_aco, account, amount);
+		            emit Claim(id, account, _aco, amount);
                     break;
                 } else {
-                    remaining = remaining - available;
+                    amount = amount - available;
                     acosAmount[_aco] = 0;
                     ACOAssetHelper._callTransferERC20(_aco, account, available);
 		            emit Claim(id, account, _aco, available);
