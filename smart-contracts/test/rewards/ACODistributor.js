@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const factoryABI = require("../../artifacts/contracts/core/ACOFactory.sol/ACOFactory.json");
-const AddressZero = "0x0000000000000000000000000000000000000000";
+const { performance } = require('perf_hooks');
 
 describe("ACODistributor", function() {
   let ACOFactory;
@@ -39,18 +39,33 @@ describe("ACODistributor", function() {
   let acoAmount4 = ethers.BigNumber.from("200000000000000000000000");
   let acoDistributor;
   
+  const generateUUID = () => { 
+    let d = Date.now();
+    let d2 = performance.now() * 1000;
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      let r = Math.random() * 16;
+      if(d > 0) {
+        r = (d + r) % 16 | 0;
+        d = Math.floor(d / 16);
+      } else {
+        r = (d2 + r) % 16 | 0;
+        d2 = Math.floor(d2 / 16);
+      }
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  };
+
+  const getId = () => {
+    let randomId = "0x" + generateUUID().split('').map(c => c.charCodeAt(0).toString(16)).join('');
+    return ethers.utils.keccak256(randomId);
+  };
+
   const getSignedData = async (_id, _account, _amount) => {
     const signedMsg = await signer.signMessage(ethers.utils.arrayify(getHashData(_id, _account, _amount)));
     return ethers.utils.splitSignature(signedMsg);
   };
 
   const getHashData = (_id, _account, _amount) => {
-    let idHex;
-    if ((typeof _id) == "object") {
-      idHex = _id.toHexString();
-    } else {
-      idHex = "0x" + _id.toString(16);
-    }
     let amountHex;
     if ((typeof _amount) == "object") {
       amountHex = _amount.toHexString();
@@ -58,8 +73,8 @@ describe("ACODistributor", function() {
       amountHex = "0x" + _amount.toString(16);
     }
     return ethers.utils.solidityKeccak256(
-        ['address', 'uint256', 'address', 'uint256'],
-        [acoDistributor.address, idHex, _account, amountHex]
+        ['address', 'bytes32', 'address', 'uint256'],
+        [acoDistributor.address, _id, _account, amountHex]
       );
   };
 
@@ -142,7 +157,7 @@ describe("ACODistributor", function() {
       expect(await acoDistributor.acosAmount(ACOToken1Token2Call4.address)).to.equal(acoAmount4);
       expect(await acoDistributor.halted()).to.equal(false);
 
-      let id = 1;
+      let id = getId();
       let amount = ethers.BigNumber.from("10000000000000000000000");
 
       let sig = await getSignedData(id, _addr1, amount);
@@ -186,7 +201,7 @@ describe("ACODistributor", function() {
         acoDistributor.claim(id, _addr1, amount, sig.v, sig.r, sig.s)
       ).to.be.revertedWith("Claimed");
 
-      ++id;
+      id = getId();
 
       await expect(
         acoDistributor.claim(id, _addr1, amount, sig.v, sig.r, sig.s)
@@ -268,7 +283,7 @@ describe("ACODistributor", function() {
       expect(await ACOToken1Token2Call4.balanceOf(_addr4)).to.equal(0);
       expect(await ACOToken1Token2Call4.balanceOf(_addr5)).to.equal(0);
 
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr1, amount.div(2));
       await acoDistributor.connect(addr3).claim(id, _addr1, amount.div(2), sig.v, sig.r, sig.s);
       expect(await acoDistributor.acos(0)).to.equal(ACOToken1Token2Call1.address);
@@ -338,7 +353,7 @@ describe("ACODistributor", function() {
       expect(await ACOToken1Token2Call4.balanceOf(_addr4)).to.equal(0);
       expect(await ACOToken1Token2Call4.balanceOf(_addr5)).to.equal(0);
 
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr4, amount.mul(50));
       await acoDistributor.connect(addr4).claim(id, _addr4, amount.mul(50), sig.v, sig.r, sig.s);
       expect(await acoDistributor.acos(0)).to.equal(ACOToken1Token2Call1.address);
@@ -371,7 +386,7 @@ describe("ACODistributor", function() {
       expect(await ACOToken1Token2Call4.balanceOf(_addr4)).to.equal(0);
       expect(await ACOToken1Token2Call4.balanceOf(_addr5)).to.equal(0);
 
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr4, amount.mul(20));
       await acoDistributor.connect(addr4).claim(id, _addr4, amount.mul(20), sig.v, sig.r, sig.s);
       expect(await acoDistributor.acos(0)).to.equal(ACOToken1Token2Call1.address);
@@ -412,7 +427,7 @@ describe("ACODistributor", function() {
       await acoDistributor.connect(owner).setHalt(true);
       expect(await acoDistributor.halted()).to.equal(true);
 
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr3, amount.mul(31));
 
       await expect(
@@ -455,22 +470,22 @@ describe("ACODistributor", function() {
       expect(await ACOToken1Token2Call4.balanceOf(_addr4)).to.equal(0);
       expect(await ACOToken1Token2Call4.balanceOf(_addr5)).to.equal(0);
 
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr2, amount.mul(4));
       await acoDistributor.claim(id, _addr2, amount.mul(4), sig.v, sig.r, sig.s);
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr1, amount.mul(2));
       await acoDistributor.claim(id, _addr1, amount.mul(2), sig.v, sig.r, sig.s);
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr2, amount.mul(2));
       await acoDistributor.claim(id, _addr2, amount.mul(2), sig.v, sig.r, sig.s);
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr3, amount.mul(5));
       await acoDistributor.claim(id, _addr3, amount.mul(5), sig.v, sig.r, sig.s);
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr5, amount.mul(6));
       await acoDistributor.claim(id, _addr5, amount.mul(6), sig.v, sig.r, sig.s);
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr4, amount.mul(4));
       await acoDistributor.claim(id, _addr4, amount.mul(4), sig.v, sig.r, sig.s);
       expect(await acoDistributor.acos(0)).to.equal(ACOToken1Token2Call1.address);
@@ -507,7 +522,7 @@ describe("ACODistributor", function() {
         acoDistributor.claim(id, _addr4, amount.mul(4), sig.v, sig.r, sig.s)
       ).to.be.revertedWith("Claimed");
 
-      ++id;
+      id = getId();
       sig = await getSignedData(id, _addr1, amount.mul(2));
       await acoDistributor.claim(id, _addr1, amount.mul(2), sig.v, sig.r, sig.s);
       expect(await acoDistributor.acos(0)).to.equal(ACOToken1Token2Call1.address);

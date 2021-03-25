@@ -123,3 +123,8 @@ module.exports.createOrder = (event, context, callback) => {
   const body = (event.body ? JSON.parse(event.body) : null);
   handle(internalInterface.createOrder(body), callback, event, "createOrder");
 };
+
+module.exports.getAirdrop = (event, context, callback) => {
+  const arg = event.pathParameters ? event.pathParameters.arg : "";
+  handle(internalInterface.getAirdrop(arg), callback, event, "getAirdrop " + arg);
+};

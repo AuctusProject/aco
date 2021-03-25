@@ -61,6 +61,12 @@ module.exports.getAcoPoolData = (pool, start = null, end = null) => {
   });
 };
 
+module.exports.getAirdrop = (arg) => {   
+  return new Promise((resolve, reject) => { 
+    callApi("distributor/" + arg, "GET", null).then((response) => resolve(response)).catch((err) => reject(err));
+  });
+};
+
 const getComplement = (queryStringParameters) => {
   let complement = "";
   if (!!queryStringParameters) {

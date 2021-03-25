@@ -5,7 +5,7 @@ import '../../libs/ACOAssetHelper.sol';
 
 contract ACODistributor is Ownable {
 
-    event Claim(uint256 indexed id, address indexed account, address indexed aco, uint256 amount);
+    event Claim(bytes32 indexed id, address indexed account, address indexed aco, uint256 amount);
     event WithdrawToken(address indexed token, uint256 amount, address destination);
     event Halt(bool previousHalted, bool newHalted);
 	
@@ -16,9 +16,9 @@ contract ACODistributor is Ownable {
     
     bool public halted;
     
-    mapping(uint256 => bool) public claimed;
+    mapping(bytes32 => bool) public claimed;
     
-    modifier isValidMessage(uint256 id, address account, uint256 amount, uint8 v, bytes32 r, bytes32 s) {
+    modifier isValidMessage(bytes32 id, address account, uint256 amount, uint8 v, bytes32 r, bytes32 s) {
 		require(signer == ecrecover(
 		    keccak256(abi.encodePacked(
 	            "\x19Ethereum Signed Message:\n32", 
@@ -106,7 +106,7 @@ contract ACODistributor is Ownable {
     }
     
     function claim(
-        uint256 id, 
+        bytes32 id, 
         address account, 
         uint256 amount, 
         uint8 v, 
@@ -120,7 +120,7 @@ contract ACODistributor is Ownable {
         _claim(id, account, amount);
     }
     
-    function _claim(uint256 id, address account, uint256 amount) internal {
+    function _claim(bytes32 id, address account, uint256 amount) internal {
         for (uint256 i = 0; i < acos.length; ++i) {
             address _aco = acos[i];
             uint256 available = acosAmount[_aco];

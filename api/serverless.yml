@@ -110,3 +110,11 @@ functions:
           path: /order
           method: post
           cors: true
+  getAirdrop:
+    handler: handler.getAirdrop
+    timeout: 30
+    events:
+      - http:
+          path: /distributor/{arg}
+          method: get
+          cors: true     
