@@ -145,7 +145,7 @@ class NavBar extends Component {
               </ul>}
               {!this.isAdvanced() && <ul className="navbar-nav mt-2 mt-lg-0 navbar-items simple-nav">
                 <div className="nav-item link-nav">
-                  <div onClick={this.toggleOptionsSubmenu} className={"options-nav-item " + (this.state.showOptionsSubmenu ? "options-expanded" : "")}>Options&nbsp;<FontAwesomeIcon className="nav-chevron" icon={faChevronDown}/></div>
+                  <div onClick={this.toggleOptionsSubmenu} className={"options-nav-item " + (this.state.showOptionsSubmenu ? "options-expanded" : "")}>OPTIONS<FontAwesomeIcon className="nav-chevron" icon={faChevronDown}/></div>
                   <div className="subnav-content">
                     <div className="container">
                       <NavLink onClick={this.submenuClick} to={this.getUrlWithPairId("/buy")}>
@@ -201,9 +201,8 @@ class NavBar extends Component {
                     </div>
                   </div>}
                 </div>
-                <div className="nav-separator"></div>
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/vaults")}>
-                  <div className="link-title">Vaults</div>
+                  <div className="link-title">VAULTS</div>
                   <div className="link-subtitle">Automated Strategies</div>
                 </NavLink>
               </ul>}
@@ -214,16 +213,9 @@ class NavBar extends Component {
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise</NavLink>
               </ul>}
               <ul className="navbar-nav ml-auto">
-                <div className="custom-control custom-switch layout-mode">
-                  <input type="checkbox" className="custom-control-input" 
-                      onChange={this.onLayoutModeChange} checked={this.state.darkMode} id="layoutMode"/>
-                  <label className="custom-control-label" htmlFor="layoutMode">{this.state.darkMode ? "Dark" : "Light"} mode</label>
-                </div>
-              </ul>
-              <ul className="navbar-nav">
                 {username &&
                   <li className="nav-item dropdown metamask">                  
-                    <div className="dropdown-toggle nav-link clickable" target="_self" id="navbarProfile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div className="dropdown-toggle clickable" target="_self" id="navbarProfile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <div className="user-nav-container">
                         <div className="user-nav-wrap">
                           <img src="/images/icon_metamask.png" alt=""></img>
@@ -243,8 +235,8 @@ class NavBar extends Component {
                   </li>
                 }
                 {!username && 
-                  <li className="nav-item mx-lg-2">
-                    <div className="nav-link link-nav underline clickable" onClick={() => this.props.signIn(null, this.context)}>CONNECT WALLET</div>
+                  <li className="nav-item my-2 connect-nav">
+                    <div className="outline-btn connect-btn" onClick={() => this.props.signIn(null, this.context)}><img src="/images/icon_metamask.png" alt=""></img>CONNECT WALLET</div>
                   </li>
                 }
               </ul>

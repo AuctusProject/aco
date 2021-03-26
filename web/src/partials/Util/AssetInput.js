@@ -124,7 +124,7 @@ class AssetInput extends Component {
               <div className="row">
                 <div className="col-md-12">
                   <div className="search-input-wrapper">
-                    <input onChange={this.onFilterChange} value={this.state.filter} placeholder="Search symbol or paste address"></input>
+                    <input onChange={this.onFilterChange} value={this.state.filter} placeholder="Search symbol or address"></input>
                     <FontAwesomeIcon icon={faSearch}/>
                   </div>
                 </div>

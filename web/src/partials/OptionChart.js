@@ -10,13 +10,13 @@ const axesProprerties = JSON.stringify({
   },
   scaleLabel: {
     display: true,
-    fontFamily: "Roboto",
+    fontFamily: "Montserrat",
     fontColor: "#a6a6a6",
     lineHeight: 1.15,
     fontSize: 12
   },
   ticks: {
-    fontFamily: "Roboto",
+    fontFamily: "Montserrat",
     fontColor: "#a6a6a6",
     lineHeight: 1.1,
     fontSize: 12
@@ -66,7 +66,7 @@ class OptionChart extends Component {
     return {
       datasets: [{
         fill: false,
-        borderColor: '#1782fc',
+        borderColor: '#5de9d4',
         borderWidth: 2,
         lineTension: 0.01,
         showLine: true,
@@ -76,7 +76,7 @@ class OptionChart extends Component {
         hoverRadius: 4,
         hoverBorderWidth: 0,
         data: [],
-        backgroundColor: '#1782fc'
+        backgroundColor: '#5de9d4'
       }]
     }
   }
@@ -237,7 +237,7 @@ class OptionChart extends Component {
               tooltipEl.style.position = 'absolute';
               tooltipEl.style.left = left + 'px';
               tooltipEl.style.top = this.chartReference.current.chartInstance.canvas.offsetTop + tooltip.caretY + 'px';
-              tooltipEl.style.fontFamily = 'Roboto';
+              tooltipEl.style.fontFamily = 'Montserrat';
               tooltipEl.style.fontSize = '12px';
               tooltipEl.style.padding ='2px 2px';
               tooltipEl.style.borderRadius = '4px';

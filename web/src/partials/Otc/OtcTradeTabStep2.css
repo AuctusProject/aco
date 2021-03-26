@@ -11,7 +11,7 @@
 }
 
 .selected-option-modify {
-    color: #1782fc;
+    color: #5de9d4;
     text-decoration: underline;
     cursor: pointer;
 }
@@ -44,7 +44,7 @@
     justify-content: flex-start;
     align-items: center;
     border-radius: 8px;
-    background-color: #333333;
+    background-color: #1a1a1a;
     margin: 6px 10px;
     padding: 16px;
 }
@@ -60,7 +60,7 @@
 
 .counterparty-expiry svg{
     font-size: 26px;
-    color: #1782fc;
+    color: #5de9d4;
     margin-right: 6px;
 }
 

@@ -11,7 +11,7 @@ const axesProperties = JSON.stringify({
   },
   scaleLabel: {
     display: true,
-    fontFamily: "Roboto",
+    fontFamily: "Montserrat",
     fontColor: "#a6a6a6",
     lineHeight: 1.15,
     fontSize: 10
@@ -21,7 +21,7 @@ const axesProperties = JSON.stringify({
     maxTicksLimit: 8,
     maxRotation: 0,
     minRotation: 0,
-    fontFamily: "Roboto",
+    fontFamily: "Montserrat",
     fontColor: "#a6a6a6",
     lineHeight: 1.1,
     fontSize: 10
@@ -72,7 +72,7 @@ class PerShareChart extends Component {
     return {
       datasets: [{
         fill: true,
-        borderColor: '#1782fc',
+        borderColor: '#5de9d4',
         backgroundColor: "rgba(23,130,252,0.2)",
         borderWidth: 4,
         lineTension: 0.2,
@@ -157,8 +157,8 @@ class PerShareChart extends Component {
           layout: {padding: {left: -20, right: -20, top: 0, bottom: -20}},
           tooltips: {
             enabled: true,
-            bodyFontFamily: 'Roboto',
-            titleFontFamily: 'Roboto',
+            bodyFontFamily: 'Montserrat',
+            titleFontFamily: 'Montserrat',
 						mode: 'x-axis',
             displayColors: false,
 						position: 'nearest',

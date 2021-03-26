@@ -4,7 +4,7 @@ import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 import { getGeneralData } from './acoPoolMethodsv2';
-import { acoPermissionConfig } from './acoPoolMethodsv4';
+import { acoPermissionConfig, validAcoCreators } from './acoPoolMethodsv4';
 
 var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {

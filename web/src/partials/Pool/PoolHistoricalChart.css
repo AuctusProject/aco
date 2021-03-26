@@ -15,14 +15,8 @@
     align-items: stretch;
     position: relative;
     padding: 10px 25px 15px 25px;
-    background-color: #22262a;
-    border-radius: 4px;       
-    border: solid 0.5px #22262a;
-}
-
-.light-mode .pool-historical-chart-wrapper {
-    background-color: #ffffff;    
-    border: solid 0.5px #666666;
+    border-radius: 12px;       
+    border: solid 1px #464646;
 }
 
 .pool-historical-chart-top {

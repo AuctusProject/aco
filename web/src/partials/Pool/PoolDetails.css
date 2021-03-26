@@ -51,7 +51,7 @@
 }
 
 .pool-iv-value {
-    color: #1782fc;
+    color: #5de9d4;
     font-size: 18px;
     font-weight: 500;
     min-width: 50px;
@@ -96,11 +96,6 @@
     width: 100%;
 }
 
-.pool-card .action-btn {
-    border-radius: 2px;
-    min-width: 160px;
-}
-
 .pool-position {
     margin-top: 40px;
     text-align: center;
@@ -118,7 +113,7 @@
     font-weight: bold;
     letter-spacing: 0.6px;
     text-align: center;
-    color: #1782fc;
+    color: #5de9d4;
 }
 
 .light-mode .pool-position .aco-table thead th.value-highlight {
@@ -132,15 +127,6 @@
 .light-mode .pool-position th:first-child,
 .light-mode .pool-position td:first-child {
     text-align: left;
-}
-
-.accordion .card-body {
-    text-align: center;
-}
-
-.accordion .card-body .action-btn {
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .view-details-link {    
@@ -181,5 +167,5 @@
 }
 
 .view-details-link:hover .view-details-label {
-    color: #1782fc;    
+    color: #5de9d4;    
 }

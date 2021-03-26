@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheckCircle } from '@fortawesome/free-regular-svg-icons'
+import { faCheckCircle, faCircle } from '@fortawesome/free-regular-svg-icons'
 import { faCheckCircle as faCheckCircleSolid } from '@fortawesome/free-solid-svg-icons'
 
 class StepsModal extends Component {
@@ -24,7 +24,7 @@ class StepsModal extends Component {
 
   render() {
     var { title, subtitle, subtitle2, img, steps, isDone, onDoneButtonClick, doneLabel } = this.props
-    return <Modal className="steps-modal" backdrop="static" keyboard={false} centered={true} size="sm" show={true} onHide={this.onHide}>
+    return <Modal className="steps-modal" backdrop="static" keyboard={false} centered={true} show={true} onHide={this.onHide}>
       <Modal.Header closeButton>
       </Modal.Header>
       <Modal.Body>
@@ -34,7 +34,7 @@ class StepsModal extends Component {
               <div className="steps-modal-icon">{img}</div>
               <div className="steps-modal-title">{title}</div>
               <div className="steps-modal-subtitle">{subtitle}</div>
-              {subtitle2 && <div className="steps-modal-subtitle">{subtitle2}</div>}
+              {subtitle2 && <div className="steps-modal-subtitle-2">{subtitle2}</div>}
               {isDone && <div className="done-button-wrapper">
                 <div className="aco-button action-btn" onClick={onDoneButtonClick}>{doneLabel ? doneLabel: "OK"}</div>
                 </div>}
@@ -52,7 +52,7 @@ class StepsModal extends Component {
                       </div>
                     </div>
                     <div className={"step-dot "+(step.progress >= 100 ? "step-dot-done" : "")}>
-                      <FontAwesomeIcon icon={(step.progress >= 100 ? faCheckCircleSolid : faCheckCircle)}></FontAwesomeIcon>
+                      <FontAwesomeIcon icon={(step.progress >= 100 ? faCheckCircleSolid : faCircle)}></FontAwesomeIcon>
                     </div>
                   </div>
                 ))}

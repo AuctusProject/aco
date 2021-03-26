@@ -12,15 +12,15 @@
 }
 
 .slippage-modal .btn-outline-secondary {
-    color: #4c4c4c;
-    border-color: #4c4c4c;
+    color: #464646;
+    border-color: #464646;
     border-radius: 0;
     height: 35px;
 }
 
 .slippage-modal .btn-secondary {
-    background-color: #4c4c4c;
-    border-color: #4c4c4c;
+    background-color: #464646;
+    border-color: #464646;
     border-radius: 0;
     height: 35px;
 }
@@ -31,12 +31,8 @@
     justify-content: center;
 }
 
-.slippage-modal .action-btn {
-    margin-top: 20px;
-}
-
 .slippage-options .input-field {
-    width: 80px;
+    width: 90px;
 }
 
 .slippage-options .input-field input {

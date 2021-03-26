@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import StepIndicator from '../Write/StepIndicator'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowRight, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faArrowRight, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getSecondsToExpiry, formatPercentage, formatWithPrecision, swapQuoteBuySize } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import { getSwapQuote } from '../../util/zrxApi'
@@ -188,6 +188,7 @@ class SimpleWriteTab extends Component {
     return <div className="simple-write-tab">
       {(!this.state.loadingOptions && this.state.currentPairPrice && this.state.swapQuotes) ? <>
         {this.state.currentStep !== 3 && <StepIndicator totalSteps={2} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>}
+        {this.state.currentStep === 2 &&<div className="back-link clickable" onClick={this.goToPools}><FontAwesomeIcon icon={faArrowLeft}/></div>}
         {this.props.selectedPair && filteredOptions.length === 0 && <div className="text-center">No options available for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>}
         {this.state.currentStep === 1 && Object.keys(grouppedOptions).map(isCall => (
           <div key={isCall} className="write-option-group">

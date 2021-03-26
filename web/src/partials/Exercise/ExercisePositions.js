@@ -87,8 +87,8 @@ class ExercisePositions extends Component {
   getTimeToExpiryLabel = (expiryTime) => {
     var timeToExpiry = getTimeToExpiry(expiryTime)
     return timeToExpiry.days > 0 ? 
-        `${timeToExpiry.days}d ${timeToExpiry.hours}h ${timeToExpiry.minutes}m` :
-        `${timeToExpiry.hours}h ${timeToExpiry.minutes}m`;
+        `(${timeToExpiry.days}d ${timeToExpiry.hours}h ${timeToExpiry.minutes}m)` :
+        `(${timeToExpiry.hours}h ${timeToExpiry.minutes}m)`;
   }
   
   render() {
@@ -128,7 +128,7 @@ class ExercisePositions extends Component {
 			        </td>
               <td>{getFormattedOpenPositionAmount(position)}</td>
               <td className={!this.props.isOtcPositions ? "exercise-actions-cell" : ""}>
-                {!this.props.isOtcPositions && this.props.mode === PositionsLayoutMode.Basic && <div className="action-btn mr-2" onClick={this.onSellClick(position)}>SELL EARLY</div>}
+                {!this.props.isOtcPositions && this.props.mode === PositionsLayoutMode.Basic && <div className="outline-btn" onClick={this.onSellClick(position)}>SELL EARLY</div>}
                 <div className="action-btn" onClick={this.onExerciseClick(position)}>EXERCISE</div>
               </td>
             </tr>)}

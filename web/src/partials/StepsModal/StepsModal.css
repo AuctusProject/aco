@@ -12,18 +12,36 @@
 }
 
 .steps-modal .modal-content {
-    background-color: #202020;
+    background-color: #000000;
+    border: solid 1px #464646;
+    border-radius: 6px;
 }
 
 .steps-modal-title {
     margin-top: 20px;
     margin-bottom: 20px;
-    font-size: 18px;
+    font-size: 22px;
+    font-weight: 500;
+    color: #5de9d4;
 }
 
 .steps-modal-subtitle {
     margin-bottom: 30px;
+    font-size: 18px;
+    font-weight: 300;
+    color: #5de9d4;
+}
+
+.steps-modal-subtitle-2 {
+    width: calc(100% + 2rem);
+    margin-left: -1rem;
+    border-top: 1px solid #464646;
+    padding: 2rem;
     font-size: 14px;
+    font-weight: 300;
+    text-align: center;
+    color: #bfbfbf;
+    margin-bottom: 0;
 }
 
 .steps-modal .steps {
@@ -32,7 +50,7 @@
     justify-content: space-between;
     margin-bottom: 20px;
     margin-top: auto;
-    padding-top: 22px;
+    padding-top: 32px;
     width: 100%;
 }
 
@@ -40,13 +58,9 @@
     border-radius: 50%;
     flex-grow: 0;
     flex-shrink: 0;
-    height: 12px;
-    width: 12px;
-    background-color: white;
-}
-
-.light-mode .steps-modal .start-dot {
-    background-color: #1782fc;
+    height: 16px;
+    width: 16px;
+    background-color: #46f217;
 }
 
 .steps-modal .step-item {
@@ -62,16 +76,16 @@
 }
 
 .steps-modal .step-title {
-    font-size: 12px;
+    font-size: 16px;
     font-weight: 500;
     line-height: 1.2;
     margin: 0;
     position: absolute;
     text-align: center;
-    top: -25px;
+    top: -32px;
     white-space: nowrap;
     width: 100%;
-    color: #5A5A5A;
+    color: #464646;
 }
 
 .steps-modal .step-title.step-title-active {
@@ -83,39 +97,27 @@
 }
 
 .steps-modal .step-line {
-    height: 3px;
+    height: 2px;
     margin: 0;
     position: relative;
-    background-color: #5A5A5A;
+    background-color: #3e3e3e;
 }
-
-.light-mode .steps-modal .step-line {
-    background-color: #adadad;
-}
-
 
 .steps-modal .step-line-progress {
-    background: white;
+    background: #46f217;
     height: 3px;
     left: 0;
     margin: 0;
     position: absolute;
 }
 
-.light-mode .steps-modal .step-line-progress {
-    background: #1782fc;
-}
-
 .steps-modal .step-dot {
-    color: #5A5A5A;
+    color: #3e3e3e;
+    font-size: 16px;
 }
 
 .steps-modal .step-dot.step-dot-done {
-    color: white;
-}
-
-.light-mode .steps-modal .step-dot.step-dot-done {
-    color: #1782fc;
+    color: #46f217;
 }
 
 .steps-modal .steps-modal-icon {

@@ -157,7 +157,7 @@ class PoolCurrentTab extends Component {
           <div className="pool-item-details-value">{this.getLiquidityAvailable()}</div>
         </div>
         {this.showConvertLiquidity() && <div className="admin-button-wrapper">
-          <div className="aco-button action-btn btn-sm" onClick={this.onConvertLiquidityClick}>{this.getRestoreButtonLabel()}</div>
+          <div className="action-btn" onClick={this.onConvertLiquidityClick}>{this.getRestoreButtonLabel()}</div>
         </div>}
         <table className="aco-table mx-auto table-responsive-md">
           <thead>
@@ -185,7 +185,7 @@ class PoolCurrentTab extends Component {
           <div className="pool-item-details-value">{this.getOpenPositions()}</div>
         </div>
         {this.showRedeem() && <div className="admin-button-wrapper">
-          <div className="aco-button action-btn btn-sm" onClick={this.onRedeemClick}>Redeem collateral from expired options</div>
+          <div className="aco-button action-btn" onClick={this.onRedeemClick}>Redeem collateral from expired options</div>
         </div>}
         {pool.openAcos && pool.openAcos.length > 0 &&
           <table className="aco-table mx-auto table-responsive-md">
