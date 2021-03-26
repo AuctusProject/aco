@@ -2459,6 +2459,7 @@ describe("ACORewards", function() {
       await pairToken1Token2.connect(addr3).approve(acoRewards.address, a3Uni);
 
       await acoRewards.connect(addr1).deposit(0, poolCallBal);
+      await acoRewards.connect(addr1).deposit(2, a1Uni);
       let pa2 = await ACOPoolToken1Token2Put.balanceOf(await addr2.getAddress());
       await acoRewards.connect(addr2).deposit(1, pa2);
       await acoRewards.connect(addr3).deposit(2, a3Uni);
@@ -2468,7 +2469,7 @@ describe("ACORewards", function() {
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -2476,12 +2477,12 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
 
       let ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra1._amounts[0]).to.equal(80000);
+      expect(ra1._amounts[0]).to.equal(120000);
       let ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       let ra3 = await acoRewards.pendingReward(0, await addr3.getAddress());
@@ -2495,7 +2496,8 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._amounts[0]).to.equal(100000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
@@ -2506,7 +2508,7 @@ describe("ACORewards", function() {
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra1._amounts[0]).to.equal(120000);
+      expect(ra1._amounts[0]).to.equal(160000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(0, await addr3.getAddress());
@@ -2520,13 +2522,14 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._amounts[0]).to.equal(125000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra3._amounts[0]).to.equal(50000);
+      expect(ra3._amounts[0]).to.equal(25000);
 
       await expect(
         acoRewards.connect(addr1).claimReward(0)
@@ -2540,7 +2543,7 @@ describe("ACORewards", function() {
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -2548,8 +2551,8 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(0);
 
@@ -2568,13 +2571,14 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._amounts[0]).to.equal(200000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra3._amounts[0]).to.equal(200000);
+      expect(ra3._amounts[0]).to.equal(100000);
 
       await network.provider.send("evm_mine");
 
@@ -2595,22 +2599,23 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._amounts[0]).to.equal(225000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra3._amounts[0]).to.equal(250000);
+      expect(ra3._amounts[0]).to.equal(125000);
 
-      await acoRewards.connect(addr1).claimReward(1);
+      await acoRewards.connect(addr1).claimRewards([1,0,2]);
       expect(await acoRewards.balanceOf(0, await addr1.getAddress())).to.equal(poolCallBal);
       expect(await acoRewards.balanceOf(0, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(0, await addr3.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -2618,15 +2623,13 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(0);
       expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(0);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(1);
-      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra1._amounts[0]).to.equal(80000);
+      expect(ra1._acos.length).to.equal(0);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(0, await addr3.getAddress());
@@ -2646,7 +2649,7 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra3._amounts[0]).to.equal(300000);
+      expect(ra3._amounts[0]).to.equal(150000);
 
       await acoRewards.setCurrentReward(ACOEthToken2Call.address, 200000);
       await acoRewards.connect(addr2).claimReward(1);
@@ -2656,7 +2659,7 @@ describe("ACORewards", function() {
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -2664,8 +2667,8 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999);
       expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(0);
       expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -2675,7 +2678,7 @@ describe("ACORewards", function() {
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra1._amounts[0]).to.equal(200000);
+      expect(ra1._amounts[0]).to.equal(120000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(0, await addr3.getAddress());
@@ -2687,20 +2690,22 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(1);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._amounts[0]).to.equal(75000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra3._amounts[0]).to.equal(450000);
+      expect(ra3._amounts[0]).to.equal(225000);
 
       await network.provider.send("evm_mine");
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra1._amounts[0]).to.equal(280000);
+      expect(ra1._amounts[0]).to.equal(200000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(0, await addr3.getAddress());
@@ -2714,13 +2719,15 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(1);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._amounts[0]).to.equal(125000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra3._amounts[0]).to.equal(550000);
+      expect(ra3._amounts[0]).to.equal(275000);
 
       await ACOEthToken2Put.transfer(acoRewards.address, await ACOEthToken2Put.balanceOf(await owner.getAddress()));
       await acoRewards.setCurrentReward(ACOEthToken2Put.address, 100000);
@@ -2728,7 +2735,7 @@ describe("ACORewards", function() {
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra1._amounts[0]).to.equal(440000);
+      expect(ra1._amounts[0]).to.equal(360000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(0, await addr3.getAddress());
@@ -2742,13 +2749,15 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(1);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._amounts[0]).to.equal(225000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
-      expect(ra3._amounts[0]).to.equal(750000);
+      expect(ra3._amounts[0]).to.equal(375000);
 
       await network.provider.send("evm_mine");
       
@@ -2756,7 +2765,7 @@ describe("ACORewards", function() {
       expect(ra1._acos.length).to.equal(2);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
       expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
-      expect(ra1._amounts[0]).to.equal(440000);
+      expect(ra1._amounts[0]).to.equal(360000);
       expect(ra1._amounts[1]).to.equal(40000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
@@ -2773,15 +2782,19 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(2);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
+      expect(ra1._amounts[0]).to.equal(225000);
+      expect(ra1._amounts[1]).to.equal(25000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(2);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Call.address);
       expect(ra3._acos[1]).to.equal(ACOEthToken2Put.address);
-      expect(ra3._amounts[0]).to.equal(750000);
-      expect(ra3._amounts[1]).to.equal(50000);
+      expect(ra3._amounts[0]).to.equal(375000);
+      expect(ra3._amounts[1]).to.equal(25000);
 
       await acoRewards.connect(addr3).claimReward(2);
       expect(await acoRewards.balanceOf(0, await addr1.getAddress())).to.equal(poolCallBal);
@@ -2790,7 +2803,7 @@ describe("ACORewards", function() {
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(0);
@@ -2798,19 +2811,19 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
       expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(2);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
       expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
-      expect(ra1._amounts[0]).to.equal(440000);
+      expect(ra1._amounts[0]).to.equal(360000);
       expect(ra1._amounts[1]).to.equal(80000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
@@ -2827,7 +2840,11 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(2);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
+      expect(ra1._amounts[0]).to.equal(225000);
+      expect(ra1._amounts[1]).to.equal(50000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
@@ -2839,7 +2856,7 @@ describe("ACORewards", function() {
       expect(ra1._acos.length).to.equal(2);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
       expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
-      expect(ra1._amounts[0]).to.equal(440000);
+      expect(ra1._amounts[0]).to.equal(360000);
       expect(ra1._amounts[1]).to.equal(120000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
@@ -2856,13 +2873,17 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(2);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
+      expect(ra1._amounts[0]).to.equal(225000);
+      expect(ra1._amounts[1]).to.equal(75000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Put.address);
-      expect(ra3._amounts[0]).to.equal(50000);
+      expect(ra3._amounts[0]).to.equal(25000);
 
       await acoRewards.withdrawStuckToken(ACOEthToken2Put.address, await ACOEthToken2Put.balanceOf(acoRewards.address), await owner.getAddress());
       await expect(
@@ -2873,7 +2894,7 @@ describe("ACORewards", function() {
       expect(ra1._acos.length).to.equal(2);
       expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
       expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
-      expect(ra1._amounts[0]).to.equal(440000);
+      expect(ra1._amounts[0]).to.equal(360000);
       expect(ra1._amounts[1]).to.equal(200000);
       ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
@@ -2890,13 +2911,17 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(2);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
+      expect(ra1._amounts[0]).to.equal(225000);
+      expect(ra1._amounts[1]).to.equal(125000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Put.address);
-      expect(ra3._amounts[0]).to.equal(150000);
+      expect(ra3._amounts[0]).to.equal(75000);
 
       await acoRewards.connect(addr1).withdraw(0, poolCallBal);
       expect(await acoRewards.balanceOf(0, await addr1.getAddress())).to.equal(0);
@@ -2905,7 +2930,7 @@ describe("ACORewards", function() {
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(poolCallBal);
@@ -2913,13 +2938,13 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000 + 440000);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
       expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(0);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
@@ -2940,13 +2965,17 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(2);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
+      expect(ra1._amounts[0]).to.equal(225000);
+      expect(ra1._amounts[1]).to.equal(150000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Put.address);
-      expect(ra3._amounts[0]).to.equal(200000);
+      expect(ra3._amounts[0]).to.equal(100000);
 
       await ACOEthToken2Put.transfer(acoRewards.address, await ACOEthToken2Put.balanceOf(await owner.getAddress()));
       await acoRewards.connect(addr2).claimReward(1);
@@ -2956,7 +2985,7 @@ describe("ACORewards", function() {
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(poolCallBal);
@@ -2964,13 +2993,13 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000 + 440000);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999 + 59999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
       expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
@@ -2987,13 +3016,17 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(2);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
+      expect(ra1._amounts[0]).to.equal(225000);
+      expect(ra1._amounts[1]).to.equal(200000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(1);
       expect(ra3._acos[0]).to.equal(ACOEthToken2Put.address);
-      expect(ra3._amounts[0]).to.equal(300000);
+      expect(ra3._amounts[0]).to.equal(150000);
 
       await acoRewards.connect(addr3).claimReward(2);
       expect(await acoRewards.balanceOf(0, await addr1.getAddress())).to.equal(0);
@@ -3002,7 +3035,7 @@ describe("ACORewards", function() {
       expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
       expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
-      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
       expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(poolCallBal);
@@ -3010,13 +3043,13 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
-      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000 + 440000);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999 + 59999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
       expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(0);
       expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000 + 350000);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000 + 175000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(1);
@@ -3035,13 +3068,64 @@ describe("ACORewards", function() {
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
-      expect(ra1._acos.length).to.equal(0);
+      expect(ra1._acos.length).to.equal(2);
+      expect(ra1._acos[0]).to.equal(ACOEthToken2Call.address);
+      expect(ra1._acos[1]).to.equal(ACOEthToken2Put.address);
+      expect(ra1._amounts[0]).to.equal(225000);
+      expect(ra1._amounts[1]).to.equal(225000);
       ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(0);
       ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
 
-      await acoRewards.connect(addr1).claimReward(0);
+      await acoRewards.connect(addr1).claimRewards([0,2]);
+      expect(await acoRewards.balanceOf(0, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(0, await addr2.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(0, await addr3.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(1, await addr1.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(1, await addr2.getAddress())).to.equal(pa2);
+      expect(await acoRewards.balanceOf(1, await addr3.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr1.getAddress())).to.equal(a1Uni);
+      expect(await acoRewards.balanceOf(2, await addr2.getAddress())).to.equal(0);
+      expect(await acoRewards.balanceOf(2, await addr3.getAddress())).to.equal(a3Uni);
+      expect(await ACOPoolToken1Token2Call.balanceOf(await addr1.getAddress())).to.equal(poolCallBal);
+      expect(await ACOPoolToken1Token2Call.balanceOf(await addr2.getAddress())).to.equal(poolCallBal);
+      expect(await ACOPoolToken1Token2Call.balanceOf(await addr3.getAddress())).to.equal(poolCallBal);
+      expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
+      expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
+      expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni.add(a1Uni));
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000 + 225000);
+      expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999 + 59999);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
+      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000 + 250000);
+      expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000 + 175000);
+
+      ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
+      expect(ra1._acos.length).to.equal(0);
+      ra2 = await acoRewards.pendingReward(0, await addr2.getAddress());
+      expect(ra2._acos.length).to.equal(0);
+      ra3 = await acoRewards.pendingReward(0, await addr3.getAddress());
+      expect(ra3._acos.length).to.equal(0);
+      ra1 = await acoRewards.pendingReward(1, await addr1.getAddress());
+      expect(ra1._acos.length).to.equal(0);
+      ra2 = await acoRewards.pendingReward(1, await addr2.getAddress());
+      expect(ra2._acos.length).to.equal(1);
+      expect(ra2._acos[0]).to.equal(ACOEthToken2Put.address);
+      expect(ra2._amounts[0]).to.equal(19999);
+      ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
+      expect(ra3._acos.length).to.equal(0);
+      ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
+      expect(ra1._acos.length).to.equal(0);
+      ra2 = await acoRewards.pendingReward(2, await addr2.getAddress());
+      expect(ra2._acos.length).to.equal(0);
+      ra3 = await acoRewards.pendingReward(2, await addr3.getAddress());
+      expect(ra3._acos.length).to.equal(1);
+      expect(ra3._acos[0]).to.equal(ACOEthToken2Put.address);
+      expect(ra3._amounts[0]).to.equal(25000);
+
+      await acoRewards.connect(addr1).withdraw(2, a1Uni);
+
       expect(await acoRewards.balanceOf(0, await addr1.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(0, await addr2.getAddress())).to.equal(0);
       expect(await acoRewards.balanceOf(0, await addr3.getAddress())).to.equal(0);
@@ -3057,12 +3141,12 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(pa2);
       expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000 + 440000);
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000 + 225000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999 + 59999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
-      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
+      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000 + 250000 + 25000);
       expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000 + 350000);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000 + 175000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(0);
@@ -3075,7 +3159,7 @@ describe("ACORewards", function() {
       ra2 = await acoRewards.pendingReward(1, await addr2.getAddress());
       expect(ra2._acos.length).to.equal(1);
       expect(ra2._acos[0]).to.equal(ACOEthToken2Put.address);
-      expect(ra2._amounts[0]).to.equal(19999);
+      expect(ra2._amounts[0]).to.equal(29999);
       ra3 = await acoRewards.pendingReward(1, await addr3.getAddress());
       expect(ra3._acos.length).to.equal(0);
       ra1 = await acoRewards.pendingReward(2, await addr1.getAddress());
@@ -3103,12 +3187,12 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(0);
       expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000 + 440000);
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000 + 225000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999 + 59999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
-      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000);
-      expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999 + 29999);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000 + 350000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
+      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000 + 250000 + 25000);
+      expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999 + 39999);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000 + 175000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(0);
@@ -3147,12 +3231,12 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(0);
       expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(a3Uni);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000 + 440000);
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000 + 225000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999 + 59999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
-      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000);
-      expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999 + 29999);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000 + 350000 + 150000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
+      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000 + 250000 + 25000);
+      expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999 + 39999);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000 + 175000 + 150000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(0);
@@ -3189,12 +3273,12 @@ describe("ACORewards", function() {
       expect(await ACOPoolToken1Token2Call.balanceOf(acoRewards.address)).to.equal(0);
       expect(await ACOPoolToken1Token2Put.balanceOf(acoRewards.address)).to.equal(0);
       expect(await pairToken1Token2.balanceOf(acoRewards.address)).to.equal(0);
-      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(240000 + 440000);
+      expect(await ACOEthToken2Call.balanceOf(await addr1.getAddress())).to.equal(280000 + 80000 + 250000 + 360000 + 225000);
       expect(await ACOEthToken2Call.balanceOf(await addr2.getAddress())).to.equal(99999 + 59999);
-      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(750000);
-      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000);
-      expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999 + 29999);
-      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(100000 + 350000 + 150000 + 50000);
+      expect(await ACOEthToken2Call.balanceOf(await addr3.getAddress())).to.equal(375000);
+      expect(await ACOEthToken2Put.balanceOf(await addr1.getAddress())).to.equal(240000 + 250000 + 25000);
+      expect(await ACOEthToken2Put.balanceOf(await addr2.getAddress())).to.equal(79999 + 39999);
+      expect(await ACOEthToken2Put.balanceOf(await addr3.getAddress())).to.equal(50000 + 175000 + 150000 + 50000);
 
       ra1 = await acoRewards.pendingReward(0, await addr1.getAddress());
       expect(ra1._acos.length).to.equal(0);

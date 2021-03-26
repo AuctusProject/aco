@@ -148,12 +148,18 @@ contract ACORewards is Ownable {
 		emit Withdraw(msg.sender, _pid, amount);
     }
 
-    function claimReward(uint256 _pid) external {
+    function claimReward(uint256 _pid) public {
 		PoolInfo storage info = poolInfo[_pid];
         require(info.lpToken != address(0), "Invalid LP token");
 		
 		_setCurrentAcoRewardAccPerShare(_pid, currentReward);
 		_getUserAcoReward(_pid, false);
+    }
+
+	function claimRewards(uint256[] calldata _pids) external {
+		for (uint256 i = 0; i < _pids.length; ++i) {
+			claimReward(_pids[i]);
+		}
     }
 	
 	// Withdraw without caring about rewards. EMERGENCY ONLY!
