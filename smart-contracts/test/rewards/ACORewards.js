@@ -263,6 +263,7 @@ describe("ACORewards", function() {
     await ACOPoolToken1Token2Put.connect(addr3).deposit(poolPutBal, 1, await addr3.getAddress(), false);
 
     acoRewards = await (await ethers.getContractFactory("ACORewards")).deploy();
+    await acoRewards.deployed();
   });
 
   describe("ACORewards user transactions", function () {

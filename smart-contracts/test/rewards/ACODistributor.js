@@ -131,7 +131,8 @@ describe("ACODistributor", function() {
 
     acoDistributor = await (await ethers.getContractFactory("ACODistributor")).deploy(await signer.getAddress(), 
         [ACOToken1Token2Call1.address, ACOToken1Token2Call2.address, ACOToken1Token2Call3.address, ACOToken1Token2Call4.address]);
-          
+    await acoDistributor.deployed();
+
     await ACOToken1Token2Call1.transfer(acoDistributor.address, acoAmount1);
     await ACOToken1Token2Call2.transfer(acoDistributor.address, acoAmount2);
     await ACOToken1Token2Call3.transfer(acoDistributor.address, acoAmount3);
