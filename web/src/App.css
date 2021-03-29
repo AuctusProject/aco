@@ -120,7 +120,6 @@ main {
 .action-btn:not(:disabled):not(.disabled):hover,
 .outline-btn:not(:disabled):not(.disabled):hover {
   box-shadow: 0px 0px 12px 0 #5de9d4 !important;
-  /* filter: drop-shadow(0 2px 10px #5de9d4); */
 }
 
 .action-btn.disabled, .action-btn:disabled {
@@ -653,6 +652,10 @@ label {
   max-width: 362px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.slippage-modal .modal-dialog {
+  max-width: 500px;
 }
 
 .modal-backdrop.show {

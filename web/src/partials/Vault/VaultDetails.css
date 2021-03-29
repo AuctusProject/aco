@@ -56,7 +56,7 @@
     justify-content: space-evenly;
     flex: 1;
     align-items: center;
-    min-width: 340px;
+    min-width: 300px;
 }
 
 @media (max-width:600px) {
@@ -89,6 +89,8 @@
     font-weight: 500;
     letter-spacing: 0.9px;
     color: #5de9d4;
+    white-space: nowrap;
+    margin: 8px;
 }
 
 .vault-apy-value {
@@ -134,6 +136,10 @@
     .vault-current-option > span {
         margin-right: 0;
     }   
+
+    .vault-card .input-row {
+        flex-direction: column;
+    }
 }
 
 .right-arrow {    

@@ -109,4 +109,16 @@
     .simple-box .nav-tabs .nav-link {
         font-size: 13px;
     }
+
+    .pair-and-mode-wrapper {
+        flex-direction: column-reverse;
+    }
+
+    .pair-dropdown-wrapper {
+        padding-inline-start: 0px;
+    }
+
+    .simple-page .nav-modes {
+        margin-right: auto;
+    }
 }

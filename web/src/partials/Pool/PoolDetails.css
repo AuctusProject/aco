@@ -64,6 +64,23 @@
         height: 1px;
         margin: 16px 0;
     }
+
+    .pool-card .card-header .vault-chevron {
+        margin-left: 0px;
+    }
+
+    .pool-name {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pool-name .discontinued-label {
+        margin-left: 0;;
+    }
+
+    .pool-card .input-row {
+        flex-direction: column;
+    }
 }
 
 .card-header.disabled {
@@ -135,6 +152,7 @@
     align-items: center;
     justify-items: center;
     cursor: pointer;
+    margin: 8px;
 }
 
 .view-details-icon {
