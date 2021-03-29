@@ -13,6 +13,11 @@ function getAcoDistributorContract() {
     return acoDistributorContract
 }
 
+export const listAlreadyClaimedAcos = (from) => {
+    const acoDistributorContract = getAcoDistributorContract()
+    return acoDistributorContract.getPastEvents('Claim', { filter: {account: from}, fromBlock: 0, toBlock: 'latest' })
+}
+
 export const getClaimableAcos = (amount) => {
     const acoDistributorContract = getAcoDistributorContract()
     return acoDistributorContract.methods.getClaimableAcos(amount).call()

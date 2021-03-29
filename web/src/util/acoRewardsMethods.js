@@ -13,6 +13,16 @@ function getAcoRewardsContract() {
     return acoRewardsContract
 }
 
+export const listAlreadyAwardedAcos = (from) => {
+    const acoRewardsContract = getAcoRewardsContract()
+    return acoRewardsContract.getPastEvents('RewardPaid', { filter: {user: from}, fromBlock: 0, toBlock: 'latest' })
+}
+
+export const balanceOf = (pid, from) => {
+    const acoRewardsContract = getAcoRewardsContract()
+    return acoRewardsContract.methods.balanceOf(pid, from).call()
+}
+
 export const poolsLength = () => {
     const acoRewardsContract = getAcoRewardsContract()
     return acoRewardsContract.methods.poolLength().call()
