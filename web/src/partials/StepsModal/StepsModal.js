@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCheckCircle, faCircle } from '@fortawesome/free-regular-svg-icons'
+import { faCircle } from '@fortawesome/free-regular-svg-icons'
 import { faCheckCircle as faCheckCircleSolid } from '@fortawesome/free-solid-svg-icons'
 
 class StepsModal extends Component {
