@@ -36,7 +36,8 @@ exports.error = function (message, title = ':(') {
     Swal.fire({
         title: title,
         text: message,
-        confirmButtonClass: "aco-btn action-btn"
+        confirmButtonClass: "aco-btn action-btn",
+        confirmButtonColor: "#5de9d4"
     });
 };
 

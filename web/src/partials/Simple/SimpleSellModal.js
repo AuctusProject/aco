@@ -267,10 +267,10 @@ class SimpleSellModal extends Component {
               </div>
             </div>           
             {this.state.optionsAmount && this.state.optionsAmount !== "" && this.state.optionsAmount > 0 && !this.isInsufficientFunds() &&
-              <div className="confirm-card-body highlight-background">
+              <div className="confirm-card-body highlight-background border-top-separator">
                 {!this.state.errorMessage && !this.state.loadingSwap && <div>
                   <div className="summary-title">SUMMARY</div>
-                  <table className="summary-table">
+                  <table className="aco-table summary-table">
                     <tbody>
                       <tr>
                         <td>Price per option</td>

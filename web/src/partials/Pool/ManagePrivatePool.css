@@ -1,6 +1,9 @@
 .manage-private-pool {
     margin: auto;
     margin-top: 16px;
+    border: 1px solid #464646;
+    padding: 16px;
+    border-radius: 12px;
 }
 
 .manage-private-pool-title {
@@ -22,7 +25,7 @@
 }
 
 .manage-private-pool-item-label {
-    width: 90px;
+    width: 100px;
     font-size: 12px;
     font-weight: 300;
     letter-spacing: 0.6px;

@@ -1,6 +1,6 @@
 .accordion .card {
     margin: 20px 0;
-    border-radius: 0.25rem !important;
+    border-radius: 12px !important;
     border: solid 1px #464646 !important;
 }
 
@@ -19,11 +19,11 @@
 }
 
 .dark-mode .card .card-header {
-    background-color: #353535;
+    background-color: #000000;
 }
 
 .dark-mode .accordion .card {
-    background-color: #252525;
+    background-color: #000000;
 }
 
 .vault-name {
@@ -39,7 +39,7 @@
 }
 
 .discontinued-label {
-    color: #ed2e2e;
+    color: #ff0000;
     font-size: 13px;
 }
 
@@ -56,7 +56,7 @@
     justify-content: space-evenly;
     flex: 1;
     align-items: center;
-    min-width: 340px;
+    min-width: 300px;
 }
 
 @media (max-width:600px) {
@@ -68,7 +68,7 @@
 .header-separator {
     width: 1px;
     height: 67px;
-    background-color: #505050;
+    background-color: #464646;
 }
 
 
@@ -88,11 +88,14 @@
     font-size: 18px;
     font-weight: 500;
     letter-spacing: 0.9px;
+    color: #5de9d4;
+    white-space: nowrap;
+    margin: 8px;
 }
 
 .vault-apy-value {
-    font-weight: bold;
-    color: #1782fc;
+    font-size: 17.5px;
+    font-weight: 600;
 }
 
 @media(max-width:600px) {
@@ -118,6 +121,7 @@
     letter-spacing: 0.5px;
     text-align: center;
     display: flex;
+    flex-direction: column;
 }
 
 .vault-current-option > span {
@@ -132,6 +136,10 @@
     .vault-current-option > span {
         margin-right: 0;
     }   
+
+    .vault-card .input-row {
+        flex-direction: column;
+    }
 }
 
 .right-arrow {    
@@ -177,9 +185,9 @@
     width: 100%;
 }
 
-.vault-card .action-btn {
+.vault-card .action-btn,
+.vault-card .outline-btn {
     margin-top: 12px;
-    border-radius: 2px;
 }
 
 .vault-position {
@@ -199,7 +207,9 @@
     font-weight: bold;
     letter-spacing: 0.6px;
     text-align: center;
-    color: #1782fc;
+    color: #5de9d4;
+    padding: 15px 15px 0;
+    border-right: none;
 }
 
 .light-mode .vault-position .aco-table thead th.value-highlight {

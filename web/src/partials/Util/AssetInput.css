@@ -42,9 +42,9 @@
     border-radius: 50%;
 }
 
-.asset-option:last-child {
-    border-bottom-left-radius: 0.3rem;
-    border-bottom-right-radius: 0.3rem;
+.asset-input .container {
+    border-radius: 6px;
+    overflow: hidden;
 }
 
 .search-input-wrapper {

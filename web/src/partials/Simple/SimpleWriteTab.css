@@ -8,13 +8,15 @@
 }
 
 .earn-title {
-    font-size: 14px;
-    font-weight: 300;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.7px;
-    text-align: left;
+    font-size: 18px;
+    font-weight: 500;
+    text-align: center;
+    color: #e6e6e6;
+    margin-top: 12px;
     margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .simple-write-tab .aco-table {
@@ -23,7 +25,13 @@
 
 
 .simple-write-tab .asset-icon {
-    width: 30px;
-    margin-right: 4px;
+    width: 34px;
+    margin-right: 8px;
     border-radius: 50%;
+}
+
+.earn-title svg {
+    align-self: flex-start;
+    margin-left: 4px;
+    color: #5de9d4;
 }

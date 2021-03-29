@@ -12,7 +12,7 @@ main {
 }
 
 .dark-mode {
-  background-color: #242424 !important;
+  background-color: #000000 !important;
   color: #ffffff !important;
   transition: background-color 300ms ease-out, color 300ms ease-out;
   -webkit-transition: background-color 300ms ease-out, color 300ms ease-out;
@@ -86,10 +86,15 @@ main {
 }
 
 .action-btn,
-.cancel-btn {
+.swal2-styled.swal2-confirm.action-btn,
+.cancel-btn,
+.swal2-styled.swal2-cancel.cancel-btn,
+.outline-btn,
+.swal2-styled.swal2-confirm.outline-btn
+ {
   display: inline-block;
   padding: 8px 24px;
-  border-radius: 4px;
+  border-radius: 22px;
   cursor: pointer;
   font-weight: 500;
   font-stretch: normal;
@@ -99,26 +104,26 @@ main {
   text-transform: uppercase;
   outline: none !important;
   box-shadow: none !important;
+  transition: background-color 300ms ease-out, color 300ms ease-out, border-color 300ms ease-out, box-shadow 300ms ease-out;
+  -webkit-transition: background-color 300ms ease-out, color 300ms ease-out, border-color 300ms ease-out, box-shadow 300ms ease-out;
+  -moz-transition: background-color 300ms ease-out, color 300ms ease-out, border-color 300ms ease-out, box-shadow 300ms ease-out;
+  -o-transition: background-color 300ms ease-out, color 300ms ease-out, border-color 300ms ease-out, box-shadow 300ms ease-out;
 }
 
+.swal2-styled.swal2-confirm.action-btn,
 .action-btn {
-  color: white;
-  border-color: #1782fc;
-  background-color: #1782fc;
-  transition: background-color 300ms ease-out, color 300ms ease-out;
-  -webkit-transition: background-color 300ms ease-out, color 300ms ease-out;
-  -moz-transition: background-color 300ms ease-out, color 300ms ease-out;
-  -o-transition: background-color 300ms ease-out, color 300ms ease-out;
+  color: black;
+  border-color: #5de9d4;
+  background-color: #5de9d4;
 }
 
-.action-btn:not(:disabled):not(.disabled):hover {
-  border-color: #0145a7;
-  background-color: #0145a7;
-  box-shadow: 6.6px 12.4px 18px 0 rgba(28, 28, 28, 0.18);
+.action-btn:not(:disabled):not(.disabled):hover,
+.outline-btn:not(:disabled):not(.disabled):hover {
+  box-shadow: 0px 0px 12px 0 #5de9d4 !important;
 }
 
 .action-btn.disabled, .action-btn:disabled {
-  background-color: #1782fc88 !important;
+  background-color: #5de9d488 !important;
   box-shadow: none !important;
   cursor: default;
 }
@@ -127,18 +132,41 @@ main {
   min-width: 180px;
 }
 
+.outline-btn {
+  color: #5de9d4;
+  border-color: #5de9d4;
+  border: solid 1px;
+  background-color: transparent;
+}
+
+.outline-btn img {
+  max-height: 20px;
+  margin-right: 8px;
+}
+
+/* .outline-btn:not(:disabled):not(.disabled):hover {
+  filter: drop-shadow(0 2px 10px #5de9d4);
+} */
+
+.outline-btn.disabled, .outline-btn:disabled {
+  color: #5de9d488 !important;
+  border-color: #5de9d488;
+  box-shadow: none !important;
+  cursor: default;
+}
+
+.outline-btn.medium {
+  min-width: 180px;
+}
+
 .cancel-btn {
-  color: #e5e5e5 !important;
-  text-decoration: underline;
+  color: #5de9d4 !important;
+  text-decoration: none;
   background: unset !important;
 }
 
-.light-mode .cancel-btn {
-  color: #333333 !important;
-}
-
 .cancel-btn:not(:disabled):not(.disabled):hover {
-  color: #e5e5e588 !important;
+  text-shadow: 0 2px 5px #5de9d4;
 }
 
 
@@ -489,44 +517,56 @@ main {
 }
 
 .aco-table {
-  background-color: #2b2b2b;
+  border: 1px solid #464646;
+  border-radius: 12px;
+  padding: 22px;
+  border-spacing: 0;
+  border-collapse: separate;
 }
 
-.light-mode .aco-table{
-  background-color: white;
+/* table > :first-child tr:first-child > :first-child {
+  border-top-left-radius: 12px;
 }
+
+table > :first-child tr:first-child >   :last-child {
+  border-top-right-radius: 12px;
+}
+
+table tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+table tr:last-child td:first-child {
+  border-bottom-left-radius: 12px;
+} */
 
 .aco-table thead th{
   height: 42px;
-  background-color: #363636;
   font-size: 12px;
-  font-weight: normal;
+  font-weight: 300;
   font-stretch: normal;
   font-style: normal;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   text-align: center;
-  color: #e6e6e6;
+  color: #656565;
   padding: 0 15px;  
-  word-break: normal;
-}
-
-.light-mode .aco-table thead th{
-  background-color: #b3b3b3;
-  color: #333333;
+  word-break: normal;  
+  text-transform: uppercase;
 }
 
 .aco-table tbody td {
   height: 48px;
   padding: 0 15px;
-  border-bottom: solid 0.2px #454545;
-  font-size: 12px;
-  font-weight: 300;
-  font-stretch: normal;
-  font-style: normal;
-  letter-spacing: 0.55px;
   text-align: center;
-  color: #e6e6e6;  
   word-break: normal;
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 0.6px;
+}
+
+.aco-table td,
+.aco-table th {
+  border-right: 1px solid #464646;
 }
 
 .light-mode .aco-table tbody td {
@@ -535,12 +575,12 @@ main {
 }
 
 .aco-table tbody tr.clickable:hover td {
-  background-color: #cbcbcb;
-  color: #262626;
+  background-color: #1a1a1a;
 }
 
-.aco-table tbody tr:last-child td {
-  border-bottom: none;
+.aco-table tr td:last-child,
+.aco-table tr th:last-child {
+  border-right: none;
 }
 
 label {
@@ -551,13 +591,11 @@ label {
   outline: none !important;
 }
 
-.aco-modal .modal-content {
-  background-color: #202020;
-}
-
-.light-mode .modal-content {
-  background-color: white !important;
-  color: #333333 !important;
+.aco-modal .modal-content,
+.steps-modal .modal-content {
+  background-color: #000000;
+  border: solid 1px #464646;
+  border-radius: 12px;
 }
 
 .aco-modal .modal-header {
@@ -565,7 +603,7 @@ label {
   border-bottom: 0;
   min-height: 24px;
   position: relative;
-  background-color: #343434;
+  background-color: #1a1a1a;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -576,6 +614,8 @@ label {
   font-style: normal;
   letter-spacing: 0.45px;
   text-align: center;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
 }
 
 .light-mode .aco-modal .modal-header {
@@ -607,19 +647,24 @@ label {
   padding: 0;
 }
 
-.aco-modal .modal-dialog {
-  width: 322px;
+.aco-modal .modal-dialog,
+.steps-modal .modal-dialog {
+  max-width: 362px;
   margin-left: auto;
   margin-right: auto;
 }
 
+.slippage-modal .modal-dialog {
+  max-width: 500px;
+}
+
 .modal-backdrop.show {
-  opacity: 0.7;
+  opacity: 0.9 !important;
 }
 
 .beta-alert {
-  border: solid 0.5px;
-  border-color: white;
+  border: solid 1px;
+  border-color: #464646;
   padding: 8px;
   margin: 0 auto 20px;
   font-size: 14px;
@@ -628,10 +673,11 @@ label {
   font-style: normal;
   letter-spacing: normal;
   text-align: center;
-  max-width: 390px;
+  max-width: 430px;
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 12px;
 }
 
 .light-mode .beta-alert {
@@ -665,26 +711,106 @@ label {
   color: #333333;
 }
 
+
+.input-field {
+  width: 138px;
+  height: 42px;
+  border-bottom: solid 1px #464646;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
 .input-field input {
   max-width: 100%;
   height: 100%;
   background-color: transparent;
   border: none;
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0.3px;
+  font-size: 18px;
+  font-weight: normal;
+  letter-spacing: 0.45px;
   padding: 0 6px;
   color: white;
 }
 
-.collateral-input input {
-  color: white;
+.btn-group.pill-button-group {
+  display: flex;
+  margin: auto;
+  width: 300px;
 }
 
-.light-mode .input-field input {
-  color: #333333 !important;
+.pill-button {
+  width: 50%;
+  background-color: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: normal;
+  text-align: center;
+  color: #5de9d4;
+  border-color: #5de9d4;
+  border: solid 1px;
+  cursor: pointer;
+  height: 42px;
+  line-height: 1;
 }
 
-.light-mode .collateral-input input {
-  color: #333333 !important;
+.pill-button svg {
+  margin-left: 8px;
+
 }
+
+.pill-button:not(.active):hover {
+  background-color: #5de9d420;
+}
+
+.pill-button:first-child {
+  border-top-left-radius: 22px;
+  border-bottom-left-radius: 22px;
+}
+
+.pill-button:last-child {
+  border-top-right-radius: 22px;
+  border-bottom-right-radius: 22px;
+}
+
+.pill-button.active {
+  background-color: #5de9d4;
+  color: black;
+  border-color: #5de9d4;
+  cursor: default !important;
+}
+
+.insufficient-funds-error .input-field {
+  border-bottom: solid 1px #ff0000;
+}
+
+.insufficient-funds-error .input-field input{
+  color: #ff0000;
+}
+
+.insufficient-funds-error .balance-info {
+  font-weight: normal;
+  color: #ff0000;
+}
+
+.accordion .card-body {
+  text-align: center;
+}
+
+.accordion .card-body .action-btn {
+  margin-left: auto;
+  margin-right: auto;
+  min-width: 160px;
+}
+
+.border-top-separator {
+  border-top: 1px solid #464646 !important;
+}
+
+/* .highlight-background {
+    background-color: #3b3b3b;
+} */

@@ -61,7 +61,7 @@ class PoolDashboard extends Component {
       {!pool ? <Loading></Loading> :
         <>
           <div className="page-title">
-            <div className="back-link clickable" onClick={this.goToPools}><FontAwesomeIcon icon={faArrowLeft}/> Pools</div>            
+            <div className="back-link clickable" onClick={this.goToPools}><FontAwesomeIcon icon={faArrowLeft}/> Pools</div>
             {this.getFormattedPoolName()}
           </div>
           <div>

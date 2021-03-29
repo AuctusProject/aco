@@ -173,7 +173,7 @@ class DiscontinuedPoolDetails extends Component {
         <div className="input-row">
           <div className="input-column">
             <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedWithdrawBalance())}</div>
-            <div className={"action-btn"} onClick={this.onWithdrawClick}>WITHDRAW</div>
+            <div className={"outline-btn"} onClick={this.onWithdrawClick}>WITHDRAW</div>
           </div>
         </div>
         {!this.state.accountPosition ? 

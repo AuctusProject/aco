@@ -26,7 +26,7 @@
 }
 
 .simple-buy-tab .input-field input::placeholder {
-    color: #4c4c4c;
+    color: #464646;
     opacity: 1;
 }
 
@@ -49,11 +49,11 @@
 
 .type-toggle .option-badge.unselected {
     background: transparent;
-    border: solid 1px #4c4c4c;
+    border: solid 1px #464646;
 }
 
 .type-toggle .option-badge.unselected:not(:hover) {
-    color: #4c4c4c;
+    color: #464646;
 }
 
 .type-toggle .option-badge:first-child {
@@ -82,7 +82,7 @@
 
 .simple-buy-tab .input-column {
     max-width: unset;
-    margin: 0 10px;
+    margin: 0 8px;
     text-align: center;
 }
 
@@ -99,7 +99,7 @@
 }
 
 .prices-wrapper .separator {
-    border-top: solid 0.5px #737373;
+    border-top: solid 0.5px #464646;
     margin: 16px 0;
 }
 
@@ -132,11 +132,6 @@
     margin: 0 10px;
 }
 
-.action-btn.disabled {
-    opacity: 0.5;
-    cursor: default;
-}
-
 .price-value {
     display: flex;
     flex-direction: row;
@@ -148,7 +143,8 @@
 
 .price-value > div:first-child {
     text-align: right;
-    width: 51px;
+    min-width: 70px;
+    width: 50%;
 }
 
 .price-value > div:last-child {
@@ -202,7 +198,12 @@
 }
 
 .create-link-wrapper .nav-link {    
-    margin: 6px 10px;
+    margin: 12px 10px;
     padding: 0;
     letter-spacing: 0.3px;
+    color: #5de9d4;
+}
+
+.create-link-wrapper .nav-link:hover {
+    text-shadow: 0 2px 5px #5de9d4;
 }

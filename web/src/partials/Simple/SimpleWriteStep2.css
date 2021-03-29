@@ -1,6 +1,9 @@
 .simple-write-step2 {
     display: flex;
     flex-direction: column;
+    width: 460px;
+    max-width: calc(100% - 40px);
+    margin: auto;
 }
 
 .collateral-input {
@@ -12,11 +15,11 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    border: solid 1px #4c4c4c;
-    margin: 20px auto;    
-    padding: 10px 0;
-    width: 380px;
-    max-width: calc(100% - 40px);
+    border: solid 1px #464646;
+    margin: 20px auto;
+    width: 100%;
+    border-radius: 12px;
+    padding: 12px
 }
 
 .collateral-label {
@@ -33,6 +36,7 @@
     width: 60px;
     text-align: center;
     background-color: transparent;
+    color: white;
 }
 
 .max-and-balance {
@@ -60,15 +64,16 @@
     flex-direction: row;
     align-items: flex-start;
     margin: auto;    
-    width: 380px;
-    max-width: calc(100% - 40px);
+    width: 100%;
 }
 
 .chart-and-summary .summary-wrapper {
     width: 100%;
     display: flex;
     flex-direction: column;
-    border: solid 1px #404040;
+    border: solid 1px #464646;
+    border-radius: 12px;
+    padding: 12px;
 }
 
 .summary-content {
@@ -80,12 +85,11 @@
     display: flex;
     flex-direction: column;
     width: calc(100% - 150px);
-    border-right: solid 1px #404040;
+    border-right: solid 1px #464646;
 }
 
 .summary-wrapper .summary-title-wrapper {
-    padding: 8px;
-    background-color: #363636;
+    padding: 8px 8px 12px 8px;
     margin-bottom: 0;
     text-align: left;
     display: flex;
@@ -107,8 +111,8 @@
     text-align: center;
     margin-top: auto;
     margin-bottom: auto;
-    width: 73px;
-    min-width: 73px;
+    width: 80px;
+    min-width: 80px;
 }
 
 .summary-wrapper .summary-separator {
@@ -128,11 +132,11 @@
     line-height: 1.4;
     letter-spacing: 0.5px;
     text-align: left;
-    color: #1782fc;
+    color: #5de9d4;
 }
 
 .summary-wrapper .summary-highlight {   
-    background-color: #2d2d2d;
+    background-color: #1a1a1a;
 }
 
 .light-mode .summary-wrapper .summary-highlight {
@@ -149,12 +153,11 @@
 }
 
 .summary-item.summary-highlight .summary-item-label {
-    font-size: 12px;
     font-weight: 500;
 }
 
 .summary-item .summary-item-label {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 300;
     font-stretch: normal;
     font-style: normal;
@@ -163,7 +166,7 @@
 }
 
 .summary-item .summary-item-value {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 500;
     font-stretch: normal;
     font-style: normal;
@@ -179,7 +182,7 @@
 }
 
 .light-mode .summary-highlight .summary-item-value {
-    color: #1782fc;
+    color: #5de9d4;
 }
 
 .similar-prices {
@@ -210,7 +213,6 @@
     letter-spacing: 0.3px;
     text-align: center;
     color: #7d7d7d;
-    margin-top: 6px;
     margin-bottom: 20px;
 }
 

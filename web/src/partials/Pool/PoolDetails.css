@@ -51,7 +51,7 @@
 }
 
 .pool-iv-value {
-    color: #1782fc;
+    color: #5de9d4;
     font-size: 18px;
     font-weight: 500;
     min-width: 50px;
@@ -63,6 +63,23 @@
         width: 100%;
         height: 1px;
         margin: 16px 0;
+    }
+
+    .pool-card .card-header .vault-chevron {
+        margin-left: 0px;
+    }
+
+    .pool-name {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .pool-name .discontinued-label {
+        margin-left: 0;;
+    }
+
+    .pool-card .input-row {
+        flex-direction: column;
     }
 }
 
@@ -96,11 +113,6 @@
     width: 100%;
 }
 
-.pool-card .action-btn {
-    border-radius: 2px;
-    min-width: 160px;
-}
-
 .pool-position {
     margin-top: 40px;
     text-align: center;
@@ -118,7 +130,7 @@
     font-weight: bold;
     letter-spacing: 0.6px;
     text-align: center;
-    color: #1782fc;
+    color: #5de9d4;
 }
 
 .light-mode .pool-position .aco-table thead th.value-highlight {
@@ -134,21 +146,13 @@
     text-align: left;
 }
 
-.accordion .card-body {
-    text-align: center;
-}
-
-.accordion .card-body .action-btn {
-    margin-left: auto;
-    margin-right: auto;
-}
-
 .view-details-link {    
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-items: center;
     cursor: pointer;
+    margin: 8px;
 }
 
 .view-details-icon {
@@ -181,5 +185,5 @@
 }
 
 .view-details-link:hover .view-details-label {
-    color: #1782fc;    
+    color: #5de9d4;    
 }

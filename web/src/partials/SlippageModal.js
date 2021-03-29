@@ -35,8 +35,8 @@ class SlippageModal extends Component {
   }
 
   getSlippageOption = (value) => {
-    var buttonClass = this.props.maxSlippage === value ? "btn-secondary" : "btn-outline-secondary"
-    return <button onClick={() => this.onSlippageSelect(value)} className={"btn btn-sm mr-2 "+buttonClass}> {formatPercentage(value, 0)} </button>
+    var buttonClass = this.props.maxSlippage === value ? "action-btn" : "outline-btn"
+    return <div onClick={() => this.onSlippageSelect(value)} className={"m-1 "+buttonClass}> {formatPercentage(value, 0)} </div>
   }
 
   onSlippageSelect = (value) => {
@@ -79,7 +79,7 @@ class SlippageModal extends Component {
                 {this.getCustomInput()}
               </div>
               <div className="error-alert">{this.state.customValueError}</div>
-              <div className="aco-button action-btn" onClick={onClose}>OK</div>
+              <div className="action-btn mt-4" onClick={onClose}>OK</div>
             </div>
           </div>
         </div>

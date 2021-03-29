@@ -275,10 +275,10 @@ class WithdrawModal extends Component {
               </div>}
             </div>
             {this.showSummary() &&
-            <div className="confirm-card-body highlight-background">
+            <div className="confirm-card-body highlight-background border-top-separator">
                 <div>
                   <div className="summary-title">SUMMARY</div>
-                  <table className="summary-table">
+                  <table className="aco-table summary-table">
                     <tbody className={this.isInsufficientLiquidity() ? "insufficient-funds-error" : ""}>
                       <tr>
                         <td rowSpan="2">You'll receive</td>

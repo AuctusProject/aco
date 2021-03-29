@@ -106,15 +106,17 @@ class Simple extends Component {
 
   render() {
     var filteredOptions = this.getOptionsFromPair()
-    return <div className="py-4">
+    return <div className="py-4 simple-page">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>Exercise is not automatic, please remember manually exercising in-the-money options before expiration.</div>    
         <div className="pair-and-mode-wrapper">
           <ul className="pair-dropdown-wrapper">
             <PairDropdown {...this.props} pairs={this.state.pairs}></PairDropdown>
           </ul>
-          <ul className="navbar-nav nav-modes ml-auto">
-            <div className="app-mode active">Basic</div>
-            <div className="app-mode" onClick={() => this.openAdvancedMode()}>Advanced<FontAwesomeIcon icon={faExternalLinkAlt} /></div>
+          <ul className="nav-modes ml-auto">
+            <div className="btn-group pill-button-group">
+              <button type="button" className="pill-button active">BASIC</button>
+              <button onClick={() => this.openAdvancedMode()} type="button" className="pill-button">ADVANCED<FontAwesomeIcon icon={faExternalLinkAlt} /></button>            
+            </div>
             {this.state.showAdvancedTootlip && window.innerWidth >= 992 &&
             <div className="advanced-tooltip">
               Go to advanced mode to trade options with limit orders.
@@ -124,7 +126,7 @@ class Simple extends Component {
         </div>
         
         <div className="simple-box">
-          <ul className="nav nav-tabs justify-content-center" id="simpleTabs" role="tablist">
+          <ul className="nav nav-tabs nav-fill" id="simpleTabs" role="tablist">
             <li className="nav-item">
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/buy`)}>Buy</NavLink>
             </li>

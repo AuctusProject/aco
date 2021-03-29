@@ -35,7 +35,7 @@ class CreateOption extends Component {
   getInitialState = (props) => {
     var state = { 
       selectedType: 1, 
-      selectedUnderlying: null,
+      selectedUnderlying: CREATE_OPTION_UNDERLYING_OPTIONS[0],
       expirationDate: "",
       selectedStrike: "",
       strikeOptions: null,

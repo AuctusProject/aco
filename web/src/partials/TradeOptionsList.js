@@ -39,7 +39,7 @@ class TradeOptionsList extends Component {
   optionRowInfo = (option) => {
     if (!option) {
       return <>
-        <td colSpan={this.props.mode === TradeOptionsListLayoutMode.Trade ? "5": "4"}>N/A</td>
+        <td className="na-col" colSpan={this.props.mode === TradeOptionsListLayoutMode.Trade ? "5": "4"}><div className="na-div">N/A</div></td>
       </>
     }
 
@@ -93,7 +93,7 @@ class TradeOptionsList extends Component {
     var pair = this.props.selectedPair    
     var grouppedOptions = this.getOptionsGrouppedByDateAndPrice()
     var pairTitle = pair.underlyingSymbol + pair.strikeAssetSymbol
-    return (<div ref={ref => this.wrapperDiv = ref} className="trade-options-list py-5">
+    return (<div ref={ref => this.wrapperDiv = ref} className="trade-options-list py-4">
           <table ref={ref => this.tableEl = ref} className="aco-table mx-auto">
             {this.props.options && this.props.options.length === 0 && 
               <thead>

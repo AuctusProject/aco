@@ -228,7 +228,7 @@ class PoolDetails extends Component {
       {!this.isConnected() ? 
       <div className="card-body">
         <div>Connect your account to load your wallet information.</div>
-        <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
+        <div className="action-btn mt-2" onClick={this.onConnectClick}>
           <div>CONNECT WALLET</div>
         </div>
       </div>:
@@ -240,7 +240,7 @@ class PoolDetails extends Component {
           </div>
           <div className="input-column">
             <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedWithdrawBalance())}</div>
-            <div className={"action-btn"} onClick={this.onWithdrawClick}>WITHDRAW</div>
+            <div className={"outline-btn"} onClick={this.onWithdrawClick}>WITHDRAW</div>
           </div>
         </div>
         {!this.state.accountPosition ? 

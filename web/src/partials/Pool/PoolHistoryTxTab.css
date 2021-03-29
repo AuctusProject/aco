@@ -1,3 +1,8 @@
+.pool-history-tx-tab {
+    padding-top: 16px;
+}
+
 .liquidity-head {
     height: 21px !important;
+    border-right: 1px solid #464646 !important;
 }
