@@ -14,6 +14,9 @@ export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS;
 export const allAcoOtcAddresses = process.env.REACT_APP_ACO_OTC_ADDRESS.split(',');
 export const acoOtcAddress = allAcoOtcAddresses[allAcoOtcAddresses.length-1];
 export const acoBuyerAddress = process.env.REACT_APP_ACO_BUYER_ADDRESS;
+export const acoDistributorAddress = process.env.REACT_APP_ACO_DISTRIBUTOR_ADDRESS;
+export const acoRewardAddress = process.env.REACT_APP_ACO_REWARD_ADDRESS;
+export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS;
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
@@ -414,7 +417,7 @@ export const removeOtcOptions = (options) => {
 export const removeNotWhitelistedOptions = (options) => {
     return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
         (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
-            defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0))
+            (o.underlying.toLowerCase() !== auctusAddress && defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
 }
 
 export const isExpired = (expiryTime) => {
