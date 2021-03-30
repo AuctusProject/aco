@@ -493,3 +493,9 @@ export const getLocalOrders = () => {
 export const capitalizeFirstLetter = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
+export const formatAcoRewardName = (acoReward) => {
+    var strikePrice = Number(fromDecimals(acoReward.strikePrice, 6)).toFixed(2)
+    var formattedDate = formatDate(acoReward.expiryTime, true)
+    return `AUC CALL $${strikePrice} Expiration: ${formattedDate}`
+}

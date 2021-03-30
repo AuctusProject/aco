@@ -632,11 +632,12 @@ label {
   top: -2px;
   padding: 0;
   margin: 0;
-  font-size: 24px;
-  color: rgb(196,196,196);
+  font-size: 36px;
+  color: white;
   text-shadow: none;
   font-weight: 300;
   position: absolute;
+  opacity: 0.9;
 }
 
 .light-mode .aco-modal .modal-header .close {

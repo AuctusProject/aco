@@ -1,6 +1,7 @@
 import { getWeb3, sendTransaction } from './web3Methods';
 import { acoDistributorAddress } from './constants';
 import { acoDistributorABI } from './acoDistributorABI';
+import { acoTokenData } from './acoFactoryMethods';
 
 var acoDistributorContract = null
 function getAcoDistributorContract() {

@@ -22,6 +22,7 @@ import Vaults from './pages/Vaults'
 import Otc from './pages/Otc'
 import PoolDashboard from './partials/Pool/PoolDashboard'
 import CreateOption from './pages/CreateOption'
+import Farm from './pages/Farm'
 
 class App extends Component {
   constructor() {
@@ -240,6 +241,15 @@ class App extends Component {
                 <Route 
                   path={`/new-option`}
                   render={ routeProps => <CreateOption
+                    {...routeProps}
+                    darkMode={darkMode}
+                    signIn={this.showSignInModal}
+                    accountToggle={this.state.accountToggle}
+                  /> }
+                />
+                <Route 
+                  path={`/farm`}
+                  render={ routeProps => <Farm
                     {...routeProps}
                     darkMode={darkMode}
                     signIn={this.showSignInModal}

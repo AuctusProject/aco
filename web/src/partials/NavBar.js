@@ -205,6 +205,14 @@ class NavBar extends Component {
                   <div className="link-title">VAULTS</div>
                   <div className="link-subtitle">Automated Strategies</div>
                 </NavLink>
+                <NavLink className="nav-item link-nav" to={"/pools"}>
+                  <div className="link-title">POOLS</div>
+                  <div className="link-subtitle">Provide Liquidity</div>
+                </NavLink>
+                <NavLink className="nav-item link-nav" to={"/farm"}>
+                  <div className="link-title">FARM &amp; AIRDROP</div>
+                  <div className="link-subtitle">Earn AUC options</div>
+                </NavLink>
               </ul>}
               {this.isAdvanced() && 
               <ul className="navbar-nav mx-auto mt-2 mt-lg-0 navbar-items advanced">
