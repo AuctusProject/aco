@@ -16,7 +16,7 @@ export const acoOtcAddress = allAcoOtcAddresses[allAcoOtcAddresses.length-1];
 export const acoBuyerAddress = process.env.REACT_APP_ACO_BUYER_ADDRESS;
 export const acoDistributorAddress = process.env.REACT_APP_ACO_DISTRIBUTOR_ADDRESS;
 export const acoRewardAddress = process.env.REACT_APP_ACO_REWARD_ADDRESS;
-export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS;
+export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
@@ -44,10 +44,11 @@ export const ethTransactionTolerance = 0.01;
 export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
-export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
-export const DEFAULT_SLIPPAGE = 0.05
-export const DEFAULT_POOL_SLIPPAGE = 0.01
-export const OTC_ORDER_STATUS_AVAILABLE = "0x00"
+export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60;
+export const DEFAULT_SLIPPAGE = 0.05;
+export const DEFAULT_POOL_SLIPPAGE = 0.01;
+export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
+export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
 
 export const OPTION_TYPES = {
     1: {
