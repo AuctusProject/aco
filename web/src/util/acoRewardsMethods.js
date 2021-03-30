@@ -16,9 +16,9 @@ function getAcoRewardsContract() {
 }
 
 let rewardsBaseData = null
-export const listRewardsData = () => {
+export const listRewardsData = (forceLoad = false) => {
     return new Promise((resolve, reject) => {
-        if (rewardsBaseData !== null) {
+        if (!forceLoad && rewardsBaseData !== null) {
             resolve(rewardsBaseData)
         } else {
             Promise.all([totalAllocPoint(), currentReward()]).then((base) => {
