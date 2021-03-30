@@ -64,14 +64,81 @@ export const listRewardsData = (forceLoad = false) => {
     })
 }
 
+export const listUnclaimedRewards = (from) => {
+    return new Promise((resolve, reject) => {
+        const promises = []
+        for (let i = 0; i < acoRewardsPools.length; ++i) {
+            promises.push(pendingReward(acoRewardsPools[i].pid, from))
+        }
+        Promise.all(promises).then((rewards) => {
+            const acoPromises = []
+            let acoIndexes = {}
+            for (let i = 0; i < rewards.length; ++i) {
+                for (let j = 0; j < rewards[i][0].length; ++j) { 
+                    if (acoIndexes[rewards[i][0][j]] === undefined) {
+                        acoIndexes = {p: [acoRewardsPools[i].pid], i: acoPromises.length, a: BigInt(rewards[i][1][j])}
+                        acoPromises.push(acoTokenData(rewards[i][0][j]))
+                    } else {
+                        acoIndexes[rewards[i][0][j]].p.push(acoRewardsPools[i].pid)
+                        acoIndexes[rewards[i][0][j]].a += BigInt(rewards[i][1][j])
+                    }
+                }
+            }
+            Promise.all(acoPromises).then((acos) => {
+                const result = []
+                for (let aco in acoIndexes) {
+                    result.push({
+                        aco: aco,
+                        expiryTime: parseInt(acos[acoIndexes[aco].i].expiryTime),
+                        underlying: acos[acoIndexes[aco].i].underlying,
+                        strikeAsset: acos[acoIndexes[aco].i].strikeAsset,
+                        strikePrice: acos[acoIndexes[aco].i].strikePrice,
+                        isCall: acos[acoIndexes[aco].i].isCall,
+                        amount: (acoIndexes[aco].a).toString(),
+                        poolPids: acoIndexes[aco].p
+                    })
+                }
+                resolve(result)
+            }).catch((err) => reject(err))
+        }).catch((err) => reject(err))
+    })
+}
+
+export const listClaimedRewards = (from) => {
+    return new Promise((resolve, reject) => {
+        listPaidRewards(from).then((rewards) => {
+            const acoPromises = []
+            let acoIndexes = {}
+            for (let i = 0; i < rewards.length; ++i) {
+                if (acoIndexes[rewards[i].aco] === undefined) {
+                    acoIndexes = {i: acoPromises.length, a: BigInt(rewards[i].reward)}
+                    acoPromises.push(acoTokenData(rewards[i].aco))
+                } else {
+                    acoIndexes[rewards[i].aco].a += BigInt(rewards[i].reward)
+                }
+            }
+            Promise.all(acoPromises).then((acos) => {
+                const result = []
+                for (let aco in acoIndexes) {
+                    result.push({
+                        aco: aco,
+                        expiryTime: parseInt(acos[acoIndexes[aco].i].expiryTime),
+                        underlying: acos[acoIndexes[aco].i].underlying,
+                        strikeAsset: acos[acoIndexes[aco].i].strikeAsset,
+                        strikePrice: acos[acoIndexes[aco].i].strikePrice,
+                        isCall: acos[acoIndexes[aco].i].isCall,
+                        amount: (acoIndexes[aco].a).toString()
+                    })
+                }
+                resolve(result)
+            }).catch((err) => reject(err))
+        }).catch((err) => reject(err))
+    })
+}
+
 export const accountBalance = (pid, from) => {
     const acoRewardsContract = getAcoRewardsContract()
     return acoRewardsContract.methods.balanceOf(pid, from).call()
-}
-
-export const pendingReward = (pid, account) => {
-    const acoRewardsContract = getAcoRewardsContract()
-    return acoRewardsContract.methods.pendingReward(pid, account).call()
 }
 
 export const listAlreadyAwardedAcos = (from) => {
@@ -121,4 +188,14 @@ const totalAllocPoint = () => {
 const currentReward = () => {
     const acoRewardsContract = getAcoRewardsContract()
     return acoRewardsContract.methods.currentReward().call()
+}
+
+const pendingReward = (pid, from) => {
+    const acoRewardsContract = getAcoRewardsContract()
+    return acoRewardsContract.methods.pendingReward(pid, from).call()
+}
+
+const listPaidRewards = (from) => {
+    const acoRewardsContract = getAcoRewardsContract()
+    return acoRewardsContract.getPastEvents('RewardPaid', { filter: {user: from}, fromBlock: 0, toBlock: 'latest' })
 }
