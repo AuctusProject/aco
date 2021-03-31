@@ -116,7 +116,7 @@ class Farm extends Component {
     return <div className="farm py-5">
       <div className="farm-title">Auctus Liquidity Incentives</div>
       <div className="farm-subtitle">Earn AUC options for helping grow the protocol fundamentals.</div>
-      <a href="TODO" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
+      <a href="https://blog.auctus.org/auctus-auc-first-ever-12-5mm-options-airdrop-incentives-campaign-b9fb96188c5" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
       <Airdrop refreshAirdrop={this.getAirdropClaimableData} airdropUnclaimed={this.state.airdropUnclaimed} acosAvailable={this.state.airdropAcosAvailable} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
       <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} airdropClaimed={this.state.airdropClaimed} airdropUnclaimed={this.state.airdropUnclaimed} rewardClaimed={this.state.rewardClaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
       <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />      
