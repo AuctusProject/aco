@@ -1,6 +1,7 @@
 import './RewardChart.css'
 import React, { Component } from 'react'
 import { Scatter } from 'react-chartjs-2'
+import { parseBigIntToNumber } from '../../util/constants'
 
 class RewardChart extends Component {
   constructor() {
@@ -52,11 +53,6 @@ class RewardChart extends Component {
     }
   }
 
-  parseToNumber = (strikePrice, decimals = 6) => {
-    const precision = 1000000000.0
-    return Math.round(100 * parseFloat(strikePrice * BigInt(precision) / BigInt("1".padEnd(decimals + 1, "0"))) / precision) / 100
-  }
-
   getBaseAxe = () => {
     return {
       display: true,
@@ -104,8 +100,8 @@ class RewardChart extends Component {
     var xAxes = []
 
     if (acos.length > 0) {
-      var minStrike = this.parseToNumber(acos[0].strikePrice)
-      var maxStrike = this.parseToNumber(acos[acos.length - 1].strikePrice)
+      var minStrike = parseBigIntToNumber(acos[0].strikePrice)
+      var maxStrike = parseBigIntToNumber(acos[acos.length - 1].strikePrice)
       var maxX = 2.5 * maxStrike
 
       var offset = 0.05
@@ -113,9 +109,9 @@ class RewardChart extends Component {
         var x = Math.round(k * 100) / 100
         var y = 0
         for (var j = 0; j < acos.length; ++j) {
-          var strike = this.parseToNumber(acos[j].strikePrice)
+          var strike = parseBigIntToNumber(acos[j].strikePrice)
           if (strike < k) {
-            y += (k - strike) * this.parseToNumber(acos[j].amount, 18)
+            y += (k - strike) * parseBigIntToNumber(acos[j].amount, 18)
           }
         }
         datasets[0].data.push({y: y, x: x})

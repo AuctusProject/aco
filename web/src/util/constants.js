@@ -499,3 +499,8 @@ export const formatAcoRewardName = (acoReward) => {
     var formattedDate = formatDate(acoReward.expiryTime, true)
     return `AUC CALL $${strikePrice} Expiration: ${formattedDate}`
 }
+
+export const parseBigIntToNumber = (bigInt, decimals = 6) => {
+    const precision = 100000000.0
+    return parseInt(bigInt * BigInt(precision) / BigInt("1".padEnd(decimals + 1, "0"))) / precision
+}

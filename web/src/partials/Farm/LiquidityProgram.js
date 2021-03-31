@@ -13,12 +13,16 @@ class LiquidityProgram extends Component {
   }
 
   componentDidMount = () => {
-    listRewardsData().then(rewardsData => 
-      {this.setState({rewardsData:rewardsData})}
-    )
+    this.loadData()
   }
 
   componentDidUpdate = (prevProps) => {    
+  }
+
+  loadData = (force = false) => {
+    listRewardsData(force).then((rewardsData) => {
+      this.setState({rewardsData: rewardsData})
+    })
   }
 
   isConnected = () => {
@@ -44,7 +48,7 @@ class LiquidityProgram extends Component {
             </div>
             <div className="liquidity-card-title">{rewardData.name}</div>
             <div className="liquidity-card-rewards-title">Rewards per 1000$ per month:</div>
-            <div className="liquidity-card-rewards-value">[TODO]</div>
+            <div className="liquidity-card-rewards-value">{rewardData.monthly1kReward}</div>
             <div className="liquidity-card-rewards-option">{formatAcoRewardName(rewardData.currentAco)}</div>
           </div>
         ))}        
