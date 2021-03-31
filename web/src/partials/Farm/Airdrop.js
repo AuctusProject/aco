@@ -5,6 +5,7 @@ import PropTypes from 'prop-types'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { airdropClaimStart, formatAcoRewardName, fromDecimals, getTimeToExpiry, numberWithCommas, ONE_SECOND } from '../../util/constants';
+import AirdropClaimModal from './AirdropClaimModal';
 
 class Airdrop extends Component {
   constructor(props) {
@@ -28,8 +29,15 @@ class Airdrop extends Component {
   
   onClaimClick = () => {
     if (this.canClaim()){
-
+      this.setState({claimData: this.props.airdropUnclaimed})
     }
+  }
+
+  onHideClaim = (refresh) => {
+    if (refresh) {
+      this.props.refreshAirdrop()
+    }
+    this.setState({claimData: null})
   }
 
   getClaimableAmount = () => {
@@ -77,7 +85,7 @@ class Airdrop extends Component {
   }
 
   isClaimStarted = () => {
-    return (airdropClaimStart * ONE_SECOND) > new Date().getTime()
+    return (airdropClaimStart * ONE_SECOND) < new Date().getTime()
   }
 
   render() {
@@ -91,8 +99,8 @@ class Airdrop extends Component {
           <div>{this.getClaimableAmount()}</div>
           <div className={"action-btn ml-3 " + (!this.canClaim() ? "disabled" : "")} onClick={this.onClaimClick}>CLAIM</div>
         </div>}
-      {this.isClaimStarted() && 
-        <div className="claim-not-started">The claiming starts in {this.getTimeLeft()}, early claimants receive options with $0.5 strike price.</div>
+      {!this.isClaimStarted() && 
+        <div className="claim-not-started">The claiming starts in {this.getTimeLeft()}, early claimants receive options with $0.50 strike price.</div>
       }
       <div className="airdrop-progress">
         <div className="airdrop-step">
@@ -131,6 +139,7 @@ class Airdrop extends Component {
           <div className="next-option-name">{formatAcoRewardName(this.props.nextOption)}</div>
         </div>}
       </>}
+      {this.state.claimData && <AirdropClaimModal data={this.state.claimData} onHide={this.onHideClaim}/>}
   </div>
   }
 }
