@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
+import { checkTransactionIsMined } from '../../util/web3Methods'
 import StepsModal from '../StepsModal/StepsModal'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'

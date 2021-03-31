@@ -7,9 +7,9 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { claimReward } from '../../util/acoRewardsMethods'
+import { claim } from '../../util/acoDistributorMethods'
 
-class ClaimModal extends Component {
+class AirdropClaimModal extends Component {
   constructor(props) {
     super(props)
     this.state = {}
@@ -28,7 +28,7 @@ class ClaimModal extends Component {
   onStartClaim = () => {
     var stepNumber = 0
     this.setStepsModalInfo(++stepNumber)
-    claimReward(this.context.web3.selectedAccount, this.props.data.pool.pid)
+    claim(this.props.data.id, this.context.web3.selectedAccount, this.props.data.amount, this.props.data.v, this.props.data.r, this.props.data.s)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber)
@@ -59,11 +59,11 @@ class ClaimModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to claim rewards."
+      subtitle = "Confirm on Metamask to claim airdrop."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {
-      subtitle = "Claiming rewards..."
+      subtitle = "Claiming airdrop..."
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
@@ -107,7 +107,7 @@ class ClaimModal extends Component {
   }
 }
 
-ClaimModal.contextTypes = {
+AirdropClaimModal.contextTypes = {
   web3: PropTypes.object
 }
-export default withRouter(ClaimModal)
+export default withRouter(AirdropClaimModal)
