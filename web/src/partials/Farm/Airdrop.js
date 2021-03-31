@@ -2,10 +2,9 @@ import './Airdrop.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import Countdown from 'react-countdown';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { formatAcoRewardName, fromDecimals, numberWithCommas } from '../../util/constants';
+import { airdropClaimStart, formatAcoRewardName, fromDecimals, getTimeToExpiry, numberWithCommas, ONE_SECOND } from '../../util/constants';
 
 class Airdrop extends Component {
   constructor(props) {
@@ -28,19 +27,57 @@ class Airdrop extends Component {
   }
   
   onClaimClick = () => {
+    if (this.canClaim()){
 
+    }
   }
 
   getClaimableAmount = () => {
     if (!this.props.airdropUnclaimed) {
       return <FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>
     }
-    return (this.props.airdropUnclaimed.amount ? 
+    return (this.props.airdropUnclaimed.amount ?
       fromDecimals(this.props.airdropUnclaimed.amount, 18) : "0.00")
   }
 
   formatCurrentOptionsLeft = () => {
     return numberWithCommas(Number(fromDecimals(this.props.currentOption.available, 18)).toFixed(0))
+  }
+
+  canClaim = () => {
+    return this.props.airdropUnclaimed && this.props.airdropUnclaimed.id !== undefined && this.props.airdropUnclaimed.id !== null && this.props.airdropUnclaimed.id !== ""
+  }
+
+  getTimeLeft = () => {
+    var timeToExpiry = getTimeToExpiry(airdropClaimStart)
+    var label = ""
+    if (timeToExpiry.days > 0) {
+      label += timeToExpiry.days
+      label += " day"
+      if (timeToExpiry.days > 1) {
+        label += "s"
+      }
+      label += ", "
+    }
+
+    label += timeToExpiry.hours
+    label += " hour"
+    if (timeToExpiry.hours !== 0) {
+      label += "s"
+    }
+    label += " and "
+
+    label += timeToExpiry.minutes
+    label += " minute"
+    if (timeToExpiry.minutes !== 0) {
+      label += "s"
+    }
+
+    return label
+  }
+
+  isClaimStarted = () => {
+    return (airdropClaimStart * ONE_SECOND) > new Date().getTime()
   }
 
   render() {
@@ -52,8 +89,11 @@ class Airdrop extends Component {
         </div> : 
         <div className="claim-row">
           <div>{this.getClaimableAmount()}</div>
-          <div className="action-btn ml-3" onClick={this.onClaimClick}>CLAIM</div>
+          <div className={"action-btn ml-3 " + (!this.canClaim() ? "disabled" : "")} onClick={this.onClaimClick}>CLAIM</div>
         </div>}
+      {this.isClaimStarted() && 
+        <div className="claim-not-started">The claiming starts in {this.getTimeLeft()}, early claimants receive options with $0.5 strike price.</div>
+      }
       <div className="airdrop-progress">
         <div className="airdrop-step">
           <div className="airdrop-step-value">$0.50</div>
@@ -80,11 +120,11 @@ class Airdrop extends Component {
       {this.props.currentOption && <>
         <div className="current-option-section">
           <div className="current-option-title">CURRENT OPTION:</div>
+          <div className="current-option-left">
+            <div className="current-option-left-value">{this.formatCurrentOptionsLeft()}</div>
+            <div className="current-option-left-description">left</div>
+          </div>
           <div className="current-option-name">{formatAcoRewardName(this.props.currentOption)}</div>
-        </div>
-        <div className="current-option-left">
-          <div className="current-option-left-value">{this.formatCurrentOptionsLeft()}</div>
-          <div className="current-option-left-description">of the current strike left</div>
         </div>
         {this.props.nextOption && <div className="next-option-section">
           <div className="next-option-title">NEXT OPTION:</div>

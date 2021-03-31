@@ -13,7 +13,7 @@ import RewardChart from '../partials/Farm/RewardChart'
 class Farm extends Component {
   constructor() {
     super()
-    this.state = { loading: true }
+    this.state = { loading: true, airdropUnclaimed: null }
   }
 
   componentDidMount = () => {
@@ -71,7 +71,7 @@ class Farm extends Component {
     const baseAmount = "1000000000000000000000"
     if (this.isConnected()) {
       getClaimableAco(this.context.web3.selectedAccount).then((claimable) => {
-        if (claimable.length) {
+        if (claimable && claimable.length) {
           const prom = []
           for (let i = 0; i < claimable.length; ++i) {
             prom.push(claimed(claimable[i].id))
@@ -90,7 +90,7 @@ class Farm extends Component {
         }
       })
     } else {
-      this.setState({airdropUnclaimed: {}}, () => this.getAirdropClaimableAcos(baseAmount))
+      this.setState({airdropUnclaimed: null}, () => this.getAirdropClaimableAcos(baseAmount))
     }
   }
 

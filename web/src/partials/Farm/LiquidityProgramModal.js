@@ -4,21 +4,43 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import DecimalInput from '../Util/DecimalInput'
-import { getTimeToExpiry } from '../../util/constants'
+import { fromDecimals, getTimeToExpiry } from '../../util/constants'
 import BigNumber from 'bignumber.js'
 import RewardOptionCard from './RewardOptionCard'
+import { balanceOf } from '../../util/erc20Methods'
+import { accountBalance } from '../../util/acoRewardsMethods'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import StakeModal from './StakeModal'
 
 class LiquidityProgramModal extends Component {
   constructor(props) {
     super(props)
-    this.state = {stakeValue: "", unstakeValue: "", poolBalance: 0, poolStakedBalance: 0 }
+    this.state = {stakeValue: "", unstakeValue: "", poolBalance: null, poolStakedBalance: null}
   }
 
   componentDidMount = () => {
+    this.loadData()
   }
 
   componentDidUpdate = (prevProps) => {    
+    if (this.props.accountToggle !== prevProps.accountToggle) {
+      this.loadData()
+    }
   }
+
+  loadData = () => {
+    this.setState({poolBalance: null, poolStakedBalance: null}, () => {
+      balanceOf(this.props.pool.address, this.context.web3.selectedAccount).then(balance => {
+        this.setState({poolBalance: balance})
+      })
+
+      accountBalance(this.props.pool.pid, this.context.web3.selectedAccount).then(balance => {
+        this.setState({poolStakedBalance: balance})
+      })
+    })
+  }
+
 
   isConnected = () => {
     return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
@@ -29,7 +51,7 @@ class LiquidityProgramModal extends Component {
   }
 
   getMultipliedValue = (percentage, value) => {
-    return new BigNumber(percentage).times(new BigNumber(value))
+    return fromDecimals(new BigNumber(percentage).times(new BigNumber(value)), this.props.pool.decimals, this.props.pool.decimals, 0)
   }
 
   onStakePercentageClick = (percentage) => () => {
@@ -57,6 +79,21 @@ class LiquidityProgramModal extends Component {
     this.setState({unstakeValue: value})
   }
 
+  onStakeClick = () => {
+    var stakeData = {
+      stakeValue: this.state.stakeValue,
+      pool: this.props.pool
+    }
+    this.setState({stakeData: stakeData})
+  }
+
+  onHideStake = (refresh) => {
+    if (refresh) {
+      this.loadData()
+    }
+    this.setState({stakeData: null})
+  }
+
   render() {
     return <Modal className="aco-modal no-header rewards-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
       <Modal.Header closeButton></Modal.Header>
@@ -71,7 +108,7 @@ class LiquidityProgramModal extends Component {
                 {this.props.pool.name} AVAILABLE
               </div>
               <div className="reward-card-balance">
-                {this.state.poolBalance}
+                {this.state.poolBalance ? fromDecimals(this.state.poolBalance, this.props.pool.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}
               </div>
               <div className="reward-card-input">
                 <div className="input-field">
@@ -96,7 +133,7 @@ class LiquidityProgramModal extends Component {
                 {this.props.pool.name} STAKED
               </div>
               <div className="reward-card-balance">
-                {this.state.poolStakedBalance}
+              {this.state.poolStakedBalance ? fromDecimals(this.state.poolStakedBalance, this.props.pool.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}
               </div>
               <div className="reward-card-input">
                 <div className="input-field">
@@ -122,6 +159,7 @@ class LiquidityProgramModal extends Component {
           </div>
           <RewardOptionCard />
         </div>
+        {this.state.stakeData && <StakeModal data={this.state.stakeData} onHide={this.onHideStake}/>}
       </Modal.Body>
     </Modal>
   }

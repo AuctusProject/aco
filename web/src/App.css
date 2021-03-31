@@ -123,7 +123,7 @@ main {
 }
 
 .action-btn.disabled, .action-btn:disabled {
-  background-color: #5de9d488 !important;
+  background-color: #464646 !important;
   box-shadow: none !important;
   cursor: default;
 }
@@ -149,8 +149,8 @@ main {
 } */
 
 .outline-btn.disabled, .outline-btn:disabled {
-  color: #5de9d488 !important;
-  border-color: #5de9d488;
+  color: #464646 !important;
+  border-color: #464646;
   box-shadow: none !important;
   cursor: default;
 }
