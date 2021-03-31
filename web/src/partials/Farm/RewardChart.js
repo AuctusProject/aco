@@ -61,20 +61,20 @@ class RewardChart extends Component {
     return {
       display: true,
       gridLines: {
-        color: '#a6a6a680',
-        zeroLineColor: '#a6a6a680',
-        borderDash: [5, 5]
+        color: '#a6a6a6',
+        zeroLineColor: '#a6a6a6',
+        borderDash: [10, 10]
       },
       scaleLabel: {
         display: true,
         fontFamily: "Montserrat",
-        fontColor: "#a6a6a6",
-        lineHeight: 1.15,
-        fontSize: 13
+        fontColor: "#ffffff",
+        lineHeight: 1.2,
+        fontSize: 14
       },
       ticks: {
         fontFamily: "Montserrat",
-        fontColor: "#a6a6a6",
+        fontColor: "#ffffff",
         lineHeight: 1.1,
         fontSize: 12,
         callback: function(value, index, values) {

@@ -4,6 +4,7 @@
     justify-content: center;
     align-items: center;
     width: 100%;
+    padding-top: 60px;
 }
 
 .rewards-chart-title {
@@ -11,7 +12,7 @@
     letter-spacing: 0.55px;
     text-align: center;
     color: #5de9d4;
-    margin-bottom: 20px;
+    margin-bottom: 30px;
 }
 
 .rewards-chart-wrapper {
