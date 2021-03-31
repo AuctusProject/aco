@@ -107,7 +107,7 @@ class Farm extends Component {
       this.setState({
         airdropCurrentOption: airdropCurrentOption,
         airdropNextOption: airdropNextOption,
-        airdropAcosAvailables: data[1]
+        airdropAcosAvailable: data[1]
       })
     })
   }
@@ -117,7 +117,7 @@ class Farm extends Component {
       <div className="farm-title">Auctus Liquidity Incentives</div>
       <div className="farm-subtitle">Earn AUC options for helping grow the protocol fundamentals.</div>
       <a href="TODO" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
-      <Airdrop airdropUnclaimed={this.state.airdropUnclaimed} acosAvailables={this.state.airdropAcosAvailables} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
+      <Airdrop airdropUnclaimed={this.state.airdropUnclaimed} acosAvailable={this.state.airdropAcosAvailable} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
       <LiquidityProgram {...this.props}/>
       <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} airdropClaimed={this.state.airdropClaimed} airdropUnclaimed={this.state.airdropUnclaimed} rewardClaimed={this.state.rewardClaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
     </div>
