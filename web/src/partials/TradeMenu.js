@@ -77,7 +77,7 @@ class TradeMenu extends Component {
               <a target="_blank" rel="noopener noreferrer" href="https://defipulse.com">DeFi Pulse</a>
             </div>
             <div className="trade-menu-footer-media">
-              <div>© 2020 Auctus</div>
+              <div>© 2021 Auctus</div>
               <div>
                 <a rel="noopener noreferrer" href="mailto:contact@auctus.org"><FontAwesomeIcon icon={faEnvelope} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://twitter.com/AuctusProject"><FontAwesomeIcon icon={faTwitter} /></a>
