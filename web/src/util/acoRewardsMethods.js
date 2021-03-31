@@ -54,9 +54,8 @@ export const listRewardsData = (forceLoad = false) => {
                         for (let i = 0; i < acoRewardsPools.length; ++i) {
                             let monthlyReward = parseBigIntToNumber(monthlyAmount * BigInt(data[i].allocPoint) / totalAlloc, 18)
                             let lpValuePerShare = 0
-                            let balance = (acoRewardsPools[i].pid === 3 ? parseBigIntToNumber(BigInt(values[index]), 8) :
-                                acoRewardsPools[i].pid === 2 || acoRewardsPools[i].pid === 4 ? parseBigIntToNumber(BigInt(values[index]), 6) :
-                                parseBigIntToNumber(BigInt(values[index]), 18))
+                            let poolDecimals = (acoRewardsPools[i].pid === 3 ? 8 : acoRewardsPools[i].pid === 2 || acoRewardsPools[i].pid === 4 ? 6 : 18)
+                            let balance = parseBigIntToNumber(BigInt(values[index]), poolDecimals)
                             if (acoRewardsPools[i].pid === 0) {
                                 let uniData = values[index+1]
                                 let ts = parseBigIntToNumber(BigInt(uniData.totalSupply), 18)
@@ -91,6 +90,7 @@ export const listRewardsData = (forceLoad = false) => {
                                 name: acoRewardsPools[i].name,
                                 image: acoRewardsPools[i].image,
                                 address: data[i].lpToken,
+                                decimals: poolDecimals,
                                 totalLocked: Math.round(totalLocked * 100) / 100,
                                 monthly1kReward: Math.round(monthly1kReward),
                                 currentAco: { 
