@@ -11,7 +11,7 @@
     border: solid 1px #464646;
     cursor: pointer;
     background-color: #141414;
-    width: 220px;
+    width: 224px;
     padding: 30px 12px;
     margin: 10px;
 }
@@ -83,7 +83,7 @@
 .liquidity-program-pools {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: strech;
     justify-content: center;
     flex-wrap: wrap;
 }

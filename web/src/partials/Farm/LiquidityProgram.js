@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import LiquidityProgramModal from './LiquidityProgramModal'
 import { listRewardsData } from '../../util/acoRewardsMethods'
-import { formatAcoRewardName } from '../../util/constants'
+import { airdropClaimStart, ONE_SECOND, formatAcoRewardName, numberWithCommas, acoRewardsPools } from '../../util/constants'
 
 class LiquidityProgram extends Component {
   constructor(props) {
@@ -20,9 +20,14 @@ class LiquidityProgram extends Component {
   }
 
   loadData = (force = false) => {
-    listRewardsData(force).then((rewardsData) => {
-      this.setState({rewardsData: rewardsData})
-    })
+    if (this.farmStarted()) {
+      listRewardsData(force).then((rewardsData) => {
+        this.setState({rewardsData: rewardsData})
+      })
+    }
+    else {
+      this.setState({rewardsData: acoRewardsPools})
+    }
   }
 
   isConnected = () => {
@@ -37,6 +42,10 @@ class LiquidityProgram extends Component {
     this.setState({selectedPid: pid})
   }
 
+  farmStarted = () => {
+    return (airdropClaimStart * ONE_SECOND) < new Date().getTime()
+  }
+
   render() {
     return <div className="liquidity-program">
       <div className="liquidity-program-title">Join our liquidity programs to earn more options</div>
@@ -47,11 +56,11 @@ class LiquidityProgram extends Component {
               {rewardData.image.map(img => <img key={img} alt="" src={img}></img>)}
             </div>
             <div className="liquidity-card-title">{rewardData.name}</div>
-            <div className="liquidity-card-rewards-title">Rewards per 1000$ per month:</div>
-            <div className="liquidity-card-rewards-value">{rewardData.monthly1kReward}</div>
+            <div className="liquidity-card-rewards-title">{this.farmStarted() ? "Rewards per $1000 per month" : "Rewards per month"}</div>
+            <div className="liquidity-card-rewards-value">{numberWithCommas(rewardData.monthly1kReward)}</div>
             <div className="liquidity-card-rewards-option">{formatAcoRewardName(rewardData.currentAco)}</div>
           </div>
-        ))}        
+        ))}
       </div>
       {this.state.selectedPid !== null && <LiquidityProgramModal pool={this.state.selectedPid} {...this.props} onHide={() => this.onLiquiditySelect(null)} />}
   </div>
