@@ -3,20 +3,25 @@
     letter-spacing: 0.55px;
     text-align: center;
     color: #5de9d4;
+    margin-bottom: 10px;
+}
+
+.liquidity-program-subtitle {
+    max-width: 490px;
+    margin: auto;
     margin-bottom: 20px;
 }
 
 .liquidity-card {
     border-radius: 12px;
     border: solid 1px #464646;
-    cursor: pointer;
     background-color: #141414;
     width: 224px;
     padding: 30px 12px;
     margin: 10px;
 }
 
-.liquidity-card:hover {
+.liquidity-card.clickable:hover {
     background-color: #1a1a1a;
 }
 
