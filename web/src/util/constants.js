@@ -37,6 +37,7 @@ export const ethAddress = "0x0000000000000000000000000000000000000000";
 export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS.toLowerCase();
 export const wethAddress = process.env.REACT_APP_WETH_ADDRESS.toLowerCase();
 export const wbtcAddress = process.env.REACT_APP_WBTC_ADDRESS.toLowerCase();
+export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
 export const ethTransactionTolerance = 0.01;
 export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
@@ -414,7 +415,7 @@ export const removeOtcOptions = (options) => {
 export const removeNotWhitelistedOptions = (options) => {
     return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
         (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
-            defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0))
+        (o.underlying.toLowerCase() !== auctusAddress && defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
 }
 
 export const isExpired = (expiryTime) => {
