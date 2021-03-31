@@ -131,7 +131,7 @@ class RewardChart extends Component {
   render() {
     return (
       <div>
-        {this.state.chart && this.state.chart.datasets.length > 0 &&
+        {this.state.chart && this.state.chart.datasets.length > 0 && this.state.chart.datasets[0].data.length > 0 &&
           <div className="rewards-chart-container">
             <div className="rewards-chart-title">View your potential Profit</div>
             <div className="rewards-chart-wrapper">
