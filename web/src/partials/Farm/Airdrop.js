@@ -3,40 +3,20 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Countdown from 'react-countdown';
-import { getClaimableAco } from '../../util/acoApi';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { formatAcoRewardName, fromDecimals, numberWithCommas } from '../../util/constants';
-import { claim, getClaimableAcos } from '../../util/acoDistributorMethods';
 
 class Airdrop extends Component {
   constructor(props) {
     super(props)
-    this.state = { airdropUnclaimed: null, currentOption: null, nextOption: null }
+    this.state = { }
   }
 
   componentDidMount = () => {
-    this.refreshClaimable()
-    getClaimableAcos("8000000000000000000000000").then(claimableAcos => 
-      this.setState({
-        currentOption: claimableAcos && claimableAcos[0] ? claimableAcos[0]: null,
-        nextOption: claimableAcos && claimableAcos[1] ? claimableAcos[1]: null,
-      })
-    )
   }
 
-  refreshClaimable = () => {
-    if (this.isConnected()) {
-      getClaimableAco(this.context.web3.selectedAccount).then(claimable => 
-        this.setState({airdropUnclaimed: claimable })
-      )
-    }
-  }
-
-  componentDidUpdate = (prevProps) => {    
-    if (this.props.accountToggle !== prevProps.accountToggle) {
-      this.refreshClaimable()
-    }    
+  componentDidUpdate = (prevProps) => {     
   }
 
   isConnected = () => {
@@ -52,15 +32,15 @@ class Airdrop extends Component {
   }
 
   getClaimableAmount = () => {
-    if (!this.state.airdropUnclaimed) {
+    if (!this.props.airdropUnclaimed) {
       return <FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>
     }
-    return (this.state.airdropUnclaimed[0] && this.state.airdropUnclaimed[0].amount) ? 
-      fromDecimals(this.state.airdropUnclaimed[0].amount, 18) : "0.00"
+    return (this.props.airdropUnclaimed.amount ? 
+      fromDecimals(this.props.airdropUnclaimed.amount, 18) : "0.00")
   }
 
   formatCurrentOptionsLeft = () => {
-    return numberWithCommas(Number(fromDecimals(this.state.currentOption.amount, 18)).toFixed(0))
+    return numberWithCommas(Number(fromDecimals(this.props.currentOption.available, 18)).toFixed(0))
   }
 
   render() {
@@ -97,18 +77,18 @@ class Airdrop extends Component {
         </div>
         <div className="airdrop-progress-fill" style={{width: '0%'}}></div>
       </div>
-      {this.state.currentOption && <>
+      {this.props.currentOption && <>
         <div className="current-option-section">
           <div className="current-option-title">CURRENT OPTION:</div>
-          <div className="current-option-name">{formatAcoRewardName(this.state.currentOption)}</div>
+          <div className="current-option-name">{formatAcoRewardName(this.props.currentOption)}</div>
         </div>
         <div className="current-option-left">
           <div className="current-option-left-value">{this.formatCurrentOptionsLeft()}</div>
           <div className="current-option-left-description">of the current strike left</div>
         </div>
-        {this.state.nextOption && <div className="next-option-section">
+        {this.props.nextOption && <div className="next-option-section">
           <div className="next-option-title">NEXT OPTION:</div>
-          <div className="next-option-name">{formatAcoRewardName(this.state.nextOption)}</div>
+          <div className="next-option-name">{formatAcoRewardName(this.props.nextOption)}</div>
         </div>}
       </>}
   </div>

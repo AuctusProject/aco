@@ -20,11 +20,11 @@ export const listClaimedAcos = (from) => {
             const acoPromises = []
             let acoIndexes = {}
             for (let i = 0; i < rewards.length; ++i) {
-                if (acoIndexes[rewards[i].aco] === undefined) {
-                    acoIndexes = {i: acoPromises.length, a: BigInt(rewards[i].amount)}
-                    acoPromises.push(acoTokenData(rewards[i].aco))
+                if (acoIndexes[rewards[i].returnValues.aco] === undefined) {
+                    acoIndexes[rewards[i].returnValues.aco] = {i: acoPromises.length, a: BigInt(rewards[i].returnValues.amount)}
+                    acoPromises.push(acoTokenData(rewards[i].returnValues.aco))
                 } else {
-                    acoIndexes[rewards[i].aco].a += BigInt(rewards[i].amount)
+                    acoIndexes[rewards[i].returnValues.aco].a += BigInt(rewards[i].returnValues.amount)
                 }
             }
             Promise.all(acoPromises).then((acos) => {
@@ -75,6 +75,17 @@ export const getClaimableAcos = (amount) => {
 export const acoAmountAvailable = (aco) => {
     const acoDistributorContract = getAcoDistributorContract()
     return acoDistributorContract.methods.acosAmount(aco).call()
+}
+
+export const claimed = (id) => {
+    return new Promise((resolve, reject) => {
+        if (!id) {
+            resolve(false)
+        } else {
+            const acoDistributorContract = getAcoDistributorContract()
+            acoDistributorContract.methods.claimed(id).call().then((isClaimed) => resolve(isClaimed)).catch((err) => reject(err))
+        }
+    })
 }
 
 export const claim = (id, from, amount, v, r, s) => {
