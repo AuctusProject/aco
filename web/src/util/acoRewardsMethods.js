@@ -125,7 +125,7 @@ export const listUnclaimedRewards = (from) => {
                 for (let j = 0; j < rewards[i][0].length; ++j) { 
                     let amount = BigInt(rewards[i][1][j])
                     if (acoIndexes[rewards[i][0][j]] === undefined) {
-                        acoIndexes[rewards[i][0][j]] = {p: [acoRewardsPools[i].pid], i: acoPromises.length, a: amount}
+                        acoIndexes[rewards[i][0][j]] = {p: [{pid: acoRewardsPools[i].pid, amount: amount.toString()}], i: acoPromises.length, a: amount}
                         acoPromises.push(acoTokenData(rewards[i][0][j]))
                     } else {
                         acoIndexes[rewards[i][0][j]].p.push({pid: acoRewardsPools[i].pid, amount: amount.toString()})
