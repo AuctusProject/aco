@@ -3,6 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import OptionBadge from '../OptionBadge'
+import { formatDate, fromDecimals, getTimeToExpiry } from '../../util/constants'
 
 class RewardOptionCard extends Component {
   constructor(props) {
@@ -10,28 +11,41 @@ class RewardOptionCard extends Component {
     this.state = {}
   }
 
+  formatPrice = () => {
+    return Number(fromDecimals(this.props.option.strikePrice, 6)).toFixed(2) + " USDC"
+  }
+
+  
+  getTimeToExpiryLabel = (expiryTime) => {
+    var timeToExpiry = getTimeToExpiry(expiryTime)
+    return timeToExpiry.days > 0 ? 
+      `(${timeToExpiry.days}d ${timeToExpiry.hours}h ${timeToExpiry.minutes}m)` :
+      `(${timeToExpiry.hours}h ${timeToExpiry.minutes}m)`;
+  }
+
   render() {
+    var option = this.props.option
     return <div className="option-reward-card">
       <div>
         <div className="option-reward-card-detail-title">TYPE</div>
         <div className="option-reward-card-detail-content">
-          <OptionBadge isCall={true}/>
+          <OptionBadge isCall={option.isCall}/>
         </div>              
       </div>
       <div>
         <div className="option-reward-card-detail-title">STRIKE</div>
-        <div className="option-reward-card-detail-content">0.75 USDC</div>
+        <div className="option-reward-card-detail-content">{this.formatPrice()}</div>
       </div>
       <div>
         <div className="option-reward-card-detail-title">EXPIRATION</div>
         <div className="option-reward-card-detail-content">
-          <div>March 19, 2021 08:00UTC</div>
-          <div className="time-to-expiry">(3d 16h 56m)</div>
+          <div>{formatDate(option.expiryTime)}</div>
+          <div className="time-to-expiry">{this.getTimeToExpiryLabel(option.expiryTime)}</div>
         </div>
       </div>
       <div>
-        <div className="option-reward-card-detail-title">AVAILABLE TO EXERCISE</div>
-        <div className="option-reward-card-detail-content">1.000</div>
+        <div className="option-reward-card-detail-title">AVAILABLE</div>
+        <div className="option-reward-card-detail-content">{fromDecimals(option.amount, 18)}</div>
       </div>
   </div>
   }

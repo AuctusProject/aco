@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import DecimalInput from '../Util/DecimalInput'
-import { fromDecimals, getTimeToExpiry } from '../../util/constants'
+import { fromDecimals, toDecimals } from '../../util/constants'
 import BigNumber from 'bignumber.js'
 import RewardOptionCard from './RewardOptionCard'
 import { balanceOf } from '../../util/erc20Methods'
@@ -12,11 +12,13 @@ import { accountBalance } from '../../util/acoRewardsMethods'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import StakeModal from './StakeModal'
+import ClaimModal from './ClaimModal'
+import UnstakeModal from './UnstakeModal'
 
 class LiquidityProgramModal extends Component {
   constructor(props) {
     super(props)
-    this.state = {stakeValue: "", unstakeValue: "", poolBalance: null, poolStakedBalance: null}
+    this.state = {stakeValue: "", unstakeValue: "", poolBalance: null, poolStakedBalance: null, unclaimedRewards: []}
   }
 
   componentDidMount = () => {
@@ -26,6 +28,9 @@ class LiquidityProgramModal extends Component {
   componentDidUpdate = (prevProps) => {    
     if (this.props.accountToggle !== prevProps.accountToggle) {
       this.loadData()
+    }
+    if (this.props.toggleRewardUnclaimed !== prevProps.toggleRewardUnclaimed) {
+      this.loadUnclaimedRewards()
     }
   }
 
@@ -38,7 +43,31 @@ class LiquidityProgramModal extends Component {
       accountBalance(this.props.pool.pid, this.context.web3.selectedAccount).then(balance => {
         this.setState({poolStakedBalance: balance})
       })
+
+      this.loadUnclaimedRewards()
     })
+  }
+
+  loadUnclaimedRewards = () => {
+    var unclaimedRewards = []
+    for (let i=0; i<this.props.rewardUnclaimed.length; i++) {
+      var unclaimed = this.props.rewardUnclaimed[i]
+      for (let j=0; j<unclaimed.poolData.length; j++) {
+        if (unclaimed.poolData[j].pid === this.props.pool.pid) {
+          unclaimedRewards.push({
+            aco: unclaimed.aco,
+            expiryTime: unclaimed.expiryTime,
+            underlying: unclaimed.underlying,
+            strikeAsset: unclaimed.strikeAsset,
+            strikePrice: unclaimed.strikePrice,
+            isCall: unclaimed.isCall,
+            amount: unclaimed.poolData[j].amount
+          })
+          break;
+        }
+      }
+    }
+    this.setState({unclaimedRewards: unclaimedRewards})
   }
 
 
@@ -63,13 +92,6 @@ class LiquidityProgramModal extends Component {
     var calculatedValue = this.getMultipliedValue(percentage, this.state.poolStakedBalance)
     this.onUnstakeValueChange(calculatedValue)
   }
-  
-  getTimeToExpiryLabel = (expiryTime) => {
-    var timeToExpiry = getTimeToExpiry(expiryTime)
-    return timeToExpiry.days > 0 ? 
-        `(${timeToExpiry.days}d ${timeToExpiry.hours}h ${timeToExpiry.minutes}m)` :
-        `(${timeToExpiry.hours}h ${timeToExpiry.minutes}m)`;
-  }
 
   onStakeValueChange = (value) => {
     this.setState({stakeValue: value})
@@ -87,11 +109,52 @@ class LiquidityProgramModal extends Component {
     this.setState({stakeData: stakeData})
   }
 
+  onClaimClick = () => {
+    var claimData = {
+      pool: this.props.pool
+    }
+    this.setState({claimData: claimData})
+  }
+
+  onUnstakeClick = () => {
+    var unstakeData = {
+      unstakeValue: this.state.unstakeValue,
+      pool: this.props.pool,
+      isExit: new BigNumber(this.state.poolStakedBalance).eq(new BigNumber(toDecimals(this.state.unstakeValue, 18)))
+    }
+    this.setState({unstakeData: unstakeData})
+  }
+
+  onExitClick = () => {
+    var unstakeData = {
+      unstakeValue: fromDecimals(this.state.poolStakedBalance, 18, 18),
+      pool: this.props.pool,
+      isExit: true
+    }
+    this.setState({unstakeData: unstakeData})
+  }
+
   onHideStake = (refresh) => {
     if (refresh) {
       this.loadData()
+      this.props.loadUnclaimedRewards()
     }
     this.setState({stakeData: null})
+  }
+
+  onHideUnstake = (refresh) => {
+    if (refresh) {
+      this.loadData()
+      this.props.loadUnclaimedRewards()
+    }
+    this.setState({unstakeData: null})
+  }
+
+  onHideClaim = (refresh) => {
+    if (refresh) {
+      this.props.loadUnclaimedRewards()
+    }
+    this.setState({claimData: null})
   }
 
   render() {
@@ -153,13 +216,17 @@ class LiquidityProgramModal extends Component {
             </div>
           </div>
         </div>
-        <div className="unclaimed-rewards">
+        {this.state.unclaimedRewards && this.state.unclaimedRewards.length > 0 && <div className="unclaimed-rewards">
           <div className="unclaimed-rewards-title">
             Unclaimed Rewards
           </div>
-          <RewardOptionCard />
-        </div>
+          {this.state.unclaimedRewards.map(reward => 
+            <RewardOptionCard key={reward.aco} option={reward}/>
+          )}          
+        </div>}
         {this.state.stakeData && <StakeModal data={this.state.stakeData} onHide={this.onHideStake}/>}
+        {this.state.claimData && <ClaimModal data={this.state.claimData} onHide={this.onHideClaim}/>}
+        {this.state.unstakeData && <UnstakeModal data={this.state.unstakeData} onHide={this.onHideUnstake}/>}
       </Modal.Body>
     </Modal>
   }

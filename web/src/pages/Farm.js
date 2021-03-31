@@ -13,7 +13,7 @@ import RewardChart from '../partials/Farm/RewardChart'
 class Farm extends Component {
   constructor() {
     super()
-    this.state = { loading: true, airdropUnclaimed: null }
+    this.state = { loading: true, airdropUnclaimed: null, toggleRewardUnclaimed: false }
   }
 
   componentDidMount = () => {
@@ -50,7 +50,7 @@ class Farm extends Component {
   getRewardUnclaimedAcos = () => {
     if (this.isConnected()) {
       listUnclaimedRewards(this.context.web3.selectedAccount).then((unclaimed) => {
-        this.setState({rewardUnclaimed: unclaimed})
+        this.setState({rewardUnclaimed: unclaimed, toggleRewardUnclaimed: !this.state.toggleRewardUnclaimed})
       })
     } else {
       this.setState({rewardUnclaimed: []})
@@ -118,7 +118,7 @@ class Farm extends Component {
       <div className="farm-subtitle">Earn AUC options for helping grow the protocol fundamentals.</div>
       <a href="TODO" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
       <Airdrop airdropUnclaimed={this.state.airdropUnclaimed} acosAvailable={this.state.airdropAcosAvailable} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
-      <LiquidityProgram {...this.props}/>
+      <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />
       <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} airdropClaimed={this.state.airdropClaimed} airdropUnclaimed={this.state.airdropUnclaimed} rewardClaimed={this.state.rewardClaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
     </div>
   }
