@@ -44,7 +44,7 @@ class LiquidityProgram extends Component {
         {this.state.rewardsData && this.state.rewardsData.map(rewardData => (
           <div key={rewardData.pid} className="liquidity-card" onClick={() => this.onLiquiditySelect(rewardData)}>
             <div className="liquidity-card-icon">
-              {rewardData.image.map(img => <img alt="" src={img}></img>)}
+              {rewardData.image.map(img => <img key={img} alt="" src={img}></img>)}
             </div>
             <div className="liquidity-card-title">{rewardData.name}</div>
             <div className="liquidity-card-rewards-title">Rewards per 1000$ per month:</div>

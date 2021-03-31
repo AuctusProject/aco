@@ -61,7 +61,9 @@ class App extends Component {
 
   onChangeAccount = (account, previousAccount) => {
     if (!account) {
-      this.props.history.push('/')
+      if (window.location.pathname.indexOf("advanced") >= 0) {
+        this.props.history.push('/')
+      }
     }
     else {
       if (!previousAccount) {

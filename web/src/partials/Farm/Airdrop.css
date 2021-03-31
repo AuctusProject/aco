@@ -22,7 +22,8 @@
     display: flex;
     margin-top: 40px;
     height: 40px;
-    position: relative;
+    position: relative;    
+    max-width: calc(100% - 10px);
 }
 
 .airdrop-progress-fill {
@@ -102,6 +103,12 @@
     color: #ffffff;
 }
 
+.current-option-left {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .current-option-left-value {
     font-size: 33.5px;
     font-weight: 600;
@@ -111,8 +118,16 @@
 }
 
 .current-option-left-description {
-    font-size: 10px;
+    font-size: 14px;
     letter-spacing: 0.25px;
     text-align: center;
     color: #5de9d4;
+    margin-left: 4px;
+}
+
+.claim-not-started {
+    max-width: 540px;
+    margin-top: 18px;
+    margin-bottom: 24px;
+    font-size: 20px;
 }

@@ -32,3 +32,10 @@
     color: #5de9d4;
     text-decoration: none;
 }
+
+.farm .rewards-chart-container {
+    max-width: 1200px;
+    margin: auto;
+    padding-left: 20px;
+    padding-right: 20px;
+}

@@ -9,7 +9,8 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { allowance, allowDeposit } from '../../util/erc20Methods'
-import { maxAllowance } from '../../util/constants'
+import { acoRewardAddress, maxAllowance, toDecimals } from '../../util/constants'
+import { deposit } from '../../util/acoRewardsMethods'
 import Web3Utils from 'web3-utils'
 
 class StakeModal extends Component {
@@ -19,7 +20,7 @@ class StakeModal extends Component {
   }
 
   componentDidMount = () => {
-    this.onStartStake()
+    this.onStartDeposit()
   }
 
   componentDidUpdate = (prevProps) => {
@@ -28,15 +29,11 @@ class StakeModal extends Component {
     }
   }
   
-  getDepositAsset = () => {
-    return this.props.info.depositAsset
-  }
-  
   needApprove = () => {
     return new Promise((resolve) => {
-      allowance(this.context.web3.selectedAccount, this.getDepositAsset(), this.props.info.address).then(result => {
+      allowance(this.context.web3.selectedAccount, this.props.data.pool.address, acoRewardAddress).then(result => {
         var resultValue = new Web3Utils.BN(result)
-        resolve(resultValue.lt(new Web3Utils.BN(this.props.info.amount)))
+        resolve(resultValue.lt(new Web3Utils.BN(toDecimals(this.props.data.stakeValue, this.props.data.pool.decimals))))
       })
     })
   }
@@ -47,7 +44,7 @@ class StakeModal extends Component {
       this.needApprove().then(needApproval => {
         if (needApproval) {
           this.setStepsModalInfo(++stepNumber, needApproval)
-          allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getDepositAsset(), this.props.info.address, nonce)
+          allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.data.pool.address, acoRewardAddress, nonce)
             .then(result => {
               if (result) {
                 this.setStepsModalInfo(++stepNumber, needApproval)
@@ -81,7 +78,7 @@ class StakeModal extends Component {
 
   sendDepositTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
-    deposit(this.context.web3.selectedAccount, this.props.info.address, this.props.info.amount, nonce)
+    deposit(this.context.web3.selectedAccount, this.props.data.pool.pid, toDecimals(this.props.data.stakeValue, this.props.data.pool.decimals), nonce)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber, needApproval)
@@ -108,11 +105,11 @@ class StakeModal extends Component {
   }
 
   getDepositAssetSymbol = () => {
-    return this.props.info.depositAssetSymbol
+    return this.props.data.pool.name
   }
 
   setStepsModalInfo = (stepNumber, needApproval) => {
-    var title = (needApproval && stepNumber <= 2) ? "Unlock token" : "Deposit"
+    var title = (needApproval && stepNumber <= 2) ? "Unlock token" : "Stake"
     var subtitle = ""
     var img = null
     var depositAssetSymbol =  this.getDepositAssetSymbol()
@@ -125,15 +122,15 @@ class StakeModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to deposit " + this.props.info.depositValue + " " + depositAssetSymbol  + "."
+      subtitle = "Confirm on Metamask to stake " + this.props.data.stakeValue + " " + depositAssetSymbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {
-      subtitle = "Sending " + this.props.info.depositValue + " " + depositAssetSymbol + "..."
+      subtitle = "Staking " + this.props.data.stakeValue + " " + depositAssetSymbol + "..."
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 5) {
-      subtitle = "You have successfully deposited."
+      subtitle = "You have successfully staked."
       img = <DoneLargeIcon />
     }
     else if (stepNumber === -1) {
@@ -145,7 +142,7 @@ class StakeModal extends Component {
     if (needApproval) {
       steps.push({ title: "Unlock", progress: stepNumber > 2 ? 100 : 0, active: true })
     }
-    steps.push({ title: "Deposit", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false })
+    steps.push({ title: "Stake", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false })
     this.setState({
       stepsModalInfo: {
         title: title,
@@ -170,7 +167,7 @@ class StakeModal extends Component {
 
   render() {
     return (<>
-      {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
+      {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal} />}
       </>
     )
   }

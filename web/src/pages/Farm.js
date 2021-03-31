@@ -13,7 +13,7 @@ import RewardChart from '../partials/Farm/RewardChart'
 class Farm extends Component {
   constructor() {
     super()
-    this.state = { loading: true }
+    this.state = { loading: true, airdropUnclaimed: null }
   }
 
   componentDidMount = () => {
@@ -90,7 +90,7 @@ class Farm extends Component {
         }
       })
     } else {
-      this.setState({airdropUnclaimed: {}}, () => this.getAirdropClaimableAcos(baseAmount))
+      this.setState({airdropUnclaimed: null}, () => this.getAirdropClaimableAcos(baseAmount))
     }
   }
 
