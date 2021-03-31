@@ -123,12 +123,13 @@ export const listUnclaimedRewards = (from) => {
             let acoIndexes = {}
             for (let i = 0; i < rewards.length; ++i) {
                 for (let j = 0; j < rewards[i][0].length; ++j) { 
+                    let amount = BigInt(rewards[i][1][j])
                     if (acoIndexes[rewards[i][0][j]] === undefined) {
-                        acoIndexes[rewards[i][0][j]] = {p: [acoRewardsPools[i].pid], i: acoPromises.length, a: BigInt(rewards[i][1][j])}
+                        acoIndexes[rewards[i][0][j]] = {p: [acoRewardsPools[i].pid], i: acoPromises.length, a: amount}
                         acoPromises.push(acoTokenData(rewards[i][0][j]))
                     } else {
-                        acoIndexes[rewards[i][0][j]].p.push(acoRewardsPools[i].pid)
-                        acoIndexes[rewards[i][0][j]].a += BigInt(rewards[i][1][j])
+                        acoIndexes[rewards[i][0][j]].p.push({pid: acoRewardsPools[i].pid, amount: amount.toString()})
+                        acoIndexes[rewards[i][0][j]].a += amount
                     }
                 }
             }
@@ -143,7 +144,7 @@ export const listUnclaimedRewards = (from) => {
                         strikePrice: acos[acoIndexes[aco].i].strikePrice,
                         isCall: acos[acoIndexes[aco].i].isCall,
                         amount: (acoIndexes[aco].a).toString(),
-                        poolPids: acoIndexes[aco].p
+                        poolData: acoIndexes[aco].p
                     })
                 }
                 resolve(result)
