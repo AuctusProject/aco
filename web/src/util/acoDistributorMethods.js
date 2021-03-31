@@ -72,9 +72,29 @@ export const getClaimableAcos = (amount) => {
     })
 }
 
-export const acoAmountAvailable = (aco) => {
-    const acoDistributorContract = getAcoDistributorContract()
-    return acoDistributorContract.methods.acosAmount(aco).call()
+export const getAcosAmount = () => {
+    return new Promise((resolve, reject) => {
+        acosLength().then((length) => {
+            length = parseInt(length)
+            const promises = []
+            for (let i = 0; i < length; ++i) {
+                promises.push(getAco(i))
+            }
+            Promise.all(promises).then((acos) => {
+                const amountPromises = []
+                for (let j = 0; j < length; ++j) {
+                    amountPromises.push(acoAmountAvailable(acos[j]))
+                }
+                Promise.all(amountPromises).then((amounts) => {
+                    const result = []
+                    for (let k = 0; k < length; ++k) {
+                        result.push({aco: acos[k], amount: amounts[k]})
+                    }
+                    resolve(result)
+                }).catch((err) => reject(err))
+            }).catch((err) => reject(err))
+        }).catch((err) => reject(err))
+    })
 }
 
 export const claimed = (id) => {
@@ -102,4 +122,19 @@ const getClaimable = (amount) => {
 const listClaimed = (from) => {
     const acoDistributorContract = getAcoDistributorContract()
     return acoDistributorContract.getPastEvents('Claim', { filter: {account: from}, fromBlock: 0, toBlock: 'latest' })
+}
+
+const acoAmountAvailable = (aco) => {
+    const acoDistributorContract = getAcoDistributorContract()
+    return acoDistributorContract.methods.acosAmount(aco).call()
+}
+
+const acosLength = () => {
+    const acoDistributorContract = getAcoDistributorContract()
+    return acoDistributorContract.methods.acosLength().call()
+}
+
+const getAco = (index) => {
+    const acoDistributorContract = getAcoDistributorContract()
+    return acoDistributorContract.methods.acos(index).call()
 }

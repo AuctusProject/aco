@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Airdrop from '../partials/Farm/Airdrop'
 import LiquidityProgram from '../partials/Farm/LiquidityProgram'
-import { acoAmountAvailable, claimed, getClaimableAcos, listClaimedAcos } from '../util/acoDistributorMethods'
+import { acoAmountAvailable, claimed, getAcosAmount, getClaimableAcos, listClaimedAcos } from '../util/acoDistributorMethods'
 import { listClaimedRewards, listUnclaimedRewards } from '../util/acoRewardsMethods'
 import { getClaimableAco } from '../util/acoApi'
 import RewardChart from '../partials/Farm/RewardChart'
@@ -71,7 +71,7 @@ class Farm extends Component {
     const baseAmount = "1000000000000000000000"
     if (this.isConnected()) {
       getClaimableAco(this.context.web3.selectedAccount).then((claimable) => {
-        if (claimable.length) {
+        if (claimable && claimable.length) {
           const prom = []
           for (let i = 0; i < claimable.length; ++i) {
             prom.push(claimed(claimable[i].id))
@@ -95,26 +95,20 @@ class Farm extends Component {
   }
 
   getAirdropClaimableAcos = (amount) => {
-    getClaimableAcos(amount).then((claimableAcos) => {
-      var airdropCurrentOption = claimableAcos && claimableAcos[0] ? claimableAcos[0] : null
-      var airdropNextOption = claimableAcos && claimableAcos[1] ? claimableAcos[1] : null
-      if (claimableAcos.length) {
-        acoAmountAvailable(claimableAcos[0].aco).then((available) => {
-          airdropCurrentOption.available = available
-          this.setState({
-            airdropCurrentOption: airdropCurrentOption,
-            airdropNextOption: airdropNextOption
-          })
-        })
-      } else {
-        if (airdropCurrentOption) {
-          airdropCurrentOption.available = "0"
-        }
-        this.setState({
-          airdropCurrentOption: airdropCurrentOption,
-          airdropNextOption: airdropNextOption
-        })
+    Promise.all([getClaimableAcos(amount), getAcosAmount()]).then((data) => {
+      var airdropCurrentOption = data && data[0] && data[0][0] ? data[0][0] : null
+      var airdropNextOption = data && data[0] && data[0][1] ? data[0][1] : null
+      var available = airdropCurrentOption && data[1] ? data[1].filter((c) => c.aco.toLowerCase() === airdropCurrentOption.aco.toLowerCase()) : []
+      if (available.length) {
+        airdropCurrentOption.available = available[0].amount
+      } else if (airdropCurrentOption) {
+        airdropCurrentOption.available = "0"
       }
+      this.setState({
+        airdropCurrentOption: airdropCurrentOption,
+        airdropNextOption: airdropNextOption,
+        airdropAcosAvailables: data[1]
+      })
     })
   }
 
@@ -123,7 +117,7 @@ class Farm extends Component {
       <div className="farm-title">Auctus Liquidity Incentives</div>
       <div className="farm-subtitle">Earn AUC options for helping grow the protocol fundamentals.</div>
       <a href="TODO" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
-      <Airdrop airdropUnclaimed={this.state.airdropUnclaimed} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
+      <Airdrop airdropUnclaimed={this.state.airdropUnclaimed} acosAvailables={this.state.airdropAcosAvailables} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
       <LiquidityProgram {...this.props}/>
       <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} airdropClaimed={this.state.airdropClaimed} airdropUnclaimed={this.state.airdropUnclaimed} rewardClaimed={this.state.rewardClaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
     </div>
