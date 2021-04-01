@@ -188,7 +188,6 @@ class SimpleWriteTab extends Component {
     return <div className="simple-write-tab">
       {(!this.state.loadingOptions && this.state.currentPairPrice && this.state.swapQuotes) ? <>
         {this.state.currentStep !== 3 && <StepIndicator totalSteps={2} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>}
-        {this.state.currentStep === 2 &&<div className="back-link clickable" onClick={this.goToPools}><FontAwesomeIcon icon={faArrowLeft}/></div>}
         {this.props.selectedPair && filteredOptions.length === 0 && <div className="text-center">No options available for {this.props.selectedPair.underlyingSymbol}{this.props.selectedPair.strikeAssetSymbol}</div>}
         {this.state.currentStep === 1 && Object.keys(grouppedOptions).map(isCall => (
           <div key={isCall} className="write-option-group">
