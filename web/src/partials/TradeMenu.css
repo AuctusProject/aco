@@ -1,5 +1,6 @@
 .trade-menu {
-    background-color: #1a1a1a;
+    box-shadow: inset -14.1px -16.9px 38px 0 rgba(0, 0, 0, 0.5);
+    background-color: #141414;
     width: 300px;
     height: calc(100vh - 63px);
     overflow: auto;
@@ -14,23 +15,28 @@
 }
 
 .trade-menu-balance-title {
-    font-size: 18px;
-    font-weight: bold;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.45px;
+    font-size: 17.5px;
+    font-weight: 600;
+    color: #5de9d4;
     text-align: left;
-    padding: 10px 0;
+    padding: 10px 0;    
+}
+
+.pair-balance-items {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #464646;
+    border-radius: 12px;
 }
 
 .pair-balance-item {
     display: flex;
     flex-direction: row;
-    padding: 8px 0;
+    padding: 12px;
 }
 
 .pair-balance-item {
-    border-bottom: 1px solid #737373;
+    border-bottom: 1px solid #464646;
 }
 
 .pair-balance-item:last-child {
@@ -38,9 +44,7 @@
 }
 
 .trade-menu-pair-symbol,
-.trade-menu-pair-balance {
-    font-size: 12px;
-    font-weight: 300;
+.trade-menu-pair-balance {    
     font-stretch: normal;
     font-style: normal;
     letter-spacing: 0.3px;
@@ -48,21 +52,29 @@
 
 .trade-menu-pair-symbol {
     flex-grow: 1;
+    font-size: 14px;
+    font-weight: 300;
 }
 
 .trade-menu-pair-balance {
     text-align: right;
     flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 500;
 }
 
 .trade-menu-pair-title {
-    font-size: 17px;
-    font-weight: normal;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.43px;
-    text-align: left;
     padding: 8px 15px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    color: #5de9d4;
+    display: flex;
+    align-items: center;
+}
+
+.trade-menu-pair-title .asset-icon {
+    height: 34px;
 }
 
 .trade-menu .option-badge {
@@ -98,7 +110,7 @@
 .option-expiration-item:hover,
 .option-expiration-item.active {
     color: #fff;
-    background-color: #242424;
+    background-color: #1a1a1a;
 }
 
 .light-mode .option-expiration-item:hover,

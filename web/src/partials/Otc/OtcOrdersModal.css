@@ -16,7 +16,7 @@
 .otc-order {
     padding: 10px;
     cursor: pointer;
-    border-bottom: 1px solid #80808080;
+    border-bottom: 1px solid #464646;
 }
 
 .otc-order:last-child {
@@ -26,7 +26,7 @@
 }
 
 .otc-order:hover {
-    background-color: #33333380;
+    background-color: #1a1a1a;
 }
 
 .light-mode .otc-order:hover {

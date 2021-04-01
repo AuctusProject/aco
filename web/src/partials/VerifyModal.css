@@ -4,8 +4,8 @@
     flex-direction: row;
     align-items: center;
     justify-content: center;
-    border: 1px solid white;
-    border-radius: 5px;
+    border: 1px solid #464646;
+    border-radius: 12px;
     padding: 8px;
 }
 

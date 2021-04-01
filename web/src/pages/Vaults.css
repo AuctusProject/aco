@@ -25,8 +25,8 @@
 }
 
 .vault-asset .asset-icon {
-    width: 30px;
-    margin-right: 4px;
+    width: 50px;
+    margin-right: 12px;
     border-radius: 50%;
 }
 
@@ -36,13 +36,14 @@
 }
 
 .vault-asset-name {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0.35px;
+    font-size: 17.5px;
+    font-weight: 600;
+    text-align: left;
+    color: #5de9d4;
 }
 
 .vault-asset-description {
-    font-size: 12px;
-    letter-spacing: 0.29px;
+    font-size: 12.5px;
+    font-weight: 300;
+    text-align: left;
 }

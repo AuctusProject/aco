@@ -26,28 +26,36 @@ class TradeMenu extends Component {
     var grouppedOptions = this.props.options ? groupBy(this.props.options, "expiryTime") : {}
     var balanceOptions = this.getOptionsWithBalance()
     var pairTitle = pair.underlyingSymbol + pair.strikeAssetSymbol
+
+    var iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[pair.underlyingSymbol]
+
     return (
       <div className="trade-menu">
         <div className="trade-menu-content">
           <div className="trade-menu-pair-balance-info">
             <div className="trade-menu-balance-title">BALANCE</div>
-            <div className="pair-balance-item">
-              <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
-              <div className="trade-menu-pair-balance">{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
-            </div>
-            <div className="pair-balance-item">
-              <div className="trade-menu-pair-symbol">{pair.strikeAssetSymbol}</div>
-              <div className="trade-menu-pair-balance">{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
-            </div>
-            {balanceOptions.map(option => (
-              <div key={option.acoToken} className="pair-balance-item clickable" onClick={() => this.onSelectOption(option)}>
-                <div className="trade-menu-pair-symbol">{option.acoTokenInfo.name}</div>
-                <div className="trade-menu-pair-balance">{fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}</div>
+            <div className="pair-balance-items">
+              <div className="pair-balance-item">
+                <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
+                <div className="trade-menu-pair-balance">{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
               </div>
-            ))}
+              <div className="pair-balance-item">
+                <div className="trade-menu-pair-symbol">{pair.strikeAssetSymbol}</div>
+                <div className="trade-menu-pair-balance">{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
+              </div>
+              {balanceOptions.map(option => (
+                <div key={option.acoToken} className="pair-balance-item clickable" onClick={() => this.onSelectOption(option)}>
+                  <div className="trade-menu-pair-symbol">{option.acoTokenInfo.name}</div>
+                  <div className="trade-menu-pair-balance">{fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}</div>
+                </div>
+              ))}
+            </div>
           </div>    
           <div>
-            <div className="trade-menu-pair-title">{pairTitle} options</div>
+            <div className="trade-menu-pair-title">
+              {iconUrl && <img className="asset-icon" src={iconUrl} alt=""/>}
+              {pairTitle} options
+            </div>
             <div className="option-expirations-wrapper">
               <div className={"option-expiration-item "+(this.props.selectedExpiryTime === ALL_OPTIONS_KEY ? "active" : "")} onClick={() => this.onSelectExpiryTime(ALL_OPTIONS_KEY)}>
                 All expirations
@@ -69,7 +77,7 @@ class TradeMenu extends Component {
               <a target="_blank" rel="noopener noreferrer" href="https://defipulse.com">DeFi Pulse</a>
             </div>
             <div className="trade-menu-footer-media">
-              <div>© 2020 Auctus</div>
+              <div>© 2021 Auctus</div>
               <div>
                 <a rel="noopener noreferrer" href="mailto:contact@auctus.org"><FontAwesomeIcon icon={faEnvelope} /></a>
                 <a target="_blank" rel="noopener noreferrer" href="https://twitter.com/AuctusProject"><FontAwesomeIcon icon={faTwitter} /></a>
@@ -82,6 +90,7 @@ class TradeMenu extends Component {
   }
 }
 TradeMenu.contextTypes = {
+  assetsImages: PropTypes.object,
   web3: PropTypes.object
 }
 export default TradeMenu

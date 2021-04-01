@@ -14,6 +14,9 @@ export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS;
 export const allAcoOtcAddresses = process.env.REACT_APP_ACO_OTC_ADDRESS.split(',');
 export const acoOtcAddress = allAcoOtcAddresses[allAcoOtcAddresses.length-1];
 export const acoBuyerAddress = process.env.REACT_APP_ACO_BUYER_ADDRESS;
+export const acoDistributorAddress = process.env.REACT_APP_ACO_DISTRIBUTOR_ADDRESS;
+export const acoRewardAddress = process.env.REACT_APP_ACO_REWARD_ADDRESS;
+export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
@@ -37,15 +40,16 @@ export const ethAddress = "0x0000000000000000000000000000000000000000";
 export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS.toLowerCase();
 export const wethAddress = process.env.REACT_APP_WETH_ADDRESS.toLowerCase();
 export const wbtcAddress = process.env.REACT_APP_WBTC_ADDRESS.toLowerCase();
-export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
 export const ethTransactionTolerance = 0.01;
 export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
-export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
-export const DEFAULT_SLIPPAGE = 0.05
-export const DEFAULT_POOL_SLIPPAGE = 0.01
-export const OTC_ORDER_STATUS_AVAILABLE = "0x00"
+export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60;
+export const DEFAULT_SLIPPAGE = 0.05;
+export const DEFAULT_POOL_SLIPPAGE = 0.01;
+export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
+export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
+export const airdropClaimStart = 1617386400;
 
 export const OPTION_TYPES = {
     1: {
@@ -260,7 +264,12 @@ export function formatWithPrecision(number, significantDigits = 4) {
 }
 
 export function numberWithCommas(x) {
-    return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+    if (x && x.toString) {
+        return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+    }
+    else {
+        return null
+    }
 }
 
 export function getNumberWithSignal(number) {
@@ -415,7 +424,7 @@ export const removeOtcOptions = (options) => {
 export const removeNotWhitelistedOptions = (options) => {
     return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
         (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
-        (o.underlying.toLowerCase() !== auctusAddress && defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
+            (o.underlying.toLowerCase() !== auctusAddress && defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
 }
 
 export const isExpired = (expiryTime) => {
@@ -489,4 +498,15 @@ export const getLocalOrders = () => {
 
 export const capitalizeFirstLetter = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+export const formatAcoRewardName = (acoReward) => {
+    var strikePrice = Number(fromDecimals(acoReward.strikePrice, 6)).toFixed(2)
+    var formattedDate = formatDate(acoReward.expiryTime, true)
+    return `AUC CALL $${strikePrice} Expiration: ${formattedDate}`
+}
+
+export const parseBigIntToNumber = (bigInt, decimals = 6) => {
+    const precision = 100000000.0
+    return parseInt(bigInt * BigInt(precision) / BigInt("1".padEnd(decimals + 1, "0"))) / precision
 }

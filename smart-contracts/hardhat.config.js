@@ -9,7 +9,7 @@ module.exports = {
         }
     },
     mocha: {
-        timeout: 60000,
+        timeout: 120000,
     },
     solidity: {
         version: "0.6.6",

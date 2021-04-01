@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import ReactDatePicker from 'react-datepicker'
-import "react-datepicker/dist/react-datepicker.css";
+import "../../customDatePicker.css";
 import AssetInput from '../Util/AssetInput'
 
 class OtcTradeTabStep1 extends Component {

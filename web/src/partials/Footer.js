@@ -19,7 +19,7 @@ class Footer extends Component {
           <div className="row footer-text">
             <div className="col-md-8 my-2">
               <div className="footer-links">
-                <div className="footer-copyright">© 2020 Auctus</div>
+                <div className="footer-copyright">© 2021 Auctus</div>
                 <NavLink className="footer-link" to="/terms">Terms</NavLink>
                 <NavLink className=" footer-link" to="/privacy">Privacy Policy</NavLink>
                 <a className="footer-link" target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/faq">FAQ</a>

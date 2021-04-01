@@ -133,7 +133,7 @@ class ManagePrivatePool extends Component {
       <div className="manage-private-pool-item">
         <div className="manage-private-pool-item-label">Current IV:</div>
         <div className="manage-private-pool-item-value">{pool.volatility}%</div>
-        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateIVClick}>Update</div>
+        <div className="aco-button action-btn" onClick={this.onUpdateIVClick}>Update</div>
       </div>
       <div className="manage-private-pool-item">
         <div className="manage-private-pool-item-label">Selling options:</div>
@@ -141,7 +141,7 @@ class ManagePrivatePool extends Component {
           <div>{this.getStrikePriceConfig()}</div>
           <div>{this.getExpirationConfig()}</div>
         </div>
-        <div className="aco-button action-btn btn-sm" onClick={this.onUpdateSellingOptionsClick}>Update</div>
+        <div className="aco-button action-btn" onClick={this.onUpdateSellingOptionsClick}>Update</div>
       </div>
       {this.state.showUpdateIVModal && <UpdateIVModal onHide={this.onHideUpdateIVModal} pool={pool}/>}
       {this.state.showUpdateSellingOptionsModal && <UpdateSellingOptionsModal 

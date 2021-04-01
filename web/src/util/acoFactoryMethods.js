@@ -289,3 +289,8 @@ export function newAcoToken(from, underlying, strikeAsset, isCall, strikePrice, 
     var data = contract.methods.newAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime).encodeABI()
     return sendTransaction(null, null, from, acoFactoryAddress, null, data)
 }
+
+export const acoTokenData = (aco) => {
+    const acoFactoryContract = getAcoFactoryContract()
+    return acoFactoryContract.methods.acoTokenData(aco).call()
+}

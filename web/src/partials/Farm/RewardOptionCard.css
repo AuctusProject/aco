@@ -1,0 +1,54 @@
+.option-reward-card {
+    margin-top: 30px;
+    border-radius: 12px;
+    border: solid 1px #464646;
+    display: flex;
+    max-width: 576px;
+    margin: auto;
+    margin-top: 30px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+.option-reward-card > div {
+    border-right: solid 1px #464646;
+    flex: 1;    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 4px;
+}
+
+.option-reward-card > div:last-child {
+    border-right: none;
+}
+
+.option-reward-card-detail-title {
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    text-align: center;
+    color: #656565;
+    height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.option-reward-card-detail-content {
+    height: 70px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.7px;
+    text-align: center;
+    color: #ffffff;
+}
+
+.option-reward-card-detail-content .time-to-expiry {
+    padding: unset;
+    margin: unset;
+}

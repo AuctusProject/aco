@@ -1,0 +1,94 @@
+.liquidity-program-title {
+    font-size: 22px;
+    letter-spacing: 0.55px;
+    text-align: center;
+    color: #5de9d4;
+    margin-bottom: 10px;
+}
+
+.liquidity-program-subtitle {
+    max-width: 490px;
+    margin: auto;
+    margin-bottom: 20px;
+}
+
+.liquidity-card {
+    border-radius: 12px;
+    border: solid 1px #464646;
+    background-color: #141414;
+    width: 224px;
+    padding: 30px 12px;
+    margin: 10px;
+}
+
+.liquidity-card.clickable:hover {
+    background-color: #1a1a1a;
+}
+
+.liquidity-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.35px;
+    text-align: center;
+    color: #ffffff;
+    margin-top: 18px;
+    margin-bottom: 18px;
+}
+
+.liquidity-card-icon {
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row-reverse;
+}
+
+.liquidity-card-icon img {
+    max-height: 34px;
+    max-width: 34px;
+    background: white;
+    border-radius: 50%;
+    box-shadow: 6.5px 4.7px 16px 0 rgba(0, 0, 0, 0.4);
+    margin-left: -4px;
+    margin-right: -4px;
+}
+
+.liquidity-card-rewards-title {
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    line-height: 1.33;
+    letter-spacing: 0.3px;
+    text-align: center;
+    color: #5de9d4;
+    max-width: 140px;
+    margin: auto;
+}
+
+.liquidity-card-rewards-value{
+    font-size: 28.5px;
+    font-weight: bold;
+    letter-spacing: 0.71px;
+    text-align: center;
+    color: #5de9d4;
+}
+
+.liquidity-card-rewards-option{
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.24px;
+    text-align: center;
+    color: #ffffff;    
+    max-width: 150px;
+    margin: auto;
+    margin-top: 18px;
+}
+
+.liquidity-program-pools {
+    display: flex;
+    flex-direction: row;
+    align-items: strech;
+    justify-content: center;
+    flex-wrap: wrap;
+}

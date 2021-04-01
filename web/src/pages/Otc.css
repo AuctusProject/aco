@@ -1,10 +1,16 @@
 .otc-title {
     font-size: 26px;
+    position: absolute;
+    text-align: center;
+    width: 100%;
+    height: 54px;
+    line-height: 54px;    
 }
 
 .orders-count-badge {
     border-radius: 5px;
-    background-color: #1782fc;
+    background-color: #5de9d4;
+    color: black;
     font-size: 14px;
     font-weight: normal;
     font-stretch: normal;
@@ -24,7 +30,7 @@
     border-color: #d2d2d2;
     padding: 2px 16px;
     border: 1px solid;
-    border-radius: 4px;
+    border-radius: 22px;
 }
 
 .light-mode .orders-btn { 

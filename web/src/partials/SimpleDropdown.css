@@ -9,11 +9,11 @@
 }
 
 .simple-dropdown-placeholder {
-    color: #4c4c4c;
+    color: #464646;
 }
 
 .simple-dropdown .dropdown-toggle.empty-select::after {
-    color: #4c4c4c;
+    color: #464646;
 }
 
 .dropdown-menu.show {

@@ -6,6 +6,11 @@
     width: calc(100% - 80px);
     min-width: 960px;
     overflow-x: auto;
+    border: none;
+}
+
+.trade-options-list .aco-table td {
+    border-right: none;
 }
 
 .trade-options-list .aco-table thead:first-of-type .option-expiry-title {
@@ -39,24 +44,30 @@
 }
 
 .aco-table thead th.strike-col {
-    background-color: #3C3C3C;;
-}
-
-.light-mode .aco-table thead th.strike-col {
-    background-color: #9a9a9a;
+    background-color: #464646;    
+    color: #5de9d4;
 }
 
 .aco-table tbody td.strike-col {
-    background-color: #404040;
+    background-color: #1a1a1a;
+    font-size: 14px;
     font-weight: 500;
+    letter-spacing: 0.7px;
+    color: #5de9d4;
 }
 
-.light-mode .aco-table tbody td.strike-col {
-    background-color: #dadada;
+.aco-table .strike-col,
+.aco-table .balance-col {
+    border-right: none;
+}
+
+.aco-table .na-col .na-div {
+    background-color: #1a1a1a;
+    height: 28px;
+    line-height: 28px;
 }
 
 .aco-table thead .option-expiry-title-cell {
-    background-color: #242424;
     text-align: center;
 }
 
@@ -65,12 +76,12 @@
 }
 
 .bid-price {
-    color: #0ec812;    
+    color: #58fb0c;    
     font-weight: 500;
 }
 
 .ask-price {
-    color: #ed2e2e;
+    color: #ff0000;
     font-weight: 500;
 }
 

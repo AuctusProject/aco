@@ -4,15 +4,17 @@
 
 .swal2-popup.swal2-modal
 {
-    background-color: #2b2b2b;
-    padding: 0;
+    background-color: #000000;
+    padding: 14px 38px;
     width: 320px;
+    border: solid 1px #464646;
+    border-radius: 12px;
 }
 
 .swal2-header {
-    background-color: #383838;
     padding: 1.25em;    
-    border-radius: 4px 4px 0px 0px;
+    border-radius: 8px 8px 0px 0px;
+    border-bottom: solid 1px #464646;
 }
 
 .swal2-content {
@@ -26,22 +28,26 @@
 }
 
 .swal2-popup.swal2-modal .swal2-title {
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 22px;
+    font-weight: 500;
     font-stretch: normal;
     font-style: normal;
-    letter-spacing: 0.8px;
+    letter-spacing: normal;
     text-align: center;
-    color: #e5e5e5;
+    color: #5de9d4;
     margin-bottom: 0;
 }
 
 .swal2-popup.swal2-modal .swal2-content div {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 300;
     font-stretch: normal;
     font-style: normal;
-    letter-spacing: 0.3px;
+    letter-spacing: normal;
     text-align: center;
-    color: #e6e6e6;
+    color: #bfbfbf;
+}
+
+.swal2-container.swal2-shown {
+    background-color: #000000e6 !important;
 }

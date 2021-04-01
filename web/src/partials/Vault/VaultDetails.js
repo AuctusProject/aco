@@ -220,7 +220,7 @@ class VaultDetails extends Component {
               <DecimalInput tabIndex="-1" onChange={this.onWithdrawValueChange} value={this.state.withdrawValue}></DecimalInput>
               <div className="max-btn" onClick={this.onMaxWithdrawClick}>MAX</div>
             </div>
-            <div className={"action-btn "+(this.canWithdraw() ? "" : "disabled")} onClick={this.onWithdrawClick}>WITHDRAW</div>
+            <div className={"outline-btn "+(this.canWithdraw() ? "" : "disabled")} onClick={this.onWithdrawClick}>WITHDRAW</div>
           </div>
         </div>
         {this.state.accountPosition && <div className="vault-position">
