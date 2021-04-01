@@ -111,7 +111,7 @@ class LiquidityProgramModal extends Component {
 
   onClaimClick = () => {
     var claimData = {
-      pool: this.props.pool
+      pid: this.props.pool.pid
     }
     this.setState({claimData: claimData})
   }

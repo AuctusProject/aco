@@ -156,15 +156,12 @@ class Farm extends Component {
       <Airdrop refreshAirdrop={this.getAirdropClaimableData} airdropUnclaimed={this.state.airdropUnclaimed} acosAvailable={this.state.airdropAcosAvailable} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
       <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} acoBalances={this.state.acoBalances} airdropUnclaimed={this.state.airdropUnclaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
       <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />
-      {((this.state.airdropClaimed && this.state.airdropClaimed.length > 0) || (this.state.rewardClaimed && this.state.rewardClaimed.length > 0)) && <>
+      {(this.state.acoBalances && this.state.acoBalances.length > 0) && <>
         <div className="unclaimed-rewards-title">
           Claimed Rewards
         </div>
-        {this.state.airdropClaimed && this.state.airdropClaimed.map(claimed => 
-          <RewardOptionCard key={claimed.aco} option={claimed}/>
-        )}
-        {this.state.rewardClaimed && this.state.rewardClaimed.map(claimed => 
-          <RewardOptionCard key={claimed.aco} option={claimed}/>
+        {this.state.acoBalances && this.state.acoBalances.map(claimed => 
+          <RewardOptionCard key={claimed.aco} option={claimed} refresh={this.getAcoBalances} showExercise={true}/>
         )}
       </>}
       {this.state.rewardUnclaimed && this.state.rewardUnclaimed.length > 0 && <>
@@ -172,7 +169,7 @@ class Farm extends Component {
           Unclaimed Rewards
         </div>
         {this.state.rewardUnclaimed.map(reward => 
-          <RewardOptionCard key={reward.aco} option={reward}/>
+          <RewardOptionCard key={reward.aco} option={reward} loadUnclaimedRewards={this.getRewardUnclaimedAcos} showClaim={true}/>
         )}
       </>}
     </div>
