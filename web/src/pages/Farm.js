@@ -8,6 +8,7 @@ import { claimed, getAcosAmount, getClaimableAcos, listClaimedAcos } from '../ut
 import { listClaimedRewards, listUnclaimedRewards } from '../util/acoRewardsMethods'
 import { getClaimableAco } from '../util/acoApi'
 import RewardChart from '../partials/Farm/RewardChart'
+import RewardOptionCard from '../partials/Farm/RewardOptionCard'
 
 
 class Farm extends Component {
@@ -119,7 +120,26 @@ class Farm extends Component {
       <a href="https://blog.auctus.org/auctus-auc-first-ever-12-5mm-options-airdrop-incentives-campaign-b9fb96188c5" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
       <Airdrop refreshAirdrop={this.getAirdropClaimableData} airdropUnclaimed={this.state.airdropUnclaimed} acosAvailable={this.state.airdropAcosAvailable} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
       <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} airdropClaimed={this.state.airdropClaimed} airdropUnclaimed={this.state.airdropUnclaimed} rewardClaimed={this.state.rewardClaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
-      <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />      
+      <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />
+      {((this.state.airdropClaimed && this.state.airdropClaimed.length > 0) || (this.state.rewardClaimed && this.state.rewardClaimed.length > 0)) && <>
+        <div className="unclaimed-rewards-title">
+          Claimed Rewards
+        </div>
+        {this.state.airdropClaimed && this.state.airdropClaimed.map(claimed => 
+          <RewardOptionCard key={claimed.aco} option={claimed}/>
+        )}
+        {this.state.rewardClaimed && this.state.rewardClaimed.map(claimed => 
+          <RewardOptionCard key={claimed.aco} option={claimed}/>
+        )}
+      </>}
+      {this.state.rewardUnclaimed && this.state.rewardUnclaimed.length > 0 && <>
+        <div className="unclaimed-rewards-title">
+          Unclaimed Rewards
+        </div>
+        {this.state.rewardUnclaimed.map(reward => 
+          <RewardOptionCard key={reward.aco} option={reward}/>
+        )}
+      </>}
     </div>
   }
 }

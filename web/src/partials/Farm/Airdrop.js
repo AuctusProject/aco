@@ -4,19 +4,37 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { airdropClaimStart, formatAcoRewardName, fromDecimals, getTimeToExpiry, numberWithCommas, ONE_SECOND } from '../../util/constants';
+import { acoAirdropAmounts, airdropClaimStart, formatAcoRewardName, fromDecimals, getTimeToExpiry, numberWithCommas, ONE_SECOND } from '../../util/constants';
 import AirdropClaimModal from './AirdropClaimModal';
+import BigNumber from 'bignumber.js';
 
 class Airdrop extends Component {
   constructor(props) {
     super(props)
-    this.state = { }
+    this.state = { airdropProgress: 0}
   }
 
   componentDidMount = () => {
+    this.setAirdropProgress()
   }
 
-  componentDidUpdate = (prevProps) => {     
+  componentDidUpdate = (prevProps) => {    
+    if (this.props.acosAvailable !== prevProps.acosAvailable) {
+      this.setAirdropProgress()
+    }
+  }
+
+  setAirdropProgress = () => {
+    var progress = 0;
+    if (this.props.acosAvailable) {
+      for (var i = 0; i < this.props.acosAvailable.length; i++) {
+        var acoAvailable = new BigNumber(this.props.acosAvailable[i].amount)
+        var airdropAmount = new BigNumber(acoAirdropAmounts[i].amount)
+        var distributedPercentage = airdropAmount.minus(acoAvailable).div(airdropAmount)
+        progress += 0.2 * distributedPercentage
+      }
+    }
+    this.setState({airdropProgress: progress * 100})
   }
 
   isConnected = () => {
@@ -123,7 +141,7 @@ class Airdrop extends Component {
           <div className="airdrop-step-value">$2.00</div>
           <div className="airdrop-step-bar"></div>
         </div>
-        <div className="airdrop-progress-fill" style={{width: '0%'}}></div>
+        <div className="airdrop-progress-fill" style={{width: this.state.airdropProgress+'%'}}></div>
       </div>
       {this.props.currentOption && <>
         <div className="current-option-section">

@@ -222,7 +222,7 @@ class LiquidityProgramModal extends Component {
           </div>
           {this.state.unclaimedRewards.map(reward => 
             <RewardOptionCard key={reward.aco} option={reward}/>
-          )}          
+          )}
         </div>}
         {this.state.stakeData && <StakeModal data={this.state.stakeData} onHide={this.onHideStake}/>}
         {this.state.claimData && <ClaimModal data={this.state.claimData} onHide={this.onHideClaim}/>}

@@ -49,6 +49,7 @@ export const DEFAULT_SLIPPAGE = 0.05;
 export const DEFAULT_POOL_SLIPPAGE = 0.01;
 export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
 export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
+export const acoAirdropAmounts = JSON.parse(process.env.REACT_APP_ACO_AIRDROP_AMOUNTS);
 export const airdropClaimStart = 1617386400;
 
 export const OPTION_TYPES = {
