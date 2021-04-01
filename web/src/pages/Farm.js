@@ -10,7 +10,7 @@ import { getClaimableAco } from '../util/acoApi'
 import RewardChart from '../partials/Farm/RewardChart'
 import RewardOptionCard from '../partials/Farm/RewardOptionCard'
 import { getAvailableAcosForUnderlying } from '../util/acoFactoryMethods'
-import { auctusAddress } from '../util/constants'
+import { auctusAddress, defaultAcoCreator } from '../util/constants'
 import { balanceOf } from '../util/erc20Methods'
 
 
@@ -128,7 +128,7 @@ class Farm extends Component {
         Promise.all(promises).then((balances) => {
           const result = []
           for (let i = 0; i < acos.length; ++i) {
-            if (BigInt(balances[i]) > BigInt(0)) {
+            if (BigInt(balances[i]) > BigInt(0) && defaultAcoCreator.filter((c) => c === acos[i].creator.toLowerCase()).length > 0) {
               result.push({
                 aco: acos[i].acoToken,
                 expiryTime: acos[i].expiryTime,
