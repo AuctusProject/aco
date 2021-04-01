@@ -265,7 +265,7 @@ export function formatWithPrecision(number, significantDigits = 4) {
 
 export function numberWithCommas(x) {
     if (x && x.toString) {
-        return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
     else {
         return null
