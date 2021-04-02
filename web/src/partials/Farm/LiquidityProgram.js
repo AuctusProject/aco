@@ -21,8 +21,13 @@ class LiquidityProgram extends Component {
   }
 
   onLiquiditySelect = (pid) => {
-    if (this.farmStarted()) {
-      this.setState({selectedPid: pid})
+    if (!this.isConnected()) {
+      this.onConnectClick()
+    }
+    else {
+      if (this.farmStarted()) {
+        this.setState({selectedPid: pid})
+      }
     }
   }
 
