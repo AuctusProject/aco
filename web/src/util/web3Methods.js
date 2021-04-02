@@ -4,6 +4,8 @@ import { wethAddress, wssInfuraAddress } from './constants'
 import detectEthereumProvider from '@metamask/detect-provider'
 import WalletConnectProvider from "@walletconnect/web3-provider"
 
+
+const infuraId = "8d03fea006b64542ab9c26af741965b2"
 let _web3 = null
 let _web3Fallback = null
 let _web3Provider = null
@@ -48,7 +50,7 @@ export const getWeb3 = () => {
     return _web3
   } else if (_web3Fallback === null) {
     _web3Fallback = new Web3(
-      new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
+      new Web3.providers.WebsocketProvider(wssInfuraAddress + infuraId)
     )
   }
   return _web3Fallback
@@ -72,7 +74,7 @@ export const connectWeb3Provider = async (connector) => {
     _web3Provider = await detectEthereumProvider()
   } else if (connector === "walletconnect") {
     _web3Provider = new WalletConnectProvider({
-      infuraId: "27e484dcd9e3efcfd25a83a78777cdf1"
+      infuraId: infuraId
     })
   } else {
     throw new Error("Invalid web3 connector")
