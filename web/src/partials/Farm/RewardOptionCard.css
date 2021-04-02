@@ -10,6 +10,10 @@
     padding-bottom: 20px;
 }
 
+.large-option-reward-card {
+    max-width: 760px;
+}
+
 .option-reward-card > div {
     border-right: solid 1px #464646;
     flex: 1;    
@@ -17,7 +21,7 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 4px;
+    padding: 8px;
 }
 
 .option-reward-card > div:last-child {
@@ -51,4 +55,25 @@
 .option-reward-card-detail-content .time-to-expiry {
     padding: unset;
     margin: unset;
+}
+
+.option-reward-card .action-btn {
+    margin: auto 20px;
+    word-break: keep-all;
+    width: 130px;
+}
+
+@media(max-width: 700px) {
+    .option-reward-card {
+        flex-direction: column;
+    }
+
+    .option-reward-card-detail-title,
+    .option-reward-card-detail-content {
+        height: unset;
+    }
+
+    .option-reward-card > div {
+        border-right: none;
+    }
 }

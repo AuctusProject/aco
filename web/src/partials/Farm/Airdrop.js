@@ -4,19 +4,37 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { airdropClaimStart, formatAcoRewardName, fromDecimals, getTimeToExpiry, numberWithCommas, ONE_SECOND } from '../../util/constants';
+import { acoAirdropAmounts, airdropClaimStart, formatAcoRewardName, fromDecimals, getTimeToExpiry, numberWithCommas, ONE_SECOND } from '../../util/constants';
 import AirdropClaimModal from './AirdropClaimModal';
+import BigNumber from 'bignumber.js';
 
 class Airdrop extends Component {
   constructor(props) {
     super(props)
-    this.state = { }
+    this.state = { airdropProgress: null }
   }
 
   componentDidMount = () => {
+    this.setAirdropProgress()
   }
 
-  componentDidUpdate = (prevProps) => {     
+  componentDidUpdate = (prevProps) => {    
+    if (this.props.acosAvailable !== prevProps.acosAvailable) {
+      this.setAirdropProgress()
+    }
+  }
+
+  setAirdropProgress = () => {
+    if (this.props.acosAvailable) {
+      var progress = 0;
+      for (var i = 0; i < this.props.acosAvailable.length; i++) {
+        var acoAvailable = new BigNumber(this.props.acosAvailable[i].amount)
+        var airdropAmount = new BigNumber(acoAirdropAmounts[i].amount)
+        var distributedPercentage = airdropAmount.minus(acoAvailable).div(airdropAmount)
+        progress += 0.2 * distributedPercentage
+      }
+      this.setState({airdropProgress: progress * 100})
+    }
   }
 
   isConnected = () => {
@@ -41,7 +59,7 @@ class Airdrop extends Component {
   }
 
   getClaimableAmount = () => {
-    if (!this.props.airdropUnclaimed) {
+    if (!this.props.airdropUnclaimed || this.state.airdropProgress === null) {
       return <FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>
     }
     return (this.props.airdropUnclaimed.amount ?
@@ -53,7 +71,7 @@ class Airdrop extends Component {
   }
 
   canClaim = () => {
-    return this.props.airdropUnclaimed && this.props.airdropUnclaimed.id !== undefined && this.props.airdropUnclaimed.id !== null && this.props.airdropUnclaimed.id !== ""
+    return this.props.airdropUnclaimed && this.props.airdropUnclaimed.id !== undefined && this.props.airdropUnclaimed.id !== null && this.props.airdropUnclaimed.id !== "" && this.state.airdropProgress !== null
   }
 
   getTimeLeft = () => {
@@ -95,10 +113,14 @@ class Airdrop extends Component {
         <div className="action-btn medium solid-blue" onClick={this.onConnectClick}>
           <div>CONNECT YOUR WALLET TO CHECK</div>
         </div> : 
-        <div className="claim-row">
+        (this.state.airdropProgress < 100 ? <div className="claim-row">
           <div>{this.getClaimableAmount()}</div>
           <div className={"action-btn ml-3 " + (!this.canClaim() ? "disabled" : "")} onClick={this.onClaimClick}>CLAIM</div>
-        </div>}
+        </div> :
+        <div className="claim-row">
+          All options have been redeemed.
+        </div>
+        )}
       {!this.isClaimStarted() && 
         <div className="claim-not-started">The claiming starts in {this.getTimeLeft()}, early claimants receive options with $0.50 strike price.</div>
       }
@@ -123,7 +145,7 @@ class Airdrop extends Component {
           <div className="airdrop-step-value">$2.00</div>
           <div className="airdrop-step-bar"></div>
         </div>
-        <div className="airdrop-progress-fill" style={{width: '0%'}}></div>
+        <div className="airdrop-progress-fill" style={{width: this.state.airdropProgress+'%'}}></div>
       </div>
       {this.props.currentOption && <>
         <div className="current-option-section">

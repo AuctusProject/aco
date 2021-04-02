@@ -8,6 +8,10 @@ import { claimed, getAcosAmount, getClaimableAcos, listClaimedAcos } from '../ut
 import { listClaimedRewards, listUnclaimedRewards } from '../util/acoRewardsMethods'
 import { getClaimableAco } from '../util/acoApi'
 import RewardChart from '../partials/Farm/RewardChart'
+import RewardOptionCard from '../partials/Farm/RewardOptionCard'
+import { getAvailableAcosForUnderlying } from '../util/acoFactoryMethods'
+import { auctusAddress, defaultAcoCreator } from '../util/constants'
+import { balanceOf } from '../util/erc20Methods'
 
 
 class Farm extends Component {
@@ -35,6 +39,7 @@ class Farm extends Component {
     this.getAirdropClaimableData()
     this.getRewardClaimedAcos()
     this.getRewardUnclaimedAcos()
+    this.getAcoBalances()
   } 
 
   getRewardClaimedAcos = () => {
@@ -112,14 +117,61 @@ class Farm extends Component {
     })
   }
 
+  getAcoBalances = () => {
+    if (this.isConnected()) {
+      getAvailableAcosForUnderlying(auctusAddress).then((acos) => {
+        const promises = []
+        const account = this.context.web3.selectedAccount
+        for (let i = 0; i < acos.length; ++i) {
+          promises.push(balanceOf(acos[i].acoToken, account))
+        }
+        Promise.all(promises).then((balances) => {
+          const result = []
+          for (let i = 0; i < acos.length; ++i) {
+            if (BigInt(balances[i]) > BigInt(0) && defaultAcoCreator.filter((c) => c === acos[i].creator.toLowerCase()).length > 0) {
+              result.push({
+                aco: acos[i].acoToken,
+                expiryTime: acos[i].expiryTime,
+                underlying: acos[i].underlying,
+                strikeAsset: acos[i].strikeAsset,
+                strikePrice: acos[i].strikePrice,
+                isCall: acos[i].isCall,
+                amount: balances[i]
+              })
+            }
+          }
+          this.setState({acoBalances: result})
+        })
+      })
+    } else {
+      this.setState({acoBalances: []})
+    }
+  }
+
   render() {
     return <div className="farm py-5">
       <div className="farm-title">Auctus Liquidity Incentives</div>
       <div className="farm-subtitle">Earn AUC options for helping grow the protocol fundamentals.</div>
       <a href="https://blog.auctus.org/auctus-auc-first-ever-12-5mm-options-airdrop-incentives-campaign-b9fb96188c5" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
       <Airdrop refreshAirdrop={this.getAirdropClaimableData} airdropUnclaimed={this.state.airdropUnclaimed} acosAvailable={this.state.airdropAcosAvailable} currentOption={this.state.airdropCurrentOption} nextOption={this.state.airdropNextOption} {...this.props}/>
-      <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} airdropClaimed={this.state.airdropClaimed} airdropUnclaimed={this.state.airdropUnclaimed} rewardClaimed={this.state.rewardClaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
-      <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />      
+      <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} acoBalances={this.state.acoBalances} airdropUnclaimed={this.state.airdropUnclaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
+      <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />
+      {(this.state.acoBalances && this.state.acoBalances.length > 0) && <>
+        <div className="unclaimed-rewards-title">
+          Claimed Rewards
+        </div>
+        {this.state.acoBalances && this.state.acoBalances.map(claimed => 
+          <RewardOptionCard key={claimed.aco} option={claimed} refresh={this.getAcoBalances} showExercise={true}/>
+        )}
+      </>}
+      {this.state.rewardUnclaimed && this.state.rewardUnclaimed.length > 0 && <>
+        <div className="unclaimed-rewards-title">
+          Unclaimed Rewards
+        </div>
+        {this.state.rewardUnclaimed.map(reward => 
+          <RewardOptionCard key={reward.aco} option={reward} loadUnclaimedRewards={this.getRewardUnclaimedAcos} showClaim={true}/>
+        )}
+      </>}
     </div>
   }
 }

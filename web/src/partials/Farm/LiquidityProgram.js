@@ -78,9 +78,9 @@ class LiquidityProgram extends Component {
   render() {
     return <div className="liquidity-program">
       <div className="liquidity-program-title">Join our liquidity programs to earn more options</div>
-      <div className="liquidity-program-subtitle">
+      {!this.farmStarted() && <div className="liquidity-program-subtitle">
         The liquidity program starts in {this.getTimeLeft()}, check available pools below to join.
-      </div>
+      </div>}
       <div className="liquidity-program-pools">
         {this.state.rewardsData && this.state.rewardsData.map(rewardData => (
           <div key={rewardData.pid} className={"liquidity-card "+ (this.farmStarted() ? "clickable" : "")} onClick={() => this.onLiquiditySelect(rewardData)}>

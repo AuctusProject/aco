@@ -21,8 +21,7 @@ class RewardChart extends Component {
   componentDidUpdate = (prevProps) => { 
     if (this.props.airdropCurrentOption !== prevProps.airdropCurrentOption ||
       this.props.airdropUnclaimed !== prevProps.airdropUnclaimed || 
-      this.props.airdropClaimed !== prevProps.airdropClaimed || 
-      this.props.rewardClaimed !== prevProps.rewardClaimed || 
+      this.props.acoBalances !== prevProps.acoBalances || 
       this.props.rewardUnclaimed !== prevProps.rewardUnclaimed) {
       this.loadChart()
     }   
@@ -30,14 +29,13 @@ class RewardChart extends Component {
 
   getAcoList = () => {
     var acos = []
-    if (this.props.airdropCurrentOption && this.props.airdropUnclaimed && this.props.airdropClaimed && this.props.rewardClaimed && this.props.rewardUnclaimed) {
+    if (this.props.airdropCurrentOption && this.props.airdropUnclaimed && this.props.acoBalances && this.props.rewardUnclaimed) {
       let result = {}
       if (this.props.airdropUnclaimed.amount) {
         result[this.props.airdropCurrentOption.aco] = {strikePrice: BigInt(this.props.airdropCurrentOption.strikePrice), amount: BigInt(this.props.airdropUnclaimed.amount)}
       }
-      this.parseAcoList(result, this.props.airdropClaimed)
+      this.parseAcoList(result, this.props.acoBalances)
       this.parseAcoList(result, this.props.rewardUnclaimed)
-      this.parseAcoList(result, this.props.rewardClaimed)
       acos = Object.values(result).sort((a,b) => a.strikePrice > b.strikePrice ? 1 : a.strikePrice < b.strikePrice ? -1 : 0)
     }
     return acos

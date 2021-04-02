@@ -49,6 +49,7 @@ export const DEFAULT_SLIPPAGE = 0.05;
 export const DEFAULT_POOL_SLIPPAGE = 0.01;
 export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
 export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
+export const acoAirdropAmounts = JSON.parse(process.env.REACT_APP_ACO_AIRDROP_AMOUNTS);
 export const airdropClaimStart = 1617386400;
 
 export const OPTION_TYPES = {
@@ -118,13 +119,13 @@ export const ellipsisCenterOfText = (text) => {
     return text
 }
 
-export const formatDate = (expiryTime, shortDate= false) => {
+export const formatDate = (expiryTime, shortDate= false, shortMonth = false) => {
     var options = {}
     if (shortDate) {
         options = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }
     }
     else {
-        options = { year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' }
+        options = { year: 'numeric', month: (shortMonth ? 'short' : 'long'), day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' }
     }
     return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + (shortDate ? "" : " UTC")
 }

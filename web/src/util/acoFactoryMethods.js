@@ -36,6 +36,33 @@ function getAllAvailableOptions() {
     })
 }
 
+export const getAvailableAcosForUnderlying = (underlying) => {
+    return new Promise((resolve, reject) => {
+        const acoFactoryContract = getAcoFactoryContract()
+        acoFactoryContract.getPastEvents('NewAcoTokenData', {filter:{underlying: underlying},fromBlock:0,toBlock:'latest'}).then((events) => {
+            var acoOptions = []
+            const now = Math.ceil(Date.now() / 1000)
+            for (let i = 0; i < events.length; i++) {
+                const eventValues = events[i].returnValues;
+                let expiryTime = parseInt(eventValues.expiryTime) 
+                if (expiryTime > now) {
+                    acoOptions.push({
+                        acoToken: eventValues.acoToken,
+                        acoTokenImplementation: eventValues.acoTokenImplementation,
+                        creator: eventValues.creator,
+                        expiryTime: expiryTime,
+                        isCall: eventValues.isCall,
+                        strikeAsset: eventValues.strikeAsset,
+                        strikePrice: eventValues.strikePrice,
+                        underlying: eventValues.underlying
+                    })
+                }   
+            }
+            resolve(acoOptions)
+        }).catch((err) => reject(err))
+    })
+}
+
 export function refreshAllOptions() {
     availableOptions = null
     return getAllAvailableOptions()
@@ -257,7 +284,7 @@ export function listPositionsForExercise(pair, userAccount, otcPositions) {
     })
 }
 
-function getPositionForOption(option, userAccount) {
+export function getPositionForOption(option, userAccount) {
     return new Promise((resolve, reject) => {
         var promises = []
         promises.push(currentCollateral(option, userAccount))
