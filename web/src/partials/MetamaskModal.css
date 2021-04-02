@@ -124,3 +124,9 @@ a.connect-connect-row {
   flex: 1;
   text-align: left;
 }
+
+.connect-icon {
+  max-width: 28px;
+  height: auto;
+  user-select: none;
+}

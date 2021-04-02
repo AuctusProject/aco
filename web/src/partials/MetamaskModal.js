@@ -49,20 +49,20 @@ class MetamaskModal extends Component {
                   <>
                     {!this.state.connecting && 
                     <div className="connect-connect-row" onClick={() => this.onConnectClick("metamask")}>
-                      <img className="metamask-icon" src="/images/icon_metamask.png" alt=""/>
+                      <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                       <span>Metamask</span>
                       <FontAwesomeIcon icon={faArrowRight}/>
                     </div>}
                     {this.state.connecting && 
                     <div className="connect-connect-row disabled">
-                      <img src="/images/icon_metamask.png" alt=""/>
+                      <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                       <span>Connecting...</span>                      
                     </div>}
                   </>
                 }
                 {!hasMetamask && !isMobile &&
                   <a className="connect-connect-row" href="https://metamask.io/download.html" target="_blank" rel="noopener noreferrer">
-                    <img src="/images/icon_metamask.png" alt=""/>
+                    <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                     <span>Install Metamask</span>
                     <FontAwesomeIcon icon={faArrowRight}/>
                   </a>
@@ -70,13 +70,13 @@ class MetamaskModal extends Component {
                 <>
                   {!this.state.connecting && 
                   <div className="connect-connect-row" onClick={() => this.onConnectClick("walletconnect")}>
-                    <img className="metamask-icon" src="/images/icon_metamask.png" alt=""/>
+                    <img className="connect-icon" src="/images/icon_walletconnect.svg" alt=""/>
                     <span>Wallet Connect</span>
                     <FontAwesomeIcon icon={faArrowRight}/>
                   </div>}
                   {this.state.connecting && 
                   <div className="connect-connect-row disabled">
-                    <img src="/images/icon_metamask.png" alt=""/>
+                    <img className="connect-icon" src="/images/icon_walletconnect.svg" alt=""/>
                     <span>Connecting...</span>                      
                   </div>}
                 </>
