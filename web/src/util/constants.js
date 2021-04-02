@@ -119,13 +119,13 @@ export const ellipsisCenterOfText = (text) => {
     return text
 }
 
-export const formatDate = (expiryTime, shortDate= false) => {
+export const formatDate = (expiryTime, shortDate= false, shortMonth = false) => {
     var options = {}
     if (shortDate) {
         options = { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }
     }
     else {
-        options = { year: 'numeric', month: 'long', day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' }
+        options = { year: 'numeric', month: (shortMonth ? 'short' : 'long'), day: 'numeric', hour:'numeric', minute:'numeric', hour12:false, timeZone: 'UTC' }
     }
     return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + (shortDate ? "" : " UTC")
 }

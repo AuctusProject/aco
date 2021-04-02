@@ -20,8 +20,18 @@
     margin-top: 26px;    
 }
 
+
+
+@media(max-width: 760px) {
+    .reward-cards {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
 .reward-card {
     width: 376px;
+    max-width: calc(100% - 20px);
     border-radius: 12px;
     border-radius: 12px;
     border: solid 1px #464646;

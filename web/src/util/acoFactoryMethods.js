@@ -284,7 +284,7 @@ export function listPositionsForExercise(pair, userAccount, otcPositions) {
     })
 }
 
-function getPositionForOption(option, userAccount) {
+export function getPositionForOption(option, userAccount) {
     return new Promise((resolve, reject) => {
         var promises = []
         promises.push(currentCollateral(option, userAccount))

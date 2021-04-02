@@ -7,7 +7,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { claimReward } from '../../util/acoRewardsMethods'
+import { claimReward, claimRewards } from '../../util/acoRewardsMethods'
 
 class ClaimModal extends Component {
   constructor(props) {
@@ -28,7 +28,10 @@ class ClaimModal extends Component {
   onStartClaim = () => {
     var stepNumber = 0
     this.setStepsModalInfo(++stepNumber)
-    claimReward(this.context.web3.selectedAccount, this.props.data.pool.pid)
+    var method = this.props.data.pids != null ? claimRewards : claimReward
+    var param = this.props.data.pids != null ? this.props.data.pids : this.props.data.pid
+
+    method(this.context.web3.selectedAccount, param)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber)
