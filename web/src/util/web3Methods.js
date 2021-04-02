@@ -16,7 +16,7 @@ export function getWeb3() {
     else {
         if (_web3Fallback === null) {
             _web3Fallback = new Web3(
-                new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
+                new Web3.providers.WebsocketProvider(wssInfuraAddress + "86a7724fd0cb4e5dae62e8c2e474ced0")
             )
         }
         return _web3Fallback
