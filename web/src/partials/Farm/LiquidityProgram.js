@@ -12,24 +12,6 @@ class LiquidityProgram extends Component {
     this.state = { selectedPid: null }
   }
 
-  componentDidMount = () => {
-    this.loadData()
-  }
-
-  componentDidUpdate = (prevProps) => {    
-  }
-
-  loadData = (force = false) => {
-    if (this.farmStarted()) {
-      listRewardsData(force).then((rewardsData) => {
-        this.setState({rewardsData: rewardsData})
-      })
-    }
-    else {
-      this.setState({rewardsData: acoRewardsPools})
-    }
-  }
-
   isConnected = () => {
     return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
   }
@@ -82,13 +64,13 @@ class LiquidityProgram extends Component {
         The liquidity program starts in {this.getTimeLeft()}, check available pools below to join.
       </div>}
       <div className="liquidity-program-pools">
-        {this.state.rewardsData && this.state.rewardsData.map(rewardData => (
+        {acoRewardsPools && acoRewardsPools.map(rewardData => (
           <div key={rewardData.pid} className={"liquidity-card "+ (this.farmStarted() ? "clickable" : "")} onClick={() => this.onLiquiditySelect(rewardData)}>
             <div className="liquidity-card-icon">
               {rewardData.image.map(img => <img key={img} alt="" src={img}></img>)}
             </div>
             <div className="liquidity-card-title">{rewardData.name}</div>
-            <div className="liquidity-card-rewards-title">{this.farmStarted() ? "Rewards per $1000 per month" : "Rewards per month"}</div>
+            <div className="liquidity-card-rewards-title">{"Rewards per month"}</div>
             <div className="liquidity-card-rewards-value">{numberWithCommas(rewardData.monthly1kReward)}</div>
             <div className="liquidity-card-rewards-option">{formatAcoRewardName(rewardData.currentAco)}</div>
           </div>
