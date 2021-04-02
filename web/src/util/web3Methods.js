@@ -63,6 +63,7 @@ export const hasWeb3Provider = () => {
 export const disconnect = async () => {
   let tryDisconnect = false
   try {
+    window.localStorage.removeItem('WEB3_LOGGED')
     if (_web3Provider && _web3Provider.disconnect) {
       tryDisconnect = true
       await _web3Provider.disconnect()
@@ -73,7 +74,6 @@ export const disconnect = async () => {
     _web3 = null
     _web3Fallback = null
     _web3Provider = null
-    window.localStorage.removeItem('WEB3_LOGGED')
     if (!tryDisconnect) {
       document.dispatchEvent(getWeb3DisconnectEvent())
     }
