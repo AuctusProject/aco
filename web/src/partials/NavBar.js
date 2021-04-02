@@ -8,6 +8,7 @@ import { faChevronDown, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/fre
 import { etherscanUrl, ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listPairs } from '../util/acoFactoryMethods'
+import { disconnect } from '../util/web3Methods'
 
 class NavBar extends Component {
   constructor(props){
@@ -120,6 +121,10 @@ class NavBar extends Component {
 
   toggleOptionsSubmenu = () => {
     this.setState({showOptionsSubmenu: !this.state.showOptionsSubmenu})
+  }
+
+  signOut() {
+    disconnect() 
   }
  
   render() {
@@ -238,7 +243,7 @@ class NavBar extends Component {
                     <div className="dropdown-menu" aria-labelledby="navbarProfile">
                       <a className="dropdown-item clickable" rel="noopener noreferrer" href={etherscanUrl + this.context.web3.selectedAccount} target="_blank"><FontAwesomeIcon icon={faExternalLinkAlt}></FontAwesomeIcon>&nbsp;OPEN IN ETHERSCAN</a>
                       <div className="dropdown-divider"></div>
-                      <div className="dropdown-item clickable" target="_self" onClick={() => this.props.signOut()}><FontAwesomeIcon icon={faSignOutAlt}></FontAwesomeIcon>&nbsp;SIGN OUT</div>
+                      <div className="dropdown-item clickable" target="_self" onClick={() => this.signOut()}><FontAwesomeIcon icon={faSignOutAlt}></FontAwesomeIcon>&nbsp;SIGN OUT</div>
                     </div>
                   </li>
                 }

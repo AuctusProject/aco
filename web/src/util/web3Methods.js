@@ -1,40 +1,103 @@
 import Web3Utils from 'web3-utils'
 import Web3 from 'web3'
 import { wethAddress, wssInfuraAddress } from './constants'
-import '@metamask/legacy-web3'
+import detectEthereumProvider from '@metamask/detect-provider'
+import WalletConnectProvider from "@walletconnect/web3-provider"
 
-var _web3 = null
-var _web3Fallback = null
-export function getWeb3() {
-    if (_web3 !== null) {
-        return _web3
-    }
-    else if (window.web3 && window.web3.currentProvider) {
-        _web3 = new Web3(window.web3.currentProvider)
-        return _web3
-    }
-    else {
-        if (_web3Fallback === null) {
-            _web3Fallback = new Web3(
-                new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
-            )
-        }
-        return _web3Fallback
-    }
+let _web3 = null
+let _web3Fallback = null
+let _web3Provider = null
+let _web3Connect = null
+let _web3Disconnect = null
+let _web3AccountChanged = null
+let _web3ChainChanged = null
+
+const getWeb3ConnectEvent = () => {
+  if (_web3Connect === null) {
+    _web3Connect = new CustomEvent("web3-connect", {bubbles: true})
+  }
+  return _web3Connect
 }
 
-export function connectMetamask() {
-    return new Promise(function (resolve, reject) {
-        const web3 = getWeb3()
-        if (web3) {
-            web3.currentProvider.enable()
-                .then(accounts => resolve(accounts))
-                .catch((err) => reject(err))
-        }
-        else {
-            reject()
-        }
+const getWeb3DisconnectEvent = () => {
+  if (_web3Disconnect === null) {
+    _web3Disconnect = new CustomEvent("web3-disconnect", {bubbles: true})
+  }
+  return _web3Disconnect
+}
+
+const getWeb3AccountChangedEvent = () => {
+  if (_web3AccountChanged === null) {
+    _web3AccountChanged = new CustomEvent("web3-accounts", {bubbles: true})
+  }
+  return _web3AccountChanged
+}
+
+const getWeb3ChainChangedEvent = () => {
+  if (_web3ChainChanged === null) {
+    _web3ChainChanged = new CustomEvent("web3-chain", {bubbles: true})
+  }
+  return _web3ChainChanged
+}
+
+export const getWeb3 = () => {
+  if (_web3 !== null) {
+    return _web3
+  } else if (_web3Provider) {
+    _web3 = new Web3(_web3Provider)
+    return _web3
+  } else if (_web3Fallback === null) {
+    _web3Fallback = new Web3(
+      new Web3.providers.WebsocketProvider(wssInfuraAddress + "8d03fea006b64542ab9c26af741965b2")
+    )
+  }
+  return _web3Fallback
+}
+
+export const hasWeb3Provider = () => {
+  return !!_web3Provider
+}
+
+export const disconnect = () => {
+  _web3 = null
+  _web3Fallback = null
+  _web3Provider = null
+  window.localStorage.removeItem('WEB3_LOGGED')
+  document.dispatchEvent(getWeb3DisconnectEvent())
+}
+
+export const connectWeb3Provider = async (connector) => {
+
+  if (connector === "metamask") {
+    _web3Provider = await detectEthereumProvider()
+  } else if (connector === "walletconnect") {
+    _web3Provider = new WalletConnectProvider({
+      infuraId: "27e484dcd9e3efcfd25a83a78777cdf1"
     })
+  } else {
+    throw new Error("Invalid web3 connector")
+  }
+  _web3Provider.on("accountsChanged", (accounts) => {
+    document.dispatchEvent(getWeb3AccountChangedEvent())
+  })
+  _web3Provider.on("chainChanged", (chainId) => {
+    document.dispatchEvent(getWeb3ChainChangedEvent())
+  })
+  _web3Provider.on("disconnect", (error) => {
+    disconnect()
+  })
+  try {
+    if (connector === "metamask") {
+      await _web3Provider.request({ method: 'eth_accounts' })
+    } else if (connector === "walletconnect") {
+      await _web3Provider.enable()
+    }
+    window.localStorage.setItem('WEB3_LOGGED', connector)
+    document.dispatchEvent(getWeb3ConnectEvent())
+  } catch (err) {
+    console.error(err)
+    _web3Provider = null
+  }
 }
 
 export function checkEthBalanceOf(address) {    

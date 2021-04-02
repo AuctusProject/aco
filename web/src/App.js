@@ -42,13 +42,10 @@ class App extends Component {
     getGasPrice()
     window.TradeApp.setNetwork(parseInt(CHAIN_ID))
   }
-
-  signOut() {
-    window.localStorage.setItem('METAMASK_ACCOUNTS_AVAILABLE', '0')
-  }
+  
 
   showSignInModal = (redirectUrl, context) => {
-    if (context && context.web3 && context.web3.hasMetamask && !context.web3.validNetwork) {
+    if (context && context.web3 && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
       error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
     } else {
       this.setState({showSignIn: true, redirectUrl: redirectUrl})
@@ -158,7 +155,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
+            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 

@@ -84,44 +84,43 @@
   margin-bottom: 24px;
 }
 
-.connect-metamask-row {
+.connect-connect-row {
   width: 100%;
   background-color: #242424b6;
-  margin-top: 20px;
   padding: 20px;
   display: flex;
   align-items: center;
   cursor: pointer;
 }
 
-.connect-metamask-row.disabled {
+.connect-connect-row.disabled {
   cursor: default;
 }
 
-.connect-metamask-row:not(.disabled):hover {
+.connect-connect-row:not(.disabled):hover {
   background-color: #ffffff;
   color: #272727;
 }
 
-.light-mode .connect-metamask-row {
+.light-mode .connect-connect-row {
   background-color: #e6e6e6;
 }
 
 
-.light-mode .connect-metamask-row:not(.disabled):hover {
+.light-mode .connect-connect-row:not(.disabled):hover {
   background-color: #5de9d4;
   color: white;
 }
 
-a.connect-metamask-row {
+a.connect-connect-row {
   color: white;
 }
 
-.connect-metamask-row img{
+.connect-connect-row img{
   margin-right: 20px;  
 }
 
-.connect-metamask-row span {
+.connect-connect-row span {
   flex: 1;
   text-align: left;
 }

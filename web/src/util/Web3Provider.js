@@ -1,15 +1,16 @@
 import PropTypes from 'prop-types'
 import { Component } from 'react'
 import { isEmpty } from 'lodash'
-import { ONE_SECOND, ONE_MINUTE, CHAIN_ID } from './constants.js'
-import { getWeb3 } from './web3Methods'
+import { CHAIN_ID } from './constants.js'
+import { connectWeb3Provider, getWeb3, hasWeb3Provider } from './web3Methods'
 
 const childContextTypes = {
   web3: PropTypes.shape({
     accounts: PropTypes.array,
     selectedAccount: PropTypes.string,
-    network: PropTypes.string,
-    networkId: PropTypes.string
+    networkId: PropTypes.number,
+    validNetwork: PropTypes.bool,
+    hasWeb3Provider: PropTypes.bool
   })
 }
 
@@ -18,14 +19,8 @@ class Web3Provider extends Component {
     super(props, context)
     this.state = {
       accounts: [],
-      networkId: null,
-      networkError: null
+      networkId: null
     }
-
-    this.accountTimeout = null
-    this.networkTimeout = null
-    this.fetchAccounts = this.fetchAccounts.bind(this)
-    this.fetchNetwork = this.fetchNetwork.bind(this)
   }
   
   getChildContext() {
@@ -34,40 +29,47 @@ class Web3Provider extends Component {
         accounts: this.state.accounts,
         selectedAccount: this.state.accounts && this.state.accounts[0],
         networkId: this.state.networkId,
-        validNetwork: this.state.networkId === CHAIN_ID,
-        hasMetamask: window.web3 && window.web3.currentProvider
+        validNetwork: this.state.networkId === parseInt(CHAIN_ID),
+        hasWeb3Provider: hasWeb3Provider()
       }
     }
   }
 
   componentDidMount() {
-    this.fetchNetwork().then(() => this.fetchAccounts())    
-    this.networkPoll()
-    this.accountPoll()    
+    window.addEventListener('web3-connect', this.handleConnect)
+    window.addEventListener('web3-disconnect', this.handleDisconnect)
+    window.addEventListener('web3-accounts', this.handleAccounts)
+    window.addEventListener('web3-chain', this.handleChainId)
+    let connector = window.localStorage.getItem('WEB3_LOGGED')
+    if (connector) {
+      connectWeb3Provider(connector)
+    } else {
+      this.props.onLoaded()
+    }
   }
 
-  accountPoll = () => {
-    var self = this
-    setTimeout(() => {
-      self.fetchAccounts()
-      self.accountPoll()
-    }, ONE_SECOND)
+  componentWillUnmount() {
+    window.removeEventListener('web3-connect', this.handleConnect)
+    window.removeEventListener('web3-disconnect', this.handleDisconnect)
+    window.removeEventListener('web3-accounts', this.handleAccounts)
+    window.removeEventListener('web3-chain', this.handleChainId)
   }
 
-  networkPoll = () => {
-    var self = this
-    setTimeout(() => {
-      self.fetchNetwork()
-      self.networkPoll()
-    }, ONE_MINUTE)
+  handleConnect = async () => {
+    this.handleChainId(true)
+    this.handleAccounts()
   }
 
-  fetchAccounts = () => {
-    this.getAccounts().then(ethAccounts => this.handleAccounts(ethAccounts))
+  handleDisconnect = async () => {
+    this.setState({
+      accounts: [],
+      networkId: null
+    }, this.notifyStateChange)
   }
 
-  handleAccounts = (accounts) => {
+  handleAccounts = async () => {
     const { onChangeAccount, onLoaded } = this.props
+    const accounts = await getWeb3().eth.getAccounts()
     let next = accounts && accounts.length > 0 && accounts[0]
     let curr = this.state.accounts && this.state.accounts.length > 0 && this.state.accounts[0]
     next = next && next.toLowerCase()
@@ -75,54 +77,24 @@ class Web3Provider extends Component {
     const didChange = (curr !== next)
 
     if (isEmpty(this.state.accounts) && !isEmpty(accounts)) {
-      this.setState({
-        accountsError: null,
-        accounts: accounts
-      }, this.notifyStateChange)
+      this.setState({ accounts: accounts }, this.notifyStateChange)
     }
 
     if (didChange) {
-      this.setState({
-        accountsError: null,
-        accounts: accounts
-      }, this.notifyStateChange)
+      this.setState({ accounts: accounts }, this.notifyStateChange)
 
-      if (typeof onChangeAccount === 'function' && this.state.networkId === CHAIN_ID) {
+      if (typeof onChangeAccount === 'function' && this.state.networkId === parseInt(CHAIN_ID)) {
         onChangeAccount(next, curr)
       }
     }
-
-    if (typeof onLoaded === 'function') {
-      onLoaded()
-    }    
+    onLoaded()  
   }
 
-  fetchNetwork = () => {
-    return new Promise((resolve, reject) => {    
-      const { web3 } = window
-
-      if (web3) {
-        const isV1 = /^1/.test(web3.version)
-        const getNetwork = isV1 ? web3.eth.net.getId : web3.version.getNetwork
-
-        getNetwork((err, netId) => {
-          if (err) {
-            this.setState({
-              networkError: err
-            }, resolve)
-          } else {
-            if (netId !== this.state.networkId) {
-              this.setState({
-                networkError: null,
-                networkId: netId
-              }, resolve)
-            }
-          }
-          
-        })
-      }
-      else {
-        resolve()
+  handleChainId = async (notNotify = null) => {
+    const chainId = await getWeb3().eth.getChainId()
+    this.setState({ networkId: chainId }, () => {
+      if (!notNotify) {
+        this.notifyStateChange()
       }
     })
   }
@@ -131,24 +103,6 @@ class Web3Provider extends Component {
     if (this.props.stateChanged) {
       this.props.stateChanged()
     }
-  }
-
-  getAccounts = () => {
-    return new Promise(function(resolve,reject){
-      try {
-        var metamaskAccountsAvailable = window.localStorage.getItem('METAMASK_ACCOUNTS_AVAILABLE')
-        if (!window.web3 || !window.web3.currentProvider ||
-         (metamaskAccountsAvailable && metamaskAccountsAvailable !== '1')) {
-          resolve([])
-        }
-        else {
-          const web3  = getWeb3()
-          web3.eth.getAccounts().then(accounts => resolve(accounts))
-        }
-      } catch (e) {
-        resolve([])
-      }
-    })    
   }
 
   render() {
