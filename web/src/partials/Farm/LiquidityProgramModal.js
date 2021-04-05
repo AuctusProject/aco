@@ -14,6 +14,7 @@ import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import StakeModal from './StakeModal'
 import ClaimModal from './ClaimModal'
 import UnstakeModal from './UnstakeModal'
+import { error } from '../../util/sweetalert'
 
 class LiquidityProgramModal extends Component {
   constructor(props) {
@@ -102,11 +103,16 @@ class LiquidityProgramModal extends Component {
   }
 
   onStakeClick = () => {
-    var stakeData = {
-      stakeValue: this.state.stakeValue,
-      pool: this.props.pool
+    if (!this.state.stakeValue || Number(this.state.stakeValue) === 0) {
+      error("You must input a value greater than 0.", "Invalid value")
     }
-    this.setState({stakeData: stakeData})
+    else {
+      var stakeData = {
+        stakeValue: this.state.stakeValue,
+        pool: this.props.pool
+      }
+      this.setState({stakeData: stakeData})
+    }
   }
 
   onClaimClick = () => {
@@ -117,12 +123,17 @@ class LiquidityProgramModal extends Component {
   }
 
   onUnstakeClick = () => {
-    var unstakeData = {
-      unstakeValue: this.state.unstakeValue,
-      pool: this.props.pool,
-      isExit: new BigNumber(this.state.poolStakedBalance).eq(new BigNumber(toDecimals(this.state.unstakeValue, 18)))
+    if (!this.state.unstakeValue || Number(this.state.unstakeValue) === 0) {
+      error("You must input a value greater than 0.", "Invalid value")
     }
-    this.setState({unstakeData: unstakeData})
+    else {
+      var unstakeData = {
+        unstakeValue: this.state.unstakeValue,
+        pool: this.props.pool,
+        isExit: new BigNumber(this.state.poolStakedBalance).eq(new BigNumber(toDecimals(this.state.unstakeValue, 18)))
+      }
+      this.setState({unstakeData: unstakeData})
+    }
   }
 
   onExitClick = () => {
