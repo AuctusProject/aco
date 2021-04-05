@@ -76,16 +76,9 @@ class Web3Provider extends Component {
     curr = curr && curr.toLowerCase()
     const didChange = (curr !== next)
 
-    if (isEmpty(this.state.accounts) && !isEmpty(accounts)) {
-      this.setState({ accounts: accounts }, this.notifyStateChange)
-    }
-
-    if (didChange) {
-      this.setState({ accounts: accounts }, this.notifyStateChange)
-
-      if (typeof onChangeAccount === 'function' && this.state.networkId === parseInt(CHAIN_ID)) {
-        onChangeAccount(next, curr)
-      }
+    this.setState({ accounts: accounts }, this.notifyStateChange)
+    if (didChange && this.state.networkId === parseInt(CHAIN_ID)) {
+      onChangeAccount(next, curr)
     }
     onLoaded()  
   }

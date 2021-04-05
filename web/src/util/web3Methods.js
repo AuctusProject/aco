@@ -93,6 +93,10 @@ export const connectWeb3Provider = async (connector) => {
       chainId: parseInt(CHAIN_ID),
       infuraId: infuraId
     })
+    _web3Provider.onConnect(() => {
+      window.localStorage.setItem('WEB3_LOGGED', "walletconnect")
+      document.dispatchEvent(getWeb3ConnectEvent())
+    })
   } 
   if (!_web3Provider) {
     throw new Error("Web3 provider not found")
