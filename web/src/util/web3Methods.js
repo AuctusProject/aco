@@ -1,11 +1,10 @@
 import Web3Utils from 'web3-utils'
 import Web3 from 'web3'
-import { wethAddress, wssInfuraAddress } from './constants'
+import { CHAIN_ID, wethAddress, wssInfuraAddress } from './constants'
 import detectEthereumProvider from '@metamask/detect-provider'
 import WalletConnectProvider from "@walletconnect/web3-provider"
 
-
-const infuraId = "8d03fea006b64542ab9c26af741965b2"
+const infuraId = "d717f0a555364b0bba00b587f1e6ab46"
 let _web3 = null
 let _web3Fallback = null
 let _web3Provider = null
@@ -86,6 +85,9 @@ export const connectWeb3Provider = async (connector) => {
     _web3Provider = await detectEthereumProvider()
   } else if (connector === "walletconnect") {
     _web3Provider = new WalletConnectProvider({
+      bridge: "https://bridge.walletconnect.org",
+      qrcode: true,
+      chainId: parseInt(CHAIN_ID),
       infuraId: infuraId
     })
   } else {
@@ -151,52 +153,54 @@ export function sendTransactionWithNonce(gasPrice, gasLimit, from, to, value, da
     return new Promise(function (resolve, reject) {        
         var transactionObj = {
             nonce: Web3Utils.toHex(nonce),
-            gasPrice: Web3Utils.toHex(gasPrice),
-            gasLimit: Web3Utils.toHex(gasLimit),
             from: from,
             to: to,
-            value: Web3Utils.toHex(value),
-            data: data,
-            chainId: Web3Utils.toHex(chainId)
+            data: data
         };
+        if (value) {
+          transactionObj.value = Web3Utils.toHex(value)
+        }
+        if (chainId) {
+          transactionObj.chainId = Web3Utils.toHex(chainId)
+        }
+        if (gasPrice) {
+          transactionObj.gasPrice = Web3Utils.toHex(gasPrice)
+        }
+        if (gasLimit) {
+          transactionObj.gasLimit = Web3Utils.toHex(gasLimit)
+        }
 
-        getWeb3().eth.sendTransaction(transactionObj, function (err, result) {
-            if (err) {
-                reject(err)
-            }
-            else {
-                resolve(result)
-            }
-        })
-        .catch(err => {
-            reject(err)
+        const _web3 = getWeb3();
+        (_web3.eth.currentProvider.isWalletConnect ?
+          _web3.eth.currentProvider.connector.signTransaction(transactionObj) :
+          _web3.eth.currentProvider.request({
+            method: 'eth_sendTransaction',
+            params: [transactionObj]
+          })).then((result) => {
+            resolve(result)
+        }).catch((err) => {
+          reject(err)
         })
     })
 }
 
 export function signTypedData(from, data){
     return new Promise(function (resolve, reject) { 
-        const _web3 = getWeb3();
-        _web3.eth.currentProvider.sendAsync({
-            method: 'eth_signTypedData_v4',
-            params: [from, data],
-            from,
-        }, (err, result) => {
-            if (err) {
-                reject(err)
-                return
-            }
-            if (result.error) {
-                reject(result.error)
-            }
-
-            let signature = JSON.stringify(result.result);
-            signature = result.result.substring(2);
-            const r = '0x' + signature.slice(0, 64);
-            const s = '0x' + signature.slice(64, 128);
-            const v = parseInt('0x' + signature.slice(128, 130), 16);
-            resolve({v: v, r: r, s: s})
-        });
+      const params = [from, data]  
+      const _web3 = getWeb3();
+      (_web3.eth.currentProvider.isWalletConnect ?
+        _web3.eth.currentProvider.connector.signTypedData(params) :
+        _web3.eth.currentProvider.request({
+          method: 'eth_signTypedData_v4',
+          params: params,
+          from,
+        })).then((result) => {
+        let signature = result.substring(2)
+        const r = '0x' + signature.slice(0, 64)
+        const s = '0x' + signature.slice(64, 128)
+        const v = parseInt('0x' + signature.slice(128, 130), 16)
+        resolve({v: v, r: r, s: s})
+      }).catch((err) => reject(err))
     })
 }
 
