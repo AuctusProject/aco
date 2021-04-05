@@ -94,7 +94,7 @@ export const connectWeb3Provider = async (connector) => {
       infuraId: infuraId
     })
   } 
-  if (_web3Provider) {
+  if (!_web3Provider) {
     throw new Error("Web3 provider not found")
   }
   _web3Provider.on("accountsChanged", (accounts) => {
