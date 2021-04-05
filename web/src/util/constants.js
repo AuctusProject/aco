@@ -425,7 +425,7 @@ export const removeOtcOptions = (options) => {
 export const removeNotWhitelistedOptions = (options) => {
     return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
         (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
-            (o.underlying.toLowerCase() !== auctusAddress && defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
+            (defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
 }
 
 export const isExpired = (expiryTime) => {

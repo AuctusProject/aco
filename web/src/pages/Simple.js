@@ -8,7 +8,7 @@ import PairDropdown from '../partials/PairDropdown'
 import SimpleBuyTab from '../partials/Simple/SimpleBuyTab'
 import SimpleWriteTab from '../partials/Simple/SimpleWriteTab'
 import SimpleManageTab from '../partials/Simple/SimpleManageTab'
-import { getPairIdFromRoute } from '../util/constants'
+import { auctusAddress, getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import Pools from './Pools'
@@ -40,7 +40,9 @@ class Simple extends Component {
 
   loadAvailableOptions = () => {
     getTokensList().then(result => {
+      result = result.filter(o => o.underlying.toLowerCase() !== auctusAddress)      
       var pairs = getPairsFromOptions(result)
+
       this.props.onPairsLoaded(pairs)
       this.setState({options: result, pairs: pairs, toggleOptionsLoaded: !this.state.toggleOptionsLoaded})
     })
