@@ -4,7 +4,7 @@ import { CHAIN_ID, wethAddress, wssInfuraAddress } from './constants'
 import detectEthereumProvider from '@metamask/detect-provider'
 import WalletConnectProvider from "@walletconnect/web3-provider"
 
-const infuraId = "d717f0a555364b0bba00b587f1e6ab46"
+const infuraId = "86a7724fd0cb4e5dae62e8c2e474ced0"
 let _web3 = null
 let _web3Fallback = null
 let _web3Provider = null
@@ -83,6 +83,9 @@ export const connectWeb3Provider = async (connector) => {
 
   if (connector === "metamask") {
     _web3Provider = await detectEthereumProvider()
+    if (!_web3Provider && window.web3 && window.web3.currentProvider) {
+      _web3Provider = window.web3.currentProvider
+    }
   } else if (connector === "walletconnect") {
     _web3Provider = new WalletConnectProvider({
       bridge: "https://bridge.walletconnect.org",
@@ -90,8 +93,9 @@ export const connectWeb3Provider = async (connector) => {
       chainId: parseInt(CHAIN_ID),
       infuraId: infuraId
     })
-  } else {
-    throw new Error("Invalid web3 connector")
+  } 
+  if (_web3Provider) {
+    throw new Error("Web3 provider not found")
   }
   _web3Provider.on("accountsChanged", (accounts) => {
     document.dispatchEvent(getWeb3AccountChangedEvent())
