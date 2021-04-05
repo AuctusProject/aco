@@ -2,11 +2,6 @@ import './Airdrop.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { acoAirdropAmounts, airdropClaimStart, formatAcoRewardName, fromDecimals, getTimeToExpiry, numberWithCommas, ONE_SECOND } from '../../util/constants';
-import AirdropClaimModal from './AirdropClaimModal';
-import BigNumber from 'bignumber.js';
 
 class Airdrop extends Component {
   constructor(props) {

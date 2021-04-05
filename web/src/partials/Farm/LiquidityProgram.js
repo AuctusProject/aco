@@ -4,12 +4,12 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import LiquidityProgramModal from './LiquidityProgramModal'
 import { listRewardsData } from '../../util/acoRewardsMethods'
-import { airdropClaimStart, ONE_SECOND, formatAcoRewardName, numberWithCommas, acoRewardsPools, getTimeToExpiry } from '../../util/constants'
+import { acoRewardsPools, formatAcoRewardName, numberWithCommas } from '../../util/constants'
 
 class LiquidityProgram extends Component {
   constructor(props) {
     super(props)
-    this.state = { selectedPid: null }
+    this.state = { selectedPid: null, rewardsData: acoRewardsPools }
   }
 
   componentDidMount = () => {
@@ -50,7 +50,7 @@ class LiquidityProgram extends Component {
             </div>
             <div className="liquidity-card-title">{rewardData.name}</div>
             <div className="liquidity-card-rewards-title">{"Rewards per $1000 per month"}</div>
-            <div className="liquidity-card-rewards-value">{numberWithCommas(rewardData.monthly1kReward)}</div>
+            <div className="liquidity-card-rewards-value">{!rewardData.monthly1kReward ? "..." : numberWithCommas(rewardData.monthly1kReward)}</div>
             <div className="liquidity-card-rewards-option">{formatAcoRewardName(rewardData.currentAco)}</div>
           </div>
         ))}
