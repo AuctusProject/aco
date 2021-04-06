@@ -57,8 +57,25 @@
     font-weight: 500;
     text-align: center;
     color: #5de9d4;
-    margin-top: 20px;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+}
+
+.reward-card-balance-mb {
     margin-bottom: 34px;
+}
+
+.reward-card-link {
+    line-height: 20px;
+    margin-bottom: 14px;
+    text-align: center;
+    font-size: 13px;
+    text-decoration: underline;
+    color: #5de9d4;
+    cursor: pointer;
 }
 
 .reward-card-input {
@@ -101,4 +118,9 @@
     text-align: center;
     color: #e6e6e6;
     margin-top: 30px;
+}
+
+.reward-card-balance-value {
+    font-size: 16px;
+    margin-left: 4px;
 }

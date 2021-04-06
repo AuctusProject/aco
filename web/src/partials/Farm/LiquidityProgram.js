@@ -9,7 +9,7 @@ import { acoRewardsPools, formatAcoRewardName, numberWithCommas } from '../../ut
 class LiquidityProgram extends Component {
   constructor(props) {
     super(props)
-    this.state = { selectedPid: null, rewardsData: acoRewardsPools }
+    this.state = { selectedPool: null, rewardsData: acoRewardsPools }
   }
 
   componentDidMount = () => {
@@ -18,7 +18,17 @@ class LiquidityProgram extends Component {
 
   loadData = (force = false) => {
     listRewardsData(force).then((rewardsData) => {
-      this.setState({rewardsData: rewardsData})
+      var selectedPool = this.state.selectedPool
+      if (selectedPool != null) {
+        for (let index = 0; index < rewardsData.length; index++) {
+          const reward = rewardsData[index];
+          if (reward.pid === selectedPool.pid) {
+            selectedPool = reward
+            break
+          }
+        };
+      }
+      this.setState({rewardsData: rewardsData, selectedPool: selectedPool})
     })
   }
 
@@ -35,7 +45,7 @@ class LiquidityProgram extends Component {
       this.onConnectClick()
     }
     else {
-      this.setState({selectedPid: pid})
+      this.setState({selectedPool: pid})
     }
   }
 
@@ -55,7 +65,7 @@ class LiquidityProgram extends Component {
           </div>
         ))}
       </div>
-      {this.state.selectedPid !== null && <LiquidityProgramModal pool={this.state.selectedPid} {...this.props} onHide={() => this.onLiquiditySelect(null)} />}
+      {this.state.selectedPool !== null && <LiquidityProgramModal pool={this.state.selectedPool} {...this.props} onHide={() => this.onLiquiditySelect(null)} />}
   </div>
   }
 }

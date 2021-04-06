@@ -815,3 +815,7 @@ label {
 /* .highlight-background {
     background-color: #3b3b3b;
 } */
+
+.aco-link:hover {
+  text-shadow: 0 2px 5px #5de9d4;
+}
