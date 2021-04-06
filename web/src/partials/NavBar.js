@@ -8,7 +8,6 @@ import { faChevronDown, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/fre
 import { etherscanUrl, ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listPairs } from '../util/acoFactoryMethods'
-import { disconnect } from '../util/web3Methods'
 
 class NavBar extends Component {
   constructor(props){
@@ -124,7 +123,7 @@ class NavBar extends Component {
   }
 
   signOut() {
-    disconnect() 
+    this.props.disconnect() 
   }
  
   render() {

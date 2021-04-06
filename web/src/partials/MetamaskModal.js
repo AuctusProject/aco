@@ -2,7 +2,6 @@ import './MetamaskModal.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
-import { connectWeb3Provider } from '../util/web3Methods'
 import Modal from 'react-bootstrap/Modal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
@@ -12,21 +11,15 @@ class MetamaskModal extends Component {
   constructor(props){
     super(props)
 		this.state = {
-      connecting: false
     }
   }
 
   onConnectClick = (connector) => {
-    this.setState({ connecting: true })
-    connectWeb3Provider(connector).then(() => {
-      this.props.onHide(true)
-    }).finally(() =>
-      this.setState({ connecting: false })
-    )
+    this.props.connect(connector)
   }
 
   render() {
-    let hasMetamask = window && !!window.ethereum
+    let hasWeb3Provider = this.context.web3.hasWeb3Provider
     let isMobile = window.innerWidth <= 768
     let username = this.context && this.context.web3 && this.context.web3.selectedAccount
     if (username) {
@@ -45,22 +38,22 @@ class MetamaskModal extends Component {
                 </div>
                 <div className="metamask-modal-title">Connect Wallet</div>
                 <div className="metamask-modal-subtitle mb-4">To start using Auctus.</div>
-                {hasMetamask &&
+                {hasWeb3Provider &&
                   <>
-                    {!this.state.connecting && 
-                    <div className="connect-connect-row" onClick={() => this.onConnectClick("metamask")}>
+                    {!this.props.connecting && 
+                    <div className="connect-connect-row" onClick={() => this.onConnectClick("injected")}>
                       <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                       <span>Metamask</span>
                       <FontAwesomeIcon icon={faArrowRight}/>
                     </div>}
-                    {this.state.connecting && 
+                    {this.props.connecting && 
                     <div className="connect-connect-row disabled">
                       <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                       <span>Connecting...</span>                      
                     </div>}
                   </>
                 }
-                {!hasMetamask && !isMobile &&
+                {!hasWeb3Provider && !isMobile &&
                   <a className="connect-connect-row" href="https://metamask.io/download.html" target="_blank" rel="noopener noreferrer">
                     <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                     <span>Install Metamask</span>
@@ -68,13 +61,13 @@ class MetamaskModal extends Component {
                   </a>
                 }
                 <>
-                  {!this.state.connecting && 
+                  {!this.props.connecting && 
                   <div className="connect-connect-row" onClick={() => this.onConnectClick("walletconnect")}>
                     <img className="connect-icon" src="/images/icon_walletconnect.svg" alt=""/>
                     <span>Wallet Connect</span>
                     <FontAwesomeIcon icon={faArrowRight}/>
                   </div>}
-                  {this.state.connecting && 
+                  {this.props.connecting && 
                   <div className="connect-connect-row disabled">
                     <img className="connect-icon" src="/images/icon_walletconnect.svg" alt=""/>
                     <span>Connecting...</span>                      
