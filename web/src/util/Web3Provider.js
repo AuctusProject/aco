@@ -104,7 +104,7 @@ class Web3Provider extends Component {
       await this.setInjectedWeb3(web3provider)
     } else {
       const _web3 = this.getWeb3(web3provider)
-      setWeb3(_web3)
+      setWeb3(_web3, null)
       this.setState({web3: _web3, hasWeb3Provider: !!web3provider}, () => this.props.onLoaded())
     }
   }
@@ -136,6 +136,8 @@ class Web3Provider extends Component {
     if (walletConnector.connected) {
       const { accounts, chainId } = walletConnector
       this.setWeb3Data(accounts, chainId, true, this.getWeb3(web3Provider), walletConnector)
+    } else {
+      this.setWeb3Data([], null, false, this.getWeb3(web3Provider), walletConnector)
     }
   }
 
@@ -166,16 +168,16 @@ class Web3Provider extends Component {
       this.setWeb3Data(accounts, parseInt(chainId), accounts && accounts.length > 0, web3)
     } else {
       const _web3 = this.getWeb3(web3Provider)
-      setWeb3(_web3)
+      setWeb3(_web3, null)
       this.setState({web3: _web3, hasWeb3Provider: false}, () => this.props.onLoaded())
     }
   }
 
   setWeb3Data = (accounts, chainId, connected = null, web3 = null, walletConnector = null) => {
-    let next = accounts && accounts.length > 0 && accounts[0]
-    let curr = this.state.accounts && this.state.accounts.length > 0 && this.state.accounts[0]
-    next = next && next.toLowerCase()
-    curr = curr && curr.toLowerCase()
+    let next = accounts && accounts.length > 0 ? accounts[0] : null
+    let curr = this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[0] : null
+    next = next ? next.toLowerCase() : null
+    curr = curr ? curr.toLowerCase() : null
     const didChange = (next !== curr)
     const _web3 = web3 != null ? web3 : this.state.web3
     const _walletConnector = walletConnector != null ? walletConnector : this.state.walletConnector
@@ -254,15 +256,36 @@ class Web3Provider extends Component {
     if (window && window.localStorage) {
       window.localStorage.removeItem('WEB3_LOGGED')
     }
-    this.setState({ ...INITIAL_STATE }, () => this.init())
+    let curr = this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[0] : null
+    this.setState({ 
+      accounts: [],
+      networkId: null,
+      activeIndex: null,
+      walletConnector: null,
+      isConnected: false, 
+      web3: null
+    }, () => {
+      if (this.props.stateChanged) {
+        this.props.stateChanged()
+      }
+      if (curr !== null) {
+        this.props.onChangeAccount(null, curr)
+      }
+      this.init()
+    })
   }
 
   killWalletConnectorSession = (walletConnector = null) => {
     walletConnector = walletConnector ? walletConnector : this.state.walletConnector
     if (walletConnector) {
-      walletConnector.killSession()
-      if (window && window.localStorage) {
-        window.localStorage.removeItem('walletconnect')
+      try {
+        walletConnector.killSession()
+      } catch(e) {
+        console.error(e)
+      } finally {
+        if (window && window.localStorage) {
+          window.localStorage.removeItem('walletconnect')
+        }
       }
     }
   }
