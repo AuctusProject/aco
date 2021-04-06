@@ -46,7 +46,7 @@ class PoolHistoryTxTab extends Component {
       }      
     }
     if (event.type === "withdraw") {
-      return `+${fromDecimals(event.data.underlyingWithdrawn, pool.underlyingInfo.decimals)}`
+      return `-${fromDecimals(event.data.underlyingWithdrawn, pool.underlyingInfo.decimals)}`
     }
   }
 
@@ -88,7 +88,7 @@ class PoolHistoryTxTab extends Component {
       }      
     }
     if (event.type === "withdraw") {
-      return `+${fromDecimals(event.data.strikeAssetWithdrawn, pool.strikeAssetInfo.decimals)}`
+      return `-${fromDecimals(event.data.strikeAssetWithdrawn, pool.strikeAssetInfo.decimals)}`
     }
   }
 

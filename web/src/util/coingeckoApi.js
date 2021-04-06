@@ -1,13 +1,15 @@
 import Axios from 'axios'
-import { coingeckoApiUrl, isEther } from './constants';
+import { coingeckoApiUrl, isEther, retry } from './constants';
 
 export function getCoingeckoPrice(ids) {
     return new Promise(function(resolve,reject){
-        Axios.get(coingeckoApiUrl + "simple/price?vs_currencies=usd&ids="+ids)
+        retry(() => {return Axios.get(coingeckoApiUrl + "simple/price?vs_currencies=usd&ids="+ids)}, 3, 100)
         .then(res => {
             resolve(res.data)
         })
-        .catch(err => reject(err));
+        .catch(err => {
+            reject(err)
+        });
     })
 }
 

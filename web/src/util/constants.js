@@ -1,3 +1,4 @@
+import { resolve } from '@metamask/legacy-web3';
 import Web3Utils from 'web3-utils'
 import { balanceOf, getERC20AssetInfo } from './erc20Methods';
 import { checkEthBalanceOf } from './web3Methods';
@@ -510,4 +511,26 @@ export const formatAcoRewardName = (acoReward) => {
 export const parseBigIntToNumber = (bigInt, decimals = 6) => {
     const precision = 100000000.0
     return parseInt(bigInt * BigInt(precision) / BigInt("1".padEnd(decimals + 1, "0"))) / precision
+}
+
+export const retry = (task, retries, delay) => {
+    return new Promise(function(resolve,reject){
+        internalRetry(task, retries, delay, resolve, reject)
+    })
+}
+
+const internalRetry = (task, retries, delay, resolve, reject) => {
+    task().then(res => {
+        resolve(res)
+    })
+    .catch(err => {
+        if (retries > 0) {
+            return setTimeout(function () {
+                internalRetry(task, retries - 1, delay, resolve, reject)
+            }, delay)
+        }
+        else {
+            reject(err)
+        }
+    })
 }
