@@ -72,7 +72,7 @@ class Web3Provider extends Component {
   }
 
   getWalletCachedSession = () => {
-    const local = window.localStorage ? window.localStorage.getItem("walletconnect") : null
+    const local = window && window.localStorage ? window.localStorage.getItem("walletconnect") : null
     let session = null
     if (local) {
       try {
@@ -85,15 +85,20 @@ class Web3Provider extends Component {
   }
 
   init = async () => {
-    let connectorType = window.localStorage.getItem('WEB3_LOGGED')
+    let connectorType = window && window.localStorage ? window.localStorage.getItem('WEB3_LOGGED') : null
     const web3provider = await this.getInjectedWeb3Provider()
     if (connectorType === "walletconnect") {
       const session = this.getWalletCachedSession()
       if (session) {
         const connector = new WalletConnect({session})
-        this.setWalletConnect(connector, web3provider)
+        if (connector.connected) {
+          this.setWalletConnect(connector, web3provider)
+        } else {
+          this.killWalletConnectorSession(connector)
+          this.disconnect()
+        }
       } else {
-        this.setDisconnect()
+        this.disconnect()
       }
     } else if (connectorType === "injected") {
       await this.setInjectedWeb3(web3provider)
@@ -126,7 +131,7 @@ class Web3Provider extends Component {
         throw error
       }
       console.log("EVENT", "wallet disconnect")
-      this.setDisconnect()
+      this.disconnect()
     })
     if (walletConnector.connected) {
       const { accounts, chainId } = walletConnector
@@ -153,7 +158,7 @@ class Web3Provider extends Component {
         if (error) {
           throw error
         }
-        this.setDisconnect()
+        this.disconnect()
       })
       const web3 = new Web3(web3Provider)
       const accounts = await web3Provider.request({ method: 'eth_accounts' })
@@ -164,11 +169,6 @@ class Web3Provider extends Component {
       setWeb3(_web3)
       this.setState({web3: _web3, hasWeb3Provider: false}, () => this.props.onLoaded())
     }
-  }
-
-  setDisconnect = () => {
-    window.localStorage.removeItem('WEB3_LOGGED')
-    this.setState({ ...INITIAL_STATE }, () => this.init())
   }
 
   setWeb3Data = (accounts, chainId, connected = null, web3 = null, walletConnector = null) => {
@@ -222,9 +222,12 @@ class Web3Provider extends Component {
         bridge: "https://bridge.walletconnect.org",
         qrcodeModal: QRCodeModal
       })
-      this.setWalletConnect(connector)
       if (!connector.connected) {
-        connector.createSession()
+        await connector.createSession()
+      }
+      this.setWalletConnect(connector)
+      if (window && window.localStorage) {
+        window.localStorage.setItem('WEB3_LOGGED', type)
       }
     } else if (type === "injected") {
       const web3Provider = await this.getInjectedWeb3Provider()
@@ -234,6 +237,9 @@ class Web3Provider extends Component {
       await this.setInjectedWeb3(web3Provider)
       const accounts = await web3Provider.request({ method: 'eth_requestAccounts' })
       const chainId = await web3Provider.request({ method: 'eth_chainId' })
+      if (window && window.localStorage) {
+        window.localStorage.setItem('WEB3_LOGGED', type)
+      }
       this.setWeb3Data(accounts, parseInt(chainId), true)
     } else {
       throw new Error("Invalid connection type")
@@ -244,10 +250,21 @@ class Web3Provider extends Component {
     if (this.state.web3 && this.state.web3.currentProvider && this.state.web3.currentProvider.removeAllListeners) {
       this.state.web3.currentProvider.removeAllListeners()
     }
-    if (this.state.walletConnector) {
-      this.state.walletConnector.killSession()
+    this.killWalletConnectorSession()
+    if (window && window.localStorage) {
+      window.localStorage.removeItem('WEB3_LOGGED')
     }
-    this.setDisconnect()
+    this.setState({ ...INITIAL_STATE }, () => this.init())
+  }
+
+  killWalletConnectorSession = (walletConnector = null) => {
+    walletConnector = walletConnector ? walletConnector : this.state.walletConnector
+    if (walletConnector) {
+      walletConnector.killSession()
+      if (window && window.localStorage) {
+        window.localStorage.removeItem('walletconnect')
+      }
+    }
   }
 
   render() {
