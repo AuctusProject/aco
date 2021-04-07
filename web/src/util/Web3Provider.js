@@ -11,39 +11,33 @@ const infuraId = "86a7724fd0cb4e5dae62e8c2e474ced0"
 
 const childContextTypes = {
   web3: PropTypes.shape({
-    accounts: PropTypes.array,
     selectedAccount: PropTypes.string,
     networkId: PropTypes.number,
     validNetwork: PropTypes.bool,
-    hasWeb3Provider: PropTypes.bool,
-    isConnected: PropTypes.bool
+    hasWeb3Provider: PropTypes.bool
   })
-}
-
-const INITIAL_STATE = {
-  accounts: [],
-  networkId: null,
-  activeIndex: null,
-  walletConnector: null,
-  isConnected: false,
-  web3: null,
-  hasWeb3Provider: false
 }
 
 class Web3Provider extends Component {
   constructor(props, context) {
     super(props, context)
-    this.state = { ...INITIAL_STATE }
+    this.state = { 
+      accounts: [],
+      networkId: null,
+      activeIndex: null,
+      walletConnector: null,
+      web3: null,
+      hasWeb3Provider: false 
+    }
   }
   
   getChildContext() {
     return {
       web3: {
-        selectedAccount: this.state.accounts && this.state.accounts[this.state.activeIndex],
+        selectedAccount: this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[this.state.activeIndex] : null,
         networkId: this.state.networkId,
         validNetwork: this.state.networkId === parseInt(CHAIN_ID),
-        hasWeb3Provider: this.state.hasWeb3Provider,
-        isConnected: this.state.isConnected
+        hasWeb3Provider: this.state.hasWeb3Provider
       }
     }
   }
@@ -53,14 +47,14 @@ class Web3Provider extends Component {
   }
 
   componentWillUnmount() {
-    if (this.state.web3 && this.state.web3.currentProvider && this.state.web3.currentProvider.removeAllListeners) {
-      this.state.web3.currentProvider.removeAllListeners()
-    }
+    this.unsubscribeEvents()
   }
 
   componentDidUpdate = (prevProps) => {    
     if (this.props.connecting && this.props.connecting !== prevProps.connecting) {
-      this.connect(this.props.connecting).then(() => this.props.connected(true)).catch((err) => {
+      this.connect(this.props.connecting).then(() => {
+        this.props.connected(true)
+      }).catch((err) => {
         this.props.connected(false)
         console.error(err)
       })
@@ -86,26 +80,27 @@ class Web3Provider extends Component {
 
   init = async () => {
     let connectorType = window && window.localStorage ? window.localStorage.getItem('WEB3_LOGGED') : null
-    const web3provider = await this.getInjectedWeb3Provider()
+    const web3Provider = await this.getInjectedWeb3Provider()
     if (connectorType === "walletconnect") {
       const session = this.getWalletCachedSession()
       if (session) {
         const connector = new WalletConnect({session})
         if (connector.connected) {
-          this.setWalletConnect(connector, web3provider)
+          this.setWalletConnect(connector, web3Provider)
         } else {
           this.killWalletConnectorSession(connector)
-          this.disconnect()
+          await this.disconnect(web3Provider)
         }
       } else {
-        this.disconnect()
+        await this.disconnect(web3Provider)
       }
     } else if (connectorType === "injected") {
-      await this.setInjectedWeb3(web3provider)
+      await this.setInjectedWeb3(web3Provider)
     } else {
-      const _web3 = this.getWeb3(web3provider)
+      const _web3 = this.getWeb3(web3Provider)
+      const chainId = await this.getChainId(web3Provider)
       setWeb3(_web3, null)
-      this.setState({web3: _web3, hasWeb3Provider: !!web3provider}, () => this.props.onLoaded())
+      this.setState({networkId: chainId, web3: _web3, hasWeb3Provider: !!web3Provider}, () => this.props.onLoaded())
     }
   }
 
@@ -116,7 +111,7 @@ class Web3Provider extends Component {
       }
       console.log("EVENT", "wallet connect")
       const { accounts, chainId } = payload.params[0]
-      this.setWeb3Data(accounts, chainId, true, this.getWeb3(web3Provider))
+      this.setWeb3Data(accounts, chainId)
     })
     walletConnector.on("session_update", (error, payload) => {
       if (error) {
@@ -133,11 +128,12 @@ class Web3Provider extends Component {
       console.log("EVENT", "wallet disconnect")
       this.disconnect()
     })
+    const _web3 = this.getWeb3(web3Provider)
     if (walletConnector.connected) {
       const { accounts, chainId } = walletConnector
-      this.setWeb3Data(accounts, chainId, true, this.getWeb3(web3Provider), walletConnector)
+      this.setWeb3Data(accounts, chainId, _web3, walletConnector)
     } else {
-      this.setWeb3Data([], null, false, this.getWeb3(web3Provider), walletConnector)
+      this.setWeb3Data([], null, _web3, walletConnector)
     }
   }
 
@@ -145,7 +141,7 @@ class Web3Provider extends Component {
     if (web3Provider) {
       web3Provider.on("connect", (chainId) => {
         this.state.web3.eth.getAccounts().then((accounts) => {
-          this.setWeb3Data(accounts, parseInt(chainId), true)
+          this.setWeb3Data(accounts, parseInt(chainId))
         }).catch((err) => {
           throw err
         })
@@ -162,18 +158,40 @@ class Web3Provider extends Component {
         }
         this.disconnect()
       })
-      const web3 = new Web3(web3Provider)
-      const accounts = await web3Provider.request({ method: 'eth_accounts' })
-      const chainId = await web3Provider.request({ method: 'eth_chainId' })
-      this.setWeb3Data(accounts, parseInt(chainId), accounts && accounts.length > 0, web3)
+      const _web3 = new Web3(web3Provider)
+      let accounts = []
+      if (web3Provider.request) {
+        accounts = await web3Provider.request({ method: 'eth_accounts' })
+      } else {
+        accounts = await _web3.eth.getAccounts()
+      }
+      const chainId = await this.getChainId(web3Provider)
+      this.setWeb3Data(accounts, chainId, _web3)
     } else {
       const _web3 = this.getWeb3(web3Provider)
+      const chainId = await this.getChainId(web3Provider)
       setWeb3(_web3, null)
-      this.setState({web3: _web3, hasWeb3Provider: false}, () => this.props.onLoaded())
+      this.setState({web3: _web3, hasWeb3Provider: false, networkId: chainId}, () => this.props.onLoaded())
     }
   }
 
-  setWeb3Data = (accounts, chainId, connected = null, web3 = null, walletConnector = null) => {
+  getChainId = async (web3Provider) => {
+    let chainId = null
+    if (web3Provider) {
+      try {
+        if (web3Provider.request) {
+          chainId = await web3Provider.request({ method: 'eth_chainId' })
+        } else {
+          chainId = await web3Provider.eth.net.getId()
+        }
+      } catch(err) {
+        console.error(err)
+      }
+    }
+    return chainId ? parseInt(chainId) : null
+  }
+
+  setWeb3Data = (accounts, chainId, web3 = null, walletConnector = null) => {
     let next = accounts && accounts.length > 0 ? accounts[0] : null
     let curr = this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[0] : null
     next = next ? next.toLowerCase() : null
@@ -183,7 +201,6 @@ class Web3Provider extends Component {
     const _walletConnector = walletConnector != null ? walletConnector : this.state.walletConnector
     setWeb3(_web3, _walletConnector)
     this.setState({ 
-      isConnected: connected != null ? connected : this.state.isConnected,
       web3: _web3,
       walletConnector: _walletConnector,
       hasWeb3Provider: true,
@@ -191,9 +208,6 @@ class Web3Provider extends Component {
       networkId: chainId !== null && chainId !== undefined ? chainId : null,
       activeIndex: accounts && accounts.length > 0 ? accounts.indexOf(accounts[0]) : null
      }, () => {
-      if (this.props.stateChanged) {
-        this.props.stateChanged()
-      }
       if (didChange) {
         this.props.onChangeAccount(next, curr)
       }
@@ -219,6 +233,7 @@ class Web3Provider extends Component {
   }
 
   connect = async (type) => {
+    const web3Provider = await this.getInjectedWeb3Provider()
     if (type === "walletconnect") {
       const connector = new WalletConnect({
         bridge: "https://bridge.walletconnect.org",
@@ -227,52 +242,63 @@ class Web3Provider extends Component {
       if (!connector.connected) {
         await connector.createSession()
       }
-      this.setWalletConnect(connector)
+      this.setWalletConnect(connector, web3Provider)
       if (window && window.localStorage) {
         window.localStorage.setItem('WEB3_LOGGED', type)
       }
     } else if (type === "injected") {
-      const web3Provider = await this.getInjectedWeb3Provider()
       if (!web3Provider) {
         throw new Error("No injected web3 provider was found")
       }
       await this.setInjectedWeb3(web3Provider)
-      const accounts = await web3Provider.request({ method: 'eth_requestAccounts' })
-      const chainId = await web3Provider.request({ method: 'eth_chainId' })
+      let accounts = []
+      if (web3Provider.request) {
+        accounts = await web3Provider.request({ method: 'eth_requestAccounts' })
+      } else if (web3Provider.enable) {
+        accounts = await web3Provider.enable()
+      }
       if (window && window.localStorage) {
         window.localStorage.setItem('WEB3_LOGGED', type)
       }
-      this.setWeb3Data(accounts, parseInt(chainId), true)
+      const chainId = await this.getChainId(web3Provider)
+      this.setWeb3Data(accounts, chainId)
     } else {
       throw new Error("Invalid connection type")
     }
   }
 
-  disconnect = () => {
-    if (this.state.web3 && this.state.web3.currentProvider && this.state.web3.currentProvider.removeAllListeners) {
-      this.state.web3.currentProvider.removeAllListeners()
-    }
+  disconnect = async (web3Provider = null) => {
+    this.unsubscribeEvents()
     this.killWalletConnectorSession()
     if (window && window.localStorage) {
       window.localStorage.removeItem('WEB3_LOGGED')
     }
     let curr = this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[0] : null
+    if (!web3Provider) {
+      web3Provider = await this.getInjectedWeb3Provider()
+    }
+    const _web3 = this.getWeb3(web3Provider)
+    const chaind = await this.getChainId(web3Provider)
+    setWeb3(_web3, null)
     this.setState({ 
       accounts: [],
-      networkId: null,
       activeIndex: null,
       walletConnector: null,
-      isConnected: false, 
-      web3: null
+      hasWeb3Provider: !!web3Provider,
+      networkId: chaind,
+      web3: _web3
     }, () => {
-      if (this.props.stateChanged) {
-        this.props.stateChanged()
-      }
       if (curr !== null) {
         this.props.onChangeAccount(null, curr)
       }
-      this.init()
+      this.props.onLoaded()
     })
+  }
+
+  unsubscribeEvents = () => {
+    if (this.state.web3 && this.state.web3.currentProvider && this.state.web3.currentProvider.removeAllListeners) {
+      this.state.web3.currentProvider.removeAllListeners()
+    }
   }
 
   killWalletConnectorSession = (walletConnector = null) => {

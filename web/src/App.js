@@ -47,7 +47,7 @@ class App extends Component {
   
 
   showSignInModal = (redirectUrl, context) => {
-    if (context && context.web3 && context.web3.isConnected && !context.web3.validNetwork) {
+    if (context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
       error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
     } else {
       this.setState({showSignIn: true, redirectUrl: redirectUrl})

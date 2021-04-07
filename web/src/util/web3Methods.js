@@ -113,10 +113,15 @@ export function sendTransactionWithNonce(gasPrice, gasLimit, from, to, value, da
       promise = _connector.sendTransaction(transactionObj)
     } else {
       const web3 = getWeb3()
-      promise = web3.eth.currentProvider.request({
+      const requestData = {
         method: 'eth_sendTransaction',
         params: [transactionObj]
-      })
+      }
+      if (web3.eth.currentProvider.request) {
+        promise = web3.eth.currentProvider.request(requestData)
+      } else {
+        promise = web3.eth.currentProvider.send(requestData)
+      }
     }
     promise.then((result) => resolve(result)).catch((err) => reject(err))
   })
@@ -130,11 +135,16 @@ export function signTypedData(from, data){
       promise = _connector.signTypedData(params)
     } else {
       const web3 = getWeb3()
-      promise = web3.eth.currentProvider.request({
+      const requestData = {
         method: 'eth_signTypedData_v4',
         params: params,
-        from,
-      })
+        from
+      }
+      if (web3.eth.currentProvider.request) {
+        promise = web3.eth.currentProvider.request(requestData)
+      } else {
+        promise = web3.eth.currentProvider.send(requestData)
+      }
     }
     promise.then((result) => {
       let signature = result.substring(2)
