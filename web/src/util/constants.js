@@ -425,7 +425,7 @@ export const removeOtcOptions = (options) => {
 export const removeNotWhitelistedOptions = (options) => {
     return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
         (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
-            (o.underlying.toLowerCase() !== auctusAddress && defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
+            (defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
 }
 
 export const isExpired = (expiryTime) => {
@@ -510,4 +510,26 @@ export const formatAcoRewardName = (acoReward) => {
 export const parseBigIntToNumber = (bigInt, decimals = 6) => {
     const precision = 100000000.0
     return parseInt(bigInt * BigInt(precision) / BigInt("1".padEnd(decimals + 1, "0"))) / precision
+}
+
+export const retry = (task, retries, delay) => {
+    return new Promise(function(resolve,reject){
+        internalRetry(task, retries, delay, resolve, reject)
+    })
+}
+
+const internalRetry = (task, retries, delay, resolve, reject) => {
+    task().then(res => {
+        resolve(res)
+    })
+    .catch(err => {
+        if (retries > 0) {
+            return setTimeout(function () {
+                internalRetry(task, retries - 1, delay, resolve, reject)
+            }, delay)
+        }
+        else {
+            reject(err)
+        }
+    })
 }

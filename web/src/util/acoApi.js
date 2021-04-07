@@ -166,19 +166,6 @@ export function getOtcOrder(orderId) {
     })
 }
 
-export function getClaimableAco(from) {
-    return new Promise(function(resolve,reject){
-        Axios.get(apiUrl + "distributor/" + encodeURIComponent(from))
-        .then((res) => {
-            if (res && res.data) {
-                resolve(res.data);
-            } else {
-                resolve(null);
-            }
-        }).catch(err => reject(err));
-    })
-}
-
 export function createOtcOrder(isAskOrder, signedOrder) {
     return new Promise(function(resolve,reject){
         Axios.post(apiUrl + "order", {isAskOrder:isAskOrder,order:signedOrder})
