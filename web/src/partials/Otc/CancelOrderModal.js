@@ -58,7 +58,7 @@ class CancelOrderModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to cancel OTC order."
+      subtitle = "Confirm on " + this.context.web3.name + " to cancel OTC order."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

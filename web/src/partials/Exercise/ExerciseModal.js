@@ -164,7 +164,7 @@ class ExerciseModal extends Component {
     var option = this.props.position.option
     var unlockSymbol =  (this.state.selectedTab === 1 ? this.getPaySymbol() : option.acoTokenInfo.symbol)
     if (needApproval && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to unlock " + unlockSymbol + " for using on Auctus"
+      subtitle = "Confirm on " + this.context.web3.name + " to unlock " + unlockSymbol + " for using on Auctus"
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {
@@ -172,7 +172,7 @@ class ExerciseModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to send " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol 
+      subtitle = "Confirm on " + this.context.web3.name + " to send " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol 
       if (this.state.selectedTab === 1) {
         subtitle += " and " + this.formattedPayValue() + " " + this.getPaySymbol() + ", you'll receive " + this.state.collateralValue + " " + this.getReceiveSymbol() + " by exercising."
       }

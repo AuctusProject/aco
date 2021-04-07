@@ -94,7 +94,7 @@ class WrittenOptionsPositions extends Component {
     var subtitle = "Redeem unassigned collateral"
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to redeem back your collateral."
+      subtitle = "Confirm on " + this.context.web3.name + " to redeem back your collateral."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

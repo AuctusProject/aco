@@ -60,7 +60,7 @@ class UnstakeModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = `Confirm on Metamask to ${(this.props.data.isExit ? "exit": "unstake")}.`
+      subtitle = `Confirm on ${this.context.web3.name} " to ${(this.props.data.isExit ? "exit": "unstake")}.`
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

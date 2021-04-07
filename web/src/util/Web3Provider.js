@@ -14,7 +14,8 @@ const childContextTypes = {
     selectedAccount: PropTypes.string,
     networkId: PropTypes.number,
     validNetwork: PropTypes.bool,
-    hasWeb3Provider: PropTypes.bool
+    hasWeb3Provider: PropTypes.bool,
+    name: PropTypes.string
   })
 }
 
@@ -27,7 +28,8 @@ class Web3Provider extends Component {
       activeIndex: null,
       walletConnector: null,
       web3: null,
-      hasWeb3Provider: false 
+      hasWeb3Provider: false,
+      name: null
     }
   }
   
@@ -37,7 +39,8 @@ class Web3Provider extends Component {
         selectedAccount: this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[this.state.activeIndex] : null,
         networkId: this.state.networkId,
         validNetwork: this.state.networkId === parseInt(CHAIN_ID),
-        hasWeb3Provider: this.state.hasWeb3Provider
+        hasWeb3Provider: this.state.hasWeb3Provider,
+        name: this.state.name
       }
     }
   }
@@ -100,8 +103,19 @@ class Web3Provider extends Component {
       const _web3 = this.getWeb3(web3Provider)
       const chainId = await this.getChainId(web3Provider)
       setWeb3(_web3, null)
-      this.setState({networkId: chainId, web3: _web3, hasWeb3Provider: !!web3Provider}, () => this.props.onLoaded())
+      this.setState({networkId: chainId, web3: _web3, hasWeb3Provider: !!web3Provider, name: this.getProviderName(web3Provider)}, () => this.props.onLoaded())
     }
+  }
+
+  getProviderName = (web3Provider) => {
+    if (web3Provider) {
+      if (web3Provider.isMetaMask) {
+        return "Metamask"
+      } else {
+        return "Web3 Provider"
+      }
+    }
+    return null
   }
 
   setWalletConnect = (walletConnector, web3Provider) => {
@@ -132,9 +146,9 @@ class Web3Provider extends Component {
     const _web3 = this.getWeb3(web3Provider)
     if (walletConnector.connected) {
       const { accounts, chainId } = walletConnector
-      this.setWeb3Data(accounts, chainId, _web3, walletConnector)
+      this.setWeb3Data(accounts, chainId, "Wallet Connect", _web3, walletConnector)
     } else {
-      this.setWeb3Data([], null, _web3, walletConnector)
+      this.setWeb3Data([], null, "Wallet Connect", _web3, walletConnector)
     }
   }
 
@@ -173,12 +187,12 @@ class Web3Provider extends Component {
         accounts = await _web3.eth.getAccounts()
       }
       const chainId = await this.getChainId(web3Provider)
-      this.setWeb3Data(accounts, chainId, _web3)
+      this.setWeb3Data(accounts, chainId, this.getProviderName(web3Provider), _web3)
     } else {
       const _web3 = this.getWeb3(web3Provider)
       const chainId = await this.getChainId(web3Provider)
       setWeb3(_web3, null)
-      this.setState({web3: _web3, hasWeb3Provider: false, networkId: chainId}, () => this.props.onLoaded())
+      this.setState({web3: _web3, hasWeb3Provider: false, networkId: chainId, name: null}, () => this.props.onLoaded())
     }
   }
 
@@ -198,7 +212,7 @@ class Web3Provider extends Component {
     return chainId ? parseInt(chainId) : null
   }
 
-  setWeb3Data = (accounts, chainId, web3 = null, walletConnector = null) => {
+  setWeb3Data = (accounts, chainId, name = null, web3 = null, walletConnector = null) => {
     let next = accounts && accounts.length > 0 ? accounts[0] : null
     let curr = this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[0] : null
     next = next ? next.toLowerCase() : null
@@ -213,6 +227,7 @@ class Web3Provider extends Component {
       hasWeb3Provider: true,
       accounts: accounts ? accounts : [],
       networkId: chainId !== null && chainId !== undefined ? chainId : null,
+      name: name !== null && name !== undefined ? name : this.state.name,
       activeIndex: accounts && accounts.length > 0 ? accounts.indexOf(accounts[0]) : null
      }, () => {
       if (didChange) {
@@ -278,7 +293,7 @@ class Web3Provider extends Component {
       if (window && window.localStorage) {
         window.localStorage.setItem('WEB3_LOGGED', type)
       }
-      this.setWeb3Data(accounts, chainId, new Web3(web3Provider))
+      this.setWeb3Data(accounts, chainId, this.getProviderName(web3Provider), new Web3(web3Provider))
     } else {
       throw new Error("Invalid connection type")
     }
@@ -303,7 +318,8 @@ class Web3Provider extends Component {
       walletConnector: null,
       hasWeb3Provider: !!web3Provider,
       networkId: chaind,
-      web3: _web3
+      web3: _web3,
+      name: this.getProviderName(web3Provider)
     }, () => {
       if (curr !== null) {
         this.props.onChangeAccount(null, curr)

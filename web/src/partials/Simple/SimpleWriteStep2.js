@@ -218,7 +218,7 @@ class SimpleWriteStep2 extends Component {
     var img = null
     var optionsAmount = this.getOptionsAmount()
     if (stepNumber === 1) {
-      subtitle =  "Confirm on Metamask to unlock "+this.getCollaterizeAssetSymbol()+" for writing on Auctus" 
+      subtitle =  "Confirm on " + this.context.web3.name + " to unlock "+this.getCollaterizeAssetSymbol()+" for writing on Auctus" 
       img = <MetamaskLargeIcon/>
     }
     else if (stepNumber === 2) {
@@ -230,7 +230,7 @@ class SimpleWriteStep2 extends Component {
       img = <SpinnerLargeIcon/>
     }
     else if (stepNumber === 4) {
-      subtitle =  "Confirm on Metamask to write "+optionsAmount+" "+this.props.option.acoTokenInfo.symbol
+      subtitle =  "Confirm on " + this.context.web3.name + " to write "+optionsAmount+" "+this.props.option.acoTokenInfo.symbol
       img = <MetamaskLargeIcon/>
     }
     else if (stepNumber === 5) {

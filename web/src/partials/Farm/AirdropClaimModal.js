@@ -59,7 +59,7 @@ class AirdropClaimModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to claim airdrop."
+      subtitle = "Confirm on " + this.context.web3.name + " to claim airdrop."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

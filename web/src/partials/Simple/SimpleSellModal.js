@@ -106,7 +106,7 @@ class SimpleSellModal extends Component {
     var option = this.props.position.option
     var unlockSymbol =  (option.strikeAssetInfo.symbol)
     if (needApproval && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to unlock " + unlockSymbol + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to unlock " + unlockSymbol + "."
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {
@@ -114,7 +114,7 @@ class SimpleSellModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to sell " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol  + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to sell " + this.state.optionsAmount + " " + option.acoTokenInfo.symbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {

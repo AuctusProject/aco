@@ -62,7 +62,7 @@ class RestoreModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to send transaction."
+      subtitle = "Confirm on " + this.context.web3.name + " to send transaction."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

@@ -206,7 +206,7 @@ class TakeOrderModal extends Component {
     var img = null
     var assetSymbol =  this.getAssetSymbol()
     if (needWrap && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to wrap ETH."
+      subtitle = "Confirm on " + this.context.web3.name + " to wrap ETH."
       img = <MetamaskLargeIcon />
     }
     else if (needWrap && stepNumber === 2) {
@@ -214,7 +214,7 @@ class TakeOrderModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (needApproval && stepNumber === 3) {
-      subtitle = "Confirm on Metamask to unlock " + assetSymbol + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to unlock " + assetSymbol + "."
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 4) {
@@ -222,7 +222,7 @@ class TakeOrderModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 5) {
-      subtitle = "Confirm on Metamask to execute OTC order."
+      subtitle = "Confirm on " + this.context.web3.name + " to execute OTC order."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 6) {
