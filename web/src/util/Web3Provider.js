@@ -262,12 +262,18 @@ class Web3Provider extends Component {
       this.setInjectedWeb3Events(web3Provider)
       const chainId = await this.getChainId(web3Provider)
       let accounts = []
-      if (web3Provider.request) {
-        accounts = await web3Provider.request({ method: 'eth_requestAccounts' })
-      } else if (web3Provider.enable) {
-        accounts = await web3Provider.enable()
-      } else {
-        throw new Error("Cannot connect on Injected Web3")
+      try {
+        if (web3Provider.request) {
+          accounts = await web3Provider.request({ method: 'eth_requestAccounts' })
+        } else if (web3Provider.enable) {
+          accounts = await web3Provider.enable()
+        } else {
+          throw new Error("Cannot connect on Injected Web3")
+        }
+      } catch(err) {
+        console.error(err)
+        this.unsubscribeEvents()
+        return
       }
       if (window && window.localStorage) {
         window.localStorage.setItem('WEB3_LOGGED', type)
