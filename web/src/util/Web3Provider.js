@@ -266,6 +266,8 @@ class Web3Provider extends Component {
         accounts = await web3Provider.request({ method: 'eth_requestAccounts' })
       } else if (web3Provider.enable) {
         accounts = await web3Provider.enable()
+      } else {
+        throw new Error("Cannot connect on Injected Web3")
       }
       if (window && window.localStorage) {
         window.localStorage.setItem('WEB3_LOGGED', type)
