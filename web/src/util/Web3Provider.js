@@ -138,7 +138,7 @@ class Web3Provider extends Component {
     }
   }
 
-  setInjectedWeb3 = async (web3Provider) => {
+  setInjectedWeb3Events = (web3Provider) => {
     if (web3Provider) {
       web3Provider.on("connect", (chainId) => {
         this.state.web3.eth.getAccounts().then((accounts) => {
@@ -159,6 +159,12 @@ class Web3Provider extends Component {
         }
         this.disconnect()
       })
+    }
+  }
+
+  setInjectedWeb3 = async (web3Provider) => {
+    if (web3Provider) {
+      this.setInjectedWeb3Events()
       const _web3 = new Web3(web3Provider)
       let accounts = []
       if (web3Provider.request) {
@@ -253,7 +259,8 @@ class Web3Provider extends Component {
       if (!web3Provider) {
         throw new Error("No injected web3 provider was found")
       }
-      await this.setInjectedWeb3(web3Provider)
+      this.setInjectedWeb3Events(web3Provider)
+      const chainId = await this.getChainId(web3Provider)
       let accounts = []
       if (web3Provider.request) {
         accounts = await web3Provider.request({ method: 'eth_requestAccounts' })
@@ -263,8 +270,7 @@ class Web3Provider extends Component {
       if (window && window.localStorage) {
         window.localStorage.setItem('WEB3_LOGGED', type)
       }
-      const chainId = await this.getChainId(web3Provider)
-      this.setWeb3Data(accounts, chainId)
+      this.setWeb3Data(accounts, chainId, new Web3(web3Provider))
     } else {
       throw new Error("Invalid connection type")
     }
