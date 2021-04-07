@@ -88,7 +88,7 @@ class Web3Provider extends Component {
         if (connector.connected) {
           this.setWalletConnect(connector, web3Provider)
         } else {
-          this.killWalletConnectorSession(connector)
+          await this.killWalletConnectorSession(connector)
           await this.disconnect(web3Provider)
         }
       } else {
@@ -269,7 +269,6 @@ class Web3Provider extends Component {
 
   disconnect = async (web3Provider = null) => {
     this.unsubscribeEvents()
-    this.killWalletConnectorSession()
     if (window && window.localStorage) {
       window.localStorage.removeItem('WEB3_LOGGED')
     }
@@ -280,6 +279,7 @@ class Web3Provider extends Component {
     const _web3 = this.getWeb3(web3Provider)
     const chaind = await this.getChainId(web3Provider)
     setWeb3(_web3, null)
+    await this.killWalletConnectorSession()
     this.setState({ 
       accounts: [],
       activeIndex: null,
@@ -301,11 +301,11 @@ class Web3Provider extends Component {
     }
   }
 
-  killWalletConnectorSession = (walletConnector = null) => {
+  killWalletConnectorSession = async (walletConnector = null) => {
     walletConnector = walletConnector ? walletConnector : this.state.walletConnector
     if (walletConnector) {
       try {
-        walletConnector.killSession()
+        await walletConnector.killSession()
       } catch(e) {
         console.error(e)
       } finally {
