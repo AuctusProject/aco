@@ -3,7 +3,7 @@ import { Component } from 'react'
 import { CHAIN_ID, wssInfuraAddress } from './constants'
 import Web3 from 'web3'
 import WalletConnect from "@walletconnect/client"
-import QRCodeModal from "@walletconnect/qrcode-modal"
+import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal"
 import detectEthereumProvider from '@metamask/detect-provider'
 import { setWeb3 } from './web3Methods'
 
@@ -109,6 +109,7 @@ class Web3Provider extends Component {
       if (error) {
         throw error
       }
+      WalletConnectQRCodeModal.close()
       console.log("EVENT", "wallet connect")
       const { accounts, chainId } = payload.params[0]
       this.setWeb3Data(accounts, chainId)
@@ -236,11 +237,13 @@ class Web3Provider extends Component {
     const web3Provider = await this.getInjectedWeb3Provider()
     if (type === "walletconnect") {
       const connector = new WalletConnect({
-        bridge: "https://bridge.walletconnect.org",
-        qrcodeModal: QRCodeModal
+        bridge: "https://bridge.walletconnect.org"
       })
       if (!connector.connected) {
         await connector.createSession()
+        WalletConnectQRCodeModal.open(connector.uri, () => {
+          this.disconnect(web3Provider)
+        })
       }
       this.setWalletConnect(connector, web3Provider)
       if (window && window.localStorage) {
