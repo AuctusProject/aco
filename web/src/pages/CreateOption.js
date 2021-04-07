@@ -54,7 +54,7 @@ class CreateOption extends Component {
 
   onExpirationChange = (value) => {
     if (value) {
-      value.setUTCHours(8)
+      value.setUTCHours(8,0,0,0)
     }
     this.setState({expirationDate: value}, this.checkSelectedOption)
   }
