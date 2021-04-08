@@ -64,9 +64,9 @@ class PoolDashboard extends Component {
             <div className="back-link clickable" onClick={this.goToPools}><FontAwesomeIcon icon={faArrowLeft}/> Pools</div>
             {this.getFormattedPoolName()}
           </div>
-          {/* <div>
+          {<div>
             <PoolHistoricalChart pool={pool}></PoolHistoricalChart>
-          </div> */}
+          </div>}
           {this.isAdmin() && <div>
             <ManagePrivatePool pool={pool} refresh={this.updatePoolStatus}/>
           </div>}
