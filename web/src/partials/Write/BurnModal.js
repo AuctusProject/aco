@@ -65,7 +65,7 @@ class BurnModal extends Component {
     var img = null
     var option = this.props.position.option
     if (stepNumber === 1) {
-      subtitle =  "Confirm on Metamask to burn "+this.state.optionsAmount+" "+option.acoTokenInfo.symbol+", you'll redeem back "+this.state.collateralValue+" "+this.getCollateralAssetSymbol()+" from your collateral."
+      subtitle =  "Confirm on " + this.context.web3.name + " to burn "+this.state.optionsAmount+" "+option.acoTokenInfo.symbol+", you'll redeem back "+this.state.collateralValue+" "+this.getCollateralAssetSymbol()+" from your collateral."
       img = <MetamaskLargeIcon/>
     }
     else if (stepNumber === 2) {

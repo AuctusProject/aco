@@ -140,7 +140,7 @@ class DepositModal extends Component {
     var img = null
     var depositAssetSymbol =  this.getDepositAssetSymbol()
     if (needApproval && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to unlock " + depositAssetSymbol + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to unlock " + depositAssetSymbol + "."
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {
@@ -148,7 +148,7 @@ class DepositModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to deposit " + this.state.depositValue + " " + depositAssetSymbol  + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to deposit " + this.state.depositValue + " " + depositAssetSymbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {

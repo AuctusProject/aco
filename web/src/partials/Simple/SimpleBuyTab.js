@@ -342,7 +342,7 @@ class SimpleBuyTab extends Component {
     var option = this.state.selectedOption
     var unlockSymbol =  (option.strikeAssetInfo.symbol)
     if (needApproval && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to unlock " + unlockSymbol + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to unlock " + unlockSymbol + "."
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {
@@ -354,7 +354,7 @@ class SimpleBuyTab extends Component {
       img = <SpinnerLargeIcon/>
     }
     else if (stepNumber === 4) {
-      subtitle = "Confirm on Metamask to buy " + this.state.qtyValue + " " + option.acoTokenInfo.symbol  + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to buy " + this.state.qtyValue + " " + option.acoTokenInfo.symbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 5) {

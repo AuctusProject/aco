@@ -2,7 +2,6 @@ import './MetamaskModal.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
-import { connectMetamask } from '../util/web3Methods'
 import Modal from 'react-bootstrap/Modal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
@@ -12,23 +11,17 @@ class MetamaskModal extends Component {
   constructor(props){
     super(props)
 		this.state = {
-      connecting: false
     }
   }
 
-  onMetamaskClick = () => {
-    this.setState({ connecting: true })
-    connectMetamask().then(() => {
-      window.localStorage.setItem('METAMASK_ACCOUNTS_AVAILABLE', '1')
-      this.props.onHide(true)
-    }).finally(() =>
-      this.setState({ connecting: false })
-    )
+  onConnectClick = (connector) => {
+    this.props.connect(connector)
   }
 
   render() {
-    var hasMetamask = this.context && this.context.web3 && this.context.web3.hasMetamask
-    var username = this.context && this.context.web3 && this.context.web3.selectedAccount
+    let hasWeb3Provider = this.context.web3.hasWeb3Provider
+    let isMobile = window.innerWidth <= 768
+    let username = this.context && this.context.web3 && this.context.web3.selectedAccount
     if (username) {
       this.props.onHide()
     }
@@ -44,29 +37,42 @@ class MetamaskModal extends Component {
                   <img src={this.props.darkMode ? "/logo_white_sm.svg" : "/logo_sm.svg"} className="logo-img" alt="" />
                 </div>
                 <div className="metamask-modal-title">Connect Wallet</div>
-                <div className="metamask-modal-subtitle">To start using Auctus.</div>
-                {hasMetamask &&
+                <div className="metamask-modal-subtitle mb-4">To start using Auctus.</div>
+                {hasWeb3Provider &&
                   <>
-                    {!this.state.connecting && 
-                    <div className="connect-metamask-row" onClick={this.onMetamaskClick}>
-                      <img className="metamask-icon" src="/images/icon_metamask.png" alt=""/>
+                    {!this.props.connecting && 
+                    <div className="connect-connect-row" onClick={() => this.onConnectClick("injected")}>
+                      <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                       <span>Metamask</span>
                       <FontAwesomeIcon icon={faArrowRight}/>
                     </div>}
-                    {this.state.connecting && 
-                    <div className="connect-metamask-row disabled">
-                      <img src="/images/icon_metamask.png" alt=""/>
+                    {this.props.connecting && 
+                    <div className="connect-connect-row disabled">
+                      <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                       <span>Connecting...</span>                      
                     </div>}
                   </>
                 }
-                {!hasMetamask && 
-                  <a className="connect-metamask-row" href="https://metamask.io/download.html" target="_blank" rel="noopener noreferrer">
-                    <img src="/images/icon_metamask.png" alt=""/>
+                {!hasWeb3Provider && !isMobile &&
+                  <a className="connect-connect-row" href="https://metamask.io/download.html" target="_blank" rel="noopener noreferrer">
+                    <img className="connect-icon" src="/images/icon_metamask.png" alt=""/>
                     <span>Install Metamask</span>
                     <FontAwesomeIcon icon={faArrowRight}/>
                   </a>
                 }
+                <>
+                  {!this.props.connecting && 
+                  <div className="connect-connect-row" onClick={() => this.onConnectClick("walletconnect")}>
+                    <img className="connect-icon" src="/images/icon_walletconnect.svg" alt=""/>
+                    <span>Wallet Connect</span>
+                    <FontAwesomeIcon icon={faArrowRight}/>
+                  </div>}
+                  {this.props.connecting && 
+                  <div className="connect-connect-row disabled">
+                    <img className="connect-icon" src="/images/icon_walletconnect.svg" alt=""/>
+                    <span>Connecting...</span>                      
+                  </div>}
+                </>
                 <div className="accept-terms">By connecting, I accept Auctus' <a href="/terms" target="_blank">Terms of Service</a></div>
               </div>
             </div>

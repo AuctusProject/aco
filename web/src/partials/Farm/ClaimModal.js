@@ -62,7 +62,7 @@ class ClaimModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to claim rewards."
+      subtitle = "Confirm on " + this.context.web3.name + " to claim rewards."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

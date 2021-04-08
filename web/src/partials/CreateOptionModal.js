@@ -58,7 +58,7 @@ class CreateOptionModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to create option."
+      subtitle = "Confirm on " + this.context.web3.name + " to create option."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

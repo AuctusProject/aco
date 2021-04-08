@@ -113,7 +113,7 @@ class StakeModal extends Component {
     var img = null
     var depositAssetSymbol =  this.getDepositAssetSymbol()
     if (needApproval && stepNumber === 1) {
-      subtitle = "Confirm on Metamask to unlock " + depositAssetSymbol + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to unlock " + depositAssetSymbol + "."
       img = <MetamaskLargeIcon />
     }
     else if (needApproval && stepNumber === 2) {
@@ -121,7 +121,7 @@ class StakeModal extends Component {
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "Confirm on Metamask to stake " + this.props.data.stakeValue + " " + depositAssetSymbol  + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to stake " + this.props.data.stakeValue + " " + depositAssetSymbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 4) {

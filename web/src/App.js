@@ -33,7 +33,9 @@ class App extends Component {
       selectedPair: null,
       accountToggle: false,
       toggleAdvancedTooltip: false,
-      orderBooks:{}
+      orderBooks:{},
+      connecting: null,
+      disconnecting: null
     }
     this.loadLayoutMode()
   }
@@ -42,13 +44,10 @@ class App extends Component {
     getGasPrice()
     window.TradeApp.setNetwork(parseInt(CHAIN_ID))
   }
-
-  signOut() {
-    window.localStorage.setItem('METAMASK_ACCOUNTS_AVAILABLE', '0')
-  }
+  
 
   showSignInModal = (redirectUrl, context) => {
-    if (context && context.web3 && context.web3.hasMetamask && !context.web3.validNetwork) {
+    if (context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
       error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
     } else {
       this.setState({showSignIn: true, redirectUrl: redirectUrl})
@@ -142,12 +141,16 @@ class App extends Component {
     this.setLayoutMode(isDarkMode())
   }
 
+  onConnect = (ok) => {
+    this.setState({connecting: null, showSignIn: !ok})
+  }
+
   render() {
     var showNavbar = window.location.pathname !== "/"
     var showFooter = window.location.pathname.indexOf("advanced/trade") < 0
     var darkMode = isDarkMode()
     return (
-      <Web3Provider onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
+      <Web3Provider connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
         <ApiCoingeckoDataProvider>
           {this.state.loading ? 
           <div className="initial-loading">
@@ -158,7 +161,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} signOut={() => this.signOut()} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
+            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -262,7 +265,7 @@ class App extends Component {
               </Switch>
               {showFooter && <Footer />}
             </div>
-            {this.state.showSignIn && <MetamaskModal darkMode={darkMode} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
+            {this.state.showSignIn && <MetamaskModal darkMode={darkMode} connecting={this.state.connecting} connect={(type) => this.setState({connecting: type})} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
           </main>}
         </ApiCoingeckoDataProvider>
       </Web3Provider>

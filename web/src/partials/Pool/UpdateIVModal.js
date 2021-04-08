@@ -64,7 +64,7 @@ class UpdateIVModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to send update transaction."
+      subtitle = "Confirm on " + this.context.web3.name + " to send update transaction."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {

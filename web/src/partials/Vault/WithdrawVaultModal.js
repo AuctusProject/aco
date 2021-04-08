@@ -60,7 +60,7 @@ class WithdrawVaultModal extends Component {
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on Metamask to withdraw " + this.props.info.withdrawValue + " " + this.props.info.withdrawAssetSymbol  + "."
+      subtitle = "Confirm on " + this.context.web3.name + " to withdraw " + this.props.info.withdrawValue + " " + this.props.info.withdrawAssetSymbol  + "."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {
