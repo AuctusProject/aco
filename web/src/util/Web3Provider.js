@@ -7,7 +7,7 @@ import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal"
 import detectEthereumProvider from '@metamask/detect-provider'
 import { setWeb3 } from './web3Methods'
 
-const infuraId = "86a7724fd0cb4e5dae62e8c2e474ced0"
+const infuraId = "8d03fea006b64542ab9c26af741965b2"
 
 const childContextTypes = {
   web3: PropTypes.shape({
@@ -190,9 +190,8 @@ class Web3Provider extends Component {
       this.setWeb3Data(accounts, chainId, this.getProviderName(web3Provider), _web3)
     } else {
       const _web3 = this.getWeb3(web3Provider)
-      const chainId = await this.getChainId(web3Provider)
       setWeb3(_web3, null)
-      this.setState({web3: _web3, hasWeb3Provider: false, networkId: chainId, name: null}, () => this.props.onLoaded())
+      this.setState({web3: _web3, hasWeb3Provider: false, networkId: null, name: null}, () => this.props.onLoaded())
     }
   }
 
