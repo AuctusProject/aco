@@ -1014,7 +1014,7 @@ module.exports.acoPoolSituation = (pool) => {
               underlyingPerShare: underlyingPerShare.toString(10),
               strikeAssetPerShare: strikeAssetPerShare.toString(10),
               collateralLocked: data[3].collateralLocked.toString(10),
-              collateralLockedValue: getPoolCollateralValue(data[3].collateralLocked, basicData.isCall, underlyingPrice, data[0].decimals),
+              collateralLockedValue: getPoolCollateralValue(data[3].collateralLocked, basicData.isCall, underlyingPrice, data[0].decimals).toString(10),
               openPositionOptionsValue: openPositionOptionsValue.toString(10),
               netValue: netValue.toString(10),
               totalValue: (notCollateralValue + collateralValue + netValue).toString(10),
