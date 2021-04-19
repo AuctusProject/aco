@@ -1035,11 +1035,13 @@ module.exports.acoPoolSituation = (pool) => {
               let index = 0;
               for (let j = 0; j < data[4].length; ++j) {
                 let amount = acoData[index].expiryTime > now ? acoData[index+2] : BigInt(0);
+                let acoCollateralLocked = getAcoCollateralAmount(acoData[index+2], basicData.isCall, acoData[index].strikePrice, data[0].decimals);
                 result.openAcos.push({
                   name: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acoData[index].strikePrice, acoData[index].expiryTime, data[1].decimals),
                   address: data[4][j],
                   tokenAmount: amount.toString(10),
-                  collateralLocked: getAcoCollateralAmount(acoData[index+2], basicData.isCall, acoData[index].strikePrice, data[0].decimals).toString(10),
+                  collateralLocked: acoCollateralLocked.toString(10),
+                  collateralLockedValue: getPoolCollateralValue(acoCollateralLocked, basicData.isCall, underlyingPrice, data[0].decimals).toString(10),
                   valueSold: acoData[index+1].valueSold.toString(10),
                   openPositionOptionsValue: "0",
                   netValue: "0"
