@@ -318,14 +318,13 @@ li.dropdown {
   justify-content: center;
   padding-top: 12px;
   padding-bottom: 12px;
-  z-index: 1;
 }
 
 .advanced-tooltip {
   display: flex;
   flex-direction: column;
   max-width: 160px;
-  z-index: 1000;
+  z-index: 1;
   padding: 6px 16px;
   background-color: #111111;
   border-radius: 5px;
