@@ -204,7 +204,7 @@ class PoolCurrentTab extends Component {
                   <td>{openAco.name}</td>
                   <td className="value-highlight">{fromDecimals(-openAco.tokenAmount, pool.underlyingInfo.decimals)}</td>
                   <td className="value-highlight">-{this.formatDolarValue(fromDecimals(openAco.openPositionOptionsValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
-                  <td className="value-highlight">{this.formatDolarValue(this.getCollateralValue(fromDecimals(openAco.collateralLocked, getCollateralInfo(pool).decimals, 4, 0)))}</td>
+                  <td className="value-highlight">{this.formatDolarValue(fromDecimals(openAco.collateralLockedValue, getCollateralInfo(pool).decimals, 4, 0))}</td>
                   <td className="value-highlight">{this.formatDolarValue(fromDecimals(openAco.netValue, pool.strikeAssetInfo.decimals, 4, 0))}</td>
                 </tr>)}
             </tbody>
