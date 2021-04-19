@@ -1051,8 +1051,8 @@ module.exports.acoPoolSituation = (pool) => {
                 let quoteIndex = 0;
                 for (let k = 0; k < data[4].length; ++k) {
                   if (result.openAcos[k].tokenAmount !== "0") {
-                    result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].tokenAmount) * quotes[quoteIndex].price / (BigInt(10) ** BigInt(data[0].decimals))).toString(10);
-                    result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].openPositionOptionsValue) * (percentage + data[8].underlyingPriceAdjustPercentage) / percentage).toString(10);
+                    let price = quotes[quoteIndex].price * (percentage + data[8].fee) / percentage;
+                    result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].tokenAmount) * price / (BigInt(10) ** BigInt(data[0].decimals))).toString(10);
                     result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionOptionsValue), underlyingPrice, data[8].withdrawOpenPositionPenalty, data[0].decimals).toString(10);
                     ++quoteIndex;
                   } else {
