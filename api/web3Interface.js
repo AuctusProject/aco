@@ -791,8 +791,8 @@ const getAcoCurrentCollaterizedTokens = (aco, account, block = "latest") => {
   });
 };
 
-const getPoolNetValue = (isCall, collateralLocked, openValue, underlyingPrice, withdrawOpenPenalty, underlyingDecimals) => {
-  return getPoolCollateralValue(collateralLocked, isCall, underlyingPrice, underlyingDecimals) - openValue * (percentage + withdrawOpenPenalty) / percentage;
+const getPoolNetValue = (isCall, collateralLocked, openValue, underlyingPrice, underlyingDecimals) => {
+  return getPoolCollateralValue(collateralLocked, isCall, underlyingPrice, underlyingDecimals) - openValue;
 };
 
 const getPoolCollateralValue = (collateral, isCall, underlyingPrice, underlyingDecimals) => {
@@ -998,7 +998,7 @@ module.exports.acoPoolSituation = (pool) => {
                 strikeAssetPerShare = share * (data[3].strikeAssetBalance + data[3].collateralLocked - (data[3].collateralOnOpenPosition * (percentage + data[8].withdrawOpenPositionPenalty)) / percentage) / data[2];
               }
             }
-            let netValue = getPoolNetValue(basicData.isCall, data[3].collateralLocked, openPositionOptionsValue, underlyingPrice, data[8].withdrawOpenPositionPenalty, data[0].decimals);
+            let netValue = getPoolNetValue(basicData.isCall, data[3].collateralLocked, openPositionOptionsValue, underlyingPrice, data[0].decimals);
             const result = {
               name: getAcoPoolName(data[0].symbol, data[1].symbol, basicData.isCall),
               address: pool.toLowerCase(),
@@ -1014,11 +1014,13 @@ module.exports.acoPoolSituation = (pool) => {
               underlyingPerShare: underlyingPerShare.toString(10),
               strikeAssetPerShare: strikeAssetPerShare.toString(10),
               collateralLocked: data[3].collateralLocked.toString(10),
+              collateralLockedValue: getPoolCollateralValue(data[3].collateralLocked, basicData.isCall, underlyingPrice, data[0].decimals).toString(10),
               openPositionOptionsValue: openPositionOptionsValue.toString(10),
               netValue: netValue.toString(10),
               totalValue: (notCollateralValue + collateralValue + netValue).toString(10),
               volatility: parseBigIntToNumber(data[5], 3),
               protocolFee: parseBigIntToNumber(data[8].fee, 3),
+              withdrawOpenPositionPenalty: parseBigIntToNumber(data[8].withdrawOpenPositionPenalty, 3),
               openAcos: []
             };
             const acoPromises = [];
@@ -1033,11 +1035,13 @@ module.exports.acoPoolSituation = (pool) => {
               let index = 0;
               for (let j = 0; j < data[4].length; ++j) {
                 let amount = acoData[index].expiryTime > now ? acoData[index+2] : BigInt(0);
+                let acoCollateralLocked = getAcoCollateralAmount(acoData[index+2], basicData.isCall, acoData[index].strikePrice, data[0].decimals);
                 result.openAcos.push({
                   name: getAcoName(data[0].symbol, data[1].symbol, basicData.isCall, acoData[index].strikePrice, acoData[index].expiryTime, data[1].decimals),
                   address: data[4][j],
                   tokenAmount: amount.toString(10),
-                  collateralLocked: getAcoCollateralAmount(acoData[index+2], basicData.isCall, acoData[index].strikePrice, data[0].decimals).toString(10),
+                  collateralLocked: acoCollateralLocked.toString(10),
+                  collateralLockedValue: getPoolCollateralValue(acoCollateralLocked, basicData.isCall, underlyingPrice, data[0].decimals).toString(10),
                   valueSold: acoData[index+1].valueSold.toString(10),
                   openPositionOptionsValue: "0",
                   netValue: "0"
@@ -1051,9 +1055,9 @@ module.exports.acoPoolSituation = (pool) => {
                 let quoteIndex = 0;
                 for (let k = 0; k < data[4].length; ++k) {
                   if (result.openAcos[k].tokenAmount !== "0") {
-                    result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].tokenAmount) * quotes[quoteIndex].price / (BigInt(10) ** BigInt(data[0].decimals))).toString(10);
-                    result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].openPositionOptionsValue) * (percentage + data[8].underlyingPriceAdjustPercentage) / percentage).toString(10);
-                    result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionOptionsValue), underlyingPrice, data[8].withdrawOpenPositionPenalty, data[0].decimals).toString(10);
+                    let price = quotes[quoteIndex].price * (percentage + data[8].fee) / percentage;
+                    result.openAcos[k].openPositionOptionsValue = (BigInt(result.openAcos[k].tokenAmount) * price / (BigInt(10) ** BigInt(data[0].decimals))).toString(10);
+                    result.openAcos[k].netValue = getPoolNetValue(basicData.isCall, BigInt(result.openAcos[k].collateralLocked), BigInt(result.openAcos[k].openPositionOptionsValue), underlyingPrice, data[0].decimals).toString(10);
                     ++quoteIndex;
                   } else {
                     result.openAcos[k].netValue = getPoolCollateralValue(BigInt(result.openAcos[k].collateralLocked), basicData.isCall, underlyingPrice, data[0].decimals).toString(10);
