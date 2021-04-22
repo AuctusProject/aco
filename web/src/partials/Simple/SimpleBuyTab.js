@@ -531,6 +531,20 @@ class SimpleBuyTab extends Component {
     this.setState({slippageModalInfo: slippageModalInfo})
   }
 
+  
+  getBreakEven = () => {
+    let price = this.getAcoOptionPrice()
+    let strike = (this.state.selectedOption ? parseFloat(fromDecimals(this.state.selectedOption.strikePrice, this.state.selectedOption.strikeAssetInfo.decimals)) : null)
+    if (price && strike && !isNaN(strike)) {
+      if (this.state.selectedType === 1) {
+        return strike + price
+      } else {
+        return strike - price
+      }
+    }
+    return null
+  }
+
   render() {
     var selectedOption = this.state.selectedOption
     var priceFromDecimals = selectedOption ? parseFloat(fromDecimals(selectedOption.strikePrice, selectedOption.strikeAssetInfo.decimals)) : null
@@ -583,8 +597,10 @@ class SimpleBuyTab extends Component {
           </div>
           <div className="separator"></div>
           <div className="input-column">
-            <div className="input-label">Prices per option:</div>
+            <div className="input-label">Price per option:</div>
             <div className="price-value">{this.formatPrice(optionPrice)}</div>
+            <div className="input-label">Break-even:</div>
+            <div className="price-value">{this.formatPrice(this.getBreakEven())}</div>
           </div>
           <div className="separator"></div>
           <div className="input-column configurations-column">
