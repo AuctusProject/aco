@@ -2,8 +2,6 @@ import './Simple.css'
 import React, { Component } from 'react'
 import { withRouter, NavLink } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { getPairsFromOptions, getOptionsFromPair } from '../util/acoFactoryMethods'
-import { getTokensList } from '../util/acoApi'
 import PairDropdown from '../partials/PairDropdown'
 import SimpleBuyTab from '../partials/Simple/SimpleBuyTab'
 import SimpleWriteTab from '../partials/Simple/SimpleWriteTab'
@@ -12,6 +10,7 @@ import { auctusAddress, getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import Pools from './Pools'
+import { getAvailableOptions, getOptionsFromPair, getPairsFromOptions } from '../util/dataController'
 
 class Simple extends Component {
   constructor() {
@@ -39,7 +38,7 @@ class Simple extends Component {
   }  
 
   loadAvailableOptions = () => {
-    getTokensList().then(result => {
+    getAvailableOptions().then(result => {
       result = result.filter(o => o.underlying.toLowerCase() !== auctusAddress)      
       var pairs = getPairsFromOptions(result)
 

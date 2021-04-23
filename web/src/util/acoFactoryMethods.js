@@ -1,8 +1,9 @@
 import { getWeb3, sendTransaction } from './web3Methods'
-import { acoFactoryAddress, getOtcOptions, isExpired, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore, sortByDesc, sortByFn, baseEthPair, baseWbtcPair } from './constants';
+import { acoFactoryAddress, getOtcOptions, isExpired, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore, sortByDesc, sortByFn } from './constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
+import { getPairsFromOptions } from './dataController';
 
 var acoFactoryContract = null
 function getAcoFactoryContract() {
@@ -154,39 +155,6 @@ export const listPairs = () => {
             resolve(pairs)
         })
     })
-}
-
-export const getPairsFromOptions = (options) => {
-    var pairs = {}
-    for (let i = 0; i < options.length; i++) {
-        const option = options[i];
-        if (!pairs[option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol]) {
-            pairs[option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol] = {
-                id: option.underlyingInfo.symbol + "_" + option.strikeAssetInfo.symbol,
-                underlying: option.underlying,
-                underlyingInfo: option.underlyingInfo,
-                underlyingSymbol: option.underlyingInfo.symbol,
-                strikeAsset: option.strikeAsset,
-                strikeAssetInfo: option.strikeAssetInfo,
-                strikeAssetSymbol: option.strikeAssetInfo.symbol
-            }
-        }
-    }
-    var ethPair = baseEthPair()
-    if (!pairs[ethPair.id]) {
-        pairs[ethPair.id] = ethPair
-    }
-    var wbtcPair = baseWbtcPair()
-    if (!pairs[wbtcPair.id]) {
-        pairs[wbtcPair.id] = wbtcPair
-    }
-    return Object.values(pairs);
-}
-  
-export const getOptionsFromPair = (options, selectedPair) => {
-    return options && selectedPair ? options.filter(o => 
-        o.underlyingInfo.symbol === selectedPair.underlyingSymbol && 
-        o.strikeAssetInfo.symbol === selectedPair.strikeAssetSymbol) : []
 }
 
 export const listOptions = (pair, optionType = null, removeExpired = false, onlyOtcOptions = false) => {

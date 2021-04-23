@@ -31,10 +31,14 @@ class PoolHistoricalChart extends Component {
       let underlying = parseFloat(fromDecimals(this.props.pool.underlyingPerShare, this.props.pool.underlyingInfo.decimals, 4, 0))
       let strikeAsset = parseFloat(fromDecimals(this.props.pool.strikeAssetPerShare, this.props.pool.strikeAssetInfo.decimals, 4, 0))  
       let price = this.getUnderlyingPrice()
-      if (isUnderlyingValue) {
-        return (underlying + strikeAsset / price)
+      if (price) {
+        if (isUnderlyingValue) {
+          return (underlying + strikeAsset / price)
+        } else {
+          return (strikeAsset + underlying * price)
+        }
       } else {
-        return (strikeAsset + underlying * price)
+        return 0
       }
     } else {
       return null

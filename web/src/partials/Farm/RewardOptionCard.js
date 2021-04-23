@@ -6,10 +6,11 @@ import OptionBadge from '../OptionBadge'
 import { formatDate, fromDecimals, getTimeToExpiry } from '../../util/constants'
 import ExerciseModal from '../Exercise/ExerciseModal'
 import { confirm } from '../../util/sweetalert'
-import { getOption, getPositionForOption } from '../../util/acoFactoryMethods'
+import { getPositionForOption } from '../../util/acoFactoryMethods'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import ClaimModal from './ClaimModal'
+import { getOption } from '../../util/dataController'
 
 class RewardOptionCard extends Component {
   constructor(props) {

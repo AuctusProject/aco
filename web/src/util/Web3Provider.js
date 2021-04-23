@@ -66,6 +66,10 @@ class Web3Provider extends Component {
       this.disconnect()
       this.props.disconnected()
     }  
+    if (this.props.refresh && this.props.refresh !== prevProps.refresh) {
+      this.componentWillUnmount()
+      this.componentDidMount()
+    } 
   }
 
   getWalletCachedSession = () => {

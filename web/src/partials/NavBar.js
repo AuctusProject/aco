@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 import { etherscanUrl, ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
-import { listPairs } from '../util/acoFactoryMethods'
+import { listAvailablePairs } from '../util/dataController'
 
 class NavBar extends Component {
   constructor(props){
@@ -22,7 +22,7 @@ class NavBar extends Component {
 
   componentDidMount = () => {
     if (this.context && this.context.web3 && this.context.web3.validNetwork) {
-      listPairs().then(pairs => {
+      listAvailablePairs().then(pairs => {
         this.setState({pairs:pairs})
         this.props.onPairsLoaded(pairs)
       })

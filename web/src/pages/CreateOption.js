@@ -7,13 +7,13 @@ import OptionBadge from '../partials/OptionBadge'
 import { ONE_SECOND, toDecimals, fromDecimals, usdcAddress, ethAddress, wbtcAddress, formatWithPrecision } from '../util/constants'
 import SimpleAssetDropdown from '../partials/SimpleAssetDropdown'
 import StrikeValueInput from '../partials/Util/StrikeValueInput'
-import { listOptions } from '../util/acoFactoryMethods'
 import { getAvailablePoolsForNonCreatedOption } from '../util/acoPoolFactoryMethods'
 import BigNumber from 'bignumber.js'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
 import { confirm } from '../util/sweetalert'
+import { getAvailableOptionsByPair } from '../util/dataController'
 
 export const CREATE_OPTION_UNDERLYING_OPTIONS = [{
   value: "ETH",
@@ -45,7 +45,6 @@ class CreateOption extends Component {
   }
 
   componentDidMount = () => {
-    listOptions() //preload options
   }
 
   selectType = (type) => {
@@ -69,7 +68,7 @@ class CreateOption extends Component {
         underlyingSymbol: this.state.selectedUnderlying.name,
         strikeAssetSymbol: "USDC",
       }
-      listOptions(pair, this.state.selectedType, true).then(options => {      
+      getAvailableOptionsByPair(pair, this.state.selectedType).then(options => {      
         var filteredOptions = options.filter(o => 
           o.strikePrice === toDecimals(this.state.selectedStrike.value, 6).toString() &&
           o.expiryTime.toString() === (this.state.expirationDate.getTime()/ONE_SECOND).toString())

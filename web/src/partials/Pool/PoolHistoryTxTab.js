@@ -1,9 +1,9 @@
 import './PoolHistoryTxTab.css'
 import React, { Component } from 'react'
-import { getAcoPoolEvents } from '../../util/acoApi'
 import { getCollateralInfo } from '../../util/acoTokenMethods'
 import { capitalizeFirstLetter, etherscanTxUrl, fromDecimals } from '../../util/constants'
 import Loading from '../Util/Loading'
+import { getPoolEvents } from '../../util/dataController'
 
 class PoolHistoryTxTab extends Component {
   constructor() {
@@ -13,7 +13,7 @@ class PoolHistoryTxTab extends Component {
   }  
 
   componentDidMount = () => {   
-    getAcoPoolEvents(this.props.pool.address).then(events => this.setState({events:events}))
+    getPoolEvents(this.props.pool.address).then(events => this.setState({events:events}))
   }
 
   componentDidUpdate = (prevProps) => {    

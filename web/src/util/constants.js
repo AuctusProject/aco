@@ -19,6 +19,7 @@ export const acoRewardAddress = process.env.REACT_APP_ACO_REWARD_ADDRESS;
 export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
+export const subgraphUrl = process.env.REACT_APP_SUBGRAPH_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL + "address/";
 export const etherscanTxUrl = process.env.REACT_APP_ETHERSCAN_URL + "tx/";
@@ -51,6 +52,7 @@ export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
 export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
 export const acoAirdropAmounts = JSON.parse(process.env.REACT_APP_ACO_AIRDROP_AMOUNTS);
 export const airdropClaimStart = 1617386400;
+export const optionsToIgnore = ["0xf7902f8db0ee97f9e9b07933ba2724d64f267110","0xde757d935f43781c7079a41a162d8560a800ec13"];
 
 export const OPTION_TYPES = {
     1: {
@@ -152,7 +154,7 @@ export function getBalanceOfAsset(assetAddress, userAddress) {
                 resolve(0)
             }
         })
-    })    
+    })
 }
 
 export function fromDecimals(input, decimals, maxSignificantsDigits = 4, minSignificantsDigits = 4) {
@@ -298,7 +300,6 @@ export function sortByDesc(array, property) {
     })
 }
 
-
 export function sortBy(array, property) {
     return array ? array.sort((a,b) => {
         return (a[property] === b[property])? 0 : ((a[property] < b[property]) ? -1 : 1);
@@ -389,19 +390,18 @@ export const getCurrentRoute = (location) => {
     return null;
 }
 
-
 export const addressToData = (address) => {
     return address.substring(2).toLowerCase().padStart(64, '0');
 }
-  
+
 export const dataToAddress = (data) => {
     return data.substring(23)
 }
-  
+
 export const numberToData = (num) => {
     return num.toString(16).padStart(64, '0')
 }
-  
+
 export const booleanToData = (bool) => {
     return "000000000000000000000000000000000000000000000000000000000000000" + (bool ? "1" : "0")
 }
@@ -411,10 +411,6 @@ export const isDarkMode = () => {
 }
 
 export const removeOptionsToIgnore = (options) => {
-    const optionsToIgnore = [
-        "0xf7902f8db0ee97f9e9b07933ba2724d64f267110",
-        "0xde757d935f43781c7079a41a162d8560a800ec13"
-    ]
     return options.filter(o => !optionsToIgnore.includes(o.acoToken.toLowerCase()))
 }
 
@@ -438,30 +434,6 @@ export const removeExpiredOptions = (options) => {
 
 export const getOtcOptions = (options) => {
     return options.filter(o => o.creator && (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length > 0))
-}
-
-export const baseEthPair = () => {
-    return {
-        id: "ETH_USDC",
-        underlying: ethAddress,
-        underlyingInfo: {symbol: "ETH", decimals: 18},
-        underlyingSymbol: "ETH",
-        strikeAsset: usdcAddress,
-        strikeAssetInfo: {symbol: "USDC", decimals: 6},
-        strikeAssetSymbol: "USDC"
-    }
-}
-
-export const baseWbtcPair = () => {
-    return {
-        id: "WBTC_USDC",
-        underlying: wbtcAddress,
-        underlyingInfo: {symbol: "WBTC", decimals: 8},
-        underlyingSymbol: "WBTC",
-        strikeAsset: usdcAddress,
-        strikeAssetInfo: {symbol: "USDC", decimals: 6},
-        strikeAssetSymbol: "USDC"
-    }
 }
 
 export const getByAddress = (address) => {

@@ -4,8 +4,8 @@ import { acoRewardsABI } from './acoRewardsABI';
 import { acoTokenData } from './acoFactoryMethods';
 import { balanceOf } from './erc20Methods';
 import { getPairData } from './uniswapPairMethods';
-import { getAcoPoolStatus } from './acoApi';
 import { getCoingeckoPrice } from './coingeckoApi';
+import { getPool } from './dataController';
 
 var acoRewardsContract = null
 function getAcoRewardsContract() {
@@ -38,7 +38,7 @@ export const listRewardsData = (forceLoad = false) => {
                         if (acoRewardsPools[i].pid === 0) {
                             valuePromises.push(getPairData(data[i].lpToken))
                         } else {
-                            valuePromises.push(getAcoPoolStatus(data[i].lpToken))
+                            valuePromises.push(getPool(data[i].lpToken))
                         }
                     }
                     valuePromises.push(getCoingeckoPrice(["auctus","ethereum","bitcoin"]))

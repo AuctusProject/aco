@@ -4,9 +4,9 @@ import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
 import TradeMenu from '../partials/TradeMenu'
 import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeOptionsList'
-import { getBalanceOfAsset, getMarketDetails } from '../util/constants'
-import { listOptions } from '../util/acoFactoryMethods'
+import { getMarketDetails, getBalanceOfAsset } from '../util/constants'
 import { balanceOf } from '../util/acoTokenMethods'
+import { getAvailableOptionsByPair } from '../util/dataController'
 
 export const ALL_OPTIONS_KEY = "all"
 
@@ -39,7 +39,7 @@ class Trade extends Component {
 
   loadOptions = () => {
     if (this.props.selectedPair) {
-      listOptions(this.props.selectedPair, null, true).then(options => {
+      getAvailableOptionsByPair(this.props.selectedPair, null).then(options => {
         this.setState({options: options}, this.loadOptionsData)
         this.selectOption(options)
       })

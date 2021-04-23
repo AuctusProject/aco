@@ -11,7 +11,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { setAcoPermissionConfig } from '../../util/acoPoolMethodsv4'
+import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/acoPoolMethodsv4'
 import SimpleDropdown from '../SimpleDropdown'
 
 const strikePriceOptions = [
@@ -183,7 +183,7 @@ class UpdateSellingOptionsModal extends Component {
         isDone: (stepNumber === 3 || stepNumber === -1),
         onDoneButtonClick: (stepNumber === 3 ? this.onDoneButtonClick : this.onHideStepsModal)
       }
-    })
+    }, () => refreshAcoPermissionConfig(this.props.pool.address))
   }
 
   onDoneButtonClick = () => {

@@ -2,7 +2,6 @@ import './PoolDashboard.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { getAcoPoolStatus } from '../../util/acoApi'
 import PoolHistoricalChart from './PoolHistoricalChart'
 import PoolCurrentTab from './PoolCurrentTab'
 import Loading from '../Util/Loading'
@@ -10,6 +9,7 @@ import PoolHistoryTxTab from './PoolHistoryTxTab'
 import ManagePrivatePool from './ManagePrivatePool'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
+import { getPool } from '../../util/dataController'
 
 class PoolDashboard extends Component {
   constructor(props) {
@@ -28,7 +28,7 @@ class PoolDashboard extends Component {
   }
 
   updatePoolStatus = () => {
-    getAcoPoolStatus(this.props.match.params.poolAddress).then(pool => 
+    getPool(this.props.match.params.poolAddress).then(pool => 
       this.setState({pool: pool})
     )
   }

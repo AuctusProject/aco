@@ -35,7 +35,8 @@ class App extends Component {
       toggleAdvancedTooltip: false,
       orderBooks:{},
       connecting: null,
-      disconnecting: null
+      disconnecting: null,
+      refreshWeb3: null
     }
     this.loadLayoutMode()
   }
@@ -48,9 +49,20 @@ class App extends Component {
 
   showSignInModal = (redirectUrl, context) => {
     if (context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
-      error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
+      if (!this.state.refreshWeb3) {
+        this.setState({refreshWeb3: true}, () => {
+          let self = this
+          setTimeout(() => {
+            self.showSignInModal(redirectUrl, context)
+          }, 1000)
+        })
+      } else {
+        this.setState({refreshWeb3: null}, () => {
+          error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
+        })
+      }
     } else {
-      this.setState({showSignIn: true, redirectUrl: redirectUrl})
+      this.setState({showSignIn: true, redirectUrl: redirectUrl, refreshWeb3: null})
     }    
   }
 
@@ -150,7 +162,7 @@ class App extends Component {
     var showFooter = window.location.pathname.indexOf("advanced/trade") < 0
     var darkMode = isDarkMode()
     return (
-      <Web3Provider connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
+      <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
         <ApiCoingeckoDataProvider>
           {this.state.loading ? 
           <div className="initial-loading">
