@@ -223,7 +223,7 @@ const parseSubgraphPool = (pool) => {
     openAcos = []
     let now = Math.ceil(Date.now()/1000)
     for (let i = 0; i < pool.acosDynamicData.length; ++i) {
-      if (parseInt(pool.acosDynamicData[i].aco.expiryTime) > now) {
+      if (parseInt(pool.acosDynamicData[i].aco.expiryTime) > now && parseFloat(pool.acosDynamicData[i].acoAmount) > 0) {
         openAcos.push({
           name: pool.acosDynamicData[i].aco.name,
           address: pool.acosDynamicData[i].aco.id,
@@ -377,15 +377,14 @@ const parseSubgraphTx = (tx) => {
 
 const parseSubgraphNum = (stringNum, decimals) => {
   let splittedNum = stringNum.split('.')
+  let fraction = ''
   if (splittedNum.length > 1) {
-    let fraction = splittedNum[1].substring(0, decimals)
-    for (let i = fraction.length; i < decimals; ++i) {
-      fraction = fraction + '0'
-    }
-    return splittedNum[0] + fraction
-  } else {
-    return splittedNum[0]
+    fraction = splittedNum[1].substring(0, decimals)
   }
+  for (let i = fraction.length; i < decimals; ++i) {
+    fraction += '0'
+  }
+  return (splittedNum[0] + fraction).trimStart('0')
 }
 
 const baseEthPair = () => {
