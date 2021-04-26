@@ -384,7 +384,12 @@ const parseSubgraphNum = (stringNum, decimals) => {
   for (let i = fraction.length; i < decimals; ++i) {
     fraction += '0'
   }
-  return (splittedNum[0] + fraction).trimStart('0')
+  let num = (splittedNum[0] + fraction)
+  let start = 0
+  while (start < num.length && num[start] === '0') {
+    ++start
+  }
+  return (start > 0) ? num.substring(start) : num
 }
 
 const baseEthPair = () => {
