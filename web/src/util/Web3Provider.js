@@ -178,7 +178,7 @@ class Web3Provider extends Component {
 
   setInjectedWeb3 = async (web3Provider) => {
     if (web3Provider) {
-      this.setInjectedWeb3Events()
+      this.setInjectedWeb3Events(web3Provider)
       const _web3 = new Web3(web3Provider)
       let accounts = []
       if (web3Provider.request) {
