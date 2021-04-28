@@ -244,7 +244,7 @@ class DepositModal extends Component {
 
   getPoolSummaryMessage = () => {
     let pool = this.props.pool
-    return <div className="pool-summary">The amount deposited will be used to automatically sell ethereum {pool.isCall ? "call" : "put"} options. If the utilization rate is high, you will have to wait for the liquidity to unlock from open positions to be able to exit your position.</div>
+    return <div className="pool-summary">The amount deposited will be used to automatically sell {pool.underlyingInfo.symbol} {pool.isCall ? "call" : "put"} options. If the utilization rate is high, you will have to wait for the liquidity to unlock from open positions to be able to exit your position.</div>
   }
 
   onAcceptedChange = (event) => {
