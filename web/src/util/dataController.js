@@ -389,7 +389,7 @@ const parseSubgraphNum = (stringNum, decimals) => {
   while (start < num.length && num[start] === '0') {
     ++start
   }
-  return (start > 0) ? num.substring(start) : num
+  return ((start > 0) ? num.substring(start) : num) || "0"
 }
 
 const baseEthPair = () => {

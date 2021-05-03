@@ -159,11 +159,13 @@ class Web3Provider extends Component {
   setInjectedWeb3Events = (web3Provider) => {
     if (web3Provider) {
       web3Provider.on("connect", (chainId) => {
-        this.state.web3.eth.getAccounts().then((accounts) => {
-          this.setWeb3Data(accounts, parseInt(chainId))
-        }).catch((err) => {
-          throw err
-        })
+        if (this.state.web3) {
+          this.state.web3.eth.getAccounts().then((accounts) => {
+            this.setWeb3Data(accounts, parseInt(chainId))
+          }).catch((err) => {
+            throw err
+          })
+        }
       })
       web3Provider.on("accountsChanged", (accounts) => {
         this.setWeb3Data(accounts, this.state.networkId)
