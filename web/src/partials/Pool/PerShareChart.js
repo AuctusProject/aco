@@ -1,8 +1,8 @@
 import './PerShareChart.css'
 import React, { Component } from 'react'
 import { Chart, Line } from 'react-chartjs-2'
-import { getAcoPoolHistory } from '../../util/acoApi'
 import { fromDecimals } from '../../util/constants'
+import { getPoolHistoricalShares } from '../../util/dataController'
 
 const axesProperties = JSON.stringify({
   display: true,
@@ -85,7 +85,7 @@ class PerShareChart extends Component {
 
   componentDidMount = () => {
     if (!!this.props.pool) {
-      getAcoPoolHistory(this.props.pool).then((data) => this.setState({data: data}, () => {
+      getPoolHistoricalShares(this.props.pool).then((data) => this.setState({data: data}, () => {
         this.setChart()
       })).catch((err) => {
         console.error(err)

@@ -2,11 +2,11 @@ import './Pools.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { getAcoPools } from '../util/acoApi'
 import Loading from '../partials/Util/Loading'
 import PoolDetails from '../partials/Pool/PoolDetails'
 import DiscontinuedPoolDetails from '../partials/Pool/DiscontinuedPoolDetails'
 import { defaultPoolAdmin, deprecatedPoolImplementation } from '../util/constants'
+import { getPools } from '../util/dataController'
 
 class Pools extends Component {
   constructor() {
@@ -15,15 +15,15 @@ class Pools extends Component {
   }
   
   componentDidMount = () => {
-    this.refreshPoolData(false)
+    this.refreshPoolData()
   }
 
   getCurrentAccount = () => {
     return (this.context && this.context.web3 && this.context.web3.selectedAccount) ? this.context.web3.selectedAccount.toLowerCase() : null
   }
 
-  refreshPoolData = (forceRefresh) => {
-    getAcoPools(forceRefresh).then(pools => {
+  refreshPoolData = () => {
+    getPools().then(pools => {
       var discontinuedPools = pools.filter(p => deprecatedPoolImplementation.filter(c => c.toLowerCase() === p.acoPoolImplementation.toLowerCase()).length > 0)
       var availablePools = pools.filter(p => deprecatedPoolImplementation.filter(c => c.toLowerCase() === p.acoPoolImplementation.toLowerCase()).length === 0 && 
         (p.admin === null || p.admin === undefined || p.admin.toLowerCase() === defaultPoolAdmin.toLowerCase() || p.admin.toLowerCase() === this.getCurrentAccount())

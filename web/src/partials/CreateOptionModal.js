@@ -7,7 +7,8 @@ import MetamaskLargeIcon from './Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from './Util/SpinnerLargeIcon'
 import DoneLargeIcon from './Util/DoneLargeIcon'
 import ErrorLargeIcon from './Util/ErrorLargeIcon'
-import { newAcoToken, refreshAllOptions } from '../util/acoFactoryMethods'
+import { newAcoToken } from '../util/acoFactoryMethods'
+import { refreshAvailableOptions } from '../util/dataController'
 
 class CreateOptionModal extends Component {
   constructor(props) {
@@ -98,7 +99,7 @@ class CreateOptionModal extends Component {
   onHideStepsModal = (completed) => () => {
     if (completed) {
       this.setStepsModalInfo(4)      
-      refreshAllOptions().then(() => {
+      refreshAvailableOptions().then(() => {
         this.setState({ stepsModalInfo: null})
         this.props.onHide(completed)
       })

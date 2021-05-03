@@ -8,9 +8,9 @@ import { listClaimedAcos } from '../util/acoDistributorMethods'
 import { listClaimedRewards, listUnclaimedRewards } from '../util/acoRewardsMethods'
 import RewardChart from '../partials/Farm/RewardChart'
 import RewardOptionCard from '../partials/Farm/RewardOptionCard'
-import { getAvailableAcosForUnderlying } from '../util/acoFactoryMethods'
 import { auctusAddress, defaultAcoCreator } from '../util/constants'
 import { balanceOf } from '../util/erc20Methods'
+import { getAvailableOptionsByUnderlying } from '../util/dataController'
 
 
 class Farm extends Component {
@@ -72,7 +72,7 @@ class Farm extends Component {
 
   getAcoBalances = () => {
     if (this.isConnected()) {
-      getAvailableAcosForUnderlying(auctusAddress).then((acos) => {
+      getAvailableOptionsByUnderlying(auctusAddress).then((acos) => {
         const promises = []
         const account = this.context.web3.selectedAccount
         for (let i = 0; i < acos.length; ++i) {

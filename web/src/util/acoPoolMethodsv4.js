@@ -15,7 +15,22 @@ export const setAcoPermissionConfig = (from, acoPoolAddress, newTolerancePriceBe
     return sendTransaction(null, null, from, acoPoolAddress, null, data)
 }
 
+let poolPermissionConfig = {}
 export const acoPermissionConfig = (acoPoolAddress) => {
-    const acoPoolContract = getAcoPoolContract(acoPoolAddress)
-    return acoPoolContract.methods.acoPermissionConfig().call()
+    return new Promise((resolve, reject) => {
+        if (poolPermissionConfig[acoPoolAddress]) {
+            resolve(poolPermissionConfig[acoPoolAddress])
+        } else {
+            const acoPoolContract = getAcoPoolContract(acoPoolAddress)
+            acoPoolContract.methods.acoPermissionConfig().call().then((result) => {
+                poolPermissionConfig[acoPoolAddress] = result
+                resolve(poolPermissionConfig[acoPoolAddress])
+            }).catch((err) => reject(err))
+        }
+    })
+}
+
+export const refreshAcoPermissionConfig = (acoPoolAddress) => {
+    poolPermissionConfig[acoPoolAddress] = undefined
+    return acoPermissionConfig(acoPoolAddress)
 }

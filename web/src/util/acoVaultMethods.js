@@ -3,9 +3,9 @@ import { acoVaultABI } from './acoVaultABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { getIsCall } from './acoTokenMethods';
 import { getBestQuote } from './acoQuote';
-import { getOption } from './acoFactoryMethods';
 import BigNumber from 'bignumber.js';
 import { fromDecimals } from './constants';
+import { getOption } from './dataController';
 
 function getAcoVaultContract(acoVaultAddress) {
     const _web3 = getWeb3()

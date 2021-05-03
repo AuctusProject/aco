@@ -2,13 +2,11 @@ import './PoolDetails.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { formatPercentage, formatWithPrecision, fromDecimals, getBalanceOfAsset } from '../../util/constants'
+import { getBalanceOfAsset, formatPercentage, formatWithPrecision, fromDecimals } from '../../util/constants'
 import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import DepositModal from './DepositModal'
 import WithdrawModal from './WithdrawModal'
-import { getAccountPoolPosition } from '../../util/acoPoolMethods'
-import BigNumber from 'bignumber.js'
 import { ASSETS_INFO } from '../../util/assets'
 import PoolAccountPosition from './PoolAccountPosition'
 
@@ -85,7 +83,7 @@ class PoolDetails extends Component {
   }
 
   formatVolatility = (pool) => {
-    return formatPercentage(pool.volatility/100000.0,0)
+    return formatPercentage(pool.volatility/100.0,0)
   }
 
   formatAssetValue = (assetInfo, value) => {

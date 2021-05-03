@@ -5,9 +5,9 @@ import PropTypes from 'prop-types'
 import OptionBadge from '../OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { listOptions } from '../../util/acoFactoryMethods'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import { formatDate } from '../../util/constants'
+import { getAvailableOptionsByPair } from '../../util/dataController'
 
 class WriteStep2 extends Component {
   constructor() {
@@ -23,7 +23,7 @@ class WriteStep2 extends Component {
   }
 
   componentDidMount = () => {
-    listOptions(this.props.selectedPair, this.props.optionType, true).then(options => {
+    getAvailableOptionsByPair(this.props.selectedPair, this.props.optionType).then(options => {
       this.setState({options: options})
     })
   }

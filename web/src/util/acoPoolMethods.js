@@ -3,8 +3,8 @@ import { acoPoolABI } from './acoPoolABI';
 import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
 import { fromDecimals, toDecimals } from './constants';
-import { getOption } from './acoFactoryMethods';
 import { getCollateralAmountInDecimals } from './acoTokenMethods';
+import { getOption } from './dataController';
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
@@ -38,7 +38,6 @@ export const getPoolQuote = (acoPoolAddress, option, amount) => {
         .catch(err => resolve({}))
     })
 }
-
 
 export const getBestPoolQuote = (option, amount) => {
     return new Promise((resolve, reject) => {
