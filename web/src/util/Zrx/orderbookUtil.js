@@ -1,5 +1,5 @@
-import { toDecimals, fromDecimals } from "./constants"
-import { TradeOptionsListLayoutMode } from "../partials/TradeOptionsList"
+import { toDecimals, fromDecimals } from "../constants"
+import { TradeOptionsListLayoutMode } from "../../partials/TradeOptionsList"
 
 export const getBestBid = (option, orders, mode) => {
     return getBestOrder(option, 1, orders, mode)

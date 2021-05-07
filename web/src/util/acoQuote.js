@@ -1,5 +1,5 @@
 import { getBestPoolQuote } from "./acoPoolMethods"
-import { getSwapQuote, isInsufficientLiquidity } from "./zrxApi"
+import { getSwapQuote, isInsufficientLiquidity } from "./Zrx/zrxApi"
 
 export function getBestQuote(option, amount, isBuy) {
     return new Promise(function(resolve,reject){

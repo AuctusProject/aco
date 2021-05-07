@@ -6,7 +6,7 @@ import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
-import { getBestBid, getBestAsk } from '../util/orderbookUtil'
+import { getBestBid, getBestAsk } from '../util/Zrx/orderbookUtil'
 
 export const TradeOptionsListLayoutMode = {
   Trade: 0,

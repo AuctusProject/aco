@@ -7,6 +7,7 @@ import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeO
 import { getMarketDetails, getBalanceOfAsset } from '../util/constants'
 import { balanceOf } from '../util/acoTokenMethods'
 import { getAvailableOptionsByPair } from '../util/dataController'
+import AdvancedTrade from '../partials/Advanced/AdvancedTrade'
 
 export const ALL_OPTIONS_KEY = "all"
 
@@ -105,8 +106,8 @@ class Trade extends Component {
     this.setState({selectedOption: option, selectedExpiryTime: option ? null : ALL_OPTIONS_KEY}, () => {
       if(option != null) {
         this.props.history.push('/advanced/trade/'+this.props.selectedPair.id+"/"+option.acoToken)
-        window.TradeApp.unmount()
-        window.TradeApp.mount(getMarketDetails(option))
+        //window.TradeApp.unmount()
+        //window.TradeApp.mount(getMarketDetails(option))
       }
       else {
         this.props.history.push('/advanced/trade/'+this.props.selectedPair.id)
@@ -125,7 +126,8 @@ class Trade extends Component {
       <>
         <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
         {!this.state.selectedOption && <TradeOptionsList {...this.props} mode={TradeOptionsListLayoutMode.Trade} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.props.orderBooks}></TradeOptionsList>}
-        <div id="trade-app" className={!this.state.selectedOption ? "d-none" : ""}></div>
+        {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption}></AdvancedTrade>}
+        {/* <div id="trade-app" className={!this.state.selectedOption ? "d-none" : ""}></div> */}
       </>}
     </div>
     

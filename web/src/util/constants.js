@@ -21,6 +21,7 @@ export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID;
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const subgraphUrl = process.env.REACT_APP_SUBGRAPH_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
+export const zrxWSSUrl = process.env.REACT_APP_ZRX_WSS_URL;
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL + "address/";
 export const etherscanTxUrl = process.env.REACT_APP_ETHERSCAN_URL + "tx/";
 export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
