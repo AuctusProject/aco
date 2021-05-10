@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import { getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
-import { toDecimals, formatWithPrecision, maxAllowance, erc20Proxy } from '../../util/constants'
+import { toDecimals, formatWithPrecision, maxAllowance, zrxExchangeAddress } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce, sendTransactionWithNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -38,7 +38,7 @@ class SimpleSellModal extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.position.option.acoToken, erc20Proxy, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.position.option.acoToken, zrxExchangeAddress, nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -158,7 +158,7 @@ class SimpleSellModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, erc20Proxy).then(result => {
+        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, zrxExchangeAddress).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(this.getOptionAmountToDecimals()))
         })

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, erc20Proxy, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy, acoBuyerAddress } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy, acoBuyerAddress, zrxExchangeAddress } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
@@ -409,7 +409,7 @@ class SimpleBuyTab extends Component {
   }
 
   getAllowanceAddress = () => {
-    return this.state.swapQuote.isPoolQuote ? this.state.swapQuote.poolData.length === 1 ? this.state.swapQuote.poolData[0].acoPool : acoBuyerAddress : erc20Proxy
+    return this.state.swapQuote.isPoolQuote ? this.state.swapQuote.poolData.length === 1 ? this.state.swapQuote.poolData[0].acoPool : acoBuyerAddress : zrxExchangeAddress
   }
   
   isPayEth = () => {
