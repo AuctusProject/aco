@@ -9,7 +9,7 @@ const getExchangeContract = () => {
   return new _web3.eth.Contract(zrxABI, zrxExchangeAddress)
 }
 
-export const submitMarketOrder = async (from, isBuy, amountToFill, price, orders, nonce) => {
+export const getMarketOrderData = async (isBuy, amountToFill, price, orders) => {
   const marketOrders = buildMarketOrders(isBuy, amountToFill, price, orders)
   if (!marketOrders.canBeFilled) {
     throw new Error("Insufficient liquidity amount")
@@ -18,7 +18,7 @@ export const submitMarketOrder = async (from, isBuy, amountToFill, price, orders
   const feeData = await getFeeData(marketOrders.ordersToFill.length)
   const exchange = getExchangeContract()
   const data = exchange.methods.batchFillLimitOrders(marketOrders.ordersToFill, orderSignatures, marketOrders.roundedAmounts, true).encodeABI()
-  return sendTransactionWithNonce(feeData.gasPrice, null, from, zrxExchangeAddress, feeData.value, data, null, nonce)
+  return {gasPrice: feeData.gasPrice, data: data, ethValue: feeData.value}
 }
 
 export const cancelLimitOrder = async (from, order) => {
