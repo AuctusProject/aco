@@ -1,4 +1,4 @@
-export const acoWriteABI = 
+export const acoWriterV2ABI = 
 [
 	{
 		"inputs": [
@@ -9,25 +9,12 @@ export const acoWriteABI =
 			},
 			{
 				"internalType": "address",
-				"name": "_erc20proxy",
+				"name": "_zrxExchange",
 				"type": "address"
 			}
 		],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
-	},
-	{
-		"inputs": [],
-		"name": "erc20proxy",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
 	},
 	{
 		"inputs": [],
@@ -55,19 +42,27 @@ export const acoWriteABI =
 				"type": "uint256"
 			},
 			{
-				"internalType": "address",
-				"name": "exchangeAddress",
-				"type": "address"
-			},
-			{
 				"internalType": "bytes",
-				"name": "exchangeData",
+				"name": "zrxExchangeData",
 				"type": "bytes"
 			}
 		],
 		"name": "write",
 		"outputs": [],
 		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "zrxExchange",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{

@@ -1,10 +1,10 @@
-import { getWeb3, sendTransactionWithNonce } from './web3Methods'
+import { getWeb3 } from './web3Methods'
 import { acoBuyerAddress } from './constants'
 import { acoBuyerV2ABI } from './acoBuyerV2ABI'
 
 let acoBuyerV2Contract = null
 function getAcoBuyerV2Contract() {
-    if (acoBuyerContract == null) {
+    if (acoBuyerV2Contract === null) {
         const _web3 = getWeb3()
         if (_web3) {
             acoBuyerV2Contract = new _web3.eth.Contract(acoBuyerV2ABI, acoBuyerAddress)
@@ -13,8 +13,8 @@ function getAcoBuyerV2Contract() {
     return acoBuyerV2Contract
 }
 
-export const buy = (from, paymentToken, paymentAmount, arrayData, nonce, gasPrice = null, ethValue = null) => {
+export const getBuyData = (paymentToken, paymentAmount, arrayData) => {
     const acoBuyerV2Contract = getAcoBuyerV2Contract()
     const data = acoBuyerV2Contract.methods.buy(paymentToken, paymentAmount, arrayData).encodeABI()
-    return sendTransactionWithNonce(gasPrice, null, from, acoBuyerAddress, ethValue, data, null, nonce)
+    return data
 }

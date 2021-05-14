@@ -5,11 +5,11 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, maxAllowance, ONE_SECOND, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy, acoBuyerAddress, zrxExchangeAddress } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, maxAllowance, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy, acoBuyerAddress, zrxExchangeAddress } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
-import { checkTransactionIsMined, getNextNonce, sendTransactionWithNonce } from '../../util/web3Methods'
+import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
@@ -18,14 +18,12 @@ import { allowDeposit, allowance } from '../../util/erc20Methods'
 import { getDeribiData } from '../../util/acoApi'
 import StepsModal from '../StepsModal/StepsModal'
 import VerifyModal from '../VerifyModal'
-import { swap } from '../../util/acoPoolMethods'
-import { getBestQuote } from '../../util/acoQuote'
 import BigNumber from 'bignumber.js'
 import SlippageModal from '../SlippageModal'
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import ReactTooltip from 'react-tooltip'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { buy } from '../../util/acoBuyerMethods'
+import { buy, getQuote } from '../../util/acoSwapUtil'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -238,7 +236,7 @@ class SimpleBuyTab extends Component {
     var previousQuote = this.state.swapQuote
     this.showVerifyQuote(() => {
         this.refreshSwapQuote(this.state.selectedOption, () => {
-          if (previousQuote && this.state.swapQuote && previousQuote.price.toString() === this.state.swapQuote.price.toString()) {
+          if (previousQuote && this.state.swapQuote && previousQuote.price.toString(10) === this.state.swapQuote.price.toString(10)) {
             this.setState({verifyModalInfo: null})
             this.sendBuyTransaction(stepNumber, nonce, needApproval)
           }
@@ -272,36 +270,13 @@ class SimpleBuyTab extends Component {
   }
 
   sendQuotedTransaction = (nonce) => {
-    if (this.state.swapQuote.isPoolQuote) {
-      const deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
-      if (this.state.swapQuote.poolData.length === 1) {
-        const amount = toDecimals(this.state.qtyValue, this.state.selectedOption.acoTokenInfo.decimals)
-        const poolAddress = this.state.swapQuote.poolData[0].acoPool
-        const restriction = this.getMaxToPay()
-        return swap(this.context.web3.selectedAccount, poolAddress, this.state.selectedOption.acoToken, amount.toString(), restriction.toString(), deadline, nonce)
-      }
-      else {
-        let pools = []
-        let amounts = []
-        let restrictions = []
-        for (let i = 0; i < this.state.swapQuote.poolData.length; ++i) {
-          pools.push(this.state.swapQuote.poolData[i].acoPool)
-          amounts.push(this.state.swapQuote.poolData[i].amount.toString())
-          let restrictionForPool = this.state.swapQuote.poolData[i].swapPrice.times(new BigNumber(1+this.state.maxSlippage))
-          restrictions.push(toDecimals(restrictionForPool, this.state.selectedOption.strikeAssetInfo.decimals).toString())
-        }
-        return buy(this.context.web3.selectedAccount, this.state.selectedOption.acoToken, pools, amounts, restrictions, deadline, nonce)
-      }
-    }
-    else {
-      return sendTransactionWithNonce(this.state.swapQuote.gasPrice, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
-    }
+    return buy(this.context.web3.selectedAccount, nonce, this.state.swapQuote.zrxData, this.state.swapQuote.poolData, this.state.selectedOption, this.state.maxSlippage)
   }
 
   getMaxToPay = () => {
     if (this.state.qtyValue && this.state.qtyValue > 0 && this.state.selectedOption && this.state.swapQuote) {
       var amount = new BigNumber(this.state.qtyValue)
-      var value = amount.times(new BigNumber(this.state.swapQuote.price)).times(new BigNumber(1+this.state.maxSlippage))
+      var value = amount.times(this.state.swapQuote.price).times(new BigNumber(1+this.state.maxSlippage))
       return toDecimals(value, this.state.selectedOption.underlyingInfo.decimals)
     }
   }
@@ -409,7 +384,13 @@ class SimpleBuyTab extends Component {
   }
 
   getAllowanceAddress = () => {
-    return this.state.swapQuote.isPoolQuote ? this.state.swapQuote.poolData.length === 1 ? this.state.swapQuote.poolData[0].acoPool : acoBuyerAddress : zrxExchangeAddress
+    if (this.state.swapQuote.poolData.length === 0 && this.state.swapQuote.zrxData.length === 1) {
+      return zrxExchangeAddress
+    }
+    if (this.state.swapQuote.poolData.length === 1 && this.state.swapQuote.zrxData.length === 0) {
+      return this.state.swapQuote.poolData[0].acoPool
+    }
+    return acoBuyerAddress
   }
   
   isPayEth = () => {
@@ -445,7 +426,7 @@ class SimpleBuyTab extends Component {
   
   getAcoOptionPrice = () => {    
     if (this.state.swapQuote) {
-      return parseFloat(this.state.swapQuote.price)
+      return parseFloat(this.state.swapQuote.price.toString(10))
     }
     return null
   }
@@ -463,13 +444,14 @@ class SimpleBuyTab extends Component {
 
   internalRefreshSwapQuote = (selectedOption, callback) => {
     if (selectedOption && this.state.qtyValue && this.state.qtyValue > 0) {
-      getBestQuote(selectedOption, toDecimals(this.state.qtyValue, selectedOption.acoTokenInfo.decimals).toString(), true)
-      .then(result => {
-        if (result.isPoolQuote) {
-          this.setState({swapQuote: result, errorMessage: null, loadingSwap: false}, callback)
-        }
-        else {
-          this.setState({swapQuote: result.quote, errorMessage: result.errorMessage, loadingSwap: false}, callback)
+      getQuote(true, selectedOption, this.state.qtyValue)
+      .then((result) => {
+        this.setState({swapQuote: result, errorMessage: null, loadingSwap: false}, callback)
+      }).catch((err) => {
+        if (err.message === "Insufficient liquidity") {
+          this.setState({swapQuote: null, errorMessage: err.message, loadingSwap: false}, callback)
+        } else {
+          console.error(err)
         }
       })
     }

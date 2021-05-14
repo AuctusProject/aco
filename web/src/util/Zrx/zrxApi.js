@@ -1,101 +1,111 @@
 import Axios from 'axios'
-import { zrxApiUrl } from '../constants';
-import { getGasPrice } from '../gasStationApi';
-import BigNumber from 'bignumber.js';
+import { fromDecimals, zrxApiUrl } from '../constants'
+import BigNumber from 'bignumber.js'
 
-export function getSwapQuote(buyToken, sellToken, amount, isBuy) {
-    return new Promise(function(resolve,reject){
-        var url = zrxApiUrl + "swap/v0/quote?"
-        url += "buyToken=" + buyToken
-        url += "&sellToken=" + sellToken
-        if (isBuy) {
-            url += "&buyAmount="+amount
-        }
-        else {
-            url += "&sellAmount="+amount
-        }
-        url+="&gasPrice=1"
-        getGasPrice().then(gasPrice => {
-            Axios.get(url)
-            .then(res => {
-                if (res && res.data) {
-                    const ordersFee = new BigNumber(res.data.protocolFee)
-                    const protocolFee = ordersFee.times(gasPrice)
-                    res.data.value = new BigNumber(res.data.value).minus(ordersFee).plus(protocolFee).toString()
-                    res.data.gasPrice = gasPrice
-                    resolve(res.data)
-                }
-                else {
-                    resolve(null)
-                }
-            })
-            .catch(err => 
-                reject(err)
-            );
-        })
-        .catch(err => reject(err))        
+export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {
+  let makerToken = (isBuy ? option.underlying : option.striKeAsset)
+  let takerToken = (isBuy ? option.striKeAsset : option.underlying)
+  const orders = await getOrders(makerToken, takerToken)
+  const sortedOrders = getSortedOrdersWithPrice(isBuy, option, orders)
+
+  const zrxData = []
+
+  let takerDecimals = (isBuy ? option.strikeAssetInfo.decimals : option.underlyingInfo.decimals)
+  let makerDecimals = (isBuy ? option.underlyingInfo.decimals : option.strikeAssetInfo.decimals)
+  let filledAmount = new BigNumber(0)
+  for (let i = 0; i < sortedOrders.length && (!acoAmount || filledAmount.isLessThan(acoAmount)); ++i) {
+    if (acoPrice && 
+      ((isBuy && sortedOrders[i].price.isGreaterThan(acoPrice)) || 
+      (isBuy && sortedOrders[i].price.isLessThan(acoPrice)))
+    ) {
+      break
+    }
+
+    let availableTakerAmountString = sortedOrders[i].metaData && sortedOrders[i].metaData.remainingFillableTakerAmount ? new BigNumber(sortedOrders[i].metaData.remainingFillableTakerAmount) : new BigNumber(sortedOrders[i].order.takerAmount)
+    let takerAvailable = new BigNumber(fromDecimals(availableTakerAmountString, takerDecimals, takerDecimals, takerDecimals))
+    let takerAmount = new BigNumber(fromDecimals(sortedOrders[i].order.takerAmount, takerDecimals, takerDecimals, takerDecimals))
+    let makerAmount = new BigNumber(fromDecimals(sortedOrders[i].order.makerAmount, makerDecimals, makerDecimals, makerDecimals))
+
+    let makerAvailable = makerAmount.times(takerAvailable).div(takerAmount)
+    let acoAvailable = (isBuy ? makerAvailable : takerAvailable)
+    let strikeAssetAvailable = (isBuy ? takerAvailable : makerAvailable)
+
+    let aco
+    let strikeAsset
+    if (acoAmount && filledAmount.plus(acoAvailable).isGreaterThan(acoAmount)) {
+      let available = acoAmount.minus(filledAmount)
+      strikeAsset = available.times(sortedOrders[i].price)
+      aco = available
+      filledAmount = acoAmount
+    } else {
+      strikeAsset = strikeAssetAvailable
+      aco = acoAvailable
+      filledAmount = filledAmount.plus(acoAvailable)
+    }
+    zrxData.push({
+      order: sortedOrders[i].order,
+      acoAmount: aco,
+      strikeAssetAmount: strikeAsset,
+      price: sortedOrders[i].price
     })
+  }
+  return {
+    zrxData: zrxData, 
+    filledAmount: filledAmount 
+  }
 }
 
-export function isInsufficientLiquidity(err) {
-  return err && err.response && err.response.data && err.response.data.validationErrors && 
-    err.response.data.validationErrors.filter(v => v.reason === "INSUFFICIENT_ASSET_LIQUIDITY").length > 0
+const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
+  const sortedOrders = []
+  let takerDecimals = (isBuy ? option.strikeAssetInfo.decimals : option.underlyingInfo.decimals)
+  for (let j = 0; j < zrxOrders.length; ++j) {
+    let takerAmount = new BigNumber(fromDecimals(zrxOrders[j].order.takerAmount, takerDecimals, takerDecimals, takerDecimals))   
+    let price
+    if (isBuy) {
+        let makerAmount = new BigNumber(fromDecimals(zrxOrders[j].order.makerAmount, option.underlyingInfo.decimals, option.underlyingInfo.decimals, option.underlyingInfo.decimals))
+        price = takerAmount.div(makerAmount)
+    } else {
+        let makerAmount = new BigNumber(fromDecimals(zrxOrders[j].order.makerAmount, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals))
+        price = makerAmount.div(takerAmount)
+    }
+    zrxOrders[j].price = price
+    sortedOrders.push(zrxOrders[j])
+  }
+  sortedOrders.sort((a, b) => {
+    if (isBuy) {
+      return a.price.comparedTo(b.price)
+    } else {
+      return b.price.comparedTo(a.price)
+    }
+  })
+  return sortedOrders
 }
 
-export function getOrders(makerToken, takerToken, page = 1, perPage = 100){
-    return new Promise(function(resolve,reject){
-        var url = zrxApiUrl + "sra/v4/orders?"
-        url += "makerToken=" + makerToken
-        url += "&takerToken=" + takerToken
-        url += "&page=" + page
-        url += "&perPage=" + perPage
-        Axios.get(url)
-        .then(res => {
-            if (res && res.data) {
-                resolve(res.data)
-            }
-            else {
-                resolve(null)
-            }
-        })
-        .catch(err => 
-            reject(err)
-        )
-    })
+export const getOrders = async (makerToken, takerToken, page = 1, perPage = 100) => {
+  let url = zrxApiUrl + "sra/v4/orders?"
+  url += "makerToken=" + makerToken
+  url += "&takerToken=" + takerToken
+  url += "&page=" + page
+  url += "&perPage=" + perPage
+  const res = await Axios.get(url)
+  if (res && res.data) {
+    return res.data
+  }
+  return []
 }
 
-export function postOrder(order){
-    return new Promise(function(resolve,reject){
-        var url = zrxApiUrl + "sra/v4/order"
-        Axios.post(url, order)
-        .then(res => {
-            if (res && res.data) {
-                resolve(res)
-            }
-            else {
-                resolve(null)
-            }
-        })
-        .catch(err => 
-            reject(err)
-        )
-    })
+export const postOrder = async (order) => {
+  const res = await Axios.post(zrxApiUrl + "sra/v4/order", order)
+  if (res && res.data) {
+    return res.data
+  }
+  return null
 }
 
-export function postOrderConfig(order){
-    return new Promise(function(resolve,reject){
-        var url = zrxApiUrl + "sra/v4/order_config"
-        Axios.post(url, order)
-        .then(res => {
-            if (res && res.data) {
-                resolve(res)
-            }
-            else {
-                resolve(null)
-            }
-        })
-        .catch(err => 
-            reject(err)
-        )
-    })
+export const postOrderConfig = async (order) => {
+  const res = await Axios.post(zrxApiUrl + "sra/v4/order_config", order)
+  if (res && res.data) {
+    return res.data
+  }
+  return null
 }

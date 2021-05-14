@@ -2,9 +2,8 @@ import './SimpleWriteStep2.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, acoWriteAddress, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
+import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, acoWriterAddress, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
 import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice, getCollateralAmount } from '../../util/acoTokenMethods'
-import { getSwapQuote, isInsufficientLiquidity } from '../../util/Zrx/zrxApi'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import StepsModal from '../StepsModal/StepsModal'
@@ -14,9 +13,10 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import { allowDeposit, allowance } from '../../util/erc20Methods'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { write } from '../../util/acoWriteMethods'
 import { getDeribiData } from '../../util/acoApi'
 import VerifyModal from '../VerifyModal'
+import { getQuote } from '../../util/acoSwapUtil'
+import { write } from '../../util/acoWriterV2Methods'
 
 class SimpleWriteStep2 extends Component {
   constructor(props) {
@@ -107,7 +107,7 @@ class SimpleWriteStep2 extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getCollaterizeAssetAddress(), acoWriteAddress, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getCollaterizeAssetAddress(), acoWriterAddress, nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -140,20 +140,13 @@ class SimpleWriteStep2 extends Component {
     }
   }
 
-  getWriteValue = (collateral) => {
-    if (this.isCollateralEth()) {
-      return Web3Utils.toBN(this.state.swapQuote.value).add(collateral).toString()
-    }
-    return this.state.swapQuote.value
-  }
-
   checkQuote = (stepNumber, nonce, needApproval) => {
     this.stopQuoteRefresh()
     this.setStepsModalInfo(++stepNumber, needApproval)
     var previousQuote = this.state.swapQuote
     this.showVerifyQuote(() => {
         this.refreshSwapQuote(() => {
-          if (previousQuote && this.state.swapQuote && previousQuote.price === this.state.swapQuote.price) {
+          if (previousQuote && this.state.swapQuote && previousQuote.price.toString(10) === this.state.swapQuote.price.toString(10)) {
             this.setState({verifyModalInfo: null})            
             this.sendWriteTransaction(stepNumber, nonce, needApproval)
           }
@@ -183,10 +176,8 @@ class SimpleWriteStep2 extends Component {
   }
 
   sendWriteTransaction = (stepNumber, nonce, needApproval) => {
-    var collateral = toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())
-    var writeValue = this.getWriteValue(collateral)
     this.setStepsModalInfo(++stepNumber, needApproval)    
-    write(this.context.web3.selectedAccount, this.props.option.acoToken, collateral.toString(), this.state.swapQuote.to, this.state.swapQuote.data, writeValue, this.state.swapQuote.gasPrice, nonce)
+    write(this.context.web3.selectedAccount, this.props.option.acoToken, this.isCollateralEth(), this.state.swapQuote.zrxData, nonce)
     .then(result => {
       if (result) {
         this.setStepsModalInfo(++stepNumber, needApproval)
@@ -279,7 +270,7 @@ class SimpleWriteStep2 extends Component {
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isCollateralEth()) {
-        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriteAddress).then(result => {
+        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriterAddress).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())))
         })
@@ -309,13 +300,6 @@ class SimpleWriteStep2 extends Component {
 
   canWrite = () => {
     return (!this.state.loadingSwap && this.getButtonMessage() === null) 
-  }
-
-  getSwapPrice = () => {
-    if (this.state.swapQuote) {
-      return this.state.swapQuote.price
-    }
-    return null
   }
 
   refresh = () => {
@@ -350,11 +334,11 @@ class SimpleWriteStep2 extends Component {
     var optionsAmount = this.getOptionsAmount()
     var selectedOption = this.props.option
     if (selectedOption && optionsAmount && optionsAmount > 0) {
-      getSwapQuote(selectedOption.strikeAsset, selectedOption.acoToken, toDecimals(optionsAmount, selectedOption.acoTokenInfo.decimals).toString(), false).then(swapQuote => {
+      getQuote(false, selectedOption, optionsAmount).then(swapQuote => {
         this.props.setSwapQuoteReturns(selectedOption, swapQuote)
         this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false}, callback)
       }).catch((err) => {
-        if (isInsufficientLiquidity(err)) {
+        if (err.message === "Insufficient liquidity") {
           this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false}, callback)
         }
         else {
@@ -371,7 +355,7 @@ class SimpleWriteStep2 extends Component {
   getOptionPremium = () => {
     var option = this.props.option
     if (option && this.state.swapQuote) {
-      return formatWithPrecision((this.state.swapQuote.price) * this.getOptionsAmount()) + " " + this.props.selectedPair.strikeAssetSymbol
+      return formatWithPrecision(this.getAcoOptionPrice() * this.getOptionsAmount()) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
   }
@@ -413,7 +397,7 @@ class SimpleWriteStep2 extends Component {
 
   getAcoOptionPrice = () => {    
     if (this.state.swapQuote) {
-      return parseFloat(this.state.swapQuote.price)
+      return parseFloat(this.state.swapQuote.price.toString(10))
     }
     return null
   }
