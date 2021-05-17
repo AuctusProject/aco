@@ -34,7 +34,10 @@ export async function attemptAsync(fn, opts = { interval: 1000, maxRetries: 10 }
 }
 
 export const getSignedOrder = async (from, order) => {
-    const signature = await signTypedData(from, getSignatureMessage(order))
+    order.chainId = parseInt(CHAIN_ID)
+    order.verifyingContract = zrxExchangeAddress
+    const msg = getSignatureMessage(order)
+    const signature = await signTypedData(from, JSON.stringify(msg))
     order.signature = {
       signatureType: 2,
       r: signature.r,
@@ -150,8 +153,8 @@ const getSignatureMessage = (order) => {
       "domain": {
         "name": "ZeroEx",
         "version": "1.0.0",
-        "chainId": parseInt(CHAIN_ID),
-        "verifyingContract": zrxExchangeAddress
+        "chainId": order.chainId,
+        "verifyingContract": order.verifyingContract
       },
       "message": order,
       "primaryType": "LimitOrder"
