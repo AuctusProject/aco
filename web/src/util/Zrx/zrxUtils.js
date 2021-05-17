@@ -50,7 +50,7 @@ export const getSignedOrder = async (from, order) => {
 export const buildOrder = async (from, baseTokenAddress, quoteTokenAddress, amount, price, isBuy, expirationUnixTimeInSeconds, underlyingDecimals, strikeAssetDecimals) => {
     const orderAmount = new BigNumber(toDecimals(amount, underlyingDecimals))
     const orderPrice = new BigNumber(toDecimals(price, strikeAssetDecimals))
-    const quoteAmount = orderAmount.times(orderPrice).div(new BigNumber(toDecimals("1", strikeAssetDecimals))).integerValue(BigNumber.ROUND_CEIL) 
+    const quoteAmount = orderAmount.times(orderPrice).div(new BigNumber(toDecimals("1", underlyingDecimals))).integerValue(BigNumber.ROUND_CEIL) 
     const makerToken = isBuy ? baseTokenAddress : quoteTokenAddress
     const takerToken = isBuy ? quoteTokenAddress : baseTokenAddress
     const makerAmount = isBuy ? orderAmount.toString(10) : quoteAmount.toString(10)

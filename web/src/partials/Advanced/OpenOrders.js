@@ -28,7 +28,7 @@ class OpenOrders extends Component {
   }
   
   render() {
-    var userOrders = getUserOrders()
+    var userOrders = this.getUserOrders()
     var isBuy = false
 
     
