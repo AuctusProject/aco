@@ -18,7 +18,7 @@ export const getQuote = async (isBuy, option, acoAmount = null, acoPrice = null)
     promises.push(getPoolQuote(option, acoAmount, acoPrice))
   }
   const quotes = await Promise.all(promises)
-
+  
   const totalLiquidity = (isBuy ? quotes[0].filledAmount.plus(quotes[1].filledAmount) : quotes[0].filledAmount)
   if (acoAmount && totalLiquidity.lt(acoAmount)) {
     throw new Error("Insufficient liquidity")

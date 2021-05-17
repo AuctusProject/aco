@@ -31,7 +31,7 @@ export const cancelAllPairLimitOrders = async (from, baseAsset, quoteAsset) => {
 
 let protocolFeeMultiplier = null
 export const getProtocolFeeMultiplier = async () => {
-  if (!protocolFeeMultiplier) {
+  if (protocolFeeMultiplier) {
     return protocolFeeMultiplier
   }
   const contract = getExchangeContract()
@@ -41,7 +41,7 @@ export const getProtocolFeeMultiplier = async () => {
 
 export const getFeeData = async (ordersAmount) => {
   const data = await Promise.all([getGasPrice(), getProtocolFeeMultiplier()])
-  let gas = new Web3Utils.BN(Math.ceil(data[0])).mul(new Web3Utils.BN("1000000000"))
+  let gas = new Web3Utils.BN(Math.ceil(data[0]))
   return {
     gasPrice: gas,
     value: gas.mul(new Web3Utils.BN(data[1])).mul(new Web3Utils.BN(ordersAmount))

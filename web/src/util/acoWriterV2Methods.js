@@ -3,6 +3,7 @@ import { acoWriterAddress } from './constants'
 import { acoWriterV2ABI } from './acoWriterV2ABI'
 import { getSwapData } from './Zrx/zrxWeb3'
 import BigNumber from 'bignumber.js'
+import Web3Utils from 'web3-utils'
 
 let acoWriterContract = null
 const getAcoWriteContract = () => {
@@ -30,7 +31,7 @@ export const write = async (from, acoToken, isCollateralEther, zrxData, nonce) =
     let ethValue = zrxOrder.ethValue
     let gasPrice = zrxOrder.gasPrice
     if (isCollateralEther) {
-        ethValue = ethValue.add(totalTaker.toString(10))
+        ethValue = ethValue.add(new Web3Utils.BN(totalTaker.toString(10)))
     }
     return sendTransactionWithNonce(gasPrice, null, from, acoWriterAddress, ethValue, data, null, nonce)
 }
