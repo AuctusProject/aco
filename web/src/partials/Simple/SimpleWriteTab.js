@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import StepIndicator from '../Write/StepIndicator'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getSecondsToExpiry, formatPercentage, formatWithPrecision, swapQuoteBuySize } from '../../util/constants'
+import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getSecondsToExpiry, formatPercentage, formatWithPrecision, toDecimals, swapQuoteSellSize } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
 import Loading from '../Util/Loading'
 import SimpleWriteStep2 from './SimpleWriteStep2'
@@ -41,8 +41,7 @@ class SimpleWriteTab extends Component {
       for (let index = 0; index < this.props.options.length; index++) {        
         let option = this.props.options[index];
         swapQuotesPromises.push(new Promise((resolve) => {
-            getQuote(true, option, swapQuoteBuySize).then(swapQuote => {              
-              swapQuote.price = new BigNumber(1).div(swapQuote.price)
+            getQuote(false, option, swapQuoteSellSize).then(swapQuote => {   
               swapQuotes[option.acoToken] = swapQuote
               resolve()
           }).catch((err) => {
@@ -75,7 +74,7 @@ class SimpleWriteTab extends Component {
   }
 
   setSwapQuoteReturns = (option, swapQuote) => {
-    if (swapQuote) {
+    if (swapQuote && swapQuote.price) {
       swapQuote.returnIfFlat = this.getReturnIfFlat(option, swapQuote.price)
       swapQuote.annualizedReturn = this.getAnnualizedReturn(option, swapQuote.returnIfFlat)
     }
@@ -95,8 +94,8 @@ class SimpleWriteTab extends Component {
   }
 
   getOptionPremium = (option) => {
-    if (option && this.state.swapQuotes[option.acoToken]) {
-      return formatWithPrecision(parseFloat(this.state.swapQuotes[option.acoToken].price.toString(10))) + " " + this.props.selectedPair.strikeAssetSymbol
+    if (option && this.state.swapQuotes[option.acoToken] && this.state.swapQuotes[option.acoToken].price) {
+      return formatWithPrecision(parseFloat(fromDecimals(this.state.swapQuotes[option.acoToken].price.toString(10), option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals))) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
   }
@@ -116,28 +115,29 @@ class SimpleWriteTab extends Component {
   }
 
   getReturnIfFlat = (option, bid) => {
-    var price = new BigNumber(this.getPairCurrentPrice(), option.strikeAssetInfo.decimals)
-    var strikePrice = new BigNumber(fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals))
+    var price = new BigNumber(toDecimals(this.getPairCurrentPrice(), option.strikeAssetInfo.decimals))
+    var strikePrice = new BigNumber(option.strikePrice)
     var value = null
+    var oneStrike = new BigNumber(toDecimals("1", option.strikeAssetInfo.decimals))
     if (bid && price && strikePrice) {
       if (option.isCall && bid.gt(price.minus(strikePrice))) {
         if (strikePrice.gt(price)) {
-          value = bid.div(price.minus(bid))
+          value = bid.times(oneStrike).div(price.minus(bid))
         }
         else {
-          value = bid.minus(price.minus(strikePrice)).div(price.minus(bid))
+          value = bid.minus(price.minus(strikePrice)).times(oneStrike).div(price.minus(bid))
         }      
       }
       else if (!option.isCall && bid.gt(strikePrice.minus(price))) {
         if (strikePrice.gt(price)) {
-          value = bid.minus(strikePrice.minus(price)).div(strikePrice)
+          value = bid.minus(strikePrice.minus(price)).times(oneStrike).div(strikePrice)
         }
         else {
-          value = bid.div(strikePrice)
+          value = bid.times(oneStrike).div(strikePrice)
         }      
       } 
     }
-    return value ? parseFloat(value.toString(10)) : null 
+    return value ? parseFloat(fromDecimals(value.integerValue(BigNumber.ROUND_CEIL).toString(10), option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals)) : null 
   }
 
   getPairCurrentPrice = () => {

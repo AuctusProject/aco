@@ -2,16 +2,16 @@ import { getSwapData as getPoolSwapData, getSwapQuote as getPoolQuote } from "./
 import { getSwapQuote as getZrxQuote } from "./Zrx/zrxApi"
 import { getSwapData as getZrxSwapData } from "./Zrx/zrxWeb3"
 import BigNumber from "bignumber.js"
-import { acoBuyerAddress, ONE_SECOND, zrxExchangeAddress } from "./constants"
+import { acoBuyerAddress, ONE_SECOND, toDecimals, zrxExchangeAddress } from "./constants"
 import { sendTransactionWithNonce } from "./web3Methods"
 import { getBuyData } from "./acoBuyerV2Methods"
 
 export const getQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {
   if (acoAmount) {
-    acoAmount = new BigNumber(acoAmount, option.underlyingInfo.decimals)
+    acoAmount = new BigNumber(toDecimals(acoAmount, option.underlyingInfo.decimals))
   }
   if (acoPrice) {
-    acoPrice = new BigNumber(acoPrice, option.strikeAssetInfo.decimals)
+    acoPrice = new BigNumber(toDecimals(acoPrice, option.strikeAssetInfo.decimals))
   }
   let promises = [getZrxQuote(isBuy, option, acoAmount, acoPrice)]
   if (isBuy) {
@@ -27,6 +27,7 @@ export const getQuote = async (isBuy, option, acoAmount = null, acoPrice = null)
   const sortedOrders = (isBuy ? quotes[0].zrxData.concat(quotes[1].poolData).sort((a, b) => a.price.gt(b.price) ? 1 : a.price.eq(b.price) ? 0 : -1) : quotes[0].zrxData)
   let totalAcoAmount = new BigNumber(0)
   let totalStrikeAssetAmount = new BigNumber(0)
+  const oneUnderlying = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
   const poolData = []
   const zrxData = []
   for (let i = 0; i < sortedOrders.length && (!acoAmount || totalAcoAmount.isLessThan(acoAmount)); ++i) {
@@ -34,7 +35,7 @@ export const getQuote = async (isBuy, option, acoAmount = null, acoPrice = null)
     let strikeAsset
     if (acoAmount && totalAcoAmount.plus(sortedOrders[i].acoAmount).isGreaterThan(acoAmount)) {
       aco = acoAmount.minus(totalAcoAmount).integerValue(BigNumber.ROUND_CEIL)
-      strikeAsset = aco.times(sortedOrders[i].price).integerValue(BigNumber.ROUND_CEIL)
+      strikeAsset = aco.times(sortedOrders[i].price).div(oneUnderlying).integerValue(BigNumber.ROUND_CEIL)
     } else {
       aco = sortedOrders[i].acoAmount.integerValue(BigNumber.ROUND_CEIL)
       strikeAsset = sortedOrders[i].strikeAssetAmount.integerValue(BigNumber.ROUND_CEIL)
@@ -60,7 +61,7 @@ export const getQuote = async (isBuy, option, acoAmount = null, acoPrice = null)
     option: option, 
     acoAmount: totalAcoAmount,
     strikeAssetAmount: totalStrikeAssetAmount,
-    price: (totalAcoAmount.gt(0) ? totalStrikeAssetAmount.div(totalAcoAmount) : null),
+    price: (totalAcoAmount.gt(0) ? totalStrikeAssetAmount.times(oneUnderlying).div(totalAcoAmount).integerValue(BigNumber.ROUND_CEIL) : null),
     poolData: poolData,
     zrxData: zrxData
   }
@@ -87,7 +88,7 @@ export const buy = async (from, nonce, zrxData, poolData = null, option = null, 
   if (poolData && option && poolData.length > 0) {
     const deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
     for (let j = 0; j < poolData.length; ++j) {
-      let strikeAssetAmount = (slippage ? poolData[j].strikeAssetAmount.times((new BigNumber(1)).plus(new BigNumber(slippage))) : poolData[j].strikeAssetAmount)
+      let strikeAssetAmount = (slippage ? poolData[j].strikeAssetAmount.times((new BigNumber(1)).plus(new BigNumber(slippage))) : poolData[j].strikeAssetAmount).integerValue(BigNumber.ROUND_CEIL)
       let web3Data = getPoolSwapData(from, poolData[j].acoPool, option.acoToken, poolData[j].acoAmount.toString(10), strikeAssetAmount.toString(10), deadline.toString(10))
       data.push({from: poolData[j].acoPool, ethValue: "0", data: web3Data})
       totalPayment = totalPayment.plus(strikeAssetAmount)

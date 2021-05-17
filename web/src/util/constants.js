@@ -36,7 +36,7 @@ export const maxAllowance = "115792089237316195423570985008687907853269984665640
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
 export const wssInfuraAddress = process.env.REACT_APP_INFURA_WSS;
-export const swapQuoteBuySize = "1000";
+export const swapQuoteSellSize = "0.001";
 export const PERCENTAGE_PRECISION = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS.toLowerCase();
@@ -108,6 +108,9 @@ export function getOptionName(isCall) {
 export function getNetworkName(chainId) {
     if (chainId === "4") {
         return "rinkeby"
+    }
+    else if (chainId === "3") {
+        return "ropsten"
     }
     else if (chainId === "42") {
         return "kovan"

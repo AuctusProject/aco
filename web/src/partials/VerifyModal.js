@@ -32,9 +32,10 @@ class VerifyModal extends Component {
                 <div className="aco-button action-btn" onClick={onRefresh}>Refresh</div>
               </div>}
               {!timedOut && <>
+                {this.props.swapQuote.zrxData && this.props.swapQuote.zrxData.length > 0 &&
                 <div className="gas-disclaimer">
                   <div><FontAwesomeIcon icon={faExclamationTriangle}/></div>
-                  <span>Don't change transaction GAS PRICE in {this.context.web3.name} / Web3 wallet!</span></div>
+                  <span>Don't change transaction GAS PRICE in {this.context.web3.name} / Web3 wallet!</span></div>}
                 <div className="done-button-wrapper">
                   <div className="aco-button cancel-btn" onClick={onCancel}>Cancel</div>
                   {!this.state.loading && <div className="aco-button action-btn" onClick={this.onConfirm}>Verify</div>}

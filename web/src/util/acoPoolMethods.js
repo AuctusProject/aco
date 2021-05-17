@@ -2,7 +2,7 @@ import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Method
 import { acoPoolABI } from './acoPoolABI';
 import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
-import { fromDecimals, toDecimals } from './constants';
+import { toDecimals } from './constants';
 import { getCollateralAmountInDecimals } from './acoTokenMethods';
 import { getOption } from './dataController';
 
@@ -47,9 +47,9 @@ export const getSwapQuote = (option, acoAmount = null, acoPrice = null) => {
             for (let i = 0; i < acoPools.length; i++) {
                 let liquidity
                 if (option.isCall) {
-                    liquidity = new BigNumber(fromDecimals(acoPools[i].underlyingBalance, option.underlyingInfo.decimals, option.underlyingInfo.decimals, option.underlyingInfo.decimals))
+                    liquidity = new BigNumber(acoPools[i].underlyingBalance)
                 } else {
-                    liquidity = new BigNumber(fromDecimals(acoPools[i].strikeAssetBalance, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals))
+                    liquidity = new BigNumber(acoPools[i].strikeAssetBalance)
                 }
                 if (liquidity.gt(0)) {
                     let amountToQuote = (acoAmount ? BigNumber.minimum(liquidity, acoAmount) : liquidity)
@@ -57,16 +57,16 @@ export const getSwapQuote = (option, acoAmount = null, acoPrice = null) => {
                         acoPool: acoPools[i].acoPool, 
                         amount: amountToQuote
                     }
-                    swapPromises.push(getPoolQuote(acoPools[i].acoPool, option, toDecimals(amountToQuote, option.underlyingInfo.decimals).toString()))
+                    swapPromises.push(getPoolQuote(acoPools[i].acoPool, option, amountToQuote.toString(10)))
                 }
             }
             Promise.all(swapPromises).then((result) => {
                 const response = {poolData: [], filledAmount: new BigNumber(0)}
                 const pricesSorted = []
-                const oneAcoToken = new BigNumber(fromDecimals("1", option.underlyingInfo.decimals, option.underlyingInfo.decimals, option.underlyingInfo.decimals))
+                const oneAcoToken = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
                 for (let i = 0; i < result.length; i++) {
                     if (!isNaN(result[i][0])) {
-                        let swapPrice = new BigNumber(fromDecimals(result[i][0], option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals))
+                        let swapPrice = new BigNumber(result[i][0])
                         let pricePerUnit = oneAcoToken.times(swapPrice).div(indexes[i.toString()].amount)
                         if (!acoPrice || pricePerUnit.lte(acoPrice)) {
                             pricesSorted.push({
@@ -86,7 +86,7 @@ export const getSwapQuote = (option, acoAmount = null, acoPrice = null) => {
                         let strikeAsset
                         if (acoAmount && response.filledAmount.plus(pricesSorted[j].acoAmount).isGreaterThan(acoAmount)) {
                             aco = acoAmount.minus(response.filledAmount)
-                            strikeAsset = aco.times(pricesSorted[j].price)
+                            strikeAsset = aco.times(pricesSorted[j].price).div(oneAcoToken)
                             response.filledAmount = acoAmount
                         } else {
                             aco = pricesSorted[j].acoAmount

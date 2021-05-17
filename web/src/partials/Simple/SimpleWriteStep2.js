@@ -397,7 +397,7 @@ class SimpleWriteStep2 extends Component {
 
   getAcoOptionPrice = () => {    
     if (this.state.swapQuote) {
-      return parseFloat(this.state.swapQuote.price.toString(10))
+      return parseFloat(fromDecimals(this.state.swapQuote.price.toString(10), this.props.option.strikeAssetInfo.decimals, this.props.option.strikeAssetInfo.decimals, this.props.option.strikeAssetInfo.decimals))
     }
     return null
   }

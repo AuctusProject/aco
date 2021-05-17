@@ -275,9 +275,9 @@ class SimpleBuyTab extends Component {
 
   getMaxToPay = () => {
     if (this.state.qtyValue && this.state.qtyValue > 0 && this.state.selectedOption && this.state.swapQuote) {
-      var amount = new BigNumber(this.state.qtyValue)
-      var value = amount.times(this.state.swapQuote.price).times(new BigNumber(1+this.state.maxSlippage))
-      return toDecimals(value, this.state.selectedOption.underlyingInfo.decimals)
+      var amount = new BigNumber(toDecimals(this.state.qtyValue, this.state.selectedOption.underlyingInfo.decimals))
+      var value = amount.times(this.state.swapQuote.price).times((new BigNumber(1)).plus(new BigNumber(this.state.maxSlippage))).div(new BigNumber(toDecimals("1", this.state.selectedOption.underlyingInfo.decimals)))
+      return value.integerValue(BigNumber.ROUND_CEIL).toString(10)
     }
   }
 
@@ -426,7 +426,7 @@ class SimpleBuyTab extends Component {
   
   getAcoOptionPrice = () => {    
     if (this.state.swapQuote) {
-      return parseFloat(this.state.swapQuote.price.toString(10))
+      return parseFloat(fromDecimals(this.state.swapQuote.price.toString(10), this.state.selectedOption.strikeAssetInfo.decimals, this.state.selectedOption.strikeAssetInfo.decimals, this.state.selectedOption.strikeAssetInfo.decimals))
     }
     return null
   }
@@ -481,7 +481,7 @@ class SimpleBuyTab extends Component {
   getMaxToPayFormatted = () => {
     var maxToPay = this.getMaxToPay()
     if (maxToPay) {
-      return fromDecimals(maxToPay, this.state.selectedOption.underlyingInfo.decimals) + " " + this.props.selectedPair.strikeAssetSymbol
+      return fromDecimals(maxToPay, this.state.selectedOption.strikeAssetInfo.decimals) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
   }
