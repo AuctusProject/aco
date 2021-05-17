@@ -1,5 +1,5 @@
 export async function getOrderHashAsync(order) {
-    return null
+    return order.metaData.orderHash
 }
 
 export async function delayAsync(ms) {
