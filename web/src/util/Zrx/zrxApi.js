@@ -6,7 +6,7 @@ export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = n
   let makerToken = (isBuy ? option.acoToken : option.strikeAsset)
   let takerToken = (isBuy ? option.strikeAsset : option.acoToken)
   const orders = await getOrders(makerToken, takerToken)
-  const sortedOrders = getSortedOrdersWithPrice(isBuy, orders)
+  const sortedOrders = getSortedOrdersWithPrice(isBuy, option, orders)
   
   const zrxData = []
 
@@ -54,16 +54,17 @@ export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = n
   }
 }
 
-const getSortedOrdersWithPrice = (isBuy, zrxOrders) => {
+const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
   const sortedOrders = []
   for (let j = 0; j < zrxOrders.records.length; ++j) {
     let takerAmount = new BigNumber(zrxOrders.records[j].order.takerAmount)  
     let makerAmount = new BigNumber(zrxOrders.records[j].order.makerAmount)    
+    let oneUnderlying = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
     let price
     if (isBuy) {
-      price = takerAmount.div(makerAmount)
+      price = takerAmount.times(oneUnderlying).div(makerAmount)
     } else {
-      price = makerAmount.div(takerAmount)
+      price = makerAmount.times(oneUnderlying).div(takerAmount)
     }
     zrxOrders.records[j].price = price
     sortedOrders.push(zrxOrders.records[j])
