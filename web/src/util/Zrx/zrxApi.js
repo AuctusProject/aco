@@ -3,8 +3,9 @@ import { toDecimals, zrxApiUrl } from '../constants'
 import BigNumber from 'bignumber.js'
 
 export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {
-  let makerToken = (isBuy ? option.underlying : option.strikeAsset)
-  let takerToken = (isBuy ? option.strikeAsset : option.underlying)
+  debugger
+  let makerToken = (isBuy ? option.acoToken : option.strikeAsset)
+  let takerToken = (isBuy ? option.strikeAsset : option.acoToken)
   const orders = await getOrders(makerToken, takerToken)
   const sortedOrders = getSortedOrdersWithPrice(isBuy, orders)
 
