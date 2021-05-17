@@ -136,7 +136,7 @@ class PoolHistoryTxTab extends Component {
                   <td className="value-highlight">{this.getUnderlyingAmount(event)}</td>
                   <td className="value-highlight">{this.getStrikeAmount(event)}</td>
                   <td className="value-highlight">{this.getCollateralAmount(event)}</td>
-                  <td className="value-highlight"><a href={etherscanTxUrl + event.tx} target="_blank" rel="noopener noreferrer">View</a></td>
+                  <td className="value-highlight"><a href={etherscanTxUrl + event.tx.split('-')[0]} target="_blank" rel="noopener noreferrer">View</a></td>
                 </tr>)}
             </tbody>
           </table>}
