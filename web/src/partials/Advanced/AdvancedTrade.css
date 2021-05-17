@@ -1,0 +1,55 @@
+.advanced-trade {
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+}
+
+.advanced-trade-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.advanced-trade-col {
+    padding: 5px;
+    max-width: 33%;
+}
+
+.advanced-trade-col:last-child {
+    -webkit-box-flex: 1;
+    flex-grow: 1;
+    max-width: none;
+}
+
+.advanced-trade-header {
+    display: flex;
+    flex-direction: row;
+    -webkit-box-align: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.advanced-trade-selected-option {
+    font-size: 14px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.35px;
+    text-align: left;
+    color: rgb(255, 255, 255);
+}
+
+.time-to-expiry-details {
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left: 1px solid rgb(166, 166, 166);
+}
+
+.time-to-expiry-label {
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+    text-align: left;
+    color: rgb(166, 166, 166);
+}

@@ -4,7 +4,7 @@ import { signTypedData } from "../web3Methods"
 import { postOrderConfig } from './zrxApi.js'
 
 export async function getOrderHashAsync(order) {
-    return null
+    return order.metaData.orderHash
 }
 
 export async function delayAsync(ms) {
