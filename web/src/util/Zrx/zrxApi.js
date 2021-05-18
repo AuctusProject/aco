@@ -30,6 +30,11 @@ export const getZrxOrdersFormatted = (isBuy, option, zrxOrders, acoAmount = null
 
     let availableTakerAmountString = sortedOrders[i].metaData && sortedOrders[i].metaData.remainingFillableTakerAmount ? new BigNumber(sortedOrders[i].metaData.remainingFillableTakerAmount) : new BigNumber(sortedOrders[i].order.takerAmount)
     let takerAvailable = new BigNumber(availableTakerAmountString)
+
+    if (takerAvailable.eq(new BigNumber(0))) {
+      continue
+    }
+    
     let takerAmount = new BigNumber(sortedOrders[i].order.takerAmount)
     let makerAmount = new BigNumber(sortedOrders[i].order.makerAmount)
 
