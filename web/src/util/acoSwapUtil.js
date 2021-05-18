@@ -54,6 +54,7 @@ export const getQuote = async (isBuy, option, acoAmount = null, acoPrice = null)
       poolData.push(data)
     }
     if (sortedOrders[i].order) {
+      data.orderHash = sortedOrders[i].orderHash
       data.order = sortedOrders[i].order
       zrxData.push(data)
     }

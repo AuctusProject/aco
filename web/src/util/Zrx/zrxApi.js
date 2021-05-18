@@ -42,6 +42,7 @@ export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = n
       filledAmount = filledAmount.plus(acoAvailable)
     }
     zrxData.push({
+      orderHash: sortedOrders[i].metaData ? sortedOrders[i].metaData.orderHash : null,
       order: sortedOrders[i].order,
       acoAmount: aco,
       strikeAssetAmount: strikeAsset,
