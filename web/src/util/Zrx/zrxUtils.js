@@ -47,17 +47,17 @@ export const getSignedOrder = async (from, order) => {
     return order
 }
 
-export const buildOrder = async (from, baseTokenAddress, quoteTokenAddress, amount, price, isBuy, expirationUnixTimeInSeconds, underlyingDecimals, strikeAssetDecimals) => {
-    const orderAmount = new BigNumber(toDecimals(amount, underlyingDecimals))
-    const orderPrice = new BigNumber(toDecimals(price, strikeAssetDecimals))
-    const quoteAmount = orderAmount.times(orderPrice).div(new BigNumber(toDecimals("1", underlyingDecimals))).integerValue(BigNumber.ROUND_CEIL) 
-    const makerToken = isBuy ? baseTokenAddress : quoteTokenAddress
-    const takerToken = isBuy ? quoteTokenAddress : baseTokenAddress
-    const makerAmount = isBuy ? orderAmount.toString(10) : quoteAmount.toString(10)
-    const takerAmount = isBuy ? quoteAmount.toString(10) : orderAmount.toString(10)
+export const buildOrder = async (from, isBuy, option, amount, price, minutesToExpirate = 20) => {
+    const acoAmount = new BigNumber(toDecimals(amount, option.underlyingInfo.decimals))
+    const orderPrice = new BigNumber(toDecimals(price, option.strikeAssetInfo.decimals))
+    const quoteAmount = acoAmount.times(orderPrice).div(new BigNumber(toDecimals("1", option.underlyingInfo.decimals))).integerValue(BigNumber.ROUND_CEIL) 
+    const makerToken = isBuy ? option.strikeAsset : option.acoToken
+    const takerToken = isBuy ? option.acoToken : option.strikeAsset
+    const makerAmount = isBuy ? quoteAmount.toString(10) : acoAmount.toString(10)
+    const takerAmount = isBuy ? acoAmount.toString(10) : quoteAmount.toString(10)
     const maker = from
     const taker = "0x0000000000000000000000000000000000000000"
-    const expiry = expirationUnixTimeInSeconds.toString()
+    const expiry = (Math.ceil(Date.now() / 1000) + parseInt(minutesToExpirate) * 60).toString()
     const verifyingContract = zrxExchangeAddress
   
     const orderConfigResult = await postOrderConfig({maker,taker,makerToken,takerToken,makerAmount,takerAmount,expiry,verifyingContract})

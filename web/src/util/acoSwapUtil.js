@@ -2,6 +2,7 @@ import { getSwapData as getPoolSwapData, getSwapQuote as getPoolQuote } from "./
 import { getSwapQuote as getZrxQuote } from "./Zrx/zrxApi"
 import { getSwapData as getZrxSwapData } from "./Zrx/zrxWeb3"
 import BigNumber from "bignumber.js"
+import Web3Utils from 'web3-utils'
 import { acoBuyerAddress, ONE_SECOND, toDecimals, zrxExchangeAddress } from "./constants"
 import { sendTransactionWithNonce } from "./web3Methods"
 import { getBuyData } from "./acoBuyerV2Methods"
@@ -81,9 +82,9 @@ export const buy = async (from, nonce, zrxData, poolData = null, option = null, 
       totalPayment = totalPayment.plus(zrxData[i].strikeAssetAmount)
     }
     const zrxOrder = await getZrxSwapData(orders, takerAmounts)
-    ethValue = zrxOrder.ethValue
-    gasPrice = zrxOrder.gasPrice
-    data.push({from: zrxExchangeAddress, ethValue: zrxOrder.ethValue, data: zrxOrder.data})
+    ethValue = new Web3Utils.BN(zrxOrder.ethValue.toString(10))
+    gasPrice = new Web3Utils.BN(zrxOrder.gasPrice.toString(10))
+    data.push({from: zrxExchangeAddress, ethValue: zrxOrder.ethValue.toString(10), data: zrxOrder.data})
   }
   if (poolData && option && poolData.length > 0) {
     const deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
