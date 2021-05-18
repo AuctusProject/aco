@@ -6,7 +6,11 @@ export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = n
   let makerToken = (isBuy ? option.acoToken : option.strikeAsset)
   let takerToken = (isBuy ? option.strikeAsset : option.acoToken)
   const orders = await getOrders(makerToken, takerToken)
-  const sortedOrders = getSortedOrdersWithPrice(isBuy, option, orders)
+  return getZrxOrdersFormatted(isBuy, option, orders.records, acoAmount, acoPrice)
+}
+
+export const getZrxOrdersFormatted = (isBuy, option, zrxOrders, acoAmount = null, acoPrice = null) => {
+  const sortedOrders = getSortedOrdersWithPrice(isBuy, option, zrxOrders)
   
   const zrxData = []
 
@@ -18,6 +22,10 @@ export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = n
       (isBuy && sortedOrders[i].price.isLessThan(acoPrice)))
     ) {
       break
+    }
+
+    if (sortedOrders[i].metaData && sortedOrders[i].metaData.state && sortedOrders[i].metaData.state.toLowerCase() === "cancelled") {
+      continue
     }
 
     let availableTakerAmountString = sortedOrders[i].metaData && sortedOrders[i].metaData.remainingFillableTakerAmount ? new BigNumber(sortedOrders[i].metaData.remainingFillableTakerAmount) : new BigNumber(sortedOrders[i].order.takerAmount)
@@ -42,6 +50,7 @@ export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = n
       filledAmount = filledAmount.plus(acoAvailable)
     }
     zrxData.push({
+      createdAt: sortedOrders[i].metaData ? sortedOrders[i].metaData.createdAt ? new Date(sortedOrders[i].metaData.createdAt) : Date.now() : null,
       orderHash: sortedOrders[i].metaData ? sortedOrders[i].metaData.orderHash : null,
       order: sortedOrders[i].order,
       acoAmount: aco,
@@ -57,9 +66,9 @@ export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = n
 
 const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
   const sortedOrders = []
-  for (let j = 0; j < zrxOrders.records.length; ++j) {
-    let takerAmount = new BigNumber(zrxOrders.records[j].order.takerAmount)  
-    let makerAmount = new BigNumber(zrxOrders.records[j].order.makerAmount)    
+  for (let j = 0; j < zrxOrders.length; ++j) {
+    let takerAmount = new BigNumber(zrxOrders[j].order.takerAmount)  
+    let makerAmount = new BigNumber(zrxOrders[j].order.makerAmount)    
     let oneUnderlying = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
     let price
     if (isBuy) {
@@ -67,8 +76,8 @@ const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
     } else {
       price = makerAmount.times(oneUnderlying).div(takerAmount)
     }
-    zrxOrders.records[j].price = price
-    sortedOrders.push(zrxOrders.records[j])
+    zrxOrders[j].price = price
+    sortedOrders.push(zrxOrders[j])
   }
   sortedOrders.sort((a, b) => {
     if (isBuy) {
