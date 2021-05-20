@@ -13,8 +13,8 @@ function getAcoBuyerV2Contract() {
     return acoBuyerV2Contract
 }
 
-export const getBuyData = (paymentToken, paymentAmount, arrayData) => {
+export const getBuyData = (acoToken, paymentToken, paymentAmount, arrayData) => {
     const acoBuyerV2Contract = getAcoBuyerV2Contract()
-    const data = acoBuyerV2Contract.methods.buy(paymentToken, paymentAmount, arrayData).encodeABI()
+    const data = acoBuyerV2Contract.methods.buy(acoToken, paymentToken, paymentAmount, arrayData).encodeABI()
     return data
 }

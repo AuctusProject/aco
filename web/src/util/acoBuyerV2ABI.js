@@ -1,12 +1,12 @@
 export const acoBuyerV2ABI =
 [
 	{
-		"inputs": [],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
 		"inputs": [
+			{
+				"internalType": "address",
+				"name": "acoToken",
+				"type": "address"
+			},
 			{
 				"internalType": "address",
 				"name": "paymentToken",
@@ -44,6 +44,11 @@ export const acoBuyerV2ABI =
 		"outputs": [],
 		"stateMutability": "payable",
 		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
 	},
 	{
 		"stateMutability": "payable",

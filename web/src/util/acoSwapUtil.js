@@ -215,7 +215,7 @@ export const buy = async (from, nonce, zrxData, poolData = null, option = null, 
   let finalData
   if (data.length > 1) {
     to = acoBuyerAddress
-    finalData = getBuyData(option.strikeAsset, totalPayment.toString(10), data)
+    finalData = getBuyData(option.acoToken, option.strikeAsset, totalPayment.toString(10), data)
   } else {
     to = data[0].from
     finalData = data[0].data
