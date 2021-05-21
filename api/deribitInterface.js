@@ -37,7 +37,7 @@ module.exports.instruments = (asset, type, expiration) => {
     callApi("public/get_instruments" + complement).then((response) => {
       const result = [];
       for (let i = 0; i < response.length; ++i) {
-        if (response[i].is_active && response[i].quote_currency === "USD") {
+        if (response[i].is_active) {
           let isCall = response[i].option_type === "call";
           if ((type && isCall) || (!type && !isCall)) {
             let exp = (response[i].expiration_timestamp/1000);
