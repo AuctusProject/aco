@@ -53,7 +53,8 @@
 .trade-menu-pair-symbol {
     flex-grow: 1;
     font-size: 14px;
-    font-weight: 300;
+    font-weight: 300;    
+    min-width: 50px;
 }
 
 .trade-menu-pair-balance {
@@ -61,6 +62,7 @@
     flex-shrink: 0;
     font-size: 16px;
     font-weight: 500;
+    max-width: calc(100% - 50px);
 }
 
 .trade-menu-pair-title {

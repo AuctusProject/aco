@@ -62,7 +62,7 @@
 
 .orderbook-table-headers {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     -webkit-box-flex: 0;
     flex-grow: 0;
     flex-shrink: 0;
@@ -127,7 +127,7 @@
 .orderbook-table-sell-row,
 .orderbook-table-spread-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
 }
 
 .orderbook-table-buy-row,

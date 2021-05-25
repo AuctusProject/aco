@@ -106,32 +106,6 @@ class App extends Component {
     this.setState({pairs: pairs})
   }
 
-  loadOrderbookFromOptions = (options, includeWeb3) => {
-    for (let i = 0; i < options.length; i++) {
-      let option = options[i]
-      this.loadOrderbookFromOption(option, includeWeb3)
-    }
-  }
-
-  loadOrderbookFromOption = (option, includeWeb3) => {
-    if (option) {
-      var marketDetails = getMarketDetails(option)
-      var baseToken = marketDetails.baseToken
-      var quoteToken = marketDetails.quoteToken
-      baseToken.address = baseToken.addresses[CHAIN_ID]
-      quoteToken.address = quoteToken.addresses[CHAIN_ID]
-
-      var orderbookFunction = includeWeb3 ? window.TradeApp.getAllOrdersAsUIOrders : 
-      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo;
-
-      orderbookFunction(baseToken, quoteToken).then(orderBook => {
-        var orderBooks = this.state.orderBooks
-        orderBooks[option.acoToken] = orderBook
-        this.setState({ orderBooks: orderBooks })
-      })
-    }
-  }
-
   setLayoutMode = (isDarkMode) => {
     if (isDarkMode) {
       if (!document.body.classList.contains("dark-mode")) {
@@ -209,8 +183,6 @@ class App extends Component {
                     darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
-                    orderBooks={this.state.orderBooks}
-                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                   /> }
                 />
                 <Route 
@@ -232,9 +204,7 @@ class App extends Component {
                     onPairsLoaded={this.onPairsLoaded}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
-                    orderBooks={this.state.orderBooks}
                     toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
-                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
                   /> }
                 />
                 <Route 

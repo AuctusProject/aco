@@ -40,7 +40,7 @@ class WebSocketOrdersChannel {
             return;
         }
         try {
-            var data = message.data;
+            var data = JSON.parse(message.data);
             var subscriptionOpts = this._subscriptionOptsMap[data.requestId];
             if (subscriptionOpts === undefined) {
                 this._handler.onError(this, new Error("Message has unknown requestId. Url: " + this._client.url + " Message: " + data));

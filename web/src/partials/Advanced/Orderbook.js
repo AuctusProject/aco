@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import { mergeByPrice } from '../../util/Zrx/zrxUtils'
+import { fromDecimals } from '../../util/constants'
 
 class Orderbook extends Component {
   constructor() {
@@ -17,11 +18,29 @@ class Orderbook extends Component {
   }
 
   getBuyOrders = () => {
-    return this.context.orders.filter(o => o.order.takerToken === this.props.makerToken)
+    return this.context.orderbook && this.context.orderbook.bid && this.context.orderbook.bid.orders
   }
 
   getSellOrders = () => {
-    return this.context.orders.filter(o => o.order.makerToken === this.props.makerToken)
+    return this.context.orderbook && this.context.orderbook.ask && this.context.orderbook.ask.orders && this.context.orderbook.ask.orders.reverse()
+  }
+
+  formatSize = (size) => {
+    return fromDecimals(size, this.props.option.acoTokenInfo.decimals)
+  }
+
+  formatPrice = (price) => {
+    return fromDecimals(price, this.props.option.strikeAssetInfo.decimals)
+  }
+
+  getSpreadValue = () => {
+    var buyOrders = this.getBuyOrders()
+    var sellOrders = this.getSellOrders()
+    if (buyOrders && buyOrders.length > 0 && sellOrders && sellOrders.length > 0) {
+      var spread = sellOrders[0].price.minus(buyOrders[0].price)
+      return this.formatPrice(spread)
+    }
+    return "-"
   }
   
   render() {
@@ -36,27 +55,24 @@ class Orderbook extends Component {
           <div className="orderbook-table-headers">
             <div className="orderbook-table-header-item orderbook-size-col">Size</div>
             <div className="orderbook-table-header-item orderbook-price-col">Price (USDC)</div>
-            <div className="orderbook-table-header-item orderbook-my-size-col">My Size</div>
           </div>
           <div className="orderbook-table-body">
             <div className="orderbook-table-body-content">
               <div className="orderbook-table-sell">
-                {sellOrders && sellOrders.map(sellOrder => <div key={sellOrder.metaData.orderHash} className="orderbook-table-sell-row">
-                  <div className="orderbook-table-sell-item orderbook-size-col">0.1585</div>
-                  <div className="orderbook-table-sell-item orderbook-price-col">1892.7843060</div>
-                  <div className="orderbook-table-sell-item orderbook-my-size-col"></div>
+                {sellOrders && sellOrders.map(sellOrder => <div key={sellOrder.acoPool ? sellOrder.acoPool : sellOrder.orderHash} className="orderbook-table-sell-row">
+                  <div className="orderbook-table-sell-item orderbook-size-col">{this.formatSize(sellOrder.acoAmount)}</div>
+                  <div className="orderbook-table-sell-item orderbook-price-col">{this.formatPrice(sellOrder.price)}</div>
+                  
                 </div>)}
               </div>
               <div className="orderbook-table-spread-row">
                 <div className="orderbook-table-spread-item">Spread</div>
-                <div className="orderbook-table-spread-value">0.0000000</div>
-                <div className="orderbook-table-spread-value">0.00%</div>
+                <div className="orderbook-table-spread-value">{this.getSpreadValue()}</div>                
               </div>
               <div className="orderbook-table-buy">
-                {buyOrders && buyOrders.map(buyOrder => <div key={buyOrder.metaData.orderHash} className="orderbook-table-buy-row">
-                  <div className="orderbook-table-buy-item orderbook-size-col">0.1585</div>
-                  <div className="orderbook-table-buy-item orderbook-price-col">1892.7843060</div>
-                  <div className="orderbook-table-buy-item orderbook-my-size"></div>
+                {buyOrders && buyOrders.map(buyOrder => <div key={buyOrder.orderHash} className="orderbook-table-buy-row">
+                  <div className="orderbook-table-buy-item orderbook-size-col">{this.formatSize(buyOrder.acoAmount)}</div>
+                  <div className="orderbook-table-buy-item orderbook-price-col">{this.formatPrice(buyOrder.price)}</div>                  
                 </div>)}
               </div>
             </div>
@@ -70,6 +86,6 @@ class Orderbook extends Component {
 Orderbook.contextTypes = {
   web3: PropTypes.object,
   ticker: PropTypes.object,
-  orders: PropTypes.array,
+  orderbook: PropTypes.object,
 }
 export default withRouter(Orderbook)

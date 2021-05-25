@@ -3,9 +3,11 @@ import { getSwapQuote as getZrxQuote, getZrxOrdersFormatted } from "./Zrx/zrxApi
 import { getSwapData as getZrxSwapData } from "./Zrx/zrxWeb3"
 import BigNumber from "bignumber.js"
 import Web3Utils from 'web3-utils'
-import { acoBuyerAddress, ONE_SECOND, toDecimals, zrxExchangeAddress } from "./constants"
+import { acoBuyerAddress, ONE_SECOND, toDecimals, zero, zrxExchangeAddress, AdvancedOrderStepsType } from "./constants"
 import { sendTransactionWithNonce } from "./web3Methods"
 import { getBuyData } from "./acoBuyerV2Methods"
+import { allowance } from "./erc20Methods"
+import { buildOrder } from "./Zrx/zrxUtils"
 
 let orderbooks = {}
 export const getOrderbook = async (option) => {
@@ -31,30 +33,30 @@ export const getOrderbook = async (option) => {
   }
 }
 
-export const getUpdatedOrderbook = async (option, wssData) => {
+export const getUpdatedOrderbook = async (option, wssOrders) => {
   const askOrders = []
   const bidOrders = []
   let orderbook = orderbooks[option.acoToken]
-  for (let i = 0; i < wssData.payload.length; ++i) {
+  for (let i = 0; i < wssOrders.length; ++i) {
     let isBuy = null
-    if (wssData.payload[i].order.makerToken === option.acoToken) {
-      askOrders.push(wssData.payload[i])
+    if (wssOrders[i].order.makerToken === option.acoToken) {
+      askOrders.push(wssOrders[i])
       isBuy = true
-    } else if (wssData.payload[i].order.takerToken === option.acoToken) {
-      bidOrders.push(wssData.payload[i])
+    } else if (wssOrders[i].order.takerToken === option.acoToken) {
+      bidOrders.push(wssOrders[i])
       isBuy = false
     }
     if (orderbook && isBuy !== null) {
-      let order = getZrxOrdersFormatted(isBuy, option, [wssData.payload[i]])
-      let sideOrders = (isBuy ? orderbook.ask : orderbook.bid)
-      let index = sideOrders.findIndex((c) => c.orderHash === wssData.payload[i].metaData.orderHash)
+      let order = getZrxOrdersFormatted(isBuy, option, [wssOrders[i]])
+      let sideOrders = (isBuy ? orderbook.ask.orders : orderbook.bid.orders)
+      let index = sideOrders.findIndex((c) => c.orderHash === wssOrders[i].metaData.orderHash)
       if (index >= 0) {
         sideOrders.splice(index, 1)
       }
       if (isBuy) {
-        orderbook.ask = orderbook.ask.concat(order)
+        orderbook.ask.orders = orderbook.ask.orders.concat(order.zrxData)
       } else {
-        orderbook.bid = orderbook.bid.concat(order)
+        orderbook.bid.orders = orderbook.bid.orders.concat(order.zrxData)
       }
     }
   }
@@ -131,15 +133,19 @@ export const getQuote = async (isBuy, option, acoAmount = null, throwLiquidityEx
     throw new Error("Insufficient liquidity")
   }
 
-  const sortedOrders = getSortedOrders(isBuy, quotes[0].zrxData, quotes.length > 0 ? quotes[1].poolData : [])
+  const sortedOrders = getSortedOrders(isBuy, quotes[0].zrxData, quotes.length > 1 ? quotes[1].poolData : [])
   return buildQuotedData(option, sortedOrders, acoAmount)
 }
 
 const getSortedOrders = (isBuy, zrxData, poolData) => {
-  return (isBuy ? zrxData.concat(poolData).sort((a, b) => a.price.gt(b.price) ? 1 : a.price.eq(b.price) ? 0 : -1) : zrxData)
+  return zrxData.concat(poolData).sort((a, b) => 
+    isBuy ?
+    (a.price.gt(b.price) ? 1 : a.price.eq(b.price) ? 0 : -1) :
+    (a.price.lt(b.price) ? 1 : a.price.eq(b.price) ? 0 : -1)
+  )
 }
 
-const buildQuotedData = (option, sortedOrders, acoAmount) => {
+export const buildQuotedData = (option, sortedOrders, acoAmount) => {
   let totalAcoAmount = new BigNumber(0)
   let totalStrikeAssetAmount = new BigNumber(0)
   const oneUnderlying = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
@@ -232,4 +238,74 @@ export const sell = async (from, nonce, zrxData) => {
   }
   const zrxOrder = await getZrxSwapData(orders, takerAmounts)
   return sendTransactionWithNonce(zrxOrder.gasPrice, null, from, zrxExchangeAddress, zrxOrder.ethValue, zrxOrder.data, null, nonce)
+}
+
+export const getAdvancedOrderSteps = async (from, quote, option, acoAmount, acoPrice, isBuy, expirationValue) => {
+  acoAmount = new BigNumber(toDecimals(acoAmount, option.underlyingInfo.decimals))
+  if (acoPrice) {
+    acoPrice = new BigNumber(toDecimals(acoPrice, option.strikeAssetInfo.decimals))
+  }  
+  const quoteAmount = acoAmount.times(acoPrice).div(new BigNumber(toDecimals("1", option.underlyingInfo.decimals))).integerValue(BigNumber.ROUND_CEIL) 
+  var steps = []
+  var hasMarketOrder = quote && quote.acoAmount.gt(zero)
+  var marketAllowanceAddress = ""
+  var tokenToApprove = isBuy ? option.strikeAsset : option.acoToken
+  var makerAmount = isBuy ? quoteAmount : option.acoToken
+  if (hasMarketOrder) {
+    marketAllowanceAddress = getMarketOrderAllowanceAddress(quote)
+    var needMarketApprove = await needApprove(from, tokenToApprove, makerAmount, marketAllowanceAddress)
+    if (needMarketApprove) {
+      steps.push({
+        type: AdvancedOrderStepsType.MarketApprove,
+        address: marketAllowanceAddress,
+        token: tokenToApprove
+      })
+    }
+    steps.push({
+      type: AdvancedOrderStepsType.BuySellMarket,
+      address: marketAllowanceAddress,
+      quote: quote,
+      isBuy: isBuy
+    })
+  }
+
+  if (!quote || quote.acoAmount.isLessThan(acoAmount)) {
+    var marketAmount = !quote ? zero : quote.acoAmount
+    var limitAmount = acoAmount.minus(marketAmount)
+    var order = await buildOrder(from, isBuy, option, limitAmount, acoPrice, expirationValue)
+    if (marketAllowanceAddress !== zrxExchangeAddress) {
+      var needLimitApprove = await needApprove(from, tokenToApprove, order.makerAmount, zrxExchangeAddress)
+      if (needLimitApprove) {
+        steps.push({
+          type: AdvancedOrderStepsType.LimitApprove,
+          address: zrxExchangeAddress,
+          token: tokenToApprove
+        })
+      }
+    }
+    
+    steps.push({
+      type: AdvancedOrderStepsType.BuySellLimit,
+      order: order,
+      isBuy: isBuy
+    })
+  }
+
+  return steps
+}
+
+const needApprove = async (from, tokenToApprove, neededApprovalValue, approvalAddress) => {
+  var result = await allowance(from, tokenToApprove, approvalAddress)
+  var resultValue = new BigNumber(result)
+  return resultValue.lt(new BigNumber(neededApprovalValue))
+}
+
+const getMarketOrderAllowanceAddress = (quote) => {
+  if (quote.poolData.length === 0 && quote.zrxData.length === 1) {
+    return zrxExchangeAddress
+  }
+  if (quote.poolData.length === 1 && quote.zrxData.length === 0) {
+    return quote.poolData[0].acoPool
+  }
+  return acoBuyerAddress
 }

@@ -5,8 +5,13 @@ import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet } from '@fortawesome/free-solid-svg-icons'
 import { balanceOf } from '../../util/erc20Methods'
-import { fromDecimals } from '../../util/constants'
+import { fromDecimals, ONE_SECOND, toDecimals } from '../../util/constants'
 import DecimalInput from '../Util/DecimalInput'
+import { postOrder } from '../../util/Zrx/zrxApi'
+import { getAdvancedOrderSteps, getQuote, buildQuotedData } from '../../util/acoSwapUtil'
+import BigNumber from 'bignumber.js'
+import { error } from '../../util/sweetalert'
+import CreateAdvancedOrderModal from './CreateAdvancedOrderModal'
 
 class BuySell extends Component {
   constructor() {
@@ -18,7 +23,8 @@ class BuySell extends Component {
       strikeAssetBalance: null,
       amountInputValue: "",
       priceInputValue: "",
-      expirationInputValue: "24"
+      expirationInputValue: "24",
+      steps: null
     }
   }
   
@@ -51,12 +57,8 @@ class BuySell extends Component {
     this.setState({ selectedLimitMarketTab: selectedLimitMarketTab })
   }
 
-  onSubmitOrder = () => {
-
-  }
-
   canSubmit = () => {
-
+    return (this.state.selectedLimitMarketTab === 2 || this.state.priceInputValue > 0) && this.state.amountInputValue > 0
   }
 
   goToMint = () => {
@@ -86,6 +88,73 @@ class BuySell extends Component {
 
   onAmountChange = (value) => {
     this.setState({amountInputValue: value})
+  }
+
+  onSubmitOrder = async () => {
+    var isBuy = this.state.selectedBuySellTab === 1
+    var isLimit = this.state.selectedLimitMarketTab === 1
+    var amountValue = this.state.amountInputValue
+    var priceValue = isLimit ? this.state.priceInputValue : null
+    var quote = await getQuote(isBuy, this.props.option, amountValue, false, priceValue)
+    var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
+    if (!isLimit && quote.acoAmount.isLessThan(amountInDecimals)) {
+        error("There are not enough orders to fill this amount")
+        return
+    }
+    var hasBalances = await this.checkBalances(isBuy, amountValue, priceValue)
+    if (hasBalances) {
+      var steps = await getAdvancedOrderSteps(this.context.web3.selectedAccount, quote, this.props.option, amountValue, priceValue, isBuy, this.state.expirationInputValue)
+      this.setState({steps: steps})
+    }
+  }
+
+  checkBalances = (isBuy, amountValue, priceValue) => {
+    if (isBuy) {
+      var totalCost = toDecimals(new BigNumber(amountValue).times(priceValue), this.props.option.strikeAssetInfo.decimals)
+      if (new BigNumber(this.state.strikeAssetBalance).isLessThan(totalCost)) {
+        error("You don't have enough "+this.props.option.strikeAssetInfo.symbol)
+        return false
+      }
+    }
+    else {
+      var amountInDecimals = new BigNumber(toDecimals(amountValue, this.props.option.acoTokenInfo.decimals))
+      if (new BigNumber(this.state.acoTokenBalance).isLessThan(amountInDecimals)) {
+        error("You don't have enough ACO")
+        return false
+      }
+    }
+    return true
+  }
+
+  getTotalCost = () => {
+    if (this.state.selectedLimitMarketTab === 1) {
+      if (this.state.amountInputValue && this.state.priceInputValue) {
+        return new BigNumber(this.state.amountInputValue).times(this.state.priceInputValue) + " USDC"
+      }
+    }
+    else {
+      if (this.state.amountInputValue) {
+        var orders = this.state.selectedBuySellTab === 1 ? this.getSellOrders() : this.getBuyOrders()
+        var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
+        var quotedData = buildQuotedData(this.props.option, orders, amountInDecimals)
+        if (!quotedData.acoAmount.isLessThan(amountInDecimals)) {
+          return fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals) + " USDC"
+        }        
+      }
+    }
+    return "-"
+  }
+
+  getBuyOrders = () => {
+    return this.context.orderbook && this.context.orderbook.bid && this.context.orderbook.bid.orders
+  }
+
+  getSellOrders = () => {
+    return this.context.orderbook && this.context.orderbook.ask && this.context.orderbook.ask.orders
+  }
+
+  onCreateOrderHide = () => {
+    this.setState({ steps: null })
   }
   
   render() {
@@ -159,7 +228,7 @@ class BuySell extends Component {
               </div>
               <div className="fee-cost-row">
                 <label className="fee-cost-label">{this.state.selectedBuySellTab === 1 ? "Cost" : "Total" }</label>
-                <div className="fee-cost-value bold">0.00 USDC</div>
+                <div className="fee-cost-value bold">{this.getTotalCost()}</div>
               </div>
               <div className={"action-btn " + (!this.canSubmit() ? "disabled" : "")} onClick={this.onSubmitOrder}>
                 Place {this.state.selectedLimitMarketTab === 1 ? "Limit" : "Market"} Order
@@ -167,6 +236,7 @@ class BuySell extends Component {
             </div>
           </div>
         </div>
+        {this.state.steps && <CreateAdvancedOrderModal steps={this.state.steps} onHide={this.onCreateOrderHide} ></CreateAdvancedOrderModal>}
       </div>
     );
   }
@@ -175,6 +245,6 @@ class BuySell extends Component {
 BuySell.contextTypes = {
   web3: PropTypes.object,
   ticker: PropTypes.object,
-  orders: PropTypes.array,
+  orderbook: PropTypes.object,
 }
 export default withRouter(BuySell)

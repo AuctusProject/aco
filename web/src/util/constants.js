@@ -94,12 +94,19 @@ export const OTC_EXPIRATION_OPTIONS = [{
 {
     value: 5,
     name: "Month"
-}]
+}] 
 
 export const PositionsLayoutMode = {
     Basic: 0,
     Advanced: 1
-}  
+}
+
+export const AdvancedOrderStepsType = {
+    MarketApprove: 0,
+    BuySellMarket: 1,
+    LimitApprove: 2,
+    BuySellLimit: 3
+}
 
 export function getOptionName(isCall) {
     return isCall ? OPTION_TYPES[1].name : OPTION_TYPES[2].name

@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { toDecimals, zrxApiUrl } from '../constants'
+import { toDecimals, zrxApiUrl, zrxExchangeAddress, ethAddress as ZERO_ADDRESS } from '../constants'
 import BigNumber from 'bignumber.js'
 
 export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {
@@ -19,12 +19,12 @@ export const getZrxOrdersFormatted = (isBuy, option, zrxOrders, acoAmount = null
   for (let i = 0; i < sortedOrders.length && (!acoAmount || filledAmount.isLessThan(acoAmount)); ++i) {
     if (acoPrice && 
       ((isBuy && sortedOrders[i].price.isGreaterThan(acoPrice)) || 
-      (isBuy && sortedOrders[i].price.isLessThan(acoPrice)))
+      (!isBuy && sortedOrders[i].price.isLessThan(acoPrice)))
     ) {
       break
     }
 
-    if (sortedOrders[i].metaData && sortedOrders[i].metaData.state && sortedOrders[i].metaData.state.toLowerCase() === "cancelled") {
+    if (sortedOrders[i].metaData && sortedOrders[i].metaData.state && (sortedOrders[i].metaData.state.toLowerCase() === "cancelled" || sortedOrders[i].metaData.state.toLowerCase() === "expired")) {
       continue
     }
 

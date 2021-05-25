@@ -1,24 +1,23 @@
-import { toDecimals, fromDecimals } from "../constants"
-import { TradeOptionsListLayoutMode } from "../../partials/TradeOptionsList"
 
-export const getBestBid = (option, orders, mode) => {
-    return getBestOrder(option, 1, orders, mode)
+export const getBestBid = (option, orderbook) => {
+    var orders = orderbook.bid.orders
+    return getBestOrder(option, 1, orders)
 }
 
-export const getBestAsk = (option, orders, mode) => {
-    return getBestOrder(option, 0, orders, mode)
+export const getBestAsk = (option, orderbook) => {
+    var orders = orderbook.ask.orders
+    return getBestOrder(option, 0, orders)
 }
 
-const getFilteredOrders = (orders, side, mode) => {
-    return orders.filter(order => order.side === side && 
-        (mode === TradeOptionsListLayoutMode.Home || order.status === 3)).sort((o1, o2) => (side === 0) ? o1.price.comparedTo(o2.price) : o2.price.comparedTo(o1.price))
+const getSortedOrders = (orders, side) => {
+    return orders.sort((o1, o2) => (side === 0) ? o1.price.comparedTo(o2.price) : o2.price.comparedTo(o1.price))
 }
 
-const getBestOrder = (option, side, orders, mode) => {
+const getBestOrder = (option, side, orders) => {
     var sortedOrders = []
     var bestOrder = null
     if (orders && orders.length > 0) {
-        sortedOrders = getFilteredOrders(orders, side, mode)
+        sortedOrders = getSortedOrders(orders, side)
         bestOrder = sortedOrders.length > 0 ? sortedOrders[0] : null
         if (bestOrder) {
             bestOrder.totalSize = bestOrder.size
@@ -34,14 +33,7 @@ const getBestOrder = (option, side, orders, mode) => {
                     }
                 }
             }
-            if (mode === TradeOptionsListLayoutMode.Home) {
-                formatPrice(bestOrder, option)
-            }
         }
     }
     return bestOrder
-}
-
-const formatPrice = (order, option) => {
-    order.formatedPrice = order.status === null ? parseFloat(fromDecimals(toDecimals(order.price, option.underlyingInfo.decimals), option.strikeAssetInfo.decimals)) : order.price
 }

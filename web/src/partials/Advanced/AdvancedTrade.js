@@ -47,12 +47,12 @@ class AdvancedTrade extends Component {
           </div>
         </div>
         <div className="advanced-trade-row">
-          <WebsocketOrderProvider {...market}>
+          <WebsocketOrderProvider option={this.props.option}>
             <div className="advanced-trade-col">
               <BuySell {...this.props}></BuySell>
             </div>
             <div className="advanced-trade-col">
-              <Orderbook {...this.props} {...market}></Orderbook>
+              <Orderbook {...this.props}></Orderbook>
             </div>
             <div className="advanced-trade-col">
               <OpenOrders {...this.props}></OpenOrders>

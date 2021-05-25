@@ -8,11 +8,6 @@ import { faSpinner} from '@fortawesome/free-solid-svg-icons'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
 import { getBestBid, getBestAsk } from '../util/Zrx/orderbookUtil'
 
-export const TradeOptionsListLayoutMode = {
-  Trade: 0,
-  Home: 1
-}
-
 class TradeOptionsList extends Component {  
   componentDidMount = () => {
     this.wrapperDiv.scrollBy((this.tableEl.getBoundingClientRect().width - this.wrapperDiv.getBoundingClientRect().width) / 2, 0)
@@ -39,36 +34,31 @@ class TradeOptionsList extends Component {
   optionRowInfo = (option) => {
     if (!option) {
       return <>
-        <td className="na-col" colSpan={this.props.mode === TradeOptionsListLayoutMode.Trade ? "5": "4"}><div className="na-div">N/A</div></td>
+        <td className="na-col" colSpan="5"><div className="na-div">N/A</div></td>
       </>
     }
 
     if (!this.props.orderBooks[option.acoToken]) {
       return <>
         <td className="clickable" onClick={() => this.onSelectOption(option)} colSpan="4"><FontAwesomeIcon icon={faSpinner} className="fa-spin"/></td>
-        {this.props.mode === TradeOptionsListLayoutMode.Trade && <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>}
+        <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
       </>
     }
-    var bestBid = getBestBid(option, this.props.orderBooks[option.acoToken], this.props.mode)
-    var bestAsk = getBestAsk(option, this.props.orderBooks[option.acoToken], this.props.mode)
+    var bestBid = getBestBid(option, this.props.orderBooks[option.acoToken])
+    var bestAsk = getBestAsk(option, this.props.orderBooks[option.acoToken])
     
     return  <>
-      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? fromDecimals(bestBid.totalSize, option.underlyingInfo.decimals) : "-"}</td>
+      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ? fromDecimals(bestBid.acoAmount, option.underlyingInfo.decimals) : "-"}</td>
       <td className="bid-col clickable" onClick={() => this.onSelectOption(option)}>{bestBid ?
-        <span className="bid-price">{this.props.mode === TradeOptionsListLayoutMode.Home ?
-          formatWithPrecision(bestBid.formatedPrice) :
-          formatWithPrecision(bestBid.price)}
-        </span>
+        <span className="bid-price">{fromDecimals(bestBid.price, option.strikeAssetInfo.decimals)}</span>
          : "-"}
       </td>
       <td className="ask-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? 
-        <span className="ask-price">{this.props.mode === TradeOptionsListLayoutMode.Home ?
-          formatWithPrecision(bestAsk.formatedPrice) :
-          formatWithPrecision(bestAsk.price)}
-        </span> : "-"}
+        <span className="ask-price">{fromDecimals(bestAsk.price, option.strikeAssetInfo.decimals)}</span>
+         : "-"}
       </td>
-      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.totalSize, option.underlyingInfo.decimals) : "-"}</td>
-      {this.props.mode === TradeOptionsListLayoutMode.Trade && <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>}
+      <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.acoAmount, option.underlyingInfo.decimals) : "-"}</td>
+      <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
     </>
   }
 
@@ -109,7 +99,7 @@ class TradeOptionsList extends Component {
               <React.Fragment key={expiryTime}>
                 <thead>
                   <tr>
-                    <td className="option-expiry-title-cell" colSpan={this.props.mode === TradeOptionsListLayoutMode.Trade ? "11" : "9"}>
+                    <td className="option-expiry-title-cell" colSpan="11">
                       <div className="option-expiry-title">
                         <div><OptionBadge isCall={true}/></div>
                         <div className="expiration-time">
@@ -127,13 +117,13 @@ class TradeOptionsList extends Component {
                     <th className="bid-col">BID</th>
                     <th className="ask-col">ASK</th>
                     <th className="size-col">SIZE</th>
-                    {this.props.mode === TradeOptionsListLayoutMode.Trade && <th className="balance-col">BALANCE</th>}
+                    <th className="balance-col">BALANCE</th>
                     <th className="strike-col">STRIKE</th>
                     <th className="size-col">SIZE</th>
                     <th className="bid-col">BID</th>
                     <th className="ask-col">ASK</th>
                     <th className="size-col">SIZE</th>
-                    {this.props.mode === TradeOptionsListLayoutMode.Trade && <th className="balance-col">BALANCE</th>}
+                    <th className="balance-col">BALANCE</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -4,6 +4,8 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
+import { fromDecimals } from '../../util/constants'
+import CancelAdvancedOrderModal from './CancelAdvancedOrderModal'
 
 class OpenOrders extends Component {
   constructor() {
@@ -19,18 +21,39 @@ class OpenOrders extends Component {
   }
 
   cancelOrder = (order) => () => {
-
+    this.setState({cancelOrderData: order.order})
   }
 
   getUserOrders = () => {    
     var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
-    return this.context.orders.filter(o => o.order.maker.toLowerCase() === userAddress.toLowerCase())
+    var userOrders = []
+    if (this.context.orderbook) {
+      if (this.context.orderbook && this.context.orderbook.ask && this.context.orderbook.ask.orders) {
+        var askOrders = this.context.orderbook.ask.orders.filter(o => o.order && o.order.maker && o.order.maker.toLowerCase() === userAddress.toLowerCase())
+        userOrders = userOrders.concat(askOrders)
+      }
+      if (this.context.orderbook && this.context.orderbook.bid && this.context.orderbook.bid.orders) {
+        var bidOrders = this.context.orderbook.bid.orders.filter(o => o.order && o.order.maker && o.order.maker.toLowerCase() === userAddress.toLowerCase())
+        userOrders = userOrders.concat(bidOrders)
+      }
+    }
+    return userOrders
+  }
+
+  formatSize = (size) => {
+    return fromDecimals(size, this.props.option.acoTokenInfo.decimals)
+  }
+
+  formatPrice = (price) => {
+    return fromDecimals(price, this.props.option.strikeAssetInfo.decimals)
+  }  
+
+  onCancelOrderHide = (completed) => {
+    this.setState({ cancelOrderData: null })
   }
   
   render() {
     var userOrders = this.getUserOrders()
-    var isBuy = false
-
     
     return (
       <div className="orders-box">
@@ -43,7 +66,7 @@ class OpenOrders extends Component {
               <tr>
                 <th className="orders-table-header-item orders-table-text-col">Type</th>
                 <th className="orders-table-header-item orders-table-number-col">Amount</th>
-                <th className="orders-table-header-item orders-table-number-col">Filled</th>
+                <th className="orders-table-header-item orders-table-number-col">Remaining</th>
                 <th className="orders-table-header-item orders-table-number-col">Price (USDC)</th>
                 <th className="orders-table-header-item orders-table-text-col">Status</th>
                 <th className="orders-table-header-item orders-table-text-col">&nbsp;</th>
@@ -51,24 +74,25 @@ class OpenOrders extends Component {
             </thead>
             <tbody>
               {userOrders && userOrders.map(order => 
-              <tr>
+              <tr key={order.orderHash}>
                 <td className="orders-table-text-col">
-                  {order.order.makerToken === this.props.option.acoToken ?
+                  {order.order.takerToken === this.props.option.acoToken ?
                     <div className="order-type-buy">Buy</div> :
                     <div className="order-type-sell">Sell</div>
                   }                  
                 </td>
-                <td className="orders-table-number-col">2.75</td>
-                <td className="orders-table-number-col">0.00</td>
-                <td className="orders-table-number-col">109.1412000</td>
+                <td className="orders-table-number-col">{this.formatSize(order.order.takerToken === this.props.option.acoToken ? order.order.takerAmount : order.order.makerAmount)}</td>
+                <td className="orders-table-number-col">{this.formatSize(order.acoAmount)}</td>                
+                <td className="orders-table-number-col">{this.formatPrice(order.price)}</td>
                 <td className="orders-table-text-col">Open</td>
                 <td className="orders-table-text-col">
-                  <FontAwesomeIcon icon={faTimes} onClick={this.cancelOrder(order)} title="Cancel Order"></FontAwesomeIcon>
+                  <FontAwesomeIcon className="clickable" icon={faTimes} onClick={this.cancelOrder(order)} title="Cancel Order"></FontAwesomeIcon>
                 </td>
               </tr>)}
             </tbody>
           </table>
         </div>
+        {this.state.cancelOrderData && <CancelAdvancedOrderModal cancelOrderData={this.state.cancelOrderData} onHide={this.onCancelOrderHide} ></CancelAdvancedOrderModal>}
     </div>
     );
   }
@@ -76,6 +100,7 @@ class OpenOrders extends Component {
 
 OpenOrders.contextTypes = {
   web3: PropTypes.object,
-  ticker: PropTypes.object
+  ticker: PropTypes.object,
+  orderbook: PropTypes.object
 }
 export default withRouter(OpenOrders)

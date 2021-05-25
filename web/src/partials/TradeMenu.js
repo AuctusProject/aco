@@ -37,16 +37,16 @@ class TradeMenu extends Component {
             <div className="pair-balance-items">
               <div className="pair-balance-item">
                 <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
-                <div className="trade-menu-pair-balance">{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
+                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : ""}>{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
               </div>
               <div className="pair-balance-item">
                 <div className="trade-menu-pair-symbol">{pair.strikeAssetSymbol}</div>
-                <div className="trade-menu-pair-balance">{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
+                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : ""}>{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
               </div>
               {balanceOptions.map(option => (
                 <div key={option.acoToken} className="pair-balance-item clickable" onClick={() => this.onSelectOption(option)}>
-                  <div className="trade-menu-pair-symbol">{option.acoTokenInfo.name}</div>
-                  <div className="trade-menu-pair-balance">{fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}</div>
+                  <div className="trade-menu-pair-symbol">{option.acoTokenInfo.symbol}</div>
+                  <div className="trade-menu-pair-balance truncate" title={fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}>{fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}</div>
                 </div>
               ))}
             </div>

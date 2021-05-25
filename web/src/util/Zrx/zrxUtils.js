@@ -47,9 +47,9 @@ export const getSignedOrder = async (from, order) => {
     return order
 }
 
-export const buildOrder = async (from, isBuy, option, amount, price, minutesToExpirate = 20) => {
-    const acoAmount = new BigNumber(toDecimals(amount, option.underlyingInfo.decimals))
-    const orderPrice = new BigNumber(toDecimals(price, option.strikeAssetInfo.decimals))
+export const buildOrder = async (from, isBuy, option, amount, price, hoursToExpirate = 24) => {
+    const acoAmount = new BigNumber(amount)
+    const orderPrice = new BigNumber(price)
     const quoteAmount = acoAmount.times(orderPrice).div(new BigNumber(toDecimals("1", option.underlyingInfo.decimals))).integerValue(BigNumber.ROUND_CEIL) 
     const makerToken = isBuy ? option.strikeAsset : option.acoToken
     const takerToken = isBuy ? option.acoToken : option.strikeAsset
@@ -57,7 +57,7 @@ export const buildOrder = async (from, isBuy, option, amount, price, minutesToEx
     const takerAmount = isBuy ? acoAmount.toString(10) : quoteAmount.toString(10)
     const maker = from
     const taker = "0x0000000000000000000000000000000000000000"
-    const expiry = (Math.ceil(Date.now() / 1000) + parseInt(minutesToExpirate) * 60).toString()
+    const expiry = (Math.ceil(Date.now() / 1000) + parseFloat(hoursToExpirate) * 3600).toString()
     const verifyingContract = zrxExchangeAddress
   
     const orderConfigResult = await postOrderConfig({maker,taker,makerToken,takerToken,makerAmount,takerAmount,expiry,verifyingContract})
