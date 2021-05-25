@@ -91,20 +91,22 @@ class BuySell extends Component {
   }
 
   onSubmitOrder = async () => {
-    var isBuy = this.state.selectedBuySellTab === 1
-    var isLimit = this.state.selectedLimitMarketTab === 1
-    var amountValue = this.state.amountInputValue
-    var priceValue = isLimit ? this.state.priceInputValue : null
-    var quote = await getQuote(isBuy, this.props.option, amountValue, false, priceValue)
-    var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
-    if (!isLimit && quote.acoAmount.isLessThan(amountInDecimals)) {
-        error("There are not enough orders to fill this amount")
-        return
-    }
-    var hasBalances = await this.checkBalances(isBuy, amountValue, priceValue)
-    if (hasBalances) {
-      var steps = await getAdvancedOrderSteps(this.context.web3.selectedAccount, quote, this.props.option, amountValue, priceValue, isBuy, this.state.expirationInputValue)
-      this.setState({steps: steps})
+    if (this.canSubmit()) {
+      var isBuy = this.state.selectedBuySellTab === 1
+      var isLimit = this.state.selectedLimitMarketTab === 1
+      var amountValue = this.state.amountInputValue
+      var priceValue = isLimit ? this.state.priceInputValue : null
+      var quote = await getQuote(isBuy, this.props.option, amountValue, false, priceValue)
+      var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
+      if (!isLimit && quote.acoAmount.isLessThan(amountInDecimals)) {
+          error("There are not enough orders to fill this amount")
+          return
+      }
+      var hasBalances = await this.checkBalances(isBuy, amountValue, priceValue)
+      if (hasBalances) {
+        var steps = await getAdvancedOrderSteps(this.context.web3.selectedAccount, quote, this.props.option, amountValue, priceValue, isBuy, this.state.expirationInputValue)
+        this.setState({steps: steps})
+      }
     }
   }
 
