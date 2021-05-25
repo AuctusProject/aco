@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { toDecimals, zrxApiUrl, zrxExchangeAddress, ethAddress as ZERO_ADDRESS } from '../constants'
+import { toDecimals, zrxApiUrl } from '../constants'
 import BigNumber from 'bignumber.js'
 
 export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {

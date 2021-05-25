@@ -1,7 +1,7 @@
 import './TradeOptionsList.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { formatDate, fromDecimals, groupBy, formatWithPrecision, getTimeToExpiry, sortBy } from '../util/constants'
+import { formatDate, fromDecimals, groupBy, getTimeToExpiry, sortBy } from '../util/constants'
 import OptionBadge from './OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner} from '@fortawesome/free-solid-svg-icons'

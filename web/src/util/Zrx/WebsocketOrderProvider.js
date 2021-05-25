@@ -2,11 +2,9 @@ import PropTypes from 'prop-types'
 import { attemptAsync, delayAsync } from "./zrxUtils.js"
 import { w3cwebsocket } from "websocket"
 import WebSocketOrdersChannel from "./WebSocketOrdersChannel"
-import BigNumber from "bignumber.js"
-import { getOrders } from "./zrxApi"
 import { zrxWSSUrl } from "../constants"
 import { Component } from 'react'
-import { getOrderbook, getQuote, getUpdatedOrderbook } from '../acoSwapUtil'
+import { getOrderbook, getUpdatedOrderbook } from '../acoSwapUtil'
 import { getOption } from '../dataController.js'
 
 const childContextTypes = {

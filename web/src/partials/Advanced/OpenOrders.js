@@ -4,8 +4,10 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes } from '@fortawesome/free-solid-svg-icons'
-import { fromDecimals } from '../../util/constants'
+import { fromDecimals, getTimeToExpiry } from '../../util/constants'
 import CancelAdvancedOrderModal from './CancelAdvancedOrderModal'
+import ExpiryCountdown from './ExpiryCountdown'
+import BigNumber from 'bignumber.js'
 
 class OpenOrders extends Component {
   constructor() {
@@ -51,6 +53,20 @@ class OpenOrders extends Component {
   onCancelOrderHide = (completed) => {
     this.setState({ cancelOrderData: null })
   }
+
+  getTimeToExpiryLabel = (expiryTime) => {
+    var timeToExpiry = getTimeToExpiry(parseInt(expiryTime))
+    return timeToExpiry.days > 0 ? 
+        `${timeToExpiry.days}d ${timeToExpiry.hours}h` :
+        timeToExpiry.hours > 0 ? `${timeToExpiry.hours}h ${timeToExpiry.minutes}m` :
+        `${timeToExpiry.minutes}m ${timeToExpiry.seconds}s`;
+  }
+
+  getFilledAmount = (order) => {
+    var orderAmount = order.order.takerToken === this.props.option.acoToken ? order.order.takerAmount : order.order.makerAmount
+    var remainingAmount = order.acoAmount
+    return new BigNumber(orderAmount).minus(new BigNumber(remainingAmount))
+  }
   
   render() {
     var userOrders = this.getUserOrders()
@@ -58,7 +74,7 @@ class OpenOrders extends Component {
     return (
       <div className="orders-box">
         <div className="box-title-wrapper">
-          <h1 className="box-title">Orders</h1>
+          <h1 className="box-title">Open Orders</h1>
         </div>
         <div className="orders-table-wrapper">
           <table className="orders-table">
@@ -66,9 +82,10 @@ class OpenOrders extends Component {
               <tr>
                 <th className="orders-table-header-item orders-table-text-col">Type</th>
                 <th className="orders-table-header-item orders-table-number-col">Amount</th>
+                <th className="orders-table-header-item orders-table-number-col">Filled</th>
                 <th className="orders-table-header-item orders-table-number-col">Remaining</th>
                 <th className="orders-table-header-item orders-table-number-col">Price (USDC)</th>
-                <th className="orders-table-header-item orders-table-text-col">Status</th>
+                <th className="orders-table-header-item orders-table-text-col">Expires in</th>
                 <th className="orders-table-header-item orders-table-text-col">&nbsp;</th>
               </tr>
             </thead>
@@ -82,9 +99,10 @@ class OpenOrders extends Component {
                   }                  
                 </td>
                 <td className="orders-table-number-col">{this.formatSize(order.order.takerToken === this.props.option.acoToken ? order.order.takerAmount : order.order.makerAmount)}</td>
-                <td className="orders-table-number-col">{this.formatSize(order.acoAmount)}</td>                
+                <td className="orders-table-number-col">{this.formatSize(this.getFilledAmount(order))}</td>
+                <td className="orders-table-number-col">{this.formatSize(order.acoAmount)}</td>
                 <td className="orders-table-number-col">{this.formatPrice(order.price)}</td>
-                <td className="orders-table-text-col">Open</td>
+                <td className="orders-table-text-col"><ExpiryCountdown expiry={order.order.expiry}/></td>
                 <td className="orders-table-text-col">
                   <FontAwesomeIcon className="clickable" icon={faTimes} onClick={this.cancelOrder(order)} title="Cancel Order"></FontAwesomeIcon>
                 </td>

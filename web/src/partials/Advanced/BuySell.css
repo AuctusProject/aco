@@ -143,10 +143,11 @@
     color: white;
 }
 
-.place-order-balance-row span a {
+.place-order-balance-row span div {
     color: white;
     cursor: pointer;
     text-decoration: underline;
+    display: inline;
 }
 
 .place-order-label-input-row {

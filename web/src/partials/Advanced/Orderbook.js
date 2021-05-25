@@ -2,7 +2,6 @@ import './Orderbook.css'
 import PropTypes from 'prop-types'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
-import { mergeByPrice } from '../../util/Zrx/zrxUtils'
 import { fromDecimals } from '../../util/constants'
 
 class Orderbook extends Component {
@@ -30,7 +29,7 @@ class Orderbook extends Component {
   }
 
   formatPrice = (price) => {
-    return fromDecimals(price, this.props.option.strikeAssetInfo.decimals)
+    return Number(fromDecimals(price, this.props.option.strikeAssetInfo.decimals, this.props.option.strikeAssetInfo.decimals, 0), 4).toFixed(2)
   }
 
   getSpreadValue = () => {

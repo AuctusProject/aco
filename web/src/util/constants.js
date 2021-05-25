@@ -326,7 +326,7 @@ export function sortByFn(array, propertyFn) {
 export const getTimeToExpiry = (expiryTimeInSeconds) => {
     let timeInSeconds = getSecondsToExpiry(expiryTimeInSeconds)
     if (timeInSeconds < 0) {
-        return {days: 0, hours: 0, minutes: 0}
+        return {days: 0, hours: 0, minutes: 0, seconds: 0}
     }
     let seconds = timeInSeconds;
     const days = Math.floor(seconds / (3600 * 24))
@@ -334,39 +334,18 @@ export const getTimeToExpiry = (expiryTimeInSeconds) => {
     const hours = Math.floor(seconds / 3600)
     seconds -= hours * 3600
     const minutes = Math.floor(seconds / 60)
+    seconds -= minutes * 60
+    seconds = Math.floor(seconds)
     return {
         days,
         hours,
-        minutes
+        minutes,
+        seconds
     }
 }
 
 export const getSecondsToExpiry = (expiryTimeInSeconds) => {
     return expiryTimeInSeconds - (new Date().getTime()/ONE_SECOND)
-}
-
-
-export const getMarketDetails = (selectedOption) => {
-    return {
-        baseToken: {
-            "decimals": parseInt(selectedOption.underlyingInfo.decimals),
-            "symbol": selectedOption.acoTokenInfo.symbol,
-            "name": selectedOption.acoTokenInfo.symbol,
-            "icon": null,
-            "primaryColor": null,
-            "expiryTime": selectedOption.expiryTime,
-            "addresses": { [CHAIN_ID]: selectedOption.acoToken },
-        },
-        quoteToken: {
-            "decimals": parseInt(selectedOption.strikeAssetInfo.decimals),
-            "symbol": selectedOption.strikeAssetInfo.symbol,
-            "name": selectedOption.strikeAssetInfo.symbol,
-            "icon": null,
-            "primaryColor": null,
-            "expiryTime": null,
-            "addresses": { [CHAIN_ID]: selectedOption.strikeAsset },
-        }
-    }
 }
 
 export const getPairIdFromRoute = (location) => {

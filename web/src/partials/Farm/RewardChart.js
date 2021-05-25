@@ -99,7 +99,6 @@ class RewardChart extends Component {
 
     if (acos.length > 0) {
       var minStrike = parseBigIntToNumber(acos[0].strikePrice)
-      var maxStrike = parseBigIntToNumber(acos[acos.length - 1].strikePrice)
       var maxX = 5
 
       var offset = 0.05

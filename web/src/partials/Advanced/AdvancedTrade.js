@@ -29,10 +29,6 @@ class AdvancedTrade extends Component {
   }
   
   render() {
-    var market = {
-      makerToken: "0x57ab1ec28d129707052df4df418d58a2d46d5f51",
-      takerToken: "0x56bc8fa2b2b48d7a9427f21565265c29a31a8bd4"
-    }
     return (
       <div className="advanced-trade">
         <div className="advanced-trade-row">

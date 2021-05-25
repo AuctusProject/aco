@@ -1,16 +1,14 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { checkTransactionIsMined, getNextNonce, wrapEth } from '../../util/web3Methods'
-import Web3Utils from 'web3-utils'
+import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import StepsModal from '../StepsModal/StepsModal'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { acoOtcAddress, AdvancedOrderStepsType, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, toDecimals, usdcAddress, wethAddress, zero, zrxExchangeAddress } from '../../util/constants'
-import { allowance, allowDeposit } from '../../util/erc20Methods'
-import BigNumber from 'bignumber.js'
+import { AdvancedOrderStepsType, maxAllowance } from '../../util/constants'
+import { allowDeposit } from '../../util/erc20Methods'
 import { buy, sell } from '../../util/acoSwapUtil'
 import { getSignedOrder } from '../../util/Zrx/zrxUtils'
 import { postOrder } from '../../util/Zrx/zrxApi'
@@ -44,8 +42,8 @@ class CreateAdvancedOrderModal extends Component {
 
   nextStepCall = (index, nonce) => {
     var from = this.context.web3.selectedAccount
-    if (index >= this.props.steps.length) {
-      this.setStepsModalInfo(currentStep, false, true, false)
+    if (index >= this.props.steps.length) {      
+      this.setStepsModalInfo(this.props.steps[this.props.steps.length-1], false, true, false)
     }
     else {
       var currentStep = this.props.steps[index]
@@ -92,6 +90,8 @@ class CreateAdvancedOrderModal extends Component {
           })
           break;
         }
+        default:
+          break;
       }
     }
   }
@@ -108,6 +108,8 @@ class CreateAdvancedOrderModal extends Component {
       case AdvancedOrderStepsType.BuySellLimit: {
         return "Sign"
       }
+      default:
+        break;
     }
   }
 
@@ -139,6 +141,8 @@ class CreateAdvancedOrderModal extends Component {
         }
         return "Confirm signature on " + this.context.web3.name + " to submit limit order."
       }
+      default:
+        break;
     }
   }
 
@@ -165,11 +169,11 @@ class CreateAdvancedOrderModal extends Component {
     
     for (let i = 0; i < this.props.steps.length; i++) {
       const step = this.props.steps[i];
-      var title = this.getTitle(step)
+      var stepTitle = this.getTitle(step)
       var currentStepIndex = this.props.steps.indexOf(currentStep)      
       var isActive = currentStepIndex >= i
       var isCompleted = currentStepIndex > i
-      steps.push({ title: title, progress: isCompleted ? 100 : 0, active: isActive })
+      steps.push({ title: stepTitle, progress: isCompleted ? 100 : 0, active: isActive })
     }
 
     this.setState({

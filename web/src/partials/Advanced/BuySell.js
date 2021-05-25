@@ -5,9 +5,8 @@ import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet } from '@fortawesome/free-solid-svg-icons'
 import { balanceOf } from '../../util/erc20Methods'
-import { fromDecimals, ONE_SECOND, toDecimals } from '../../util/constants'
+import { fromDecimals, toDecimals } from '../../util/constants'
 import DecimalInput from '../Util/DecimalInput'
-import { postOrder } from '../../util/Zrx/zrxApi'
 import { getAdvancedOrderSteps, getQuote, buildQuotedData } from '../../util/acoSwapUtil'
 import BigNumber from 'bignumber.js'
 import { error } from '../../util/sweetalert'
@@ -180,7 +179,7 @@ class BuySell extends Component {
               <div className="place-order-balance-row">
                 <FontAwesomeIcon icon={faWallet}/>
                 {this.formatBalance()}
-                {this.state.selectedBuySellTab === 2 && <span>(<a onClick={this.goToMint}>Mint</a>)</span>}
+                {this.state.selectedBuySellTab === 2 && <span>(<div onClick={this.goToMint}>Mint</div>)</span>}
               </div>
               <div className="place-order-label-input-row amount-row">
                 <div className="place-order-label-item">
