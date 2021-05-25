@@ -17,6 +17,7 @@ export const acoBuyerAddress = process.env.REACT_APP_ACO_BUYER_ADDRESS;
 export const acoDistributorAddress = process.env.REACT_APP_ACO_DISTRIBUTOR_ADDRESS;
 export const acoRewardAddress = process.env.REACT_APP_ACO_REWARD_ADDRESS;
 export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
+export const acoAssetConverterHelperAddress = process.env.REACT_APP_ASSET_CONVERTER_HELPER_ADDRESS;
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const subgraphUrl = process.env.REACT_APP_SUBGRAPH_API_URL;
