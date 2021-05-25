@@ -43,7 +43,6 @@ class App extends Component {
 
   componentDidMount = () => {
     getGasPrice()
-    window.TradeApp.setNetwork(parseInt(CHAIN_ID))
   }
   
 

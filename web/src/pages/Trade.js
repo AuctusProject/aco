@@ -111,12 +111,6 @@ class Trade extends Component {
     return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
   }
 
-  componentWillUnmount = () => {
-    if (this.props.selectedPair && this.canLoad() && window.TradeApp) {
-      window.TradeApp.unmount()
-    }
-  }
-
   onSelectOption = (option) => {
     this.setState({selectedOption: option, selectedExpiryTime: option ? null : ALL_OPTIONS_KEY}, () => {
       if(option != null) {
