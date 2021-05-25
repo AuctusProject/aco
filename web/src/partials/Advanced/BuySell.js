@@ -155,7 +155,11 @@ class BuySell extends Component {
     return this.context.orderbook && this.context.orderbook.ask && this.context.orderbook.ask.orders
   }
 
-  onCreateOrderHide = () => {
+  onCreateOrderHide = (isDone) => {
+    if (isDone) {
+      this.loadBalances()
+      this.props.loadBalances()
+    }
     this.setState({ steps: null })
   }
   

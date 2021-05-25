@@ -139,7 +139,7 @@ class Trade extends Component {
       <>
         <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
         {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
-        {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption}></AdvancedTrade>}
+        {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption} loadBalances={this.loadBalances}></AdvancedTrade>}
       </>}
     </div>
     
