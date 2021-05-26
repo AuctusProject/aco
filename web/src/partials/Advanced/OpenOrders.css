@@ -64,16 +64,17 @@
     text-align: right;
 }
 
-td.orders-table-number-col {
-    font-feature-settings: "tnum";
-}
 
 td.orders-table-number-col,
 td.orders-table-text-col {
-    font-size: 12px;
+    font-size: 13px;
     border-bottom: none;
     color: rgb(255, 255, 255);
     padding: 5px 16px 5px 0px;
+}
+
+td.orders-table-number-col {
+    font-feature-settings: "tnum";
 }
 
 .orders-table .order-type-buy {

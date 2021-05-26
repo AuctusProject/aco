@@ -1,6 +1,5 @@
 import './BuySell.css'
 import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet } from '@fortawesome/free-solid-svg-icons'
@@ -87,6 +86,10 @@ class BuySell extends Component {
 
   onAmountChange = (value) => {
     this.setState({amountInputValue: value})
+  }
+
+  setOrderData = (isBuy, price, amount) => {
+    this.setState({selectedBuySellTab: isBuy ? 1 : 2, priceInputValue: price, amountInputValue: amount})
   }
 
   onSubmitOrder = async () => {
@@ -252,4 +255,4 @@ BuySell.contextTypes = {
   ticker: PropTypes.object,
   orderbook: PropTypes.object,
 }
-export default withRouter(BuySell)
+export default BuySell

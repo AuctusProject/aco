@@ -42,6 +42,33 @@ class Orderbook extends Component {
     }
     return "-"
   }
+
+  onOrderClick = (isBuy, order, allOrders) => () => {
+    var totalAmount = isBuy ? this.getTotalBuyAmount(order, allOrders) : this.getTotalSellAmount(order, allOrders)
+    this.props.setPlaceOrderData(!isBuy, this.formatPrice(order.price), this.formatSize(totalAmount))
+  }
+
+  getTotalBuyAmount = (order, allOrders) => {
+    var totalAmount = order.totalSize
+    for (let i = 0; i < allOrders.length; i++) {
+      const element = allOrders[i];      
+      if (element.price.gte(order.price)) {
+        totalAmount = totalAmount.plus(element.totalSize)
+      }
+    }
+    return totalAmount
+  }
+
+  getTotalSellAmount = (order, allOrders) => {
+    var totalAmount = order.totalSize
+    for (let i = allOrders.length-1; i >= 0; i--) {
+      const element = allOrders[i];      
+      if (element.price.lte(order.price)) {
+        totalAmount = totalAmount.plus(element.totalSize)
+      }
+    }
+    return totalAmount
+  }
   
   render() {
     var buyOrders = mergeByPrice(this.getBuyOrders())
@@ -59,7 +86,7 @@ class Orderbook extends Component {
           <div className="orderbook-table-body">
             <div className="orderbook-table-body-content">
               <div className="orderbook-table-sell">
-                {sellOrders && sellOrders.map(sellOrder => <div key={sellOrder.acoPool ? sellOrder.acoPool : sellOrder.orderHash} className="orderbook-table-sell-row">
+                {sellOrders && sellOrders.map(sellOrder => <div key={sellOrder.acoPool ? sellOrder.acoPool : sellOrder.orderHash} className="orderbook-table-sell-row" onClick={this.onOrderClick(false, sellOrder, sellOrders)}>
                   <div className="orderbook-table-sell-item orderbook-size-col font-mono">{this.formatSize(sellOrder.totalSize)}</div>
                   <div className="orderbook-table-sell-item orderbook-price-col font-mono">{this.formatPrice(sellOrder.price)}</div>                  
                 </div>)}
@@ -69,7 +96,7 @@ class Orderbook extends Component {
                 <div className="orderbook-table-spread-value font-mono">{this.getSpreadValue()}</div>                
               </div>
               <div className="orderbook-table-buy">
-                {buyOrders && buyOrders.map(buyOrder => <div key={buyOrder.orderHash} className="orderbook-table-buy-row">
+                {buyOrders && buyOrders.map(buyOrder => <div key={buyOrder.orderHash} className="orderbook-table-buy-row" onClick={this.onOrderClick(true, buyOrder, buyOrders)}>
                   <div className="orderbook-table-buy-item orderbook-size-col font-mono">{this.formatSize(buyOrder.totalSize)}</div>
                   <div className="orderbook-table-buy-item orderbook-price-col font-mono">{this.formatPrice(buyOrder.price)}</div>                  
                 </div>)}

@@ -161,25 +161,23 @@
     border-top: 1px solid rgb(115, 115, 115);
     color: rgb(255, 255, 255);
     font-feature-settings: "tnum" 0;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: normal;
     line-height: 1.2;
     padding: 5px 16px 5px 0px;
 }
 
 .orderbook-size-col,
-.orderbook-my-size-col,
 .orderbook-price-col {
     color: rgb(255, 255, 255);
     font-feature-settings: "tnum";
-    font-size: 12px;
+    font-size: 13px;
     font-weight: normal;
     line-height: 1.2;
     padding: 5px 16px 5px 0px;
 }
 
-.orderbook-size-col,
-.orderbook-my-size-col {
+.orderbook-size-col {
     color: rgb(222, 222, 222);
 }
 
