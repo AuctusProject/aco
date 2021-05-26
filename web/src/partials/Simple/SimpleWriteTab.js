@@ -115,27 +115,30 @@ class SimpleWriteTab extends Component {
   }
 
   getReturnIfFlat = (option, bid) => {
-    var price = new BigNumber(toDecimals(this.getPairCurrentPrice(), option.strikeAssetInfo.decimals))
-    var strikePrice = new BigNumber(option.strikePrice)
-    var value = null
-    var oneStrike = new BigNumber(toDecimals("1", option.strikeAssetInfo.decimals))
-    if (bid && price && strikePrice) {
-      if (option.isCall && bid.gt(price.minus(strikePrice))) {
-        if (strikePrice.gt(price)) {
-          value = bid.times(oneStrike).div(price.minus(bid))
+    var currentPrice = this.getPairCurrentPrice()
+    if (currentPrice) {
+      var price = new BigNumber(toDecimals(currentPrice, option.strikeAssetInfo.decimals))
+      var strikePrice = new BigNumber(option.strikePrice)
+      var value = null
+      var oneStrike = new BigNumber(toDecimals("1", option.strikeAssetInfo.decimals))
+      if (bid && price && strikePrice) {
+        if (option.isCall && bid.gt(price.minus(strikePrice))) {
+          if (strikePrice.gt(price)) {
+            value = bid.times(oneStrike).div(price.minus(bid))
+          }
+          else {
+            value = bid.minus(price.minus(strikePrice)).times(oneStrike).div(price.minus(bid))
+          }      
         }
-        else {
-          value = bid.minus(price.minus(strikePrice)).times(oneStrike).div(price.minus(bid))
-        }      
+        else if (!option.isCall && bid.gt(strikePrice.minus(price))) {
+          if (strikePrice.gt(price)) {
+            value = bid.minus(strikePrice.minus(price)).times(oneStrike).div(strikePrice)
+          }
+          else {
+            value = bid.times(oneStrike).div(strikePrice)
+          }      
+        } 
       }
-      else if (!option.isCall && bid.gt(strikePrice.minus(price))) {
-        if (strikePrice.gt(price)) {
-          value = bid.minus(strikePrice.minus(price)).times(oneStrike).div(strikePrice)
-        }
-        else {
-          value = bid.times(oneStrike).div(strikePrice)
-        }      
-      } 
     }
     return value ? parseFloat(fromDecimals(value.integerValue(BigNumber.ROUND_CEIL).toString(10), option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals)) : null 
   }
