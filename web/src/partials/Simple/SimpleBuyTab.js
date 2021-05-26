@@ -360,13 +360,24 @@ class SimpleBuyTab extends Component {
         steps: steps,
         img: img,
         isDone: (stepNumber === 6 || stepNumber === -1),
+        success: (stepNumber === 6),
         onDoneButtonClick: this.onHideStepsModal
       }
     })
   }
 
   onHideStepsModal = () => {
-    this.setState({ stepsModalInfo: null })
+    let redirect = (this.props.selectedPair && this.state.stepsModalInfo && this.state.stepsModalInfo.success)
+    this.setState({ stepsModalInfo: null, selectedStrike: null, qtyValue: "1.00", selectedExpiration: null }, () => {
+      this.setSelectedOption()
+      if (redirect) {
+        this.props.refreshExercise()
+        var self = this
+        setTimeout(() => {
+          self.props.history.push('/manage/'+self.props.selectedPair.id)
+        },300)
+      }
+    })
   }
 
   needApprove = () => {

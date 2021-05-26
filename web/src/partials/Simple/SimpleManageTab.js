@@ -16,6 +16,20 @@ class SimpleManageTab extends Component {
     this.state = { position: null, writtenPositions: null, exercisePositions: null, refreshExercise: false, refreshWrite: false}
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (
+      (this.props.refreshExercise !== prevProps.refreshExercise && this.props.refreshExercise) ||
+      (this.props.refreshWrite !== prevProps.refreshWrite && this.props.refreshWrite)
+      ) {
+      if (this.props.refreshExercise) {
+        this.setState({refreshExercise: true}, () => this.props.exerciseUpdated())
+      }
+      if (this.props.refreshWrite) {
+        this.setState({refreshWrite: true}, () => this.props.writeUpdated())
+      }
+    }
+  }
+
   onCancelBurnClick = (shouldRefresh) => {
     this.setState({burnPosition: null, refreshWrite: !!shouldRefresh})
   }
@@ -68,7 +82,7 @@ class SimpleManageTab extends Component {
         this.state.exercisePositions && this.state.exercisePositions.length === 0 && <>
           <div className="page-subtitle">No open positions{this.props.selectedPair && ` for ${this.props.selectedPair.underlyingSymbol}${this.props.selectedPair.strikeAssetSymbol}`}</div>
         </>}
-        <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedWrittenPositions} onBurnPositionSelect={this.onBurnPositionSelect}  refresh={this.state.refreshWrite} updated={() => this.setState({refreshWrite: false})}></WrittenOptionsPositions>
+        <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedWrittenPositions} onBurnPositionSelect={this.onBurnPositionSelect} refresh={this.state.refreshWrite} updated={() => this.setState({refreshWrite: false})}></WrittenOptionsPositions>
         {this.state.exercisePositions && this.state.exercisePositions.length > 0 && <div className="page-title">MANAGE LONG OPTIONS POSITIONS</div>}
         <ExercisePositions {...this.props} mode={PositionsLayoutMode.Basic} loadedPositions={this.loadedExercisePositions} setSellPosition={this.onSellPositionSelect} setPosition={this.onExercisePositionSelect} refresh={this.state.refreshExercise} updated={() => this.setState({refreshExercise: false})}></ExercisePositions>  
 
