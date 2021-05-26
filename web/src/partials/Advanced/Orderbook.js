@@ -60,18 +60,18 @@ class Orderbook extends Component {
             <div className="orderbook-table-body-content">
               <div className="orderbook-table-sell">
                 {sellOrders && sellOrders.map(sellOrder => <div key={sellOrder.acoPool ? sellOrder.acoPool : sellOrder.orderHash} className="orderbook-table-sell-row">
-                  <div className="orderbook-table-sell-item orderbook-size-col">{this.formatSize(sellOrder.totalSize)}</div>
-                  <div className="orderbook-table-sell-item orderbook-price-col">{this.formatPrice(sellOrder.price)}</div>                  
+                  <div className="orderbook-table-sell-item orderbook-size-col font-mono">{this.formatSize(sellOrder.totalSize)}</div>
+                  <div className="orderbook-table-sell-item orderbook-price-col font-mono">{this.formatPrice(sellOrder.price)}</div>                  
                 </div>)}
               </div>
               <div className="orderbook-table-spread-row">
                 <div className="orderbook-table-spread-item">Spread</div>
-                <div className="orderbook-table-spread-value">{this.getSpreadValue()}</div>                
+                <div className="orderbook-table-spread-value font-mono">{this.getSpreadValue()}</div>                
               </div>
               <div className="orderbook-table-buy">
                 {buyOrders && buyOrders.map(buyOrder => <div key={buyOrder.orderHash} className="orderbook-table-buy-row">
-                  <div className="orderbook-table-buy-item orderbook-size-col">{this.formatSize(buyOrder.totalSize)}</div>
-                  <div className="orderbook-table-buy-item orderbook-price-col">{this.formatPrice(buyOrder.price)}</div>                  
+                  <div className="orderbook-table-buy-item orderbook-size-col font-mono">{this.formatSize(buyOrder.totalSize)}</div>
+                  <div className="orderbook-table-buy-item orderbook-price-col font-mono">{this.formatPrice(buyOrder.price)}</div>                  
                 </div>)}
               </div>
             </div>

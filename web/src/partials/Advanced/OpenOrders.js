@@ -98,10 +98,10 @@ class OpenOrders extends Component {
                     <div className="order-type-sell">Sell</div>
                   }                  
                 </td>
-                <td className="orders-table-number-col">{this.formatSize(order.order.takerToken === this.props.option.acoToken ? order.order.takerAmount : order.order.makerAmount)}</td>
-                <td className="orders-table-number-col">{this.formatSize(this.getFilledAmount(order))}</td>
-                <td className="orders-table-number-col">{this.formatSize(order.acoAmount)}</td>
-                <td className="orders-table-number-col">{this.formatPrice(order.price)}</td>
+                <td className="orders-table-number-col font-mono">{this.formatSize(order.order.takerToken === this.props.option.acoToken ? order.order.takerAmount : order.order.makerAmount)}</td>
+                <td className="orders-table-number-col font-mono">{this.formatSize(this.getFilledAmount(order))}</td>
+                <td className="orders-table-number-col font-mono">{this.formatSize(order.acoAmount)}</td>
+                <td className="orders-table-number-col font-mono">{this.formatPrice(order.price)}</td>
                 <td className="orders-table-text-col"><ExpiryCountdown expiry={order.order.expiry}/></td>
                 <td className="orders-table-text-col">
                   <FontAwesomeIcon className="clickable" icon={faTimes} onClick={this.cancelOrder(order)} title="Cancel Order"></FontAwesomeIcon>

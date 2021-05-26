@@ -819,3 +819,7 @@ label {
 .aco-link:hover {
   text-shadow: 0 2px 5px #5de9d4;
 }
+
+.font-mono {
+  font-family: Courier, monospace;
+}
