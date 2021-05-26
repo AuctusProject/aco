@@ -27,6 +27,10 @@ class AdvancedTrade extends Component {
         `${timeToExpiry.days}d ${timeToExpiry.hours}h` :
         `${timeToExpiry.hours}h ${timeToExpiry.minutes}m`;
   }
+
+  setPlaceOrderData = (isBuy, price, amount) => {
+    this.buySell.setOrderData(isBuy, price, amount)
+  }
   
   render() {
     return (
@@ -45,10 +49,10 @@ class AdvancedTrade extends Component {
         <div className="advanced-trade-row">
           <WebsocketOrderProvider option={this.props.option}>
             <div className="advanced-trade-col">
-              <BuySell {...this.props}></BuySell>
+              <BuySell ref={ref => this.buySell = ref} {...this.props}></BuySell>
             </div>
             <div className="advanced-trade-col">
-              <Orderbook {...this.props}></Orderbook>
+              <Orderbook {...this.props} setPlaceOrderData={this.setPlaceOrderData}></Orderbook>
             </div>
             <div className="advanced-trade-col">
               <OpenOrders {...this.props}></OpenOrders>

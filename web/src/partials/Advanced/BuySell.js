@@ -89,6 +89,10 @@ class BuySell extends Component {
     this.setState({amountInputValue: value})
   }
 
+  setOrderData = (isBuy, price, amount) => {
+    this.setState({selectedBuySellTab: isBuy ? 1 : 2, priceInputValue: price, amountInputValue: amount})
+  }
+
   onSubmitOrder = async () => {
     if (this.canSubmit()) {
       var isBuy = this.state.selectedBuySellTab === 1
@@ -252,4 +256,4 @@ BuySell.contextTypes = {
   ticker: PropTypes.object,
   orderbook: PropTypes.object,
 }
-export default withRouter(BuySell)
+export default BuySell
