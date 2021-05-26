@@ -20,17 +20,11 @@ const getBestOrder = (option, side, orders) => {
         sortedOrders = getSortedOrders(orders, side)
         bestOrder = sortedOrders.length > 0 ? sortedOrders[0] : null
         if (bestOrder) {
-            bestOrder.totalSize = bestOrder.size
-            if (bestOrder.filled) {
-                bestOrder.totalSize = bestOrder.totalSize.minus(bestOrder.filled)
-            }
+            bestOrder.totalSize = bestOrder.acoAmount
             for (let index = 1; index < sortedOrders.length; index++) {
                 const order = sortedOrders[index];
                 if (order.price.eq(bestOrder.price)) {
-                    bestOrder.totalSize = bestOrder.totalSize.plus(order.size)
-                    if (order.filled) {
-                        bestOrder.totalSize = bestOrder.totalSize.minus(order.filled)
-                    }
+                    bestOrder.totalSize = bestOrder.totalSize.plus(order.acoAmount)
                 }
             }
         }
