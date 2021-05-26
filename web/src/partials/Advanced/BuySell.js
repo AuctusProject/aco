@@ -1,6 +1,5 @@
 import './BuySell.css'
 import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet } from '@fortawesome/free-solid-svg-icons'
