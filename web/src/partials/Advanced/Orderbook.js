@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import { fromDecimals } from '../../util/constants'
+import { mergeByPrice } from '../../util/Zrx/orderbookUtil'
 
 class Orderbook extends Component {
   constructor() {
@@ -43,8 +44,8 @@ class Orderbook extends Component {
   }
   
   render() {
-    var buyOrders = this.getBuyOrders()
-    var sellOrders = this.getSellOrders()
+    var buyOrders = mergeByPrice(this.getBuyOrders())
+    var sellOrders = mergeByPrice(this.getSellOrders())
     return (
       <div className="orderbook-box">
         <div className="box-title-wrapper">
@@ -59,9 +60,8 @@ class Orderbook extends Component {
             <div className="orderbook-table-body-content">
               <div className="orderbook-table-sell">
                 {sellOrders && sellOrders.map(sellOrder => <div key={sellOrder.acoPool ? sellOrder.acoPool : sellOrder.orderHash} className="orderbook-table-sell-row">
-                  <div className="orderbook-table-sell-item orderbook-size-col">{this.formatSize(sellOrder.acoAmount)}</div>
-                  <div className="orderbook-table-sell-item orderbook-price-col">{this.formatPrice(sellOrder.price)}</div>
-                  
+                  <div className="orderbook-table-sell-item orderbook-size-col">{this.formatSize(sellOrder.totalSize)}</div>
+                  <div className="orderbook-table-sell-item orderbook-price-col">{this.formatPrice(sellOrder.price)}</div>                  
                 </div>)}
               </div>
               <div className="orderbook-table-spread-row">
@@ -70,7 +70,7 @@ class Orderbook extends Component {
               </div>
               <div className="orderbook-table-buy">
                 {buyOrders && buyOrders.map(buyOrder => <div key={buyOrder.orderHash} className="orderbook-table-buy-row">
-                  <div className="orderbook-table-buy-item orderbook-size-col">{this.formatSize(buyOrder.acoAmount)}</div>
+                  <div className="orderbook-table-buy-item orderbook-size-col">{this.formatSize(buyOrder.totalSize)}</div>
                   <div className="orderbook-table-buy-item orderbook-price-col">{this.formatPrice(buyOrder.price)}</div>                  
                 </div>)}
               </div>
