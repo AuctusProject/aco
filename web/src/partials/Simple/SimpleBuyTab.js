@@ -384,7 +384,7 @@ class SimpleBuyTab extends Component {
   }
 
   getAllowanceAddress = () => {
-    if (this.state.swapQuote.poolData.length === 0 && this.state.swapQuote.zrxData.length === 1) {
+    if (this.state.swapQuote.poolData.length === 0) {
       return zrxExchangeAddress
     }
     if (this.state.swapQuote.poolData.length === 1 && this.state.swapQuote.zrxData.length === 0) {
