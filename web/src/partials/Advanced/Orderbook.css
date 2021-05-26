@@ -161,7 +161,6 @@
     border-top: 1px solid rgb(115, 115, 115);
     color: rgb(255, 255, 255);
     font-feature-settings: "tnum" 0;
-    font-family: Courier;
     font-size: 13px;
     font-weight: normal;
     line-height: 1.2;
@@ -172,7 +171,6 @@
 .orderbook-price-col {
     color: rgb(255, 255, 255);
     font-feature-settings: "tnum";
-    font-family: Courier;
     font-size: 13px;
     font-weight: normal;
     line-height: 1.2;
