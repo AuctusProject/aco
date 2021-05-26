@@ -250,7 +250,7 @@ export const getAdvancedOrderSteps = async (from, quote, option, acoAmount, acoP
   var hasMarketOrder = quote && quote.acoAmount.gt(zero)
   var marketAllowanceAddress = ""
   var tokenToApprove = isBuy ? option.strikeAsset : option.acoToken
-  var makerAmount = isBuy ? quoteAmount : option.acoToken
+  var makerAmount = isBuy ? quoteAmount : acoAmount
   if (hasMarketOrder) {
     marketAllowanceAddress = getMarketOrderAllowanceAddress(quote)
     var needMarketApprove = await needApprove(from, tokenToApprove, makerAmount, marketAllowanceAddress)
@@ -301,7 +301,7 @@ const needApprove = async (from, tokenToApprove, neededApprovalValue, approvalAd
 }
 
 const getMarketOrderAllowanceAddress = (quote) => {
-  if (quote.poolData.length === 0 && quote.zrxData.length === 1) {
+  if (quote.poolData.length === 0) {
     return zrxExchangeAddress
   }
   if (quote.poolData.length === 1 && quote.zrxData.length === 0) {
