@@ -40,23 +40,23 @@ const getPoolQuote = (acoPoolAddress, option, amount) => {
     })
 }
 
-export const getSwapQuote = (option, acoAmount = null, acoPrice = null) => {
+export const getSwapQuote = (option, acoAmount = null, acoPrice = null, slippage = null) => {
     return new Promise((resolve, reject) => {
         getAvailablePoolsForOption(option).then((acoPools) => {
             if (!option.isCall) {
                 getPrice(option.underlying, option.strikeAsset).then((price) => {
                     let formattedPrice = new BigNumber(price)
-                    internalSwapQuote(acoPools, option, acoAmount, acoPrice, formattedPrice).then((r) => resolve(r)).catch((err) => reject(err))
+                    internalSwapQuote(acoPools, option, acoAmount, acoPrice, formattedPrice, slippage).then((r) => resolve(r)).catch((err) => reject(err))
                 }).catch((err) => reject(err))
             } else {
-                internalSwapQuote(acoPools, option, acoAmount, acoPrice, null).then((r) => resolve(r)).catch((err) => reject(err))
+                internalSwapQuote(acoPools, option, acoAmount, acoPrice, null, slippage).then((r) => resolve(r)).catch((err) => reject(err))
             }
             
         }).catch((err) => reject(err))
     })
 }
 
-const internalSwapQuote = (acoPools, option, acoAmount, acoPrice, currentPrice) => {
+const internalSwapQuote = (acoPools, option, acoAmount, acoPrice, currentPrice, slippage = null) => {
     return new Promise((resolve, reject) => {
         let swapPromises = []   
         let indexes = {}
@@ -88,6 +88,9 @@ const internalSwapQuote = (acoPools, option, acoAmount, acoPrice, currentPrice) 
             for (let i = 0; i < result.length; i++) {
                 if (!isNaN(result[i][0])) {
                     let swapPrice = new BigNumber(result[i][0])
+                    if (slippage) {
+                        swapPrice = swapPrice.times((new BigNumber(1)).plus(new BigNumber(slippage))).integerValue(BigNumber.ROUND_CEIL)
+                    }
                     let pricePerUnit = oneAcoToken.times(swapPrice).div(indexes[i.toString()].amount)
                     if (!acoPrice || pricePerUnit.lte(acoPrice)) {
                         pricesSorted.push({

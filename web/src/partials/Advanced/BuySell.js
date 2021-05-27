@@ -98,7 +98,7 @@ class BuySell extends Component {
       var isLimit = this.state.selectedLimitMarketTab === 1
       var amountValue = this.state.amountInputValue
       var priceValue = isLimit ? this.state.priceInputValue : null
-      var quote = await getQuote(isBuy, this.props.option, amountValue, false, priceValue)
+      var quote = await getQuote(isBuy, this.props.option, amountValue, false, priceValue, this.props.slippage)
       var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
       if (!isLimit && quote.acoAmount.isLessThan(amountInDecimals)) {
           error("There are not enough orders to fill this amount")

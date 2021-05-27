@@ -48,8 +48,7 @@ export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60;
-export const DEFAULT_SLIPPAGE = 0.05;
-export const DEFAULT_POOL_SLIPPAGE = 0.01;
+export const DEFAULT_SLIPPAGE = 0.03;
 export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
 export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
 export const acoAirdropAmounts = JSON.parse(process.env.REACT_APP_ACO_AIRDROP_AMOUNTS);
@@ -457,6 +456,20 @@ export const getLocalOrders = () => {
     }
     else {
         return JSON.parse(localOrders)
+    }
+}
+
+export const setSlippageConfig = (slippageConfig) => {
+    window.localStorage.setItem('SLIPPAGE_CONFIG', slippageConfig.toString())
+}
+
+export const getSlippageConfig = () => {
+    var slippageConfig = window.localStorage.getItem('SLIPPAGE_CONFIG')
+    if (!slippageConfig) {
+        return DEFAULT_SLIPPAGE
+    }
+    else {
+        return parseFloat(slippageConfig)
     }
 }
 

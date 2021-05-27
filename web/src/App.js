@@ -14,7 +14,7 @@ import Writer from './pages/Writer'
 import Exercise from './pages/Exercise'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getNetworkName, CHAIN_ID, getCurrentRoute, getPairIdFromRoute, isDarkMode } from './util/constants'
+import { getNetworkName, CHAIN_ID, getCurrentRoute, getPairIdFromRoute, isDarkMode, getSlippageConfig, setSlippageConfig } from './util/constants'
 import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
@@ -36,7 +36,8 @@ class App extends Component {
       orderBooks:{},
       connecting: null,
       disconnecting: null,
-      refreshWeb3: null
+      refreshWeb3: null,
+      slippage: getSlippageConfig()
     }
     this.loadLayoutMode()
   }
@@ -44,7 +45,11 @@ class App extends Component {
   componentDidMount = () => {
     getGasPrice()
   }
-  
+
+  setSlippage = (slippage) => {
+    setSlippageConfig(slippage)
+    this.setState({slippage: slippage})
+  }  
 
   showSignInModal = (redirectUrl, context) => {
     if (context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
@@ -146,7 +151,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
+            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair} slippage={this.state.slippage} setSlippage={this.setSlippage}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -182,6 +187,7 @@ class App extends Component {
                     darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 
@@ -191,6 +197,7 @@ class App extends Component {
                     darkMode={darkMode}
                     signIn={this.showSignInModal}
                     accountToggle={this.state.accountToggle}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 
@@ -204,6 +211,7 @@ class App extends Component {
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                     toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 
@@ -213,6 +221,7 @@ class App extends Component {
                     darkMode={darkMode}
                     signIn={this.showSignInModal}
                     accountToggle={this.state.accountToggle}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 

@@ -191,6 +191,32 @@ li.dropdown {
   color: white !important;  
 }
 
+.nav-item.dropdown.slippage-config {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+
+.nav-item.dropdown.slippage-config .dropdown-menu {
+  width: 350px;
+  padding: 15px;
+}
+
+.nav-item.dropdown.slippage-config .outline-btn,
+.nav-item.dropdown.slippage-config .action-btn {
+  font-size: 14px;
+}
+
+.nav-item.dropdown.slippage-config .steps-modal-title {
+  margin-top: 0px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.nav-item.dropdown.slippage-config .slippage-options .input-field {
+  width: 72px;
+}
+
 .dropdown-item:hover, .dropdown-item:focus {
   background-color: rgba(152,151,151, 0) !important;
   color: #dedede !important;  

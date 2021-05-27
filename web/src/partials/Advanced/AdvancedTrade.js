@@ -30,7 +30,7 @@ class AdvancedTrade extends Component {
 
   setPlaceOrderData = (isBuy, price, amount) => {
     this.buySell.setOrderData(isBuy, price, amount)
-  }
+  } 
   
   render() {
     return (
@@ -47,7 +47,7 @@ class AdvancedTrade extends Component {
           </div>
         </div>
         <div className="advanced-trade-row">
-          <WebsocketOrderProvider option={this.props.option}>
+          <WebsocketOrderProvider {...this.props} option={this.props.option}>
             <div className="advanced-trade-col">
               <BuySell ref={ref => this.buySell = ref} {...this.props}></BuySell>
             </div>
@@ -58,7 +58,7 @@ class AdvancedTrade extends Component {
               <OpenOrders {...this.props}></OpenOrders>
             </div>
           </WebsocketOrderProvider>
-        </div>
+        </div>        
       </div>
     );
   }

@@ -45,6 +45,9 @@ class WebsocketOrderProvider extends Component {
         if (this.props.option !== prevProps.option) {
             this.componentDidMount()
         }
+        if (this.props.slippage !== prevProps.slippage && this.props.option) {
+            this.setOrderBook(this.props.option)
+        }
     }
 
     subscribeAndGetOrders = async () => {
@@ -62,7 +65,11 @@ class WebsocketOrderProvider extends Component {
 
     async _fetchAndCreateSubscriptionAsync(option) {
         await this._createWebsocketSubscriptionAsync(option)
-        const orderBook = await getOrderbook(option)
+        this.setOrderBook(option)
+    }
+
+    async setOrderBook(option) {
+        const orderBook = await getOrderbook(option, this.props.slippage)
         this.updateOrderbooks(option.acoToken, orderBook)
     }
 
@@ -95,10 +102,10 @@ class WebsocketOrderProvider extends Component {
         });
     }
 
-    async _handleOrderUpdatesAsync(_channel, _opts, apiOrders) {
-        var option = await getOption(_opts.acoToken)
-        var orderBook = await getUpdatedOrderbook(option, apiOrders)
-        this.updateOrderbooks(_opts.acoToken, orderBook)
+    async _handleOrderUpdatesAsync(acoToken, apiOrders) {
+        var option = await getOption(acoToken)
+        var orderBook = await getUpdatedOrderbook(option, apiOrders, this.props.slippage)
+        this.updateOrderbooks(acoToken, orderBook)
     }    
 
     updateOrderbooks = (acoToken, orderbook) => {
@@ -109,7 +116,7 @@ class WebsocketOrderProvider extends Component {
 
     async _createOrdersChannelAsync() {
         const ordersChannelHandler = {
-            onUpdate: async (_channel, _opts, apiOrders) => this._handleOrderUpdatesAsync(_channel, _opts, apiOrders),
+            onUpdate: async (_channel, _opts, apiOrders) => this._handleOrderUpdatesAsync(_opts.acoToken, apiOrders),
             onError: (_channel, _err) => {},
             onClose: async () => {
                 if (this._isDestroyed) {

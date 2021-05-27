@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { toDecimals, maxAllowance, fromDecimals, isEther, DEFAULT_POOL_SLIPPAGE, formatPercentage } from '../../util/constants'
+import { toDecimals, maxAllowance, fromDecimals, isEther, formatPercentage } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -26,8 +26,7 @@ class DepositModal extends Component {
     super(props)
     this.state = { 
       depositValue: "",
-      accepted: false,
-      maxSlippage: DEFAULT_POOL_SLIPPAGE
+      accepted: false
     }
   }
 
@@ -96,7 +95,7 @@ class DepositModal extends Component {
   getDepositMinValue = () => {
     return new Promise((resolve, reject) => {
       getDepositShares(this.props.pool.acoPool, this.getDepositAssetValue()).then(shares => { 
-        var minShares = fromDecimals(new BigNumber(shares).times(new BigNumber(1-this.state.maxSlippage)), 0, 0, 0)
+        var minShares = fromDecimals(new BigNumber(shares).times(new BigNumber(1-this.props.slippage)), 0, 0, 0)
         resolve(minShares)
       }).catch(err => reject(err))
     })    
@@ -254,12 +253,11 @@ class DepositModal extends Component {
   onSlippageClick = () => {
     let slippageModalInfo = {}
     slippageModalInfo.onClose = () => this.setState({slippageModalInfo: null})
-    slippageModalInfo.setMaxSlippage = (value) => this.setState({maxSlippage: value})
     this.setState({slippageModalInfo: slippageModalInfo})
   }
 
   getSlippageFormatted = () => {
-    return formatPercentage(this.state.maxSlippage)
+    return formatPercentage(this.props.slippage)
   }
 
   render() {
@@ -310,7 +308,7 @@ class DepositModal extends Component {
               <div className={"aco-button action-btn " + (this.canDeposit() ? "" : "disabled")} onClick={this.onDepositClick}>Confirm</div>
             </div>
           </div>
-          {this.state.slippageModalInfo && <SlippageModal {...this.state.slippageModalInfo} maxSlippage={this.state.maxSlippage} />}
+          {this.state.slippageModalInfo && <SlippageModal {...this.props} {...this.state.slippageModalInfo} />}
           {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
         </div>
       </Modal.Body>

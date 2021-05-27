@@ -10,11 +10,11 @@ import { allowance } from "./erc20Methods"
 import { buildOrder } from "./Zrx/zrxUtils"
 
 let orderbooks = {}
-export const getOrderbook = async (option) => {
+export const getOrderbook = async (option, slippage) => {
   if (orderbooks[option.acoToken]) {
-    return (await reprocessOrderbook(option, orderbooks[option.acoToken]))
+    return (await reprocessOrderbook(option, orderbooks[option.acoToken], slippage))
   } else {
-    const data = await Promise.all([getQuote(true, option), getQuote(false, option)])
+    const data = await Promise.all([getQuote(true, option, null, null, null, slippage), getQuote(false, option, null, null, null, slippage)])
     orderbooks[option.acoToken] = {
       ask: {
         acoAmount: data[0].acoAmount,
@@ -33,7 +33,7 @@ export const getOrderbook = async (option) => {
   }
 }
 
-export const getUpdatedOrderbook = async (option, wssOrders) => {
+export const getUpdatedOrderbook = async (option, wssOrders, slippage) => {
   const askOrders = []
   const bidOrders = []
   let orderbook = orderbooks[option.acoToken]
@@ -83,20 +83,20 @@ export const getUpdatedOrderbook = async (option, wssOrders) => {
       }
     }
   }
-  return (await reprocessOrderbook(option, orderbook))
+  return (await reprocessOrderbook(option, orderbook, slippage))
 }
 
-const reprocessOrderbook = async (option, orderbook) => {
+const reprocessOrderbook = async (option, orderbook, slippage) => {
   const now = Math.ceil(Date.now() / 1000)
-  const sides = await Promise.all([getOrderBookSideProcessed(now, option, true, orderbook.ask), getOrderBookSideProcessed(now, option, false, orderbook.bid)])
+  const sides = await Promise.all([getOrderBookSideProcessed(now, option, true, orderbook.ask, slippage), getOrderBookSideProcessed(now, option, false, orderbook.bid, slippage)])
   orderbooks[option.acoToken].ask = sides[0]
   orderbooks[option.acoToken].bid = sides[1]
   return orderbooks[option.acoToken]
 }
 
-const getOrderBookSideProcessed = async (now, option, isBuy, orderbookSide) => {
+const getOrderBookSideProcessed = async (now, option, isBuy, orderbookSide, slippage) => {
   const zrxOrders = []
-  const poolPromises = (isBuy ? [getPoolQuote(option)] : [])
+  const poolPromises = (isBuy ? [getPoolQuote(option, null, null, slippage)] : [])
   for (let i = 0; i < orderbookSide.orders.length; ++i) {
     if (orderbookSide.orders[i].order) {
       if (parseInt(orderbookSide.orders[i].order.expiry) > now) {
@@ -115,7 +115,7 @@ const getOrderBookSideProcessed = async (now, option, isBuy, orderbookSide) => {
   }
 }
 
-export const getQuote = async (isBuy, option, acoAmount = null, throwLiquidityException = true, acoPrice = null) => {
+export const getQuote = async (isBuy, option, acoAmount = null, throwLiquidityException = true, acoPrice = null, slippage = null) => {
   if (acoAmount) {
     acoAmount = new BigNumber(toDecimals(acoAmount, option.underlyingInfo.decimals))
   }
@@ -124,7 +124,7 @@ export const getQuote = async (isBuy, option, acoAmount = null, throwLiquidityEx
   }
   let promises = [getZrxQuote(isBuy, option, acoAmount, acoPrice)]
   if (isBuy) {
-    promises.push(getPoolQuote(option, acoAmount, acoPrice))
+    promises.push(getPoolQuote(option, acoAmount, acoPrice, slippage))
   }
   const quotes = await Promise.all(promises)
   

@@ -16,7 +16,7 @@ import { faCog, faInfoCircle, faSpinner } from '@fortawesome/free-solid-svg-icon
 import DecimalInput from '../Util/DecimalInput'
 import ReactTooltip from 'react-tooltip'
 import SlippageModal from '../SlippageModal'
-import { DEFAULT_POOL_SLIPPAGE, formatPercentage, fromDecimals, toDecimals } from '../../util/constants'
+import { formatPercentage, fromDecimals, toDecimals } from '../../util/constants'
 import Web3Utils from 'web3-utils'
 import BigNumber from 'bignumber.js'
 
@@ -25,8 +25,7 @@ class WithdrawModal extends Component {
     super(props)
     this.state = { 
       withdrawValue:"", 
-      selectedTab: 1,
-      maxSlippage: DEFAULT_POOL_SLIPPAGE
+      selectedTab: 1
     }
   }
 
@@ -42,7 +41,7 @@ class WithdrawModal extends Component {
   getWithdrawMinCollateral = () => {
     var collateralIndex = this.props.pool.isCall ? 0 : 1
     var collateralValue = this.state.withdrawNoLockedDataInfo[collateralIndex]
-    var minCollateral = fromDecimals(new BigNumber(collateralValue).times(new BigNumber(1-this.state.maxSlippage)), 0, 0, 0)
+    var minCollateral = fromDecimals(new BigNumber(collateralValue).times(new BigNumber(1-this.props.slippage)), 0, 0, 0)
     return minCollateral
   }  
 
@@ -162,12 +161,11 @@ class WithdrawModal extends Component {
   onSlippageClick = () => {
     let slippageModalInfo = {}
     slippageModalInfo.onClose = () => this.setState({slippageModalInfo: null})
-    slippageModalInfo.setMaxSlippage = (value) => this.setState({maxSlippage: value})
     this.setState({slippageModalInfo: slippageModalInfo})
   }
 
   getSlippageFormatted = () => {
-    return formatPercentage(this.state.maxSlippage)
+    return formatPercentage(this.props.slippage)
   }
 
   canWithdraw = () => {
@@ -301,7 +299,7 @@ class WithdrawModal extends Component {
               <div className={"aco-button action-btn " + (this.canWithdraw() ? "" : "disabled")} onClick={this.onWithdrawClick}>Confirm</div>
             </div>
           </div>
-          {this.state.slippageModalInfo && <SlippageModal {...this.state.slippageModalInfo} maxSlippage={this.state.maxSlippage} />}
+          {this.state.slippageModalInfo && <SlippageModal {...this.props} {...this.state.slippageModalInfo} />}
           {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
         </div>
       </Modal.Body>

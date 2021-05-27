@@ -225,7 +225,7 @@ class DiscontinuedPoolDetails extends Component {
         </div>}
       </div>
     </div>
-    {this.state.withdrawPool && <WithdrawModal discontinued={true} pool={this.state.withdrawPool} withdrawBalance={this.state.withdrawBalance} onHide={this.onWithdrawHide} />}
+    {this.state.withdrawPool && <WithdrawModal {...this.props} discontinued={true} pool={this.state.withdrawPool} withdrawBalance={this.state.withdrawBalance} onHide={this.onWithdrawHide} />}
   </div>
   }
 }

@@ -4,10 +4,11 @@ import PropTypes from 'prop-types'
 import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faCog, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 import { etherscanUrl, ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listAvailablePairs } from '../util/dataController'
+import SlippageConfig from './SlippageConfig'
 
 class NavBar extends Component {
   constructor(props){
@@ -225,7 +226,15 @@ class NavBar extends Component {
                 <NavLink className="nav-item link-nav" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise</NavLink>
               </ul>}
               <ul className="navbar-nav ml-auto">
-                {username &&
+                {username && <>
+                  <li className="nav-item dropdown slippage-config"> 
+                    <div className="dropdown-toggle clickable" target="_self" id="slippageConfig" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      <FontAwesomeIcon icon={faCog}></FontAwesomeIcon>
+                    </div>
+                    <div className="dropdown-menu" aria-labelledby="slippageConfig">
+                      <SlippageConfig {...this.props}></SlippageConfig>
+                    </div>
+                  </li>
                   <li className="nav-item dropdown metamask">                  
                     <div className="dropdown-toggle clickable" target="_self" id="navbarProfile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <div className="user-nav-container">
@@ -245,6 +254,7 @@ class NavBar extends Component {
                       <div className="dropdown-item clickable" target="_self" onClick={() => this.signOut()}><FontAwesomeIcon icon={faSignOutAlt}></FontAwesomeIcon>&nbsp;SIGN OUT</div>
                     </div>
                   </li>
+                  </>
                 }
                 {!username && 
                   <li className="nav-item my-2 connect-nav">

@@ -208,8 +208,8 @@ class PoolDetails extends Component {
         <PoolAccountPosition pool={this.props.pool} balance={this.state.withdrawBalance}/>
       </div>}
     </div>
-    {this.state.depositPool && <DepositModal pool={this.state.depositPool} depositBalance={this.state.depositBalance} onHide={this.onDepositHide} />}
-    {this.state.withdrawPool && <WithdrawModal pool={this.state.withdrawPool} withdrawBalance={this.state.withdrawBalance} onHide={this.onWithdrawHide} />}
+    {this.state.depositPool && <DepositModal {...this.props} pool={this.state.depositPool} depositBalance={this.state.depositBalance} onHide={this.onDepositHide} />}
+    {this.state.withdrawPool && <WithdrawModal {...this.props} pool={this.state.withdrawPool} withdrawBalance={this.state.withdrawBalance} onHide={this.onWithdrawHide} />}
   </div>
   }
 }

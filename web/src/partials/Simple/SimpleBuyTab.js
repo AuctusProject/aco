@@ -270,13 +270,13 @@ class SimpleBuyTab extends Component {
   }
 
   sendQuotedTransaction = (nonce) => {
-    return buy(this.context.web3.selectedAccount, nonce, this.state.swapQuote.zrxData, this.state.swapQuote.poolData, this.state.selectedOption, this.state.maxSlippage)
+    return buy(this.context.web3.selectedAccount, nonce, this.state.swapQuote.zrxData, this.state.swapQuote.poolData, this.state.selectedOption, this.props.slippage)
   }
 
   getMaxToPay = () => {
     if (this.state.qtyValue && this.state.qtyValue > 0 && this.state.selectedOption && this.state.swapQuote) {
       var amount = new BigNumber(toDecimals(this.state.qtyValue, this.state.selectedOption.underlyingInfo.decimals))
-      var value = amount.times(this.state.swapQuote.price).times((new BigNumber(1)).plus(new BigNumber(this.state.maxSlippage))).div(new BigNumber(toDecimals("1", this.state.selectedOption.underlyingInfo.decimals)))
+      var value = amount.times(this.state.swapQuote.price).times((new BigNumber(1)).plus(new BigNumber(this.props.slippage))).div(new BigNumber(toDecimals("1", this.state.selectedOption.underlyingInfo.decimals)))
       return value.integerValue(BigNumber.ROUND_CEIL).toString(10)
     }
   }
@@ -503,13 +503,12 @@ class SimpleBuyTab extends Component {
   }
 
   getSlippageFormatted = () => {
-    return formatPercentage(this.state.maxSlippage)
+    return formatPercentage(this.props.slippage)
   }
 
   onSlippageClick = () => {
     let slippageModalInfo = {}
     slippageModalInfo.onClose = () => this.setState({slippageModalInfo: null})
-    slippageModalInfo.setMaxSlippage = (value) => this.setState({maxSlippage: value})
     this.setState({slippageModalInfo: slippageModalInfo})
   }
 
@@ -619,7 +618,7 @@ class SimpleBuyTab extends Component {
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
       {this.state.verifyModalInfo && <VerifyModal {...this.state.verifyModalInfo} />}
-      {this.state.slippageModalInfo && <SlippageModal {...this.state.slippageModalInfo} maxSlippage={this.state.maxSlippage} />}
+      {this.state.slippageModalInfo && <SlippageModal {...this.props} {...this.state.slippageModalInfo} />}
     </div>
   }
 }
