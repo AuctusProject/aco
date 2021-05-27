@@ -1,6 +1,7 @@
 import Axios from 'axios'
-import { toDecimals, zrxApiUrl } from '../constants'
+import { toDecimals, zrxApiUrl, ZRX_RPS } from '../constants'
 import BigNumber from 'bignumber.js'
+import { RateLimit } from 'async-sema';
 
 export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {
   let makerToken = (isBuy ? option.acoToken : option.strikeAsset)
@@ -94,7 +95,9 @@ const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
   return sortedOrders
 }
 
+var rateLimit = new RateLimit(ZRX_RPS)
 export const getOrders = async (makerToken, takerToken, page = 1, perPage = 100) => {
+  await rateLimit()
   let url = zrxApiUrl + "sra/v4/orders?"
   url += "makerToken=" + makerToken
   url += "&takerToken=" + takerToken
@@ -108,6 +111,7 @@ export const getOrders = async (makerToken, takerToken, page = 1, perPage = 100)
 }
 
 export const postOrder = async (order) => {
+  await rateLimit()
   const res = await Axios.post(zrxApiUrl + "sra/v4/order", order)
   if (res && res.data) {
     return res.data
@@ -116,6 +120,7 @@ export const postOrder = async (order) => {
 }
 
 export const postOrderConfig = async (order) => {
+  await rateLimit()
   const res = await Axios.post(zrxApiUrl + "sra/v4/order_config", order)
   if (res && res.data) {
     return res.data

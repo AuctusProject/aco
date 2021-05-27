@@ -50,6 +50,7 @@ export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60;
 export const DEFAULT_SLIPPAGE = 0.03;
 export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
+export const ZRX_RPS = 5;
 export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
 export const acoAirdropAmounts = JSON.parse(process.env.REACT_APP_ACO_AIRDROP_AMOUNTS);
 export const airdropClaimStart = 1617386400;
