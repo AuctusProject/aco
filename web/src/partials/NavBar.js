@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faCog, faExternalLinkAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faCog, faExternalLinkAlt, faSignOutAlt, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { etherscanUrl, ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listAvailablePairs } from '../util/dataController'
@@ -17,7 +17,8 @@ class NavBar extends Component {
       pairs: null,
       showAdvancedTootlip: false,
       darkMode: isDarkMode(),
-      showOptionsSubmenu: false
+      showOptionsSubmenu: false,
+      showSlippageDropdown: false
     }
   }
 
@@ -28,6 +29,10 @@ class NavBar extends Component {
         this.props.onPairsLoaded(pairs)
       })
     }
+  }
+
+  componentWillUnmount = () => {    
+    document.removeEventListener('click', this.handleClickOutside)
   }
 
   componentDidUpdate = (prevProps) => {
@@ -125,6 +130,14 @@ class NavBar extends Component {
 
   signOut() {
     this.props.disconnect() 
+  }
+
+  closeSlippageDropdown = () => {
+    this.setState({showSlippageDropdown: false})
+  }
+
+  toggleSlippageDropdown = () => {
+    this.setState({showSlippageDropdown: !this.state.showSlippageDropdown})
   }
  
   render() {
@@ -228,12 +241,14 @@ class NavBar extends Component {
               <ul className="navbar-nav ml-auto">
                 {username && <>
                   <li className="nav-item dropdown slippage-config"> 
-                    <div className="dropdown-toggle clickable" target="_self" id="slippageConfig" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <div className="dropdown-toggle clickable" target="_self" id="slippageConfig" role="button" aria-haspopup="true" aria-expanded="false" onClick={this.toggleSlippageDropdown}>
                       <FontAwesomeIcon icon={faCog}></FontAwesomeIcon>
                     </div>
-                    <div className="dropdown-menu" aria-labelledby="slippageConfig">
+                    <div className={"dropdown-menu " + (this.state.showSlippageDropdown ? "show" : "")} aria-labelledby="slippageConfig">
+                      <FontAwesomeIcon className="close-slippage-dropdown" icon={faTimes} onClick={this.closeSlippageDropdown}></FontAwesomeIcon>
                       <SlippageConfig {...this.props}></SlippageConfig>
                     </div>
+                    {this.state.showSlippageDropdown && <div className="slippage-backdrop" onClick={this.closeSlippageDropdown}></div>}
                   </li>
                   <li className="nav-item dropdown metamask">                  
                     <div className="dropdown-toggle clickable" target="_self" id="navbarProfile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

@@ -48,7 +48,7 @@ class SlippageConfig extends Component {
     }
     else {
       this.setState({customValue:value, customValueError: ""}, () => {
-          this.props.setSlippage(value/100.0)
+        this.props.setSlippage(value/100.0)
       })
     }
   }
