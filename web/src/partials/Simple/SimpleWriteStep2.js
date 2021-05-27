@@ -249,14 +249,25 @@ class SimpleWriteStep2 extends Component {
         subtitle: subtitle, 
         steps: steps, 
         img: img, 
-        isDone: (stepNumber === 6 || stepNumber === -1), 
+        isDone: (stepNumber === 6 || stepNumber === -1),
+        success: (stepNumber === 6), 
         doneLabel:"OK", 
         onDoneButtonClick: (this.onHideStepsModal)}
     })
   } 
 
   onHideStepsModal = () => {
-    this.setState({ stepsModalInfo: null }, this.startQuoteRefresh)
+    let redirect = (this.props.selectedPair && this.state.stepsModalInfo && this.state.stepsModalInfo.success)
+    this.setState({ stepsModalInfo: null, collaterizeValue: "" }, () => {
+      this.refresh()
+      if (redirect) {
+        this.props.refreshWrite()
+        var self = this
+        setTimeout(() => {
+          self.props.history.push('/manage/'+this.props.selectedPair.id)
+        }, 300)
+      }
+    })
   }
 
   isInsufficientFunds = () => {
