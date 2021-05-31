@@ -191,6 +191,50 @@ li.dropdown {
   color: white !important;  
 }
 
+.nav-item.dropdown.slippage-config {
+  align-items: center;
+  justify-content: center;
+  display: flex;
+}
+
+.nav-item.dropdown.slippage-config .dropdown-menu {
+  width: 350px;
+  padding: 15px;
+}
+
+.nav-item.dropdown.slippage-config .outline-btn,
+.nav-item.dropdown.slippage-config .action-btn {
+  font-size: 14px;
+}
+
+.nav-item.dropdown.slippage-config .steps-modal-title {
+  margin-top: 0px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.nav-item.dropdown.slippage-config .slippage-options .input-field {
+  width: 72px;
+}
+
+.close-slippage-dropdown {
+  position: absolute;
+  right: 15px;
+  color: rgb(196,196,196);
+  text-shadow: none;
+  font-size: 14px;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.slippage-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+}
+
 .dropdown-item:hover, .dropdown-item:focus {
   background-color: rgba(152,151,151, 0) !important;
   color: #dedede !important;  

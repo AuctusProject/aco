@@ -1,0 +1,254 @@
+.buy-sell-box {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    max-width: 100%;
+    width: 100%;
+    min-width: 250px;
+    width: 250px;
+}
+
+.buy-sell-tabs {
+    -webkit-box-align: center;
+    align-items: center;
+    display: flex;
+    -webkit-box-pack: justify;
+    justify-content: space-between;
+    padding: 0px 30px 20px;
+}
+
+.buy-sell-tabs :first-child {    
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+.buy-sell-tabs :last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.buy-tab,
+.sell-tab {
+    -webkit-box-align: center;
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    height: 30px;
+    -webkit-box-pack: center;
+    justify-content: center;
+    width: 50%;
+    font-size: 14px;
+    font-weight: 500;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.5px;
+    text-align: center;
+    color: rgb(102, 102, 102);
+    background-color: rgb(46, 46, 46);
+}
+
+.buy-tab.active {
+    cursor: default;
+    background-color: #58fb0c;
+    color: black;
+}
+
+.sell-tab.active {
+    cursor: default;
+    color: black;
+    background-color: #FF0000;
+}
+
+.limit-market-tabs {
+    -webkit-box-align: center;
+    align-items: center;
+    color: rgb(185, 185, 185);
+    display: flex;
+    font-size: 14px;
+    font-weight: 500;
+    -webkit-box-pack: justify;
+    justify-content: space-between;
+    line-height: 1.2;
+    font-size: 14px;
+    height: 45px;
+    margin-bottom: -2px;
+}
+
+.limit-market-tab {
+    color: rgb(185, 185, 185);
+    cursor: pointer;
+    user-select: none;
+    width: 50%;
+    height: 100%;
+    display: flex;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    justify-content: center;
+    margin-top: -2px;
+    border: 1px solid transparent;
+    background: transparent;
+}
+
+.limit-market-tab.active {
+    color: rgb(255, 255, 255);
+    cursor: default; 
+    border-width: 1px;
+    border-style: solid;
+    border-image: initial;
+    border-color: rgb(70, 70, 70);
+    border-bottom-color: black;
+    border-top-right-radius: 12px;
+    border-top-left-radius: 12px;
+}
+
+.place-order-tab {    
+    display: flex;
+    flex-direction: column;
+    padding: 20px 16px;
+    border: 1px solid #464646;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-top-right-radius: 12px;
+    border-top-left-radius: 12px;
+}
+
+.place-order-tab.left-tab {
+    border-top-left-radius: 0;
+}
+
+.place-order-tab.right-tab {
+    border-top-right-radius: 0;
+}
+
+.place-order-balance-row {
+    display: flex;
+    letter-spacing: 0.6px;
+    text-align: left;
+    color: rgb(230, 230, 230);
+    font-size: 12px;
+    margin-bottom: 12px;
+    -webkit-box-align: center;
+    align-items: center;
+}
+
+.place-order-balance-row svg {
+    height: 14px;
+    color: rgb(230, 230, 230);
+    margin-right: 6px;
+}
+
+.place-order-balance-row span {
+    margin-left: 6px;
+    color: white;
+}
+
+.place-order-balance-row span div {
+    color: white;
+    cursor: pointer;
+    text-decoration: underline;
+    display: inline;
+}
+
+.place-order-label-input-row {
+    display: flex;
+    -webkit-box-align: center;
+    align-items: center;
+    -webkit-box-pack: justify;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.place-order-label-item {    
+    align-items: flex-end;
+    display: flex;
+    -webkit-box-pack: justify;
+    justify-content: space-between;
+    flex-shrink: 0;
+    margin-right: 16px;    
+    font-size: 12px;
+    line-height: 1.17;
+    letter-spacing: 0.6px;
+    text-align: left;
+    color: rgb(230, 230, 230);
+    min-width: 55px;
+}
+
+.order-input-wrapper {    
+    height: 26px;
+    position: relative;
+    width: 150px;
+    max-width: 150px;
+}
+
+.order-input {
+    background-color: transparent;
+    border: 1px solid rgb(70, 70, 70);
+    color: rgb(255, 255, 255);
+    font-feature-settings: "tnum";
+    height: 100%;
+    padding-left: 8px;
+    padding-right: 40px;
+    position: absolute;
+    width: 100%;
+    z-index: 1;
+    font-size: 12px;
+    font-weight: 300;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.3px;
+}
+
+.order-input-right-label {
+    display: flex;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 12;
+    color: rgb(255, 255, 255);
+    font-size: 12px;
+    font-weight: normal;
+    text-align: right;
+}
+
+.place-order-separator {    
+    border-top: 1px solid rgb(115, 115, 115);
+    padding-top: 12px;
+}
+
+.fee-cost-row {
+    -webkit-box-align: center;
+    align-items: center;
+    display: flex;
+    -webkit-box-pack: justify;
+    justify-content: space-between;
+    padding-bottom: 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.fee-cost-label {
+    font-size: 12px;
+    font-weight: normal;
+    font-stretch: normal;
+    font-style: normal;
+    letter-spacing: 0.6px;
+    color: rgb(255, 255, 255);
+    margin: 0px;
+}
+
+.fee-cost-value {
+    color: rgb(255, 255, 255);
+    flex-shrink: 0;
+    font-feature-settings: "tnum";
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.buy-sell-box .action-btn {
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 15px;
+    margin-top: 12px;
+}

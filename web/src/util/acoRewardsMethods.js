@@ -217,11 +217,6 @@ export const claimRewards = (from, pids) => {
     return sendTransaction(null, null, from, acoRewardAddress, null, data, null)
 }
 
-const poolLength = () => {
-    const acoRewardsContract = getAcoRewardsContract()
-    return acoRewardsContract.methods.poolLength().call()
-}
-
 const poolInfo = (pid) => {
     const acoRewardsContract = getAcoRewardsContract()
     return acoRewardsContract.methods.poolInfo(pid).call()

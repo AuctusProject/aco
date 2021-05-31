@@ -1,0 +1,106 @@
+.orders-box {
+    -webkit-box-flex: 0;
+    flex-grow: 0;
+    flex-shrink: 1;
+    max-width: 100%;
+    min-width: 0px;   
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;    
+    border: 1px solid #464646;
+    border-radius: 12px;
+}
+
+.orders-table-wrapper {
+    margin: 0px;
+    min-height: 140px;
+    overflow-x: auto;    
+    position: relative;
+    padding-top: 10px;
+    padding-bottom: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.orders-table {
+    border-bottom: none;
+    border-top: none;
+    margin-left: 0px;
+    margin-right: 0px;
+    min-width: fit-content;
+    width: 100%;
+}
+
+.orders-table-header-item {
+    border-bottom: 1px solid rgb(115, 115, 115);
+    border-top: none;
+    color: rgb(185, 185, 185);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    padding: 0px 16px 5px 0px;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.orders-table td:first-child,
+.orders-table th:first-child {
+    padding-left: 8px;
+}
+
+.orders-table td:last-child,
+.orders-table th:last-child {
+    padding-right: 8px;
+}
+
+.orders-table-text-col {
+    text-align: left;
+}
+
+.orders-table-number-col {
+    text-align: right;
+}
+
+
+td.orders-table-number-col,
+td.orders-table-text-col {
+    font-size: 13px;
+    border-bottom: none;
+    color: rgb(255, 255, 255);
+    padding: 5px 16px 5px 0px;
+}
+
+td.orders-table-number-col {
+    font-feature-settings: "tnum";
+}
+
+.orders-table .order-type-buy {
+    color: #58fb0c;
+}
+
+.orders-table .order-type-buy::before {
+    content: "";
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-right: 8px;
+    display: inline-block;
+    background-color: #58fb0c;
+}
+
+.orders-table .order-type-sell {
+    color: #ff0000;
+}
+
+.orders-table .order-type-sell::before {
+    content: "";
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    margin-right: 8px;
+    display: inline-block;
+    background-color: #ff0000;
+}

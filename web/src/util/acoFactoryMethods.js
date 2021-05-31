@@ -164,8 +164,8 @@ export const listOptions = (pair, optionType = null, removeExpired = false, only
             var options = []
             for (let i = 0; i < availableOptions.length; i++) {
                 const option = availableOptions[i];
-                if ((!pair || (option.underlyingInfo.symbol === pair.underlyingSymbol && 
-                    option.strikeAssetInfo.symbol === pair.strikeAssetSymbol)) && 
+                if ((!pair || (option.underlying.toLowerCase() === pair.underlying.toLowerCase() && 
+                    option.strikeAsset.toLowerCase() === pair.strikeAsset.toLowerCase())) && 
                     (!optionType || (optionType === 1 ? option.isCall : !option.isCall)) && 
                     (!removeExpired || !isExpired(option.expiryTime))) {
                     options.push(option)

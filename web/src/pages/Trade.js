@@ -3,17 +3,19 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
 import TradeMenu from '../partials/TradeMenu'
-import TradeOptionsList, { TradeOptionsListLayoutMode } from '../partials/TradeOptionsList'
-import { getMarketDetails, getBalanceOfAsset } from '../util/constants'
+import TradeOptionsList from '../partials/TradeOptionsList'
+import { getBalanceOfAsset } from '../util/constants'
 import { balanceOf } from '../util/acoTokenMethods'
 import { getAvailableOptionsByPair } from '../util/dataController'
+import AdvancedTrade from '../partials/Advanced/AdvancedTrade'
+import { getOrderbook } from '../util/acoSwapUtil'
 
 export const ALL_OPTIONS_KEY = "all"
 
 class Trade extends Component {
   constructor(props) {
     super(props)
-    this.state = {options:null, balances:{}, selectedExpiryTime: ALL_OPTIONS_KEY}
+    this.state = {options:null, balances:{}, selectedExpiryTime: ALL_OPTIONS_KEY, orderBooks: {}}
   }
   
   componentDidMount = () => {
@@ -65,7 +67,21 @@ class Trade extends Component {
   }
 
   loadOrderBook = () => {
-    this.props.loadOrderbookFromOptions(this.state.options, true)    
+    var options = this.state.options
+    for (let i = 0; i < options.length; i++) {
+      let option = options[i]
+      this.loadOrderbookFromOption(option)
+    }
+  }
+
+  loadOrderbookFromOption = (option) => {
+    if (option) {
+      getOrderbook(option).then(orderBook => {
+        var orderBooks = this.state.orderBooks
+        orderBooks[option.acoToken] = orderBook
+        this.setState({ orderBooks: orderBooks })
+      })
+    }
   }
 
   loadBalances = () => {
@@ -95,18 +111,10 @@ class Trade extends Component {
     return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
   }
 
-  componentWillUnmount = () => {
-    if (this.props.selectedPair && this.canLoad() && window.TradeApp) {
-      window.TradeApp.unmount()
-    }
-  }
-
   onSelectOption = (option) => {
     this.setState({selectedOption: option, selectedExpiryTime: option ? null : ALL_OPTIONS_KEY}, () => {
       if(option != null) {
         this.props.history.push('/advanced/trade/'+this.props.selectedPair.id+"/"+option.acoToken)
-        window.TradeApp.unmount()
-        window.TradeApp.mount(getMarketDetails(option))
       }
       else {
         this.props.history.push('/advanced/trade/'+this.props.selectedPair.id)
@@ -124,8 +132,8 @@ class Trade extends Component {
       {this.props.selectedPair && this.canLoad() && 
       <>
         <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
-        {!this.state.selectedOption && <TradeOptionsList {...this.props} mode={TradeOptionsListLayoutMode.Trade} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.props.orderBooks}></TradeOptionsList>}
-        <div id="trade-app" className={!this.state.selectedOption ? "d-none" : ""}></div>
+        {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
+        {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption} loadBalances={this.loadBalances}></AdvancedTrade>}
       </>}
     </div>
     

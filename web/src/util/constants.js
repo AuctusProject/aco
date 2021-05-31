@@ -8,8 +8,8 @@ const negative1 = new Web3Utils.BN(-1);
 export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
 export const acoPoolFactoryAddress = process.env.REACT_APP_ACO_POOL_FACTORY_ADDRESS; 
 export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
-export const acoWriteAddress = process.env.REACT_APP_ACO_WRITE_ADDRESS; 
-export const erc20Proxy = process.env.REACT_APP_ERC20_PROXY; 
+export const acoWriterAddress = process.env.REACT_APP_ACO_WRITER_ADDRESS; 
+export const zrxExchangeAddress = process.env.REACT_APP_ZRX_EXCHANGE_ADDRESS.toLowerCase(); 
 export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS; 
 export const allAcoOtcAddresses = process.env.REACT_APP_ACO_OTC_ADDRESS.split(',');
 export const acoOtcAddress = allAcoOtcAddresses[allAcoOtcAddresses.length-1];
@@ -17,10 +17,12 @@ export const acoBuyerAddress = process.env.REACT_APP_ACO_BUYER_ADDRESS;
 export const acoDistributorAddress = process.env.REACT_APP_ACO_DISTRIBUTOR_ADDRESS;
 export const acoRewardAddress = process.env.REACT_APP_ACO_REWARD_ADDRESS;
 export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
+export const acoAssetConverterHelperAddress = process.env.REACT_APP_ASSET_CONVERTER_HELPER_ADDRESS;
 export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
 export const apiUrl = process.env.REACT_APP_ACO_API_URL;
 export const subgraphUrl = process.env.REACT_APP_SUBGRAPH_API_URL;
 export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
+export const zrxWSSUrl = process.env.REACT_APP_ZRX_WSS_URL;
 export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL + "address/";
 export const etherscanTxUrl = process.env.REACT_APP_ETHERSCAN_URL + "tx/";
 export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
@@ -35,7 +37,7 @@ export const maxAllowance = "115792089237316195423570985008687907853269984665640
 export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
 export const wssInfuraAddress = process.env.REACT_APP_INFURA_WSS;
-export const swapQuoteBuySize = "1000";
+export const swapQuoteSellSize = "0.001";
 export const PERCENTAGE_PRECISION = 100000;
 export const ethAddress = "0x0000000000000000000000000000000000000000"; 
 export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS.toLowerCase();
@@ -46,9 +48,9 @@ export const gwei = 1000000000;
 export const ONE_SECOND = 1000;
 export const ONE_MINUTE = ONE_SECOND * 60;
 export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60;
-export const DEFAULT_SLIPPAGE = 0.05;
-export const DEFAULT_POOL_SLIPPAGE = 0.01;
+export const DEFAULT_SLIPPAGE = 0.03;
 export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
+export const ZRX_RPS = 3;
 export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
 export const acoAirdropAmounts = JSON.parse(process.env.REACT_APP_ACO_AIRDROP_AMOUNTS);
 export const airdropClaimStart = 1617386400;
@@ -93,12 +95,19 @@ export const OTC_EXPIRATION_OPTIONS = [{
 {
     value: 5,
     name: "Month"
-}]
+}] 
 
 export const PositionsLayoutMode = {
     Basic: 0,
     Advanced: 1
-}  
+}
+
+export const AdvancedOrderStepsType = {
+    MarketApprove: 0,
+    BuySellMarket: 1,
+    LimitApprove: 2,
+    BuySellLimit: 3
+}
 
 export function getOptionName(isCall) {
     return isCall ? OPTION_TYPES[1].name : OPTION_TYPES[2].name
@@ -107,6 +116,9 @@ export function getOptionName(isCall) {
 export function getNetworkName(chainId) {
     if (chainId === "4") {
         return "rinkeby"
+    }
+    else if (chainId === "3") {
+        return "ropsten"
     }
     else if (chainId === "42") {
         return "kovan"
@@ -315,7 +327,7 @@ export function sortByFn(array, propertyFn) {
 export const getTimeToExpiry = (expiryTimeInSeconds) => {
     let timeInSeconds = getSecondsToExpiry(expiryTimeInSeconds)
     if (timeInSeconds < 0) {
-        return {days: 0, hours: 0, minutes: 0}
+        return {days: 0, hours: 0, minutes: 0, seconds: 0}
     }
     let seconds = timeInSeconds;
     const days = Math.floor(seconds / (3600 * 24))
@@ -323,39 +335,18 @@ export const getTimeToExpiry = (expiryTimeInSeconds) => {
     const hours = Math.floor(seconds / 3600)
     seconds -= hours * 3600
     const minutes = Math.floor(seconds / 60)
+    seconds -= minutes * 60
+    seconds = Math.floor(seconds)
     return {
         days,
         hours,
-        minutes
+        minutes,
+        seconds
     }
 }
 
 export const getSecondsToExpiry = (expiryTimeInSeconds) => {
     return expiryTimeInSeconds - (new Date().getTime()/ONE_SECOND)
-}
-
-
-export const getMarketDetails = (selectedOption) => {
-    return {
-        baseToken: {
-            "decimals": parseInt(selectedOption.underlyingInfo.decimals),
-            "symbol": selectedOption.acoTokenInfo.symbol,
-            "name": selectedOption.acoTokenInfo.symbol,
-            "icon": null,
-            "primaryColor": null,
-            "expiryTime": selectedOption.expiryTime,
-            "addresses": { [CHAIN_ID]: selectedOption.acoToken },
-        },
-        quoteToken: {
-            "decimals": parseInt(selectedOption.strikeAssetInfo.decimals),
-            "symbol": selectedOption.strikeAssetInfo.symbol,
-            "name": selectedOption.strikeAssetInfo.symbol,
-            "icon": null,
-            "primaryColor": null,
-            "expiryTime": null,
-            "addresses": { [CHAIN_ID]: selectedOption.strikeAsset },
-        }
-    }
 }
 
 export const getPairIdFromRoute = (location) => {
@@ -466,6 +457,20 @@ export const getLocalOrders = () => {
     }
     else {
         return JSON.parse(localOrders)
+    }
+}
+
+export const setSlippageConfig = (slippageConfig) => {
+    window.localStorage.setItem('SLIPPAGE_CONFIG', slippageConfig.toString())
+}
+
+export const getSlippageConfig = () => {
+    var slippageConfig = window.localStorage.getItem('SLIPPAGE_CONFIG')
+    if (!slippageConfig) {
+        return DEFAULT_SLIPPAGE
+    }
+    else {
+        return parseFloat(slippageConfig)
     }
 }
 

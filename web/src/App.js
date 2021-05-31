@@ -14,7 +14,7 @@ import Writer from './pages/Writer'
 import Exercise from './pages/Exercise'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getNetworkName, CHAIN_ID, getMarketDetails, getCurrentRoute, getPairIdFromRoute, isDarkMode } from './util/constants'
+import { getNetworkName, CHAIN_ID, getCurrentRoute, getPairIdFromRoute, isDarkMode, getSlippageConfig, setSlippageConfig } from './util/constants'
 import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
@@ -36,16 +36,20 @@ class App extends Component {
       orderBooks:{},
       connecting: null,
       disconnecting: null,
-      refreshWeb3: null
+      refreshWeb3: null,
+      slippage: getSlippageConfig()
     }
     this.loadLayoutMode()
   }
 
   componentDidMount = () => {
     getGasPrice()
-    window.TradeApp.setNetwork(parseInt(CHAIN_ID))
   }
-  
+
+  setSlippage = (slippage) => {
+    setSlippageConfig(slippage)
+    this.setState({slippage: slippage})
+  }  
 
   showSignInModal = (redirectUrl, context) => {
     if (context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
@@ -106,32 +110,6 @@ class App extends Component {
     this.setState({pairs: pairs})
   }
 
-  loadOrderbookFromOptions = (options, includeWeb3) => {
-    for (let i = 0; i < options.length; i++) {
-      let option = options[i]
-      this.loadOrderbookFromOption(option, includeWeb3)
-    }
-  }
-
-  loadOrderbookFromOption = (option, includeWeb3) => {
-    if (option) {
-      var marketDetails = getMarketDetails(option)
-      var baseToken = marketDetails.baseToken
-      var quoteToken = marketDetails.quoteToken
-      baseToken.address = baseToken.addresses[CHAIN_ID]
-      quoteToken.address = quoteToken.addresses[CHAIN_ID]
-
-      var orderbookFunction = includeWeb3 ? window.TradeApp.getAllOrdersAsUIOrders : 
-      window.TradeApp.getAllOrdersAsUIOrdersWithoutOrdersInfo;
-
-      orderbookFunction(baseToken, quoteToken).then(orderBook => {
-        var orderBooks = this.state.orderBooks
-        orderBooks[option.acoToken] = orderBook
-        this.setState({ orderBooks: orderBooks })
-      })
-    }
-  }
-
   setLayoutMode = (isDarkMode) => {
     if (isDarkMode) {
       if (!document.body.classList.contains("dark-mode")) {
@@ -173,7 +151,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair}/>}
+            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair} slippage={this.state.slippage} setSlippage={this.setSlippage}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -209,8 +187,7 @@ class App extends Component {
                     darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
-                    orderBooks={this.state.orderBooks}
-                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 
@@ -220,6 +197,7 @@ class App extends Component {
                     darkMode={darkMode}
                     signIn={this.showSignInModal}
                     accountToggle={this.state.accountToggle}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 
@@ -232,9 +210,8 @@ class App extends Component {
                     onPairsLoaded={this.onPairsLoaded}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
-                    orderBooks={this.state.orderBooks}
                     toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
-                    loadOrderbookFromOptions={this.loadOrderbookFromOptions}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 
@@ -244,6 +221,7 @@ class App extends Component {
                     darkMode={darkMode}
                     signIn={this.showSignInModal}
                     accountToggle={this.state.accountToggle}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 

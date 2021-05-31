@@ -2,10 +2,10 @@ import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Method
 import { acoVaultABI } from './acoVaultABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { getIsCall } from './acoTokenMethods';
-import { getBestQuote } from './acoQuote';
 import BigNumber from 'bignumber.js';
 import { fromDecimals } from './constants';
 import { getOption } from './dataController';
+import { getQuote } from './acoSwapUtil';
 
 function getAcoVaultContract(acoVaultAddress) {
     const _web3 = getWeb3()
@@ -102,10 +102,10 @@ export const getAccountPosition = (acoVaultAddress, account, shares, decimals) =
                         accountPosition.acoTokensInfos[acoTokenAddress] = result
                         accountPosition.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
                         try {
-                            getBestQuote(result, accountSituation[3][i], true)
+                            getQuote(true, result, accountSituation[3][i])
                             .then(quote => {
-                                accountPosition.acoTokensInfos[acoTokenAddress].quote = quote.isPoolQuote ? quote : quote.quote
-                                accountPosition.acoTokensInfos[acoTokenAddress].value = fromDecimals(new BigNumber(accountPosition.acoTokensInfos[acoTokenAddress].quote.price.toString()).times(accountPosition.acoTokensInfos[acoTokenAddress].balance), accountPosition.acoTokensInfos[acoTokenAddress].acoTokenInfo.decimals)
+                                accountPosition.acoTokensInfos[acoTokenAddress].quote = quote
+                                accountPosition.acoTokensInfos[acoTokenAddress].value = fromDecimals(accountPosition.acoTokensInfos[acoTokenAddress].quote.price.times(accountPosition.acoTokensInfos[acoTokenAddress].balance), accountPosition.acoTokensInfos[acoTokenAddress].acoTokenInfo.decimals)
                                 accountPosition.value = accountPosition.value.plus(new BigNumber(accountPosition.acoTokensInfos[acoTokenAddress].value))
                                 resolve()
                             })

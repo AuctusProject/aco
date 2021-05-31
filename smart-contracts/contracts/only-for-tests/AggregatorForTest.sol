@@ -76,6 +76,10 @@ contract AggregatorForTest is AggregatorV2V3Interface {
     updateAnswer(_initialAnswer);
   }
 
+  function aggregator() external view returns(address) {
+    return address(this);
+  }
+
   function updateAnswer(
     int256 _answer
   ) public {
@@ -85,6 +89,7 @@ contract AggregatorForTest is AggregatorV2V3Interface {
     getAnswer[latestRound] = _answer;
     getTimestamp[latestRound] = block.timestamp;
     getStartedAt[latestRound] = block.timestamp;
+    emit AnswerUpdated(_answer, latestRound, block.timestamp);
   }
 
   function updateRoundData(
@@ -93,12 +98,16 @@ contract AggregatorForTest is AggregatorV2V3Interface {
     uint256 _timestamp,
     uint256 _startedAt
   ) public {
-    latestRound = _roundId;
-    latestAnswer = _answer;
-    latestTimestamp = _timestamp;
-    getAnswer[latestRound] = _answer;
-    getTimestamp[latestRound] = _timestamp;
-    getStartedAt[latestRound] = _startedAt;
+    uint256 id = uint256(_roundId);  
+    if (id >= latestRound) {
+      latestRound = id;
+      latestAnswer = _answer;
+      latestTimestamp = _timestamp;
+    }
+    getAnswer[id] = _answer;
+    getTimestamp[id] = _timestamp;
+    getStartedAt[id] = _startedAt;
+    emit AnswerUpdated(_answer, id, _timestamp);
   }
 
   function getRoundData(uint80 _roundId)

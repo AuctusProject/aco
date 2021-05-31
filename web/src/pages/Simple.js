@@ -18,7 +18,9 @@ class Simple extends Component {
     this.state = { 
       pairs: null, 
       toggleOptionsLoaded: false, 
-      showAdvancedTootlip: false 
+      showAdvancedTootlip: false,
+      refreshExercise: false, 
+      refreshWrite: false
     }
   }
   
@@ -143,16 +145,16 @@ class Simple extends Component {
           </ul>
           <div className="tab-content" id="simpleTabsContent">
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("buy") > 0 ? " show active" : "")}>
-              <SimpleBuyTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded}/>
+              <SimpleBuyTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded} refreshExercise={() => this.setState({refreshExercise:true})}/>
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("write") > 0 ? " show active" : "")}>
-              <SimpleWriteTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded}/>
+              <SimpleWriteTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded} refreshWrite={() => this.setState({refreshWrite:true})}/>
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("pools") > 0 ? " show active" : "")}>
               <Pools {...this.props} isConnected={this.isConnected()} />
             </div>
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("manage") > 0 ? " show active" : "")}>
-              <SimpleManageTab {...this.props} isConnected={this.isConnected()}/>
+              <SimpleManageTab {...this.props} isConnected={this.isConnected()} exerciseUpdated={() => this.setState({refreshExercise:false})} refreshExercise={this.state.refreshExercise} writeUpdated={() => this.setState({refreshWrite:false})} refreshWrite={this.state.refreshWrite}/>
             </div>
           </div>
         </div>

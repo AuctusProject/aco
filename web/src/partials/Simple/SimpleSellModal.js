@@ -4,8 +4,8 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import { getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
-import { toDecimals, formatWithPrecision, maxAllowance, erc20Proxy } from '../../util/constants'
-import { checkTransactionIsMined, getNextNonce, sendTransactionWithNonce } from '../../util/web3Methods'
+import { toDecimals, formatWithPrecision, maxAllowance, zrxExchangeAddress, fromDecimals } from '../../util/constants'
+import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
 import DecimalInput from '../Util/DecimalInput'
@@ -14,9 +14,9 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { getSwapQuote, isInsufficientLiquidity } from '../../util/zrxApi'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { getQuote, sell } from '../../util/acoSwapUtil'
 
 class SimpleSellModal extends Component {
   constructor(props) {
@@ -38,7 +38,7 @@ class SimpleSellModal extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.position.option.acoToken, erc20Proxy, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.position.option.acoToken, zrxExchangeAddress, nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -73,7 +73,7 @@ class SimpleSellModal extends Component {
 
   sendSellTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
-    sendTransactionWithNonce(this.state.swapQuote.gasPrice, null, this.context.web3.selectedAccount, this.state.swapQuote.to, this.state.swapQuote.value, this.state.swapQuote.data, null, nonce)
+    sell(this.context.web3.selectedAccount, nonce, this.state.swapQuote.zrxData)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber, needApproval)
@@ -158,7 +158,7 @@ class SimpleSellModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, erc20Proxy).then(result => {
+        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, zrxExchangeAddress).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(this.getOptionAmountToDecimals()))
         })
@@ -185,7 +185,7 @@ class SimpleSellModal extends Component {
   
   getAcoOptionPrice = () => {    
     if (this.state.swapQuote) {
-      return parseFloat(this.state.swapQuote.price)
+      return parseFloat(fromDecimals(this.state.swapQuote.price.toString(10), this.props.position.option.strikeAssetInfo.decimals, this.props.position.option.strikeAssetInfo.decimals, this.props.position.option.strikeAssetInfo.decimals))
     }
     return null
   }
@@ -212,10 +212,10 @@ class SimpleSellModal extends Component {
     var amount = this.state.optionsAmount
     this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
       if (selectedOption && amount && amount > 0) {
-        getSwapQuote(selectedOption.strikeAsset, selectedOption.acoToken, toDecimals(amount, selectedOption.acoTokenInfo.decimals).toString(), false).then(swapQuote => {
+        getQuote(false, selectedOption, amount).then(swapQuote => {
           this.setState({swapQuote: swapQuote, errorMessage: null, loadingSwap: false})
         }).catch((err) => {
-          if (isInsufficientLiquidity(err)) {
+          if (err.message === "Insufficient liquidity") {
             this.setState({swapQuote: null, errorMessage: "Insufficient liquidity", loadingSwap: false})
           }
           else {

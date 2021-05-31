@@ -5,13 +5,14 @@ import PropTypes from 'prop-types'
 import StepIndicator from '../Write/StepIndicator'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getSecondsToExpiry, formatPercentage, formatWithPrecision, swapQuoteBuySize } from '../../util/constants'
+import { groupBy, formatDate, ONE_YEAR_TOTAL_MINUTES, fromDecimals, getSecondsToExpiry, formatPercentage, formatWithPrecision, toDecimals, swapQuoteSellSize } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
-import { getSwapQuote } from '../../util/zrxApi'
 import Loading from '../Util/Loading'
 import SimpleWriteStep2 from './SimpleWriteStep2'
 import { ASSETS_INFO } from '../../util/assets'
 import ReactTooltip from 'react-tooltip'
+import BigNumber from 'bignumber.js'
+import { getQuote } from '../../util/acoSwapUtil'
 
 class SimpleWriteTab extends Component {
   constructor(props) {
@@ -40,8 +41,7 @@ class SimpleWriteTab extends Component {
       for (let index = 0; index < this.props.options.length; index++) {        
         let option = this.props.options[index];
         swapQuotesPromises.push(new Promise((resolve) => {
-            getSwapQuote(option.strikeAsset, option.acoToken, swapQuoteBuySize, true).then(swapQuote => {              
-              swapQuote.price = 1/swapQuote.price
+            getQuote(false, option, swapQuoteSellSize).then(swapQuote => {   
               swapQuotes[option.acoToken] = swapQuote
               resolve()
           }).catch((err) => {
@@ -74,7 +74,7 @@ class SimpleWriteTab extends Component {
   }
 
   setSwapQuoteReturns = (option, swapQuote) => {
-    if (swapQuote) {
+    if (swapQuote && swapQuote.price) {
       swapQuote.returnIfFlat = this.getReturnIfFlat(option, swapQuote.price)
       swapQuote.annualizedReturn = this.getAnnualizedReturn(option, swapQuote.returnIfFlat)
     }
@@ -94,8 +94,8 @@ class SimpleWriteTab extends Component {
   }
 
   getOptionPremium = (option) => {
-    if (option && this.state.swapQuotes[option.acoToken]) {
-      return formatWithPrecision(this.state.swapQuotes[option.acoToken].price) + " " + this.props.selectedPair.strikeAssetSymbol
+    if (option && this.state.swapQuotes[option.acoToken] && this.state.swapQuotes[option.acoToken].price) {
+      return formatWithPrecision(parseFloat(fromDecimals(this.state.swapQuotes[option.acoToken].price.toString(10), option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals))) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
   }
@@ -115,31 +115,32 @@ class SimpleWriteTab extends Component {
   }
 
   getReturnIfFlat = (option, bid) => {
-    var price = this.getPairCurrentPrice()
-    var strikePrice = this.getStrikePrice(option)
-    if (bid && price && strikePrice) {
-      if (option.isCall && bid > (price - strikePrice)) {
-        if (strikePrice > price) {
-          return bid / (price - bid)
+    var currentPrice = this.getPairCurrentPrice()
+    if (currentPrice) {
+      var price = new BigNumber(toDecimals(currentPrice, option.strikeAssetInfo.decimals))
+      var strikePrice = new BigNumber(option.strikePrice)
+      var value = null
+      var oneStrike = new BigNumber(toDecimals("1", option.strikeAssetInfo.decimals))
+      if (bid && price && strikePrice) {
+        if (option.isCall && bid.gt(price.minus(strikePrice))) {
+          if (strikePrice.gt(price)) {
+            value = bid.times(oneStrike).div(price.minus(bid))
+          }
+          else {
+            value = bid.minus(price.minus(strikePrice)).times(oneStrike).div(price.minus(bid))
+          }      
         }
-        else {
-          return (bid - (price - strikePrice)) / (price - bid)
-        }      
+        else if (!option.isCall && bid.gt(strikePrice.minus(price))) {
+          if (strikePrice.gt(price)) {
+            value = bid.minus(strikePrice.minus(price)).times(oneStrike).div(strikePrice)
+          }
+          else {
+            value = bid.times(oneStrike).div(strikePrice)
+          }      
+        } 
       }
-      else if (!option.isCall && bid > (strikePrice - price)) {
-        if (strikePrice > price) {
-          return (bid - (strikePrice - price)) / strikePrice
-        }
-        else {
-          return bid / strikePrice
-        }      
-      } 
     }
-    return null  
-  }
-
-  getStrikePrice = (option) => {
-    return parseFloat(fromDecimals(option.strikePrice, option.strikeAssetInfo.decimals))
+    return value ? parseFloat(fromDecimals(value.integerValue(BigNumber.ROUND_CEIL).toString(10), option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals, option.strikeAssetInfo.decimals)) : null 
   }
 
   getPairCurrentPrice = () => {
