@@ -4,6 +4,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import { fromDecimals } from '../../util/constants'
 import { mergeByPrice } from '../../util/Zrx/orderbookUtil'
+import BigNumber from 'bignumber.js'
 
 class Orderbook extends Component {
   constructor() {
@@ -49,7 +50,7 @@ class Orderbook extends Component {
   }
 
   getTotalBuyAmount = (order, allOrders) => {
-    var totalAmount = order.totalSize
+    var totalAmount = new BigNumber(0)
     for (let i = 0; i < allOrders.length; i++) {
       const element = allOrders[i];      
       if (element.price.gte(order.price)) {
@@ -60,7 +61,7 @@ class Orderbook extends Component {
   }
 
   getTotalSellAmount = (order, allOrders) => {
-    var totalAmount = order.totalSize
+    var totalAmount = new BigNumber(0)
     for (let i = allOrders.length-1; i >= 0; i--) {
       const element = allOrders[i];      
       if (element.price.lte(order.price)) {
