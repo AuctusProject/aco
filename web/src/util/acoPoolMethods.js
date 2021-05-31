@@ -5,7 +5,6 @@ import BigNumber from 'bignumber.js';
 import { toDecimals } from './constants';
 import { getCollateralAmountInDecimals } from './acoTokenMethods';
 import { getOption } from './dataController';
-import { getPrice } from './acoAssetConverterHelperMethods';
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
@@ -43,20 +42,12 @@ const getPoolQuote = (acoPoolAddress, option, amount) => {
 export const getSwapQuote = (option, acoAmount = null, acoPrice = null, slippage = null) => {
     return new Promise((resolve, reject) => {
         getAvailablePoolsForOption(option).then((acoPools) => {
-            if (!option.isCall) {
-                getPrice(option.underlying, option.strikeAsset).then((price) => {
-                    let formattedPrice = new BigNumber(price)
-                    internalSwapQuote(acoPools, option, acoAmount, acoPrice, formattedPrice, slippage).then((r) => resolve(r)).catch((err) => reject(err))
-                }).catch((err) => reject(err))
-            } else {
-                internalSwapQuote(acoPools, option, acoAmount, acoPrice, null, slippage).then((r) => resolve(r)).catch((err) => reject(err))
-            }
-            
+            internalSwapQuote(acoPools, option, acoAmount, acoPrice, slippage).then((r) => resolve(r)).catch((err) => reject(err))
         }).catch((err) => reject(err))
     })
 }
 
-const internalSwapQuote = (acoPools, option, acoAmount, acoPrice, currentPrice, slippage = null) => {
+const internalSwapQuote = (acoPools, option, acoAmount, acoPrice, slippage = null) => {
     return new Promise((resolve, reject) => {
         let swapPromises = []   
         let indexes = {}
@@ -67,8 +58,8 @@ const internalSwapQuote = (acoPools, option, acoAmount, acoPrice, currentPrice, 
                 liquidity = new BigNumber(acoPools[i].underlyingBalance)
             } else {
                 let collateralLiquidity = new BigNumber(acoPools[i].strikeAssetBalance)
-                if (collateralLiquidity.gt(0) && currentPrice && currentPrice.gt(0)) {
-                    liquidity = collateralLiquidity.times(oneAcoToken).div(currentPrice).integerValue(BigNumber.ROUND_FLOOR)
+                if (collateralLiquidity.gt(0)) {
+                    liquidity = collateralLiquidity.times(oneAcoToken).div(new BigNumber(option.strikePrice)).integerValue(BigNumber.ROUND_FLOOR)
                 } else {
                     liquidity = new BigNumber(0)
                 }
