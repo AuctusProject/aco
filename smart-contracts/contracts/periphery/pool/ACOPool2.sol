@@ -70,25 +70,31 @@ import '../../interfaces/ILendingPool.sol';
  *------------------------------------------------------------------------------------------*
  * E83  | _setAcoPermissionConfig             | Invalid minimum above tolerance percentage  *
  *------------------------------------------------------------------------------------------*
- * E84  | _setAcoPermissionConfig             | Invalid expiration range                    *
+ * E84  | _setAcoPermissionConfig             | Invalid minimum below tolerance amount      *
  *------------------------------------------------------------------------------------------*
- * E85  | _setBaseVolatility                  | Invalid base volatility                     *
+ * E85  | _setAcoPermissionConfig             | Invalid minimum above tolerance amount      *
  *------------------------------------------------------------------------------------------*
- * E86  | _setStrategy                        | Invalid strategy address                    *
+ * E86  | _setAcoPermissionConfig             | Invalid expiration range                    *
  *------------------------------------------------------------------------------------------*
- * E87  | _setPoolAdmin                       | Invalid pool admin address                  *
+ * E87  | _setBaseVolatility                  | Invalid base volatility                     *
  *------------------------------------------------------------------------------------------*
- * E88  | _setProtocolConfig                  | No price on the Oracle                      *
+ * E88  | _setStrategy                        | Invalid strategy address                    *
  *------------------------------------------------------------------------------------------*
- * E89  | _setProtocolConfig                  | Invalid fee destination address             *
+ * E89  | _setPoolAdmin                       | Invalid pool admin address                  *
  *------------------------------------------------------------------------------------------*
- * E90  | _setProtocolConfig                  | Invalid fee value                           *
+ * E90  | _setProtocolConfig                  | No price on the Oracle                      *
  *------------------------------------------------------------------------------------------*
- * E91  | _setProtocolConfig                  | Invalid penalty percentage                  *
+ * E91  | _setProtocolConfig                  | Invalid fee destination address             *
  *------------------------------------------------------------------------------------------*
- * E92  | _setProtocolConfig                  | Invalid underlying price adjust percentage  *
+ * E92  | _setProtocolConfig                  | Invalid fee value                           *
  *------------------------------------------------------------------------------------------*
- * E93  | _setProtocolConfig                  | Invalid maximum number of open ACOs allowed *
+ * E93  | _setProtocolConfig                  | Invalid penalty percentage                  *
+ *------------------------------------------------------------------------------------------*
+ * E94  | _setProtocolConfig                  | Invalid underlying price adjust percentage  *
+ *------------------------------------------------------------------------------------------*
+ * E95  | _setProtocolConfig                  | Invalid maximum number of open ACOs allowed *
+ *------------------------------------------------------------------------------------------*
+ * E97  | _privateValidation                  | The pool is public or it is a pool admin    *
  *------------------------------------------------------------------------------------------*
  * E98  | _onlyPoolAdmin                      | Only the pool admin can call the method     *
  *------------------------------------------------------------------------------------------*
@@ -164,40 +170,14 @@ contract ACOPool2 is Ownable, ERC20 {
 
     address internal lendingToken;
 	uint256 internal underlyingPrecision;
-
+	
 	modifier discountCHI {
         uint256 gasStart = gasleft();
         _;
         uint256 gasSpent = 21000 + gasStart - gasleft() + 16 * msg.data.length;
         chiToken.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41947);
     }
-
-    function init(IACOPool2.InitData calldata initData) external {
-		require(underlying == address(0) && strikeAsset == address(0), "E00");
-        require(initData.underlying != initData.strikeAsset, "E01");
-        
-        super.init();
-
-        acoFactory = IACOFactory(initData.acoFactory);
-        chiToken = IChiToken(initData.chiToken);
-        lendingPool = ILendingPool(initData.lendingPool);
-        underlying = initData.underlying;
-        strikeAsset = initData.strikeAsset;
-        isCall = initData.isCall;
-		
-		_setProtocolConfig(initData.protocolConfig);
-		_setPoolAdmin(initData.admin);
-		_setAcoPermissionConfig(initData.acoPermissionConfig);
-        _setBaseVolatility(initData.baseVolatility);
-        _setStrategy(initData.strategy);
-		
-		if (!initData.isCall) {
-		    lendingToken = ILendingPool(initData.lendingPool).getReserveData(initData.strikeAsset).aTokenAddress;
-            _setAuthorizedSpender(initData.strikeAsset, initData.lendingPool);
-        }
-		underlyingPrecision = 10 ** uint256(ACOAssetHelper._getAssetDecimals(initData.underlying));
-    }
-
+    
     receive() external payable {
     }
 
@@ -213,6 +193,44 @@ contract ACOPool2 is Ownable, ERC20 {
         return ACOAssetHelper._getAssetDecimals(collateral());
     }
 
+	function collateral() public view returns(address) {
+        return (isCall ? underlying : strikeAsset);
+    }
+}
+
+contract ACOPool2V2 is ACOPool2 {
+    
+	event SetAcoPermissionConfigV2(IACOPool2.PoolAcoPermissionConfigV2 oldConfig, IACOPool2.PoolAcoPermissionConfigV2 newConfig);
+	
+    bool public isPrivate;
+    IACOPool2.PoolAcoPermissionConfigV2 public acoPermissionConfigV2;
+
+    function init(IACOPool2.InitData calldata initData) external {
+		require(underlying == address(0) && strikeAsset == address(0), "E00");
+        require(initData.underlying != initData.strikeAsset, "E01");
+        
+        super.init();
+
+        acoFactory = IACOFactory(initData.acoFactory);
+        lendingPool = ILendingPool(initData.lendingPool);
+        underlying = initData.underlying;
+        strikeAsset = initData.strikeAsset;
+        isCall = initData.isCall;
+        isPrivate = initData.isPrivate;
+		
+		_setProtocolConfig(initData.protocolConfig);
+		_setPoolAdmin(initData.admin);
+		_setAcoPermissionConfig(initData.acoPermissionConfigV2);
+        _setBaseVolatility(initData.baseVolatility);
+        _setStrategy(initData.strategy);
+		
+		if (!initData.isCall) {
+		    lendingToken = ILendingPool(initData.lendingPool).getReserveData(initData.strikeAsset).aTokenAddress;
+            _setAuthorizedSpender(initData.strikeAsset, initData.lendingPool);
+        }
+		underlyingPrecision = 10 ** uint256(ACOAssetHelper._getAssetDecimals(initData.underlying));
+    }
+
     function numberOfAcoTokensNegotiated() external view returns(uint256) {
         return acoTokens.length;
     }
@@ -221,15 +239,11 @@ contract ACOPool2 is Ownable, ERC20 {
         return openAcos.length;
     }
 
-	function collateral() public view returns(address) {
-        return (isCall ? underlying : strikeAsset);
-    }
-
     function canSwap(address acoToken) external view returns(bool) {
         (address _underlying, address _strikeAsset, bool _isCall, uint256 _strikePrice, uint256 _expiryTime) = _getAcoData(acoToken);
 		if (_acoBasicDataIsValid(acoToken, _underlying, _strikeAsset, _isCall)) {
             uint256 price = _getPrice(_underlying, _strikeAsset, protocolConfig.assetConverter);
-            return ACOPoolLib.acoStrikeAndExpirationIsValid(_strikePrice, _expiryTime, price, acoPermissionConfig);
+            return ACOPoolLib.acoStrikeAndExpirationIsValid(_strikePrice, _expiryTime, price, acoPermissionConfigV2);
         }
         return false;
     }
@@ -314,7 +328,7 @@ contract ACOPool2 is Ownable, ERC20 {
         (underlyingBalance, strikeAssetBalance,, collateralLocked, collateralOnOpenPosition, collateralLockedRedeemable) = _getCollateralData(true);
     }
     
-    function setAcoPermissionConfig(IACOPool2.PoolAcoPermissionConfig calldata newConfig) external {
+    function setAcoPermissionConfig(IACOPool2.PoolAcoPermissionConfigV2 calldata newConfig) external {
         _onlyPoolAdmin();
         _setAcoPermissionConfig(newConfig);
     }
@@ -368,26 +382,8 @@ contract ACOPool2 is Ownable, ERC20 {
     ) external payable returns(uint256) {
         return _deposit(collateralAmount, minShares, to, isLendingToken);
     }
-
-	function depositWithGasToken(
-	    uint256 collateralAmount, 
-	    uint256 minShares, 
-	    address to, 
-	    bool isLendingToken
-    ) discountCHI external payable returns(uint256) {
-        return _deposit(collateralAmount, minShares, to, isLendingToken);
-    }
-
+    
     function withdrawWithLocked(uint256 shares, address account, bool withdrawLendingToken) external returns (
-		uint256 underlyingWithdrawn,
-		uint256 strikeAssetWithdrawn,
-		address[] memory acos,
-		uint256[] memory acosAmount
-	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn, acos, acosAmount) = _withdrawWithLocked(shares, account, withdrawLendingToken);
-    }
-
-	function withdrawWithLockedWithGasToken(uint256 shares, address account, bool withdrawLendingToken) discountCHI external returns (
 		uint256 underlyingWithdrawn,
 		uint256 strikeAssetWithdrawn,
 		address[] memory acos,
@@ -408,18 +404,6 @@ contract ACOPool2 is Ownable, ERC20 {
         (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(shares, minCollateral, account, withdrawLendingToken);
     }
 
-	function withdrawNoLockedWithGasToken(
-	    uint256 shares, 
-	    uint256 minCollateral, 
-	    address account, 
-	    bool withdrawLendingToken
-    ) discountCHI external returns (
-		uint256 underlyingWithdrawn,
-		uint256 strikeAssetWithdrawn
-	) {
-        (underlyingWithdrawn, strikeAssetWithdrawn) = _withdrawNoLocked(shares, minCollateral, account, withdrawLendingToken);
-    }
-
 	function swap(
         address acoToken, 
         uint256 tokenAmount, 
@@ -427,16 +411,6 @@ contract ACOPool2 is Ownable, ERC20 {
         address to, 
         uint256 deadline
     ) external payable {
-        _swap(acoToken, tokenAmount, restriction, to, deadline);
-    }
-
-    function swapWithGasToken(
-        address acoToken, 
-        uint256 tokenAmount, 
-        uint256 restriction, 
-        address to, 
-        uint256 deadline
-    ) discountCHI external payable {
         _swap(acoToken, tokenAmount, restriction, to, deadline);
     }
 
@@ -548,7 +522,7 @@ contract ACOPool2 is Ownable, ERC20 {
     		underlyingPrice,
     		underlyingPrecision,
     		_acoData,
-    		acoPermissionConfig));
+    		acoPermissionConfigV2));
     }
     
     function _getAcoDataForQuote(address acoToken, uint256 tokenAmount) internal view returns(ACOPoolLib.AcoData memory _acoData) {
@@ -562,6 +536,7 @@ contract ACOPool2 is Ownable, ERC20 {
 	    address to,
 	    bool isLendingToken
     ) internal returns(uint256 shares) {
+        _privateValidation();
         require(collateralAmount > 0, "E10");
         require(to != address(0) && to != address(this), "E11");
         require(!isLendingToken || !isCall, "E12");
@@ -852,31 +827,33 @@ contract ACOPool2 is Ownable, ERC20 {
         ACOAssetHelper._callApproveERC20(asset, spender, ACOAssetHelper.MAX_UINT);
     }
 
-    function _setAcoPermissionConfig(IACOPool2.PoolAcoPermissionConfig memory newConfig) internal {
-        require(newConfig.tolerancePriceBelowMax < PERCENTAGE_PRECISION && newConfig.tolerancePriceBelowMin < PERCENTAGE_PRECISION, "E81");
-        require(newConfig.tolerancePriceBelowMin <= newConfig.tolerancePriceBelowMax || newConfig.tolerancePriceBelowMax == 0, "E82");
-        require(newConfig.tolerancePriceAboveMin <= newConfig.tolerancePriceAboveMax || newConfig.tolerancePriceAboveMax == 0, "E83");
-        require(newConfig.minExpiration <= newConfig.maxExpiration, "E84");
+    function _setAcoPermissionConfig(IACOPool2.PoolAcoPermissionConfigV2 memory newConfig) internal {
+        require(newConfig.tolerancePriceBelowMax < int256(PERCENTAGE_PRECISION) && newConfig.tolerancePriceBelowMin < int256(PERCENTAGE_PRECISION), "E81");
+        require(newConfig.tolerancePriceBelowMin < newConfig.tolerancePriceBelowMax || newConfig.tolerancePriceBelowMax < int256(0), "E82");
+        require(newConfig.tolerancePriceAboveMin < newConfig.tolerancePriceAboveMax || newConfig.tolerancePriceAboveMax < int256(0), "E83");
+        require(newConfig.toleranceAmountPriceBelowMin < newConfig.toleranceAmountPriceBelowMax || newConfig.toleranceAmountPriceBelowMax < int256(0), "E84");
+        require(newConfig.toleranceAmountPriceAboveMin < newConfig.toleranceAmountPriceAboveMax || newConfig.toleranceAmountPriceAboveMax < int256(0), "E85");
+        require(newConfig.minExpiration <= newConfig.maxExpiration, "E86");
         
-        emit SetAcoPermissionConfig(acoPermissionConfig, newConfig);
+        emit SetAcoPermissionConfigV2(acoPermissionConfigV2, newConfig);
         
-        acoPermissionConfig = newConfig;
+        acoPermissionConfigV2 = newConfig;
     }
 
     function _setBaseVolatility(uint256 newBaseVolatility) internal {
-        require(newBaseVolatility > 0, "E85");
+        require(newBaseVolatility > 0, "E87");
         emit SetBaseVolatility(baseVolatility, newBaseVolatility);
         baseVolatility = newBaseVolatility;
     }
     
     function _setStrategy(address newStrategy) internal {
-        require(IACOPoolFactory2(owner()).strategyPermitted(newStrategy), "E86");
+        require(IACOPoolFactory2(owner()).strategyPermitted(newStrategy), "E88");
         emit SetStrategy(address(strategy), newStrategy);
         strategy = newStrategy;
     }
 
     function _setPoolAdmin(address newAdmin) internal {
-        require(newAdmin != address(0), "E87");
+        require(newAdmin != address(0), "E89");
         emit SetPoolAdmin(poolAdmin, newAdmin);
         poolAdmin = newAdmin;
     }
@@ -884,12 +861,12 @@ contract ACOPool2 is Ownable, ERC20 {
     function _setProtocolConfig(IACOPool2.PoolProtocolConfig memory newConfig) internal {
         address _underlying = underlying;
         address _strikeAsset = strikeAsset;
-		require(IACOAssetConverterHelper(newConfig.assetConverter).getPrice(_underlying, _strikeAsset) > 0, "E88");
-        require(newConfig.feeDestination != address(0), "E89");
-        require(newConfig.fee <= 12500, "E90");
-        require(newConfig.withdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "E91");
-        require(newConfig.underlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "E92");
-        require(newConfig.maximumOpenAco > 0, "E93");
+		require(IACOAssetConverterHelper(newConfig.assetConverter).getPrice(_underlying, _strikeAsset) > 0, "E90");
+        require(newConfig.feeDestination != address(0), "E91");
+        require(newConfig.fee <= 12500, "E92");
+        require(newConfig.withdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "E93");
+        require(newConfig.underlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "E94");
+        require(newConfig.maximumOpenAco > 0, "E95");
         		
 		if (isCall) {
             if (!ACOAssetHelper._isEther(_strikeAsset)) {
@@ -902,6 +879,10 @@ contract ACOPool2 is Ownable, ERC20 {
         emit SetProtocolConfig(protocolConfig, newConfig);
         
         protocolConfig = newConfig;
+    }
+    
+    function _privateValidation() internal view {
+        require(!isPrivate || poolAdmin == msg.sender, "E97");
     }
     
     function _onlyPoolAdmin() internal view {

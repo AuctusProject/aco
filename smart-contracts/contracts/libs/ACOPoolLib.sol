@@ -35,7 +35,7 @@ library ACOPoolLib {
 		uint256 underlyingPrice;
 		uint256 underlyingPrecision;
 		AcoData acoData;
-		IACOPool2.PoolAcoPermissionConfig acoPermissionConfig;
+		IACOPool2.PoolAcoPermissionConfigV2 acoPermissionConfig;
 	}
 	
 	struct AcoData {
@@ -64,7 +64,7 @@ library ACOPoolLib {
 		uint256 strikePrice, 
         uint256 acoExpiryTime, 
 		uint256 underlyingPrice,
-        IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig
+        IACOPool2.PoolAcoPermissionConfigV2 memory acoPermissionConfig
     ) public view returns(bool) {
         return _acoExpirationIsValid(acoExpiryTime, acoPermissionConfig) && _acoStrikePriceIsValid(strikePrice, underlyingPrice, acoPermissionConfig);
     }
@@ -284,17 +284,58 @@ library ACOPoolLib {
 	function _acoStrikePriceIsValid(
 		uint256 strikePrice, 
 		uint256 underlyingPrice,
-		IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig
+		IACOPool2.PoolAcoPermissionConfigV2 memory acoPermissionConfig
 	) internal pure returns(bool) {
 	    return (
-	        (acoPermissionConfig.tolerancePriceBelowMin == 0 || strikePrice <= underlyingPrice.mul(PERCENTAGE_PRECISION.sub(acoPermissionConfig.tolerancePriceBelowMin)).div(PERCENTAGE_PRECISION))
-	        && (acoPermissionConfig.tolerancePriceBelowMax == 0 || strikePrice >= underlyingPrice.mul(PERCENTAGE_PRECISION.sub(acoPermissionConfig.tolerancePriceBelowMax)).div(PERCENTAGE_PRECISION))
-	        && (acoPermissionConfig.tolerancePriceAboveMin == 0 || strikePrice >= underlyingPrice.mul(PERCENTAGE_PRECISION.add(acoPermissionConfig.tolerancePriceAboveMin)).div(PERCENTAGE_PRECISION))
-	        && (acoPermissionConfig.tolerancePriceAboveMax == 0 || strikePrice <= underlyingPrice.mul(PERCENTAGE_PRECISION.add(acoPermissionConfig.tolerancePriceAboveMax)).div(PERCENTAGE_PRECISION))
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMin, false, true, true) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMax, false, true, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMin, true, true, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMax, true, true, true) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceBelowMin, false, false, true) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceBelowMax, false, false, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceAboveMin, true, false, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceAboveMax, true, false, true)
         );
 	}
+	
+	function _validatePricePercentageTolerance(
+	    uint256 strikePrice, 
+	    uint256 underlyingPrice, 
+	    int256 tolerance, 
+	    bool isAbove,
+	    bool isPercentage,
+	    bool shouldBeLesser
+    ) internal pure returns(bool) {
+        if (tolerance < int256(0)) {
+            return true;
+        } else {
+            uint256 value;
+            if (isAbove) {
+                if (isPercentage) {
+                    value = underlyingPrice.mul(PERCENTAGE_PRECISION.add(uint256(tolerance))).div(PERCENTAGE_PRECISION);
+                } else {
+                    value = underlyingPrice.add(uint256(tolerance));
+                }
+            } else {
+                if (isPercentage) {
+                    value = underlyingPrice.mul(PERCENTAGE_PRECISION.sub(uint256(tolerance))).div(PERCENTAGE_PRECISION);
+                } else {
+                    if (uint256(tolerance) > underlyingPrice) {
+                        value = 0;
+                    } else {
+                        value = underlyingPrice.sub(uint256(tolerance));
+                    }
+                }
+            }
+            if (shouldBeLesser) {
+                return strikePrice <= value;
+            } else {
+                return strikePrice >= value;
+            }
+        }
+    }
 
-	function _acoExpirationIsValid(uint256 acoExpiryTime, IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig) internal view returns(bool) {
+	function _acoExpirationIsValid(uint256 acoExpiryTime, IACOPool2.PoolAcoPermissionConfigV2 memory acoPermissionConfig) internal view returns(bool) {
 		return acoExpiryTime >= block.timestamp.add(acoPermissionConfig.minExpiration) && acoExpiryTime <= block.timestamp.add(acoPermissionConfig.maxExpiration);
 	}
     

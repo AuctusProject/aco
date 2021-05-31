@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 import "../../core/ACOProxy.sol";
 import "../../libs/Address.sol";
 import "../../interfaces/IACOPool2.sol";
+import "../../interfaces/IACOAssetConverterHelper.sol";
 
 /**
  * @title ACOPoolFactory
@@ -1101,51 +1102,6 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
 	}
 
     /**
-     * @dev Function to create a new ACO pool.
-     * It deploys a minimal proxy for the ACO pool implementation address. 
-     * @param underlying Address of the underlying asset (0x0 for Ethereum).
-     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
-     * @param isCall True if the type is CALL, false for PUT.
-     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
-     * @param poolAdmin Address of the pool admin.
-     * @param strategy Address of the pool strategy to be used.
-     * @param acoPermissionConfig The configuration data for the ACO permission on the pool.
-     * @return The created ACO pool address.
-     */
-    function createAcoPool(
-        address underlying, 
-        address strikeAsset, 
-        bool isCall,
-        uint256 baseVolatility,
-        address poolAdmin,
-        address strategy,
-        IACOPool2.PoolAcoPermissionConfig calldata acoPermissionConfig
-    ) external virtual returns(address) {
-        require((operators[address(0)] || operators[msg.sender]), "ACOPoolFactory2::createAcoPool: Only authorized operators");
-        return _createAcoPool(IACOPool2.InitData(
-            acoFactory,
-            chiToken,
-            lendingPool,
-            underlying, 
-            strikeAsset,
-            isCall,
-            baseVolatility,
-            poolAdmin,
-            strategy,
-            acoPermissionConfig,
-            IACOPool2.PoolProtocolConfig(
-                lendingPoolReferral,
-                acoPoolWithdrawOpenPositionPenalty,
-                acoPoolUnderlyingPriceAdjustPercentage,
-                acoPoolFee,
-                acoPoolMaximumOpenAco,
-                acoPoolFeeDestination,
-                assetConverterHelper
-            )
-        ));
-    }
-
-    /**
      * @dev Internal function to deploy a proxy using ACO pool implementation.
      * @param initData Data to initialize o ACO Pool.
      * @return Address of the new proxy deployed for the ACO pool.
@@ -1220,5 +1176,161 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
         for (uint256 i = 0; i < acoPools.length; ++i) {
             IACOPool2(acoPools[i]).setForbiddenAcoCreator(acoCreator, status);
         }
+    }
+}
+
+contract ACOPoolFactory2V5 is ACOPoolFactory2V4 {
+    
+    /**
+     * @dev Emitted when a ACO Pool default strategy address has been changed.
+     * @param previousDefaultStrategy Address of the previous ACO pool default strategy.
+     * @param newDefaultStrategy Address of the new ACO pool default strategy. 
+     */
+    event SetDefaultStrategy(address indexed previousDefaultStrategy, address indexed newDefaultStrategy);
+    
+    /**
+     * @dev Emitted when the strike asset address permission has been changed.
+     * @param strikeAsset Address of the strike asset.
+     * @param previousPermission Whether the strike asset was authorized.
+     * @param newPermission Whether the strike asset will be authorized.
+     */
+    event SetStrikeAssetPermission(address indexed strikeAsset, bool indexed previousPermission, bool indexed newPermission);
+    
+    /**
+     * @dev Address of the pool default strategy.
+     */
+    address public defaultStrategy;
+    
+    /**
+     * @dev A map to register the strike assets permissions.
+     */
+    mapping(address => bool) public strikeAssets;
+    
+    /**
+     * @dev Function to create a new ACO pool.
+     * It deploys a proxy for the ACO pool implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall True if the type is CALL, false for PUT.
+     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
+     * @param poolAdmin Address of the pool admin.
+     * @param strategy Address of the pool strategy to be used.
+     * @param acoPermissionConfig The configuration data for the ACO permission on the pool.
+     * @return The created ACO pool address.
+     */
+    function createAcoPool(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 baseVolatility,
+        address poolAdmin,
+        address strategy,
+        bool isPrivate,
+        IACOPool2.PoolAcoPermissionConfigV2 calldata acoPermissionConfig
+    ) external virtual returns(address) {
+        require((operators[address(0)] || operators[msg.sender]), "ACOPoolFactory2::createAcoPool: Only authorized operators");
+        return _createAcoPool(IACOPool2.InitData(
+            acoFactory,
+            lendingPool,
+            underlying, 
+            strikeAsset,
+            isCall,
+            baseVolatility,
+            poolAdmin,
+            strategy,
+            isPrivate,
+            acoPermissionConfig,
+            IACOPool2.PoolProtocolConfig(
+                lendingPoolReferral,
+                acoPoolWithdrawOpenPositionPenalty,
+                acoPoolUnderlyingPriceAdjustPercentage,
+                acoPoolFee,
+                acoPoolMaximumOpenAco,
+                acoPoolFeeDestination,
+                assetConverterHelper
+            )
+        ));
+    }
+    
+    /**
+     * @dev Function to create a new ACO pool.
+     * It deploys a proxy for the ACO pool implementation address. 
+     * @param underlying Address of the underlying asset (0x0 for Ethereum).
+     * @param strikeAsset Address of the strike asset (0x0 for Ethereum).
+     * @param isCall True if the type is CALL, false for PUT.
+     * @param baseVolatility The base volatility for the pool starts. It is a percentage value (100000 is 100%).
+     * @param poolAdmin Address of the pool admin.
+     * @param acoPermissionConfig The configuration data for the ACO permission on the pool.
+     * @return The created ACO pool address.
+     */
+    function newAcoPool(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall,
+        uint256 baseVolatility,
+        address poolAdmin,
+        IACOPool2.PoolAcoPermissionConfigV2 calldata acoPermissionConfig
+    ) external virtual returns(address) {
+        require(strikeAssets[strikeAsset], "ACOPoolFactory2::newAcoPool: Invalid strike asset");
+        require(IACOAssetConverterHelper(assetConverterHelper).hasAggregator(underlying, strikeAsset), "ACOPoolFactory2::newAcoPool: Invalid pair");
+        
+        return _createAcoPool(IACOPool2.InitData(
+            acoFactory,
+            lendingPool,
+            underlying, 
+            strikeAsset,
+            isCall,
+            baseVolatility,
+            poolAdmin,
+            defaultStrategy,
+            true,
+            acoPermissionConfig,
+            IACOPool2.PoolProtocolConfig(
+                lendingPoolReferral,
+                acoPoolWithdrawOpenPositionPenalty,
+                acoPoolUnderlyingPriceAdjustPercentage,
+                acoPoolFee,
+                acoPoolMaximumOpenAco,
+                acoPoolFeeDestination,
+                assetConverterHelper
+            )
+        ));
+    }
+    
+    /**
+     * @dev Function to set the ACO pool default strategy address.
+     * @param newDefaultStrategy Address of the new ACO pool default strategy. 
+     */
+    function setPoolDefaultStrategy(address newDefaultStrategy) onlyFactoryAdmin external virtual {
+        _setPoolDefaultStrategy(newDefaultStrategy);
+    }
+    
+    /**
+     * @dev Function to set the strike asset permission.
+     * @param strikeAsset Address of the strike asset.
+     * @param newPermission Whether the strike asset will be authorized.
+     */
+    function setStrikeAssetPermission(address strikeAsset, bool newPermission) onlyFactoryAdmin external virtual {
+        _setStrikeAssetPermission(strikeAsset, newPermission);
+    }
+    
+    /**
+     * @dev Internal function to set the ACO pool default strategy address.
+     * @param newDefaultStrategy Address of the new ACO pool default strategy. 
+     */
+    function _setPoolDefaultStrategy(address newDefaultStrategy) internal virtual {
+        _validateStrategy(newDefaultStrategy);
+        emit SetDefaultStrategy(defaultStrategy, newDefaultStrategy);
+        defaultStrategy = newDefaultStrategy;
+    }
+    
+    /**
+     * @dev Internal function to set the strike asset permission.
+     * @param strikeAsset Address of the strike asset.
+     * @param newPermission Whether the strike asset will be authorized.
+     */
+    function _setStrikeAssetPermission(address strikeAsset, bool newPermission) internal virtual {
+        emit SetStrikeAssetPermission(strikeAsset, strikeAssets[strikeAsset], newPermission);
+        strikeAssets[strikeAsset] = newPermission;
     }
 }
