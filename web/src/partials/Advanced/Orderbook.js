@@ -31,7 +31,11 @@ class Orderbook extends Component {
   }
 
   formatPrice = (price) => {
-    return Number(fromDecimals(price, this.props.option.strikeAssetInfo.decimals, this.props.option.strikeAssetInfo.decimals, 0), 4).toFixed(2)
+    return Number(fromDecimals(price, this.props.option.strikeAssetInfo.decimals, this.props.option.strikeAssetInfo.decimals, 0)).toFixed(2)
+  }
+
+  getPriceInDecimals = (price) => {
+    return fromDecimals(price, this.props.option.strikeAssetInfo.decimals, this.props.option.strikeAssetInfo.decimals, 0)
   }
 
   getSpreadValue = () => {
@@ -46,7 +50,7 @@ class Orderbook extends Component {
 
   onOrderClick = (isBuy, order, allOrders) => () => {
     var totalAmount = isBuy ? this.getTotalBuyAmount(order, allOrders) : this.getTotalSellAmount(order, allOrders)
-    this.props.setPlaceOrderData(!isBuy, this.formatPrice(order.price), this.formatSize(totalAmount))
+    this.props.setPlaceOrderData(!isBuy, this.getPriceInDecimals(order.price), this.formatSize(totalAmount))
   }
 
   getTotalBuyAmount = (order, allOrders) => {

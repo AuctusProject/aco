@@ -133,7 +133,7 @@ class BuySell extends Component {
   getTotalCost = () => {
     if (this.state.selectedLimitMarketTab === 1) {
       if (this.state.amountInputValue && this.state.priceInputValue) {
-        return new BigNumber(this.state.amountInputValue).times(this.state.priceInputValue) + " USDC"
+        return new BigNumber(this.state.amountInputValue).times(this.state.priceInputValue).toFixed(2) + " USDC"
       }
     }
     else {
@@ -142,7 +142,7 @@ class BuySell extends Component {
         var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
         var quotedData = buildQuotedData(this.props.option, orders, amountInDecimals)
         if (!quotedData.acoAmount.isLessThan(amountInDecimals)) {
-          return fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals) + " USDC"
+          return fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals).toFixed(2) + " USDC"
         }        
       }
     }
