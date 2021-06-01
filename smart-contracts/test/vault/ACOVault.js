@@ -300,7 +300,7 @@ describe("ACOVault", function() {
     current = await getCurrentTimestamp();
     start = current + 180;
 
-    let acoConfig = [-1, 30000, -1, 30000, 0, expiration+4*minTimeToExercise,-1,-1,-1,-1];
+    let acoConfig = [-1, 30000, -1, 30000, 0, 0, 0, expiration+4*minTimeToExercise];
     let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, acoConfig)).wait();
     let result8 = tx8.events[tx8.events.length - 1].args;
     ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool2V2", result8.acoPool);

@@ -70,29 +70,27 @@ import '../../interfaces/ILendingPool.sol';
  *------------------------------------------------------------------------------------------*
  * E83  | _setAcoPermissionConfig             | Invalid minimum above tolerance percentage  *
  *------------------------------------------------------------------------------------------*
- * E84  | _setAcoPermissionConfig             | Invalid minimum below tolerance amount      *
+ * E84  | _setAcoPermissionConfig             | Invalid minimum strike price value          *
  *------------------------------------------------------------------------------------------*
- * E85  | _setAcoPermissionConfig             | Invalid minimum above tolerance amount      *
+ * E85  | _setAcoPermissionConfig             | Invalid expiration range                    *
  *------------------------------------------------------------------------------------------*
- * E86  | _setAcoPermissionConfig             | Invalid expiration range                    *
+ * E86  | _setBaseVolatility                  | Invalid base volatility                     *
  *------------------------------------------------------------------------------------------*
- * E87  | _setBaseVolatility                  | Invalid base volatility                     *
+ * E87  | _setStrategy                        | Invalid strategy address                    *
  *------------------------------------------------------------------------------------------*
- * E88  | _setStrategy                        | Invalid strategy address                    *
+ * E88  | _setPoolAdmin                       | Invalid pool admin address                  *
  *------------------------------------------------------------------------------------------*
- * E89  | _setPoolAdmin                       | Invalid pool admin address                  *
+ * E89  | _setProtocolConfig                  | No price on the Oracle                      *
  *------------------------------------------------------------------------------------------*
- * E90  | _setProtocolConfig                  | No price on the Oracle                      *
+ * E90  | _setProtocolConfig                  | Invalid fee destination address             *
  *------------------------------------------------------------------------------------------*
- * E91  | _setProtocolConfig                  | Invalid fee destination address             *
+ * E91  | _setProtocolConfig                  | Invalid fee value                           *
  *------------------------------------------------------------------------------------------*
- * E92  | _setProtocolConfig                  | Invalid fee value                           *
+ * E92  | _setProtocolConfig                  | Invalid penalty percentage                  *
  *------------------------------------------------------------------------------------------*
- * E93  | _setProtocolConfig                  | Invalid penalty percentage                  *
+ * E93  | _setProtocolConfig                  | Invalid underlying price adjust percentage  *
  *------------------------------------------------------------------------------------------*
- * E94  | _setProtocolConfig                  | Invalid underlying price adjust percentage  *
- *------------------------------------------------------------------------------------------*
- * E95  | _setProtocolConfig                  | Invalid maximum number of open ACOs allowed *
+ * E94  | _setProtocolConfig                  | Invalid maximum number of open ACOs allowed *
  *------------------------------------------------------------------------------------------*
  * E97  | _privateValidation                  | The pool is public or it is a pool admin    *
  *------------------------------------------------------------------------------------------*
@@ -831,9 +829,8 @@ contract ACOPool2V2 is ACOPool2 {
         require(newConfig.tolerancePriceBelowMax < int256(PERCENTAGE_PRECISION) && newConfig.tolerancePriceBelowMin < int256(PERCENTAGE_PRECISION), "E81");
         require(newConfig.tolerancePriceBelowMin < newConfig.tolerancePriceBelowMax || newConfig.tolerancePriceBelowMax < int256(0), "E82");
         require(newConfig.tolerancePriceAboveMin < newConfig.tolerancePriceAboveMax || newConfig.tolerancePriceAboveMax < int256(0), "E83");
-        require(newConfig.toleranceAmountPriceBelowMin < newConfig.toleranceAmountPriceBelowMax || newConfig.toleranceAmountPriceBelowMax < int256(0), "E84");
-        require(newConfig.toleranceAmountPriceAboveMin < newConfig.toleranceAmountPriceAboveMax || newConfig.toleranceAmountPriceAboveMax < int256(0), "E85");
-        require(newConfig.minExpiration <= newConfig.maxExpiration, "E86");
+        require(newConfig.minStrikePrice < newConfig.maxStrikePrice || newConfig.maxStrikePrice == 0, "E84");
+        require(newConfig.minExpiration <= newConfig.maxExpiration, "E85");
         
         emit SetAcoPermissionConfigV2(acoPermissionConfigV2, newConfig);
         
@@ -841,19 +838,19 @@ contract ACOPool2V2 is ACOPool2 {
     }
 
     function _setBaseVolatility(uint256 newBaseVolatility) internal {
-        require(newBaseVolatility > 0, "E87");
+        require(newBaseVolatility > 0, "E86");
         emit SetBaseVolatility(baseVolatility, newBaseVolatility);
         baseVolatility = newBaseVolatility;
     }
     
     function _setStrategy(address newStrategy) internal {
-        require(IACOPoolFactory2(owner()).strategyPermitted(newStrategy), "E88");
+        require(IACOPoolFactory2(owner()).strategyPermitted(newStrategy), "E87");
         emit SetStrategy(address(strategy), newStrategy);
         strategy = newStrategy;
     }
 
     function _setPoolAdmin(address newAdmin) internal {
-        require(newAdmin != address(0), "E89");
+        require(newAdmin != address(0), "E88");
         emit SetPoolAdmin(poolAdmin, newAdmin);
         poolAdmin = newAdmin;
     }
@@ -861,12 +858,12 @@ contract ACOPool2V2 is ACOPool2 {
     function _setProtocolConfig(IACOPool2.PoolProtocolConfig memory newConfig) internal {
         address _underlying = underlying;
         address _strikeAsset = strikeAsset;
-		require(IACOAssetConverterHelper(newConfig.assetConverter).getPrice(_underlying, _strikeAsset) > 0, "E90");
-        require(newConfig.feeDestination != address(0), "E91");
-        require(newConfig.fee <= 12500, "E92");
-        require(newConfig.withdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "E93");
-        require(newConfig.underlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "E94");
-        require(newConfig.maximumOpenAco > 0, "E95");
+		require(IACOAssetConverterHelper(newConfig.assetConverter).getPrice(_underlying, _strikeAsset) > 0, "E89");
+        require(newConfig.feeDestination != address(0), "E90");
+        require(newConfig.fee <= 12500, "E91");
+        require(newConfig.withdrawOpenPositionPenalty <= PERCENTAGE_PRECISION, "E92");
+        require(newConfig.underlyingPriceAdjustPercentage < PERCENTAGE_PRECISION, "E93");
+        require(newConfig.maximumOpenAco > 0, "E94");
         		
 		if (isCall) {
             if (!ACOAssetHelper._isEther(_strikeAsset)) {

@@ -226,7 +226,7 @@ describe("Controller", function() {
     current = await getCurrentTimestamp();
     start = current + 180;
 
-    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, 30000, -1, 30000, 0, expiration, -1, -1, -1, -1])).wait();
+    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, 30000, -1, 30000, 0, 0, 0, expiration])).wait();
     let result10 = tx10.events[tx10.events.length - 1].args;
     ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool2V2", result10.acoPool);
 

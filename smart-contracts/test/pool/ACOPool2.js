@@ -247,19 +247,19 @@ describe("ACOPool2", function() {
     let result7 = tx7.events[tx7.events.length - 1].args;
     ACOEthToken2Put2 = await ethers.getContractAt("ACOToken", result7.acoToken);
 
-    let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1])).wait();
+    let tx8 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, true, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration])).wait();
     let result8 = tx8.events[tx8.events.length - 1].args;
     ACOPoolToken1Token2Call = await ethers.getContractAt("ACOPool2V2", result8.acoPool);
 
-    let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1])).wait();
+    let tx9 = await (await ACOPoolFactory.createAcoPool(token1.address, token2.address, false, token1Token2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration])).wait();
     let result9 = tx9.events[tx9.events.length - 1].args;
     ACOPoolToken1Token2Put = await ethers.getContractAt("ACOPool2V2", result9.acoPool);
     
-    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1])).wait();
+    let tx10 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, true, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration])).wait();
     let result10 = tx10.events[tx10.events.length - 1].args;
     ACOPoolEthToken2Call = await ethers.getContractAt("ACOPool2V2", result10.acoPool);
 
-    let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1])).wait();
+    let tx11 = await (await ACOPoolFactory.createAcoPool(AddressZero, token2.address, false, ethToken2BaseVolatility, await owner.getAddress(), defaultStrategy.address, false, [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration])).wait();
     let result11 = tx11.events[tx11.events.length - 1].args;
     ACOPoolEthToken2Put = await ethers.getContractAt("ACOPool2V2", result11.acoPool);
   });
@@ -641,46 +641,31 @@ describe("ACOPool2", function() {
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,toleranceAboveMax,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,toleranceAboveMax,-1,0,0,minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,acoToken1Token2CallPrice.sub(1),minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,acoToken1Token2CallPrice.add(1),0,minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.add(2).mul(100));
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,1,-1,-1]);
-
-      await expect(
-        ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.sub(2).mul(100));
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,-1,1]);
-
-      await expect(
-        ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(100));
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,10,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,10]);
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token expiration");
 
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,(30*86400),-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,(30*86400)]);
 
       await expect(
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount.mul(5), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
@@ -691,7 +676,7 @@ describe("ACOPool2", function() {
         ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, swapAmount, quote3[0].sub(tol), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("E42");
       
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,toleranceAboveMax,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,toleranceAboveMax,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,1,await addr3.getAddress(),converterHelper.address,[ACOPoolToken1Token2Call.address]);
       
@@ -796,46 +781,31 @@ describe("ACOPool2", function() {
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,toleranceAboveMax,0,0,minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,acoToken1Token2PutPrice.sub(1),minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,acoToken1Token2PutPrice.add(1),0,minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.add(2).mul(100));
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,1,-1,-1]);
-
-      await expect(
-        ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.sub(2).mul(100));
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,-1,1]);
-
-      await expect(
-        ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorToken1Token2.updateAnswer(token1Token2Price.mul(100));
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,10,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,10]);
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token expiration");
 
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,(30*86400),-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,(30*86400)]);
 
       await expect(
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount.mul(5), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
@@ -846,7 +816,7 @@ describe("ACOPool2", function() {
         ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, swapAmount, quote3[0].mul(99).div(100), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("E42");
 
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,1,await addr3.getAddress(),converterHelper.address,[ACOPoolToken1Token2Put.address]);
 
@@ -949,46 +919,31 @@ describe("ACOPool2", function() {
         ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,toleranceAboveMax,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,toleranceAboveMax,-1,0,0,minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,acoEthToken2CallPrice.sub(1),minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,acoEthToken2CallPrice.add(1),acoEthToken2CallPrice.add(2),minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await aggregatorWethToken2.updateAnswer(ethToken2Price.add(2).mul(100));
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,1,-1,-1]);
-
-      await expect(
-        ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorWethToken2.updateAnswer(ethToken2Price.sub(2).mul(100));
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,-1,1]);
-
-      await expect(
-        ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorWethToken2.updateAnswer(ethToken2Price.mul(100));
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,10,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,10]);
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token expiration");
 
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,(30*86400),-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,(30*86400)]);
 
       await expect(
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount.mul(5), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
@@ -999,7 +954,7 @@ describe("ACOPool2", function() {
         ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, swapAmount, quote3[0].sub(tol), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("E42");
 
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,toleranceAboveMax,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,toleranceAboveMax,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,1,await addr3.getAddress(),converterHelper.address,[ACOPoolEthToken2Call.address]);
 
@@ -1104,46 +1059,31 @@ describe("ACOPool2", function() {
         ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,toleranceAboveMax,0,0,minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,acoEthToken2PutPrice.sub(1),minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,acoEthToken2PutPrice.add(1),0,minExpiration,maxExpiration]);
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
 
-      await aggregatorWethToken2.updateAnswer(ethToken2Price.add(2).mul(100));
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,1,-1,-1]);
-
-      await expect(
-        ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorWethToken2.updateAnswer(ethToken2Price.sub(2).mul(100));
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,maxExpiration,-1,-1,-1,1]);
-
-      await expect(
-        ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
-      ).to.be.revertedWith("ACOPoolLib: Invalid ACO token strike price");
-
-      await aggregatorWethToken2.updateAnswer(ethToken2Price.mul(100));
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,10,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,10]);
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("ACOPoolLib: Invalid ACO token expiration");
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,minExpiration,(30*86400),-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,toleranceBelowMax,-1,toleranceAboveMax,0,0,minExpiration,(30*86400)]);
 
       await expect(
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount.mul(1000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999)
@@ -1158,7 +1098,7 @@ describe("ACOPool2", function() {
         ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, swapAmount, quote3[0].mul(99).div(100), await owner.getAddress(), 1999999999)
       ).to.be.revertedWith("E42");
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolFactory.setProtocolConfigOnAcoPool(0,withdrawOpenPositionPenalty,underlyingPriceAdjustPercentage,poolFee,1,await addr3.getAddress(),converterHelper.address,[ACOPoolEthToken2Put.address]);
 
@@ -1339,7 +1279,7 @@ describe("ACOPool2", function() {
       await ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOToken1Token2Call.exercise(val1, 0);
 
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1368,7 +1308,7 @@ describe("ACOPool2", function() {
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(100), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOToken1Token2Put.exercise(val1.div(200), 0);
 
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, val1.div(100), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1396,7 +1336,7 @@ describe("ACOPool2", function() {
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOEthToken2Call.exercise(val1.div(2), 0);
 
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1424,7 +1364,7 @@ describe("ACOPool2", function() {
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val1.mul(100000000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOEthToken2Put.exercise(val1.mul(100000000), 0, {value: val1.mul(100000000).add(maxExercisedAccounts)});
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, val1.mul(100000000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1455,7 +1395,7 @@ describe("ACOPool2", function() {
       await ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOToken1Token2Call.exercise(val1, 0);
 
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1494,7 +1434,7 @@ describe("ACOPool2", function() {
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put.address, val1.div(100), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOToken1Token2Put.exercise(val1.div(200), 0);
 
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, val1.div(100), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1532,7 +1472,7 @@ describe("ACOPool2", function() {
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOEthToken2Call.exercise(val1.div(2), 0);
       
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1570,7 +1510,7 @@ describe("ACOPool2", function() {
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val1.mul(100000000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOEthToken2Put.exercise(val1.mul(100000000), 0, {value: val1.mul(100000000).add(maxExercisedAccounts)});
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, val1.mul(100000000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
@@ -1611,7 +1551,7 @@ describe("ACOPool2", function() {
       await ACOPoolToken1Token2Call.swap(ACOToken1Token2Call.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOToken1Token2Call.exercise(val1, 0);
 
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await ACOPoolToken1Token2Call.swap(ACOToken1Token2Call2.address, val1, ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
 
@@ -1798,7 +1738,7 @@ describe("ACOPool2", function() {
 
       await ACOPoolToken1Token2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress(), false);
       await ACOToken1Token2Put.exercise(val1.div(800), 0);
-      await ACOPoolToken1Token2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,0,0,minExpiration,maxExpiration]);
       await ACOPoolToken1Token2Put.swap(ACOToken1Token2Put2.address, val1.div(1000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       let col = await ACOToken1Token2Put2.currentCollateral(ACOPoolToken1Token2Put.address);
 
@@ -1905,7 +1845,7 @@ describe("ACOPool2", function() {
       await token2.approve(ACOEthToken2Call.address, token2TotalSupply);
       await token2.approve(ACOEthToken2Call2.address, token2TotalSupply);
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call.address, val1.div(4), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,toleranceAboveMax,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,toleranceAboveMax,-1,0,0,minExpiration,maxExpiration]);
       await ACOPoolEthToken2Call.swap(ACOEthToken2Call2.address, val1.div(4), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
       await ACOPoolEthToken2Call.deposit(val2, 1, await addr2.getAddress(), false, {value: val2});
       let bal = await ACOPoolEthToken2Call.balanceOf(await addr2.getAddress());
@@ -1991,7 +1931,7 @@ describe("ACOPool2", function() {
       await ACOPoolEthToken2Put.connect(addr2).deposit(val2, 1, await addr2.getAddress(), false);
 
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put.address, val1.mul(100000000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([toleranceBelowMax,-1,-1,-1,0,0,minExpiration,maxExpiration]);
       await ACOPoolEthToken2Put.swap(ACOEthToken2Put2.address, val1.mul(100000000), ethers.BigNumber.from("9999999999"), await owner.getAddress(), 1999999999);
     
       await expect(
@@ -2087,7 +2027,7 @@ describe("ACOPool2", function() {
       let val5 = ethers.BigNumber.from("500000000");
       let val8 = ethers.BigNumber.from("800000000");
       
-      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolToken1Token2Call.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await token1.connect(owner).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
       await token1.connect(addr1).approve(ACOPoolToken1Token2Call.address, token1TotalSupply);
@@ -2293,7 +2233,7 @@ describe("ACOPool2", function() {
       let val3 = ethers.BigNumber.from("300000000000000000");
       let val5 = ethers.BigNumber.from("500000000000000000");
 
-      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Call.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await token2.connect(owner).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
       await token2.connect(addr1).approve(ACOPoolEthToken2Call.address, token2TotalSupply);
@@ -2358,7 +2298,7 @@ describe("ACOPool2", function() {
       let val2 = ethers.BigNumber.from("20000000000");
       let val5 = ethers.BigNumber.from("50000000000");
 
-      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,-1,-1,-1,minExpiration,maxExpiration,-1,-1,-1,-1]);
+      await ACOPoolEthToken2Put.setAcoPermissionConfig([-1,-1,-1,-1,0,0,minExpiration,maxExpiration]);
 
       await token2.connect(owner).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
       await token2.connect(addr1).approve(ACOPoolEthToken2Put.address, token2TotalSupply);
@@ -2442,7 +2382,7 @@ describe("ACOPool2", function() {
       expect(await aco4.currentCollateral(await owner.getAddress())).to.equal(0);
     });
     it("Check ACOPoolToken1Token2Call private pool", async function () {
-      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1];
+      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration];
       let tx = await (await ACOPoolFactory.connect(addr2).newAcoPool(token1.address, token2.address, true, token1Token2BaseVolatility, await addr2.getAddress(), config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let pool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -2518,7 +2458,7 @@ describe("ACOPool2", function() {
       expect(await pool.balanceOf(await addr2.getAddress())).to.equal(0);
     });
     it("Check ACOPoolToken1Token2Put private pool", async function () {
-      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1];
+      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration];
       let tx = await (await ACOPoolFactory.connect(addr2).newAcoPool(token1.address, token2.address, false, token1Token2BaseVolatility, await addr2.getAddress(), config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let pool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -2590,7 +2530,7 @@ describe("ACOPool2", function() {
       expect(await pool.balanceOf(await addr2.getAddress())).to.equal(0);
     });
     it("Check ACOPoolEthToken2Call private pool", async function () {
-      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1];
+      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration];
       let tx = await (await ACOPoolFactory.connect(addr2).newAcoPool(AddressZero, token2.address, true, token1Token2BaseVolatility, await addr2.getAddress(), config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let pool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -2659,7 +2599,7 @@ describe("ACOPool2", function() {
       expect(await pool.balanceOf(await addr2.getAddress())).to.equal(0);
     });
     it("Check ACOPoolEthToken2Put private pool", async function () {
-      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, minExpiration, maxExpiration, -1, -1, -1, -1];
+      let config = [-1, toleranceBelowMax, -1, toleranceAboveMax, 0, 0, minExpiration, maxExpiration];
       let tx = await (await ACOPoolFactory.connect(addr2).newAcoPool(AddressZero, token2.address, false, token1Token2BaseVolatility, await addr2.getAddress(), config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let pool = await ethers.getContractAt("ACOPool2V2", result.acoPool);

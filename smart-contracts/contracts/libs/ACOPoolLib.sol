@@ -287,14 +287,12 @@ library ACOPoolLib {
 		IACOPool2.PoolAcoPermissionConfigV2 memory acoPermissionConfig
 	) internal pure returns(bool) {
 	    return (
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMin, false, true, true) &&
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMax, false, true, false) &&
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMin, true, true, false) &&
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMax, true, true, true) &&
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceBelowMin, false, false, true) &&
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceBelowMax, false, false, false) &&
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceAboveMin, true, false, false) &&
-	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.toleranceAmountPriceAboveMax, true, false, true)
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMin, false, true) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMax, false, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMin, true, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMax, true, true) &&
+	        (acoPermissionConfig.minStrikePrice <= strikePrice) &&
+	        (acoPermissionConfig.maxStrikePrice == 0 || acoPermissionConfig.maxStrikePrice >= strikePrice)
         );
 	}
 	
@@ -303,7 +301,6 @@ library ACOPoolLib {
 	    uint256 underlyingPrice, 
 	    int256 tolerance, 
 	    bool isAbove,
-	    bool isPercentage,
 	    bool shouldBeLesser
     ) internal pure returns(bool) {
         if (tolerance < int256(0)) {
@@ -311,21 +308,9 @@ library ACOPoolLib {
         } else {
             uint256 value;
             if (isAbove) {
-                if (isPercentage) {
-                    value = underlyingPrice.mul(PERCENTAGE_PRECISION.add(uint256(tolerance))).div(PERCENTAGE_PRECISION);
-                } else {
-                    value = underlyingPrice.add(uint256(tolerance));
-                }
+                value = underlyingPrice.mul(PERCENTAGE_PRECISION.add(uint256(tolerance))).div(PERCENTAGE_PRECISION);
             } else {
-                if (isPercentage) {
-                    value = underlyingPrice.mul(PERCENTAGE_PRECISION.sub(uint256(tolerance))).div(PERCENTAGE_PRECISION);
-                } else {
-                    if (uint256(tolerance) > underlyingPrice) {
-                        value = 0;
-                    } else {
-                        value = underlyingPrice.sub(uint256(tolerance));
-                    }
-                }
+                value = underlyingPrice.mul(PERCENTAGE_PRECISION.sub(uint256(tolerance))).div(PERCENTAGE_PRECISION);
             }
             if (shouldBeLesser) {
                 return strikePrice <= value;

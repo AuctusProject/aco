@@ -171,7 +171,7 @@ describe("ACOPoolFactory2", function() {
 
   describe("ACOPoolFactory transactions", function () {
     it("Check create ACO pool", async function () {
-      let config = [-1, 20000, -1, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [-1, 20000, -1, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr2.getAddress(), defaultStrategy.address, false, config)).wait();
       let result1 = tx.events[tx.events.length - 1].args;
 
@@ -185,12 +185,10 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(-1);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(-1);
       expect(await buidlerPool.isPrivate()).to.equal(false);
       expect(await buidlerPool.strategy()).to.equal(defaultStrategy.address);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
@@ -216,12 +214,10 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(-1);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(-1);
       expect(await buidlerPool.isPrivate()).to.equal(true);
       expect(await buidlerPool.strategy()).to.equal(defaultStrategy.address);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
@@ -235,7 +231,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.poolAdmin()).to.equal(await addr1.getAddress());
     });
     it("Check fail to create ACO pool", async function () { 
-      let config = [-1, 30000, -1, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [-1, 30000, -1, 30000, 0, 0, 0, (30*86400)];
       await expect(
         buidlerACOPoolFactory.connect(addr1).createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, config)
       ).to.be.revertedWith("ACOPoolFactory2::createAcoPool: Only authorized operators");
@@ -257,7 +253,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [0, 30000, 0, 30000, (31*86400), (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [0, 30000, 0, 30000, 0, 0, (31*86400), (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -265,22 +261,14 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [0, 100000, 0, 30000, 0, (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [0, 100000, 0, 30000, 0, 0, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
       expect(error).to.equal(true);
       error = false;
       try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [100000, 0, 0, 30000, 0, (30*86400), -1, -1, -1, -1]);
-      } catch(e) {
-        error = e.message === "VM Exception while processing transaction: invalid opcode";
-      }
-      expect(error).to.equal(true);
-
-      error = false;
-      try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [2000, 1000, 0, 30000, 0, (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [100000, 0, 0, 30000, 0, 0, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -288,7 +276,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [2000, 1000, 30001, 30000, 0, (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [2000, 1000, 0, 30000, 0, 0, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -296,7 +284,15 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [-1, 1000, -1, 30000, 0, (30*86400), -1, -100, 50, 50]);
+        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [2000, 1000, 30001, 30000, 0, 0, 0, (30*86400)]);
+      } catch(e) {
+        error = e.message === "VM Exception while processing transaction: invalid opcode";
+      }
+      expect(error).to.equal(true);
+
+      error = false;
+      try {
+        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [-1, 1000, -1, 30000, 1, 1, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -304,23 +300,7 @@ describe("ACOPoolFactory2", function() {
       
       error = false;
       try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [-1, 1000, -1, 30000, 0, (30*86400), -1, -1, 51, 50]);
-      } catch(e) {
-        error = e.message === "VM Exception while processing transaction: invalid opcode";
-      }
-      expect(error).to.equal(true);
-
-      error = false;
-      try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [-1, 1000, -1, 30000, 0, (30*86400), 10, 5, 50, -1]);
-      } catch(e) {
-        error = e.message === "VM Exception while processing transaction: invalid opcode";
-      }
-      expect(error).to.equal(true);
-
-      error = false;
-      try {
-        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [-1, 1000, -1, 30000, 0, (30*86400), 5, 5, -1, -1]);
+        await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, [-1, 1000, -1, 30000, 100, 99, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -690,7 +670,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerACOPoolFactory.strikeAssets(token1.address)).to.equal(false); 
     });
     it("Check set pool strategy on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let acoPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -704,7 +684,7 @@ describe("ACOPoolFactory2", function() {
       expect(await acoPool.strategy()).to.equal(newStrategy.address);
     });
     it("Check fail to set pool strategy on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -727,7 +707,7 @@ describe("ACOPoolFactory2", function() {
       ).to.be.revertedWith("E98");
     });
     it("Check set pool base volatility on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -737,7 +717,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.baseVolatility()).to.equal(200000);
     });
     it("Check fail to set pool base volatility on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       await expect(
         buidlerACOPoolFactory.setBaseVolatilityOnAcoPool([100000], [])
       ).to.be.revertedWith("ACOPoolFactory::_setAcoPoolUint256Data: Invalid arguments");
@@ -760,7 +740,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
     });
     it("Check set pool ACO permission data on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -769,76 +749,65 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(-1);
 
-      await buidlerPool.connect(addr1).setAcoPermissionConfig([4000, 4400, 5000, 7900, 100, 1000, 0, -100, 30, 150]);
+      await buidlerPool.connect(addr1).setAcoPermissionConfig([4000, 4400, 5000, 7900, 0, 2000000, 100, 1000]);
 
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(4000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMax).to.equal(4400);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(5000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(7900);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(2000000);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(100);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal(1000);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(0);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-100);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(30);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(150);
 
-      await buidlerPool.connect(addr1).setAcoPermissionConfig([4000, 4400, 5500, 7900, 101, 1000, 0, -1, 3, 150]);
+      await buidlerPool.connect(addr1).setAcoPermissionConfig([4000, 4400, 5500, 7900, 1000, 2000000, 101, 1000]);
 
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(4000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMax).to.equal(4400);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(5500);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(7900);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(1000);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(2000000);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(101);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal(1000);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(0);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(3);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(150);
     });
     it("Check fail to set pool ACO permission data on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1000, 0];
+      let config = [-1, 30000, -1, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
-      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(0);
-      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1000);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(0);
 
       await expect(
-        buidlerPool.connect(addr1).setAcoPermissionConfig([100000, 0, 0, 1000, 100, 1000, -100, 0, 300, 400])
+        buidlerPool.connect(addr1).setAcoPermissionConfig([100000, 0, 0, 1000, 0, 0, 100, 1000])
       ).to.be.revertedWith("E81");
       await expect(
-        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 100000, 0, 1000, 100, 1000, -100, 0, 300, 400])
+        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 100000, 0, 1000, 0, 0, 100, 1000])
       ).to.be.revertedWith("E81");
       await expect(
-        buidlerPool.connect(addr1).setAcoPermissionConfig([2001, 2000, 0, 1000, 100, 1000, -100, 0, 300, 400])
+        buidlerPool.connect(addr1).setAcoPermissionConfig([2001, 2000, 0, 1000, 0, 0, 100, 1000])
       ).to.be.revertedWith("E82");
       await expect(
-        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 500, 1001, 1000, 100, 1000, -100, 0, 300, 400])
+        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 500, 1001, 1000, 0, 0, 100, 1000])
       ).to.be.revertedWith("E83");
       await expect(
-        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 500, -1, 1000, 100, 1000, 2, 1, 300, 400])
+        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 500, -1, 1000, 1000, 999, 100, 1000])
       ).to.be.revertedWith("E84");
       await expect(
-        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 500, -1, 1000, 100, 1000, -100, -200, 50, 40])
+        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 2000, -1, 1000, 1000, 0, 1001, 1000])
       ).to.be.revertedWith("E85");
-      await expect(
-        buidlerPool.connect(addr1).setAcoPermissionConfig([0, 2000, -1, 1000, 1001, 1000, -100, 0, 300, 400])
-      ).to.be.revertedWith("E86");
 
       await expect(
         buidlerPool.connect(owner).setAcoPermissionConfig(config)
@@ -846,17 +815,15 @@ describe("ACOPoolFactory2", function() {
 
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
-      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(0);
-      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1000);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(0);
     });
     it("Check set pool admin on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -866,7 +833,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.poolAdmin()).to.equal(await owner.getAddress());
     });
     it("Check fail to set pool admin on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -874,7 +841,7 @@ describe("ACOPoolFactory2", function() {
      
       await expect(
         buidlerPool.connect(addr1).setPoolAdmin(AddressZero)
-      ).to.be.revertedWith("E89");
+      ).to.be.revertedWith("E88");
       await expect(
         buidlerPool.connect(owner).setPoolAdmin(await addr2.getAddress())
       ).to.be.revertedWith("E98");
@@ -882,7 +849,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.poolAdmin()).to.equal(await addr1.getAddress());
     });
     it("Check set pool protocol config on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -920,7 +887,7 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.protocolConfig()).assetConverter).to.equal(converterHelper.address);
     });
     it("Check fail to set pool protocol config on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await addr1.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -946,19 +913,19 @@ describe("ACOPoolFactory2", function() {
 
       await expect(
         buidlerACOPoolFactory.setProtocolConfigOnAcoPool(5, 21000, 2000, 860, 9, AddressZero, converterHelper2.address, [buidlerPool.address])
-      ).to.be.revertedWith("E91");
+      ).to.be.revertedWith("E90");
       await expect(
         buidlerACOPoolFactory.setProtocolConfigOnAcoPool(5, 21000, 2000, 12501, 9, await addr1.getAddress(), converterHelper2.address, [buidlerPool.address])
-      ).to.be.revertedWith("E92");
+      ).to.be.revertedWith("E91");
       await expect(
         buidlerACOPoolFactory.setProtocolConfigOnAcoPool(5, 100001, 2000, 860, 9, await addr1.getAddress(), converterHelper2.address, [buidlerPool.address])
-      ).to.be.revertedWith("E93");
+      ).to.be.revertedWith("E92");
       await expect(
         buidlerACOPoolFactory.setProtocolConfigOnAcoPool(5, 21000, 100000, 860, 9, await addr1.getAddress(), converterHelper2.address, [buidlerPool.address])
-      ).to.be.revertedWith("E94");
+      ).to.be.revertedWith("E93");
       await expect(
         buidlerACOPoolFactory.setProtocolConfigOnAcoPool(5, 21000, 2000, 860, 0, await addr1.getAddress(), converterHelper2.address, [buidlerPool.address])
-      ).to.be.revertedWith("E95");
+      ).to.be.revertedWith("E94");
 
       await expect(
         buidlerACOPoolFactory.connect(addr1).setProtocolConfigOnAcoPool(5, 21000, 2000, 860, 9, await addr1.getAddress(), converterHelper2.address, [buidlerPool.address])
@@ -979,7 +946,7 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.protocolConfig()).assetConverter).to.equal(converterHelper.address);
     });
     it("Check set pool valid creator permission on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -1003,7 +970,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.validAcoCreators(await addr2.getAddress())).to.equal(true);
     });
     it("Check fail to set pool valid creator permission on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -1020,7 +987,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.validAcoCreators(await addr1.getAddress())).to.equal(false);
     });
     it("Check set pool forbidden creator on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -1044,7 +1011,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.forbiddenAcoCreators(await addr2.getAddress())).to.equal(false);
     });
     it("Check fail to set pool forbidden creator on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -1061,7 +1028,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.forbiddenAcoCreators(await addr2.getAddress())).to.equal(false);
     });
     it("Check withdraw stuck asset on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -1079,7 +1046,7 @@ describe("ACOPoolFactory2", function() {
       expect(await token3.balanceOf(await addr1.getAddress())).to.equal(500000);
     });
     it("Check fail to withdraw stuck asset on ACO", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, false, 100000, await owner.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -1117,7 +1084,7 @@ describe("ACOPoolFactory2", function() {
       expect(await token3.balanceOf(buidlerPool.address)).to.equal(500000);
     });
     it("Check pool proxy update", async function () {
-      let config = [0, 30000, 0, 30000, 0, (30*86400), -1, -1, -1000, 0];
+      let config = [0, 30000, 0, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.createAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), defaultStrategy.address, false, config)).wait();
       let result = tx.events[tx.events.length - 1].args;
       let buidlerPool = await ethers.getContractAt("ACOPool2V2", result.acoPool);
@@ -1134,12 +1101,10 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1000);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(0);
       expect(await buidlerPool.isPrivate()).to.equal(false);
       expect(await buidlerPool.strategy()).to.equal(defaultStrategy.address);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
@@ -1179,12 +1144,10 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1000);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(0);
       expect(await buidlerPool.isPrivate()).to.equal(false);
       expect(await buidlerPool.strategy()).to.equal(defaultStrategy.address);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
@@ -1202,7 +1165,7 @@ describe("ACOPoolFactory2", function() {
     });
     it("Check private pool creation", async function () {
       await buidlerACOPoolFactory.setStrikeAssetPermission(token2.address, true);
-      let config = [-1, 20000, -1, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [-1, 20000, -1, 30000, 0, 0, 0, (30*86400)];
       let tx = await (await buidlerACOPoolFactory.connect(addr2).newAcoPool(token1.address, token2.address, true, 100000, await addr2.getAddress(), config)).wait();
       let result1 = tx.events[tx.events.length - 1].args;
 
@@ -1216,12 +1179,10 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(-1);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(-1);
       expect(await buidlerPool.isPrivate()).to.equal(true);
       expect(await buidlerPool.strategy()).to.equal(defaultStrategy.address);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
@@ -1247,12 +1208,10 @@ describe("ACOPoolFactory2", function() {
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMax).to.equal(30000);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceBelowMin).to.equal(-1);
       expect((await buidlerPool.acoPermissionConfigV2()).tolerancePriceAboveMin).to.equal(-1);
+      expect((await buidlerPool.acoPermissionConfigV2()).minStrikePrice).to.equal(0);
+      expect((await buidlerPool.acoPermissionConfigV2()).maxStrikePrice).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).minExpiration).to.equal(0);
       expect((await buidlerPool.acoPermissionConfigV2()).maxExpiration).to.equal((30*86400));
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceBelowMax).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMin).to.equal(-1);
-      expect((await buidlerPool.acoPermissionConfigV2()).toleranceAmountPriceAboveMax).to.equal(-1);
       expect(await buidlerPool.isPrivate()).to.equal(true);
       expect(await buidlerPool.strategy()).to.equal(defaultStrategy.address);
       expect(await buidlerPool.baseVolatility()).to.equal(100000);
@@ -1266,7 +1225,7 @@ describe("ACOPoolFactory2", function() {
       expect(await buidlerPool.poolAdmin()).to.equal(await owner.getAddress());
     });
     it("Check fail on private pool creation", async function () {
-      let config = [-1, 30000, -1, 30000, 0, (30*86400), -1, -1, -1, -1];
+      let config = [-1, 30000, -1, 30000, 0, 0, 0, (30*86400)];
       await expect(
         buidlerACOPoolFactory.connect(addr1).newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), config)
       ).to.be.revertedWith("ACOPoolFactory2::newAcoPool: Invalid strike asset");
@@ -1279,7 +1238,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [0, 30000, 0, 30000, (31*86400), (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [0, 30000, 0, 30000, 100, 0, (31*86400), (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -1287,7 +1246,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [0, 100000, 0, 30000, 0, (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [0, 100000, 0, 30000, 0, 0, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -1295,7 +1254,7 @@ describe("ACOPoolFactory2", function() {
       
       error = false;
       try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [100000, 0, 0, 30000, 0, (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [100000, 0, 0, 30000, 0, 0, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -1303,7 +1262,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [2000, 1000, 0, 30000, 0, (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [2000, 1000, 0, 30000, 0, 0, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -1311,7 +1270,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [2000, 1000, 30001, 30000, 0, (30*86400), -1, -1, -1, -1]);
+        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [2000, 1000, 30001, 30000, 0, 50000000, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -1319,15 +1278,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [-1, 1000, -1, 30000, 0, (30*86400), -1, -100, 50, 50]);
-      } catch(e) {
-        error = e.message === "VM Exception while processing transaction: invalid opcode";
-      }
-      expect(error).to.equal(true);
-      
-      error = false;
-      try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [-1, 1000, -1, 30000, 0, (30*86400), -1, -1, 51, 50]);
+        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [-1, 1000, -1, 30000, 60000, 60000, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }
@@ -1335,15 +1286,7 @@ describe("ACOPoolFactory2", function() {
 
       error = false;
       try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [-1, 1000, -1, 30000, 0, (30*86400), 10, 5, 50, -1]);
-      } catch(e) {
-        error = e.message === "VM Exception while processing transaction: invalid opcode";
-      }
-      expect(error).to.equal(true);
-
-      error = false;
-      try {
-        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [-1, 1000, -1, 30000, 0, (30*86400), 5, 5, -1, -1]);
+        await buidlerACOPoolFactory.newAcoPool(token1.address, token2.address, true, 100000, await owner.getAddress(), [-1, 1000, -1, 30000, 9, 8, 0, (30*86400)]);
       } catch(e) {
         error = e.message === "VM Exception while processing transaction: invalid opcode";
       }

@@ -42,12 +42,10 @@ interface IACOPool2 is IERC20 {
         int256 tolerancePriceBelowMax;
         int256 tolerancePriceAboveMin;
         int256 tolerancePriceAboveMax;
+        uint256 minStrikePrice;
+        uint256 maxStrikePrice;
         uint256 minExpiration;
         uint256 maxExpiration;
-        int256 toleranceAmountPriceBelowMin;
-        int256 toleranceAmountPriceBelowMax;
-        int256 toleranceAmountPriceAboveMin;
-        int256 toleranceAmountPriceAboveMax;
     }
     
     struct PoolProtocolConfig {
