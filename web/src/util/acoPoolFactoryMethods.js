@@ -4,7 +4,7 @@ import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 import { getGeneralData } from './acoPoolMethodsv2';
-import { acoPermissionConfig } from './acoPoolMethodsv4';
+import { acoPermissionConfig } from './acoPoolMethodsv5';
 
 var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {
@@ -149,10 +149,12 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
 
                 }
                 var strikePrice = Number(fromDecimals(option.strikePrice, 6))
-                var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) === 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.tolerancePriceBelowMax) === 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.tolerancePriceAboveMin) === 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.tolerancePriceAboveMax) === 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
+                var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) < 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceBelowMax) < 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMin) < 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMax) < 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.minStrikePrice) <= strikePrice)
+                    && (Number(poolConfig.maxStrikePrice) === 0 || Number(poolConfig.maxStrikePrice) >= strikePrice)
 
                 resolve(isValidStrikePrice)
             })

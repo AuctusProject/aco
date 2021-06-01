@@ -11,7 +11,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/acoPoolMethodsv4'
+import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/acoPoolMethodsv5'
 import SimpleDropdown from '../SimpleDropdown'
 
 const strikePriceOptions = [
@@ -78,11 +78,8 @@ class UpdateSellingOptionsModal extends Component {
   }
 
   getToleranceDecimals = (stateValue) => {
-    if (stateValue === null) {
-      return "0"
-    }
-    else if (Number(stateValue) === 0) {
-      return "1"
+    if (stateValue === null || isNaN(stateValue) || stateValue < 0) {
+      return "-1"
     }
     else {
       return toDecimals(stateValue / 100.0, 5).toString()
@@ -98,33 +95,34 @@ class UpdateSellingOptionsModal extends Component {
       let tolerancePriceAboveMin = this.getToleranceDecimals(this.state.tolerancePriceAboveMin)
       let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
       if (this.state.priceSettingsType === strikePriceOptions[0]) {
-        tolerancePriceBelowMin = 0
-        tolerancePriceBelowMax = 0
-        tolerancePriceAboveMin = 0
-        tolerancePriceAboveMax = 0
+        tolerancePriceBelowMin = "-1"
+        tolerancePriceBelowMax = "-1"
+        tolerancePriceAboveMin = "-1"
+        tolerancePriceAboveMax = "-1"
       }
       else if ((this.state.priceSettingsType === strikePriceOptions[1] && pool.isCall) || 
         (this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall)) {
-        tolerancePriceBelowMin = 0
-        tolerancePriceBelowMax = 0
+        tolerancePriceBelowMin = "-1"
+        tolerancePriceBelowMax = "-1"
         if (this.state.noMax) {
-          tolerancePriceAboveMax = 0
+          tolerancePriceAboveMax = "-1"
         }
       }
       else if ((this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
         (this.state.priceSettingsType === strikePriceOptions[2] && pool.isCall)) {
-          tolerancePriceAboveMin = 0
-          tolerancePriceAboveMax = 0
+          tolerancePriceAboveMin = "-1"
+          tolerancePriceAboveMax = "-1"
       }
       else if (this.state.priceSettingsType === strikePriceOptions[3]) {
-        tolerancePriceBelowMin = 0
-        tolerancePriceAboveMin = 0
+        tolerancePriceBelowMin = "-1"
+        tolerancePriceAboveMin = "-1"
       }
 
       let minExpiration = this.state.minExpiration * 86400
       let maxExpiration = this.state.maxExpiration * 86400
       this.setStepsModalInfo(++stepNumber)
-      setAcoPermissionConfig(this.context.web3.selectedAccount, pool.address, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minExpiration, maxExpiration)
+      //TODO MIN and MAX strike price (zero is same that undefined)
+      setAcoPermissionConfig(this.context.web3.selectedAccount, pool.address, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, "0", "0", minExpiration, maxExpiration)
         .then(result => {
           if (result) {
             this.setStepsModalInfo(++stepNumber)

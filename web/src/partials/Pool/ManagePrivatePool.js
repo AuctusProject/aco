@@ -1,10 +1,11 @@
 import './ManagePrivatePool.css'
 import React, { Component } from 'react'
-import { acoPermissionConfig } from '../../util/acoPoolMethodsv4'
+import { acoPermissionConfig } from '../../util/acoPoolMethodsv5'
 import { formatPercentage, PERCENTAGE_PRECISION } from '../../util/constants'
 import Loading from '../Util/Loading'
 import UpdateIVModal from './UpdateIVModal'
 import UpdateSellingOptionsModal from './UpdateSellingOptionsModal'
+import BigNumber from 'bignumber.js'
 
 class ManagePrivatePool extends Component {
   constructor() {
@@ -27,18 +28,24 @@ class ManagePrivatePool extends Component {
       tolerancePriceBelowMax: this.getTolerance(acoPermissionConfig.tolerancePriceBelowMax),
       tolerancePriceAboveMin: this.getTolerance(acoPermissionConfig.tolerancePriceAboveMin),
       tolerancePriceAboveMax: this.getTolerance(acoPermissionConfig.tolerancePriceAboveMax),
+      minStrikePrice: this.getStrikePriceArgument(acoPermissionConfig.minStrikePrice),
+      maxStrikePrice: this.getStrikePriceArgument(acoPermissionConfig.maxStrikePrice),
       loading:false
     })
   }
 
   getTolerance = (tolerance) => {
-    if (tolerance === "0") {
+    if (!tolerance || isNaN(tolerance) || tolerance.startsWith("-")) {
       return null
     }
-    if (tolerance === "1") {
-      return 0
-    }
     return tolerance/PERCENTAGE_PRECISION
+  }
+
+  getStrikePriceArgument = (arg) => {
+    if (!arg || isNaN(arg) || arg === "0") {
+      return null
+    }
+    return new BigNumber(arg)
   }
 
   getStrikePriceConfig = () => {
