@@ -253,6 +253,8 @@ const parseSubgraphPool = (pool) => {
     tolerancePriceBelowMax: parseSubgraphNum(pool.tolerancePriceBelowMax, percentageDecimals),
     tolerancePriceAboveMin: parseSubgraphNum(pool.tolerancePriceAboveMin, percentageDecimals),
     tolerancePriceAboveMax: parseSubgraphNum(pool.tolerancePriceAboveMax, percentageDecimals),
+    minStrikePrice: parseSubgraphNum(pool.minStrikePrice, parseInt(pool.strikeAsset.decimals)),
+    maxStrikePrice: parseSubgraphNum(pool.maxStrikePrice, parseInt(pool.strikeAsset.decimals)),
     minExpiration: parseInt(pool.minExpiration),
     maxExpiration: parseInt(pool.maxExpiration),
     totalSupply: parseSubgraphNum(pool.totalSupply, parseInt(pool.decimals)),
@@ -376,6 +378,9 @@ const parseSubgraphTx = (tx) => {
 }
 
 const parseSubgraphNum = (stringNum, decimals) => {
+  if (stringNum && stringNum.startsWith('-')) {
+    return stringNum
+  }
   let splittedNum = stringNum.split('.')
   let fraction = ''
   if (splittedNum.length > 1) {

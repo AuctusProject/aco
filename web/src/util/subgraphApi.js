@@ -54,6 +54,8 @@ const basePoolQuery = `{
     tolerancePriceBelowMax
     tolerancePriceAboveMin
     tolerancePriceAboveMax
+    minStrikePrice
+    maxStrikePrice
     minExpiration
     maxExpiration
     holdersCount
@@ -105,6 +107,8 @@ const detailedPoolQuery = `{
     tolerancePriceBelowMax
     tolerancePriceAboveMin
     tolerancePriceAboveMax
+    minStrikePrice
+    maxStrikePrice
     minExpiration
     maxExpiration
     holdersCount
