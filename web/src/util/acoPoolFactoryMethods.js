@@ -1,4 +1,4 @@
-import { getWeb3 } from './web3Methods'
+import { getWeb3, sendTransaction } from './web3Methods'
 import { acoPoolFactoryAddress, deprecatedPoolImplementation, fromDecimals, getBalanceOfAsset, ONE_SECOND, toDecimals, PERCENTAGE_PRECISION } from './constants';
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
@@ -202,5 +202,13 @@ export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwa
             .catch(err => reject(err))
         })
         .catch(err => reject(err))
+    })
+}
+
+export const createPrivatePool = (from, underlying, strikeAsset, isCall, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration) => {
+    return new Promise((resolve, reject) => {
+        const acoPoolFactoryContract = getAcoPoolFactoryContract()
+        var data = acoPoolFactoryContract.methods.newAcoPool(underlying, strikeAsset, isCall, baseVolatility, from, [tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration]).encodeABI()
+        return sendTransaction(null, null, from, acoPoolFactoryContract, null, data)
     })
 }

@@ -176,23 +176,16 @@ contract ACOPool2 is Ownable, ERC20 {
         chiToken.freeFromUpTo(msg.sender, (gasSpent + 14154) / 41947);
     }
     
-    receive() external payable {
+    function name() public override virtual view returns(string memory) {
+        return "";
     }
 
-    function name() public override view returns(string memory) {
-        return ACOPoolLib.name(underlying, strikeAsset, isCall);
+	function symbol() public override virtual view returns(string memory) {
+        return "";
     }
 
-	function symbol() public override view returns(string memory) {
-        return name();
-    }
-
-    function decimals() public override view returns(uint8) {
-        return ACOAssetHelper._getAssetDecimals(collateral());
-    }
-
-	function collateral() public view returns(address) {
-        return (isCall ? underlying : strikeAsset);
+    function decimals() public override virtual view returns(uint8) {
+        return 0;
     }
 }
 
@@ -201,6 +194,7 @@ contract ACOPool2V2 is ACOPool2 {
 	event SetAcoPermissionConfigV2(IACOPool2.PoolAcoPermissionConfigV2 oldConfig, IACOPool2.PoolAcoPermissionConfigV2 newConfig);
 	
     bool public isPrivate;
+    uint256 public poolId;
     IACOPool2.PoolAcoPermissionConfigV2 public acoPermissionConfigV2;
 
     function init(IACOPool2.InitData calldata initData) external {
@@ -215,6 +209,7 @@ contract ACOPool2V2 is ACOPool2 {
         strikeAsset = initData.strikeAsset;
         isCall = initData.isCall;
         isPrivate = initData.isPrivate;
+        poolId = initData.poolId;
 		
 		_setProtocolConfig(initData.protocolConfig);
 		_setPoolAdmin(initData.admin);
@@ -227,6 +222,25 @@ contract ACOPool2V2 is ACOPool2 {
             _setAuthorizedSpender(initData.strikeAsset, initData.lendingPool);
         }
 		underlyingPrecision = 10 ** uint256(ACOAssetHelper._getAssetDecimals(initData.underlying));
+    }
+    
+    receive() external payable {
+    }
+
+    function name() public override view returns(string memory) {
+        return ACOPoolLib.name(underlying, strikeAsset, isCall, poolId);
+    }
+
+	function symbol() public override view returns(string memory) {
+        return name();
+    }
+
+    function decimals() public override view returns(uint8) {
+        return ACOAssetHelper._getAssetDecimals(collateral());
+    }
+
+	function collateral() public view returns(address) {
+        return (isCall ? underlying : strikeAsset);
     }
 
     function numberOfAcoTokensNegotiated() external view returns(uint256) {

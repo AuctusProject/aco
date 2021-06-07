@@ -47,6 +47,7 @@ const basePoolQuery = `{
     baseVolatility
     implementation
     poolAdmin
+    poolId
     fee
     withdrawOpenPositionPenalty
     totalSupply
@@ -100,6 +101,7 @@ const detailedPoolQuery = `{
     baseVolatility
     implementation
     poolAdmin
+    poolId
     fee
     withdrawOpenPositionPenalty
     totalSupply

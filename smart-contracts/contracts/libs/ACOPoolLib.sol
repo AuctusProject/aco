@@ -49,14 +49,20 @@ library ACOPoolLib {
 	
 	uint256 public constant PERCENTAGE_PRECISION = 100000;
 	
-	function name(address underlying, address strikeAsset, bool isCall) public view returns(string memory) {
+	function name(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall, 
+        uint256 poolId
+    ) public view returns(string memory) {
         return string(abi.encodePacked(
             "ACO POOL WRITE ",
             _getAssetSymbol(underlying),
             "-",
             _getAssetSymbol(strikeAsset),
             "-",
-            (isCall ? "CALL" : "PUT")
+            (isCall ? "CALL #" : "PUT #"),
+            _formatNumber(poolId)
         ));
     }
     
@@ -204,6 +210,26 @@ library ACOPoolLib {
             
 		(collateralLocked, collateralOnOpenPosition, collateralLockedRedeemable) = _poolOpenPositionCollateralBalance(data, openAcos);
 	}
+
+    function _formatNumber(uint256 value) internal pure returns(string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 digits;
+        uint256 temp = value;
+        while (temp != 0) {
+            temp /= 10;
+            digits++;
+        }
+        bytes memory buffer = new bytes(digits);
+        uint256 index = digits - 1;
+        temp = value;
+        for (uint256 i = 0; i < digits; ++i) {
+            buffer[index--] = byte(uint8(48 + temp % 10));
+            temp /= 10;
+        }
+        return string(buffer);
+    }
 	
 	function _getBaseCollateralData(
 	    bool isDeposit,

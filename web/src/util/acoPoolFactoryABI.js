@@ -118,6 +118,44 @@ export const acoPoolFactoryABI =
 		"inputs": [
 			{
 				"indexed": true,
+				"internalType": "address",
+				"name": "oldLendingPool",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newLendingPool",
+				"type": "address"
+			}
+		],
+		"name": "SetAcoPoolLendingPool",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "oldLendingPoolReferral",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "newLendingPoolReferral",
+				"type": "uint256"
+			}
+		],
+		"name": "SetAcoPoolLendingPoolReferral",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
 				"internalType": "uint256",
 				"name": "previousMaximumOpenAco",
 				"type": "uint256"
@@ -220,6 +258,31 @@ export const acoPoolFactoryABI =
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "acoCreator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "previousPermission",
+				"type": "bool"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "newPermission",
+				"type": "bool"
+			}
+		],
+		"name": "SetAuthorizedAcoCreator",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "previousChiToken",
 				"type": "address"
 			},
@@ -231,6 +294,25 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "SetChiToken",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousDefaultStrategy",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newDefaultStrategy",
+				"type": "address"
+			}
+		],
+		"name": "SetDefaultStrategy",
 		"type": "event"
 	},
 	{
@@ -258,6 +340,75 @@ export const acoPoolFactoryABI =
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "acoCreator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "previousStatus",
+				"type": "bool"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "newStatus",
+				"type": "bool"
+			}
+		],
+		"name": "SetForbiddenAcoCreator",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "previousPermission",
+				"type": "bool"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "newPermission",
+				"type": "bool"
+			}
+		],
+		"name": "SetOperator",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousPoolProxyAdmin",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newPoolProxyAdmin",
+				"type": "address"
+			}
+		],
+		"name": "SetPoolProxyAdmin",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "strategy",
 				"type": "address"
 			},
@@ -275,6 +426,31 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "SetStrategyPermission",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "strikeAsset",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "previousPermission",
+				"type": "bool"
+			},
+			{
+				"indexed": true,
+				"internalType": "bool",
+				"name": "newPermission",
+				"type": "bool"
+			}
+		],
+		"name": "SetStrikeAssetPermission",
 		"type": "event"
 	},
 	{
@@ -442,23 +618,13 @@ export const acoPoolFactoryABI =
 			},
 			{
 				"internalType": "uint256",
-				"name": "tolerancePriceBelow",
+				"name": "baseVolatility",
 				"type": "uint256"
 			},
 			{
-				"internalType": "uint256",
-				"name": "tolerancePriceAbove",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "minExpiration",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "maxExpiration",
-				"type": "uint256"
+				"internalType": "address",
+				"name": "poolAdmin",
+				"type": "address"
 			},
 			{
 				"internalType": "address",
@@ -466,9 +632,56 @@ export const acoPoolFactoryABI =
 				"type": "address"
 			},
 			{
-				"internalType": "uint256",
-				"name": "baseVolatility",
-				"type": "uint256"
+				"internalType": "bool",
+				"name": "isPrivate",
+				"type": "bool"
+			},
+			{
+				"components": [
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceBelowMin",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceBelowMax",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceAboveMin",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceAboveMax",
+						"type": "int256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minStrikePrice",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "maxStrikePrice",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minExpiration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "maxExpiration",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct IACOPool2.PoolAcoPermissionConfigV2",
+				"name": "acoPermissionConfig",
+				"type": "tuple"
 			}
 		],
 		"name": "createAcoPool",
@@ -483,6 +696,38 @@ export const acoPoolFactoryABI =
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "creators",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "defaultStrategy",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "factoryAdmin",
 		"outputs": [
@@ -490,6 +735,70 @@ export const acoPoolFactoryABI =
 				"internalType": "address",
 				"name": "",
 				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "getAcoCreatorAuthorized",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "index",
+				"type": "uint256"
+			}
+		],
+		"name": "getAcoCreatorForbidden",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getNumberOfAcoCreatorsAuthorized",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getNumberOfAcoCreatorsForbidden",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -554,6 +863,137 @@ export const acoPoolFactoryABI =
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "lendingPool",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "lendingPoolReferral",
+		"outputs": [
+			{
+				"internalType": "uint16",
+				"name": "",
+				"type": "uint16"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "underlying",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "strikeAsset",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "isCall",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "baseVolatility",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "poolAdmin",
+				"type": "address"
+			},
+			{
+				"components": [
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceBelowMin",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceBelowMax",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceAboveMin",
+						"type": "int256"
+					},
+					{
+						"internalType": "int256",
+						"name": "tolerancePriceAboveMax",
+						"type": "int256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minStrikePrice",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "maxStrikePrice",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "minExpiration",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "maxExpiration",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct IACOPool2.PoolAcoPermissionConfigV2",
+				"name": "acoPermissionConfig",
+				"type": "tuple"
+			}
+		],
+		"name": "newAcoPool",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "operators",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -573,6 +1013,32 @@ export const acoPoolFactoryABI =
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "poolCount",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "poolProxyAdmin",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -581,6 +1047,39 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "setAcoFactory",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "tolerancePricesBelow",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "tolerancePricesAbove",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "minExpirations",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "maxExpirations",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setAcoPermissionDataOnAcoPool",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -620,6 +1119,32 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "setAcoPoolImplementation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newLendingPool",
+				"type": "address"
+			}
+		],
+		"name": "setAcoPoolLendingPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "newLendingPoolReferral",
+				"type": "uint16"
+			}
+		],
+		"name": "setAcoPoolLendingPoolReferral",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -733,6 +1258,24 @@ export const acoPoolFactoryABI =
 	{
 		"inputs": [
 			{
+				"internalType": "address",
+				"name": "acoCreator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "newPermission",
+				"type": "bool"
+			}
+		],
+		"name": "setAuthorizedAcoCreator",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
 				"internalType": "uint256[]",
 				"name": "baseVolatilities",
 				"type": "uint256[]"
@@ -782,6 +1325,29 @@ export const acoPoolFactoryABI =
 				"type": "address[]"
 			},
 			{
+				"internalType": "uint256[]",
+				"name": "fees",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setFeeDataOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "feeDestinations",
+				"type": "address[]"
+			},
+			{
 				"internalType": "address[]",
 				"name": "acoPools",
 				"type": "address[]"
@@ -806,6 +1372,65 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "setFeeOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "acoCreator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "newStatus",
+				"type": "bool"
+			}
+		],
+		"name": "setForbiddenAcoCreator",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "acoCreator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "status",
+				"type": "bool"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setForbiddenAcoCreatorOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "lendingPoolReferrals",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setLendingPoolReferralOnAcoPool",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -868,6 +1493,98 @@ export const acoPoolFactoryABI =
 		"inputs": [
 			{
 				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "newPermission",
+				"type": "bool"
+			}
+		],
+		"name": "setOperator",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newDefaultStrategy",
+				"type": "address"
+			}
+		],
+		"name": "setPoolDefaultStrategy",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newPoolProxyAdmin",
+				"type": "address"
+			}
+		],
+		"name": "setPoolProxyAdmin",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint16",
+				"name": "lendingPoolReferral",
+				"type": "uint16"
+			},
+			{
+				"internalType": "uint256",
+				"name": "withdrawOpenPositionPenalty",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "underlyingPriceAdjustPercentage",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "fee",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "maximumOpenAco",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "feeDestination",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "assetConverter",
+				"type": "address"
+			},
+			{
+				"internalType": "address[]",
+				"name": "acoPools",
+				"type": "address[]"
+			}
+		],
+		"name": "setProtocolConfigOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
 				"name": "strategy",
 				"type": "address"
 			},
@@ -878,6 +1595,24 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"name": "setStrategyOnAcoPool",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "strikeAsset",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "newPermission",
+				"type": "bool"
+			}
+		],
+		"name": "setStrikeAssetPermission",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -994,6 +1729,61 @@ export const acoPoolFactoryABI =
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "strikeAssets",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newPoolProxyAdmin",
+				"type": "address"
+			},
+			{
+				"internalType": "address payable[]",
+				"name": "pools",
+				"type": "address[]"
+			}
+		],
+		"name": "transferPoolProxyAdmin",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address payable[]",
+				"name": "pools",
+				"type": "address[]"
+			},
+			{
+				"internalType": "bytes",
+				"name": "initData",
+				"type": "bytes"
+			}
+		],
+		"name": "updatePoolsImplementation",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
