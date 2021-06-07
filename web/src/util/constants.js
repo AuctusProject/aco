@@ -109,6 +109,19 @@ export const AdvancedOrderStepsType = {
     BuySellLimit: 3
 }
 
+export const STRIKE_PRICE_OPTIONS = [
+    {value: 2, name:"OTM"}, 
+    {value: 3, name:"ITM"}, 
+    {value: 4, name:"ATM"}
+]
+
+export const STRIKE_PRICE_MODE = [
+    {value: 1, name:"FIXED"}, 
+    {value: 2, name:"PERCENTAGE"}, 
+    {value: 3, name:"BOTH"},
+    {value: 4, name:"ANY PRICE"},
+]
+
 export function getOptionName(isCall) {
     return isCall ? OPTION_TYPES[1].name : OPTION_TYPES[2].name
 }

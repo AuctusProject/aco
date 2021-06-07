@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
 
-class SimpleDropdown extends Component {  
+class SimpleAssetDropdown extends Component {  
   selectOption = (option) => {
     this.props.onSelectOption(option)
   } 
@@ -50,7 +50,7 @@ class SimpleDropdown extends Component {
       </ul>)
   }
 }
-SimpleDropdown.contextTypes = {
+SimpleAssetDropdown.contextTypes = {
   assetsImages: PropTypes.object
 }
-export default SimpleDropdown
+export default SimpleAssetDropdown

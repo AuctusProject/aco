@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { toDecimals } from '../../util/constants'
+import { STRIKE_PRICE_OPTIONS, toDecimals } from '../../util/constants'
 import { checkTransactionIsMined } from '../../util/web3Methods'
 import StepsModal from '../StepsModal/StepsModal'
 import DecimalInput from '../Util/DecimalInput'
@@ -13,13 +13,6 @@ import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/acoPoolMethodsv5'
 import SimpleDropdown from '../SimpleDropdown'
-
-const strikePriceOptions = [
-  {value: 1, name:"ANY PRICE"}, 
-  {value: 2, name:"OTM"}, 
-  {value: 3, name:"ITM"}, 
-  {value: 4, name:"ATM"}
-]
 
 class UpdateSellingOptionsModal extends Component {
   constructor(props) {
@@ -40,16 +33,16 @@ class UpdateSellingOptionsModal extends Component {
     let priceSettingsType = null
     if (this.props.tolerancePriceAboveMin === null && this.props.tolerancePriceBelowMin === null && 
       this.props.tolerancePriceAboveMax === null && this.props.tolerancePriceBelowMax === null) {
-      priceSettingsType = strikePriceOptions[0]
+      priceSettingsType = STRIKE_PRICE_OPTIONS[0]
     }
     else if (this.props.tolerancePriceBelowMin === null && this.props.tolerancePriceBelowMax === null) {
-      priceSettingsType = pool.isCall ? strikePriceOptions[1] : strikePriceOptions[2]
+      priceSettingsType = pool.isCall ? STRIKE_PRICE_OPTIONS[1] : STRIKE_PRICE_OPTIONS[2]
     }
     else if (this.props.tolerancePriceAboveMin === null && this.props.tolerancePriceAboveMax === null) {
-      priceSettingsType = pool.isCall ? strikePriceOptions[2] : strikePriceOptions[1]
+      priceSettingsType = pool.isCall ? STRIKE_PRICE_OPTIONS[2] : STRIKE_PRICE_OPTIONS[1]
     }
     else {
-      priceSettingsType = strikePriceOptions[3]
+      priceSettingsType = STRIKE_PRICE_OPTIONS[3]
     }
 
     this.setState({
@@ -94,26 +87,26 @@ class UpdateSellingOptionsModal extends Component {
       let tolerancePriceBelowMax = this.getToleranceDecimals(this.state.tolerancePriceBelowMax)
       let tolerancePriceAboveMin = this.getToleranceDecimals(this.state.tolerancePriceAboveMin)
       let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
-      if (this.state.priceSettingsType === strikePriceOptions[0]) {
+      if (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[0]) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceBelowMax = "-1"
         tolerancePriceAboveMin = "-1"
         tolerancePriceAboveMax = "-1"
       }
-      else if ((this.state.priceSettingsType === strikePriceOptions[1] && pool.isCall) || 
-        (this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall)) {
+      else if ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && pool.isCall) || 
+        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && !pool.isCall)) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceBelowMax = "-1"
         if (this.state.noMax) {
           tolerancePriceAboveMax = "-1"
         }
       }
-      else if ((this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
-        (this.state.priceSettingsType === strikePriceOptions[2] && pool.isCall)) {
+      else if ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && !pool.isCall) || 
+        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && pool.isCall)) {
           tolerancePriceAboveMin = "-1"
           tolerancePriceAboveMax = "-1"
       }
-      else if (this.state.priceSettingsType === strikePriceOptions[3]) {
+      else if (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[3]) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceAboveMin = "-1"
       }
@@ -205,25 +198,25 @@ class UpdateSellingOptionsModal extends Component {
       return "Select strike price option"
     }
     if ((this.state.tolerancePriceBelowMin === null || this.state.tolerancePriceBelowMin === "") && 
-      ((this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
-        (this.state.priceSettingsType === strikePriceOptions[2] && pool.isCall))) {
+      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && !pool.isCall) || 
+        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && pool.isCall))) {
       return "Enter tolerance"
     }
     if ((this.state.tolerancePriceBelowMax === null || this.state.tolerancePriceBelowMax === "") && 
-      ((this.state.priceSettingsType === strikePriceOptions[1] && !pool.isCall) || 
-        (this.state.priceSettingsType === strikePriceOptions[2] && pool.isCall) || 
-        this.state.priceSettingsType === strikePriceOptions[3])) {
+      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && !pool.isCall) || 
+        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && pool.isCall) || 
+        this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[3])) {
       return "Enter tolerance"
     }
     if ((this.state.tolerancePriceAboveMin === null || this.state.tolerancePriceAboveMin === "") && 
-      ((this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall) || 
-        (this.state.priceSettingsType === strikePriceOptions[1] && pool.isCall))) {
+      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && !pool.isCall) || 
+        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && pool.isCall))) {
       return "Enter tolerance"
     }
     if ((this.state.tolerancePriceAboveMax === null || this.state.tolerancePriceAboveMax === "") && 
-      ((this.state.priceSettingsType === strikePriceOptions[3]) ||
-      (((this.state.priceSettingsType === strikePriceOptions[2] && !pool.isCall) || 
-        (this.state.priceSettingsType === strikePriceOptions[1] && pool.isCall)) && 
+      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[3]) ||
+      (((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && !pool.isCall) || 
+        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && pool.isCall)) && 
         !this.state.noMax))) {
       return "Enter tolerance"
     }
@@ -242,10 +235,6 @@ class UpdateSellingOptionsModal extends Component {
 
   canConfirm = () => {
     return (this.getButtonMessage() === null)
-  }
-
-  onValueChange = (value) => {
-    this.setState({ value: value })
   }
 
   onMinExpirationChange = (value) => {
@@ -313,7 +302,7 @@ class UpdateSellingOptionsModal extends Component {
                 <div className="input-column">
                   <div className="input-label">Strike Price Options</div>
                   <div className="input-field">
-                    <SimpleDropdown placeholder="Strike Settings" selectedOption={this.state.priceSettingsType} options={strikePriceOptions} onSelectOption={this.priceSettingsTypeChange}></SimpleDropdown>
+                    <SimpleDropdown placeholder="Strike Settings" selectedOption={this.state.priceSettingsType} options={STRIKE_PRICE_OPTIONS} onSelectOption={this.priceSettingsTypeChange}></SimpleDropdown>
                   </div>
                 </div>
               </div>
@@ -331,7 +320,7 @@ class UpdateSellingOptionsModal extends Component {
                   <div>&lt;=</div>
                   <div>Strike Price</div>
                   <div className={(this.state.noMax ? " no-max-checked" : "")}>&lt;=</div>
-                  <div className={"label-input-column"+(this.state.noMax ? " no-max-checked" : "")}>
+                  <div className={"label-input-column no-max-input "+(this.state.noMax ? "no-max-checked" : "")}>
                     <div className="form-group form-check">
                       <input type="checkbox" onChange={this.onNoMaxChange} checked={this.state.noMax} className="form-check-input clickable" id="noMaxCheck"/>
                       <label className="form-check-label clickable" htmlFor="noMaxCheck">

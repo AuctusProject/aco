@@ -15,6 +15,17 @@
     background-color: transparent;
 }
 
+.pooled-liquidity-title-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pooled-liquidity-title-row .create-pool-btn {
+    margin-bottom: 16px;
+}
+
 .pooled-liquidity-title {
     margin-bottom: 16px;
     font-weight: bold;

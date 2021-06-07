@@ -94,8 +94,8 @@ export const getOptionsFromPair = (options, selectedPair) => {
 }
 
 let allPools = null
-export const getPools = async () => {
-  if (allPools != null) {
+export const getPools = async (forceRefresh = false) => {
+  if (!forceRefresh && allPools != null) {
     return allPools
   }
   let result = await getAllPools()
