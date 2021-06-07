@@ -1114,7 +1114,7 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
     /**
      * @dev Internal function to create a new ACO pool.
      * @param initData Data to initialize o ACO Pool.
-     * @return Address of the new minimal proxy deployed for the ACO pool.
+     * @return Address of the new proxy deployed for the ACO pool.
      */
     function _createAcoPool(IACOPool2.InitData memory initData) internal override virtual returns(address) {
         address acoPool  = _deployAcoPool(initData);
@@ -1128,8 +1128,8 @@ contract ACOPoolFactory2V4 is ACOPoolFactory2V3 {
         }
         emit NewAcoPool(initData.underlying, initData.strikeAsset, initData.isCall, acoPool, acoPoolImplementation);
         return acoPool;
-    }
-
+    }	
+    
     /**
      * @dev Internal function to set the pool proxy admin address.
      * @param newPoolProxyAdmin Address of the new pool proxy admin.
@@ -1202,6 +1202,11 @@ contract ACOPoolFactory2V5 is ACOPoolFactory2V4 {
     address public defaultStrategy;
     
     /**
+     * @dev Number of pools.
+     */
+    uint256 public poolCount;
+    
+    /**
      * @dev A map to register the strike assets permissions.
      */
     mapping(address => bool) public strikeAssets;
@@ -1239,6 +1244,7 @@ contract ACOPoolFactory2V5 is ACOPoolFactory2V4 {
             poolAdmin,
             strategy,
             isPrivate,
+            ++poolCount,
             acoPermissionConfig,
             IACOPool2.PoolProtocolConfig(
                 lendingPoolReferral,
@@ -1284,6 +1290,7 @@ contract ACOPoolFactory2V5 is ACOPoolFactory2V4 {
             poolAdmin,
             defaultStrategy,
             true,
+            ++poolCount,
             acoPermissionConfig,
             IACOPool2.PoolProtocolConfig(
                 lendingPoolReferral,

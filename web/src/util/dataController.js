@@ -246,6 +246,7 @@ const parseSubgraphPool = (pool) => {
     isCall: pool.isCall,
     acoPoolImplementation: pool.implementation,
     admin: pool.poolAdmin,
+    poolId: parseInt(pool.poolId),
     volatility: parseFloat(pool.baseVolatility) * 100,
     protocolFee: parseFloat(pool.fee) * 100,
     withdrawOpenPositionPenalty: parseFloat(pool.withdrawOpenPositionPenalty) * 100,

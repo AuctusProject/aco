@@ -15,6 +15,7 @@ interface IACOPool2 is IERC20 {
         address admin;
         address strategy;  
         bool isPrivate;
+        uint256 poolId;
         PoolAcoPermissionConfigV2 acoPermissionConfigV2;
         PoolProtocolConfig protocolConfig;
     }
