@@ -6,8 +6,15 @@ import PropTypes from "prop-types";
 import OptionBadge from "../OptionBadge";
 import SimpleAssetDropdown from "../SimpleAssetDropdown";
 import DecimalInput from "../Util/DecimalInput";
-import { STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS } from "../../util/constants";
+import { ethAddress, StrikePriceModes, StrikePriceOptions, STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS, toDecimals, usdcAddress, wbtcAddress } from "../../util/constants";
 import SimpleDropdown from "../SimpleDropdown";
+import { createPrivatePool } from "../../util/acoPoolFactoryMethods";
+import { checkTransactionIsMined } from "../../util/web3Methods";
+import MetamaskLargeIcon from "../Util/MetamaskLargeIcon";
+import SpinnerLargeIcon from "../Util/SpinnerLargeIcon";
+import DoneLargeIcon from "../Util/DoneLargeIcon";
+import ErrorLargeIcon from "../Util/ErrorLargeIcon";
+import StepsModal from "../StepsModal/StepsModal";
 
 export const CREATE_POOL_UNDERLYING_OPTIONS = [
   {
@@ -42,7 +49,10 @@ class CreatePoolModal extends Component {
       tolerancePriceAboveMax: "",
       minExpiration: "",
       maxExpiration: "",
-      ivValue: ""
+      ivValue: "",
+      noFixedMin: "",
+      noFixedMax: "",
+      noMax: ""
     };
     return state;
   }
@@ -51,17 +61,6 @@ class CreatePoolModal extends Component {
 
   selectType = (type) => {
     this.setState({ selectedType: type });
-  }
-
-  getButtonMessage = () => {
-    if (!this.state.selectedUnderlying) {
-      return "Select underlying";
-    }
-    return null;
-  }
-
-  canProceed = () => {
-    return this.getButtonMessage() === null;
   }
 
   onAssetSelected = (selectedAsset) => {
@@ -81,14 +80,8 @@ class CreatePoolModal extends Component {
     this.props.signIn(null, this.context);
   }
 
-  onCreateClick = () => {}
-
   onIVValueChange = (value) => {
     this.setState({ ivValue: value });
-  }
-
-  onHideStepsModal = () => {
-    this.setState({ stepsModalInfo: null });
   }
 
   onMinExpirationChange = (value) => {
@@ -143,7 +136,25 @@ class CreatePoolModal extends Component {
     this.setState({ minStrikePrice: value });
   }
 
-  onConfirmClick = () => {
+  getToleranceDecimals = (stateValue) => {
+    if (stateValue === null || isNaN(stateValue) || stateValue < 0) {
+      return "-1"
+    }
+    else {
+      return toDecimals(stateValue / 100.0, 5).toString()
+    }
+  }
+
+  getStrikePriceDecimals = (stateValue) => {
+    if (stateValue === null || isNaN(stateValue) || stateValue < 0) {
+      return "-1"
+    }
+    else {
+      return toDecimals(stateValue, 6).toString()
+    }
+  }
+
+  onCreateClick = () => {
     if (this.canConfirm()) {
       var stepNumber = 0
       let pool = this.props.pool
@@ -151,59 +162,121 @@ class CreatePoolModal extends Component {
       let tolerancePriceBelowMax = this.getToleranceDecimals(this.state.tolerancePriceBelowMax)
       let tolerancePriceAboveMin = this.getToleranceDecimals(this.state.tolerancePriceAboveMin)
       let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
-      if (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[0]) {
+      let minStrikePrice = this.getStrikePriceDecimals(this.state.minStrikePrice)
+      let maxStrikePrice = this.getStrikePriceDecimals(this.state.maxStrikePrice)
+      let underlying = this.state.selectedUnderlying.value === "ETH" ? ethAddress : wbtcAddress
+      if (this.state.priceMode.value === StrikePriceModes.AnyPrice || this.state.priceMode.value === StrikePriceModes.Fixed) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceBelowMax = "-1"
         tolerancePriceAboveMin = "-1"
         tolerancePriceAboveMax = "-1"
       }
-      else if ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && pool.isCall) || 
-        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && !pool.isCall)) {
-        tolerancePriceBelowMin = "-1"
-        tolerancePriceBelowMax = "-1"
-        if (this.state.noMax) {
-          tolerancePriceAboveMax = "-1"
+      if (this.state.priceMode.value === StrikePriceModes.AnyPrice || this.state.priceMode.value === StrikePriceModes.Percentage) {
+        minStrikePrice = 0
+        maxStrikePrice = 0
+      }
+      if (this.state.priceMode.value === StrikePriceModes.Fixed) {
+        if (this.state.noFixedMin) {
+          minStrikePrice = 0        
+        }
+        if (this.state.noFixedMax) {
+          maxStrikePrice = 0
         }
       }
-      else if ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && !pool.isCall) || 
-        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && pool.isCall)) {
+
+      if (this.state.priceMode.value === StrikePriceModes.Percentage || this.state.priceMode.value === StrikePriceModes.Both) {
+        if ((this.state.priceSettingsType.value === StrikePriceOptions.OTM && pool.isCall) || 
+          (this.state.priceSettingsType.value === StrikePriceOptions.ITM && !pool.isCall)) {
+          tolerancePriceBelowMin = "-1"
+          tolerancePriceBelowMax = "-1"
+          if (this.state.noMax) {
+            tolerancePriceAboveMax = "-1"
+          }
+        }
+        else if ((this.state.priceSettingsType.value === StrikePriceOptions.OTM && !pool.isCall) || 
+          (this.state.priceSettingsType.value === StrikePriceOptions.ITM && pool.isCall)) {
+            tolerancePriceAboveMin = "-1"
+            tolerancePriceAboveMax = "-1"
+        }
+        else if (this.state.priceSettingsType.value === StrikePriceOptions.ATM) {
+          tolerancePriceBelowMin = "-1"
           tolerancePriceAboveMin = "-1"
-          tolerancePriceAboveMax = "-1"
-      }
-      else if (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[3]) {
-        tolerancePriceBelowMin = "-1"
-        tolerancePriceAboveMin = "-1"
+        }
       }
 
       let minExpiration = this.state.minExpiration * 86400
       let maxExpiration = this.state.maxExpiration * 86400
+      let baseVolatility = this.getToleranceDecimals(this.state.ivValue)
       this.setStepsModalInfo(++stepNumber)
-      //TODO MIN and MAX strike price (zero is same that undefined)
-      // setAcoPermissionConfig(this.context.web3.selectedAccount, pool.address, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, "0", "0", minExpiration, maxExpiration)
-      //   .then(result => {
-      //     if (result) {
-      //       this.setStepsModalInfo(++stepNumber)
-      //       checkTransactionIsMined(result)
-      //         .then(result => {
-      //           if (result) {
-      //             this.setStepsModalInfo(++stepNumber)
-      //           }
-      //           else {
-      //             this.setStepsModalInfo(-1)
-      //           }
-      //         })
-      //         .catch(() => {
-      //           this.setStepsModalInfo(-1)
-      //         })
-      //     }
-      //     else {
-      //       this.setStepsModalInfo(-1)
-      //     }
-      //   })
-      //   .catch(() => {
-      //     this.setStepsModalInfo(-1)
-      //   })
+      createPrivatePool(this.context.web3.selectedAccount, underlying, usdcAddress, this.state.selectedType === 1, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration)
+      .then(result => {
+        if (result) {
+          this.setStepsModalInfo(++stepNumber)
+          checkTransactionIsMined(result)
+            .then(result => {
+              if (result) {
+                this.setStepsModalInfo(++stepNumber)
+              }
+              else {
+                this.setStepsModalInfo(-1)
+              }
+            })
+            .catch(() => {
+              this.setStepsModalInfo(-1)
+            })
+        }
+        else {
+          this.setStepsModalInfo(-1)
+        }
+      })
+      .catch(() => {
+        this.setStepsModalInfo(-1)
+      })
     }
+  }
+
+  setStepsModalInfo = (stepNumber) => {
+    var title = "Create Pool"
+    var subtitle = ""
+    var img = null
+    if (stepNumber === 1) {
+      subtitle = "Confirm on " + this.context.web3.name + " to send transaction."
+      img = <MetamaskLargeIcon />
+    }
+    else if (stepNumber === 2) {
+      subtitle = "Creating pool..."
+      img = <SpinnerLargeIcon />
+    }
+    else if (stepNumber === 3) {
+      subtitle = "You have successfully created the pool."
+      img = <DoneLargeIcon />
+    }
+    else if (stepNumber === -1) {
+      subtitle = "An error ocurred. Please try again."
+      img = <ErrorLargeIcon />
+    }
+
+    var steps = []
+    steps.push({ title: "Create", progress: stepNumber > 2 ? 100 : 0, active: true })
+    this.setState({
+      stepsModalInfo: {
+        title: title,
+        subtitle: subtitle,
+        steps: steps,
+        img: img,
+        isDone: (stepNumber === 3 || stepNumber === -1),
+        onDoneButtonClick: (stepNumber === 3 ? this.onDoneButtonClick : this.onHideStepsModal)
+      }
+    })
+  }
+
+  onDoneButtonClick = () => {
+    this.setState({ stepsModalInfo: null })
+    this.props.onHide(true)
+  }
+
+  onHideStepsModal = () => {
+    this.setState({ stepsModalInfo: null })
   }
 
   getButtonMessage = () => {
@@ -217,40 +290,63 @@ class CreatePoolModal extends Component {
     if (this.state.priceMode === null || this.state.priceMode === "") {
       return "Select strike price range"
     }
-    if ((this.state.tolerancePriceBelowMin === null || this.state.tolerancePriceBelowMin === "") && 
-      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && !isCall) || 
-        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && isCall))) {
-      return "Set deviation"
+    if (this.state.priceMode.value === StrikePriceModes.Fixed || this.state.priceMode.value === StrikePriceModes.Both) {
+      if (!this.state.noFixedMin && (this.state.minStrikePrice === null || this.state.minStrikePrice === "")) {
+        return "Select min strike price"
+      }
+      if (!this.state.noFixedMax && (this.state.maxStrikePrice === null || this.state.maxStrikePrice === "")) {
+        return "Select max strike price"
+      }
+      if ((this.state.minStrikePrice !== null && this.state.minStrikePrice !== "") && 
+        (this.state.maxStrikePrice !== null && this.state.maxStrikePrice !== "")) {
+        if (Number(this.state.minStrikePrice) > Number(this.state.maxStrikePrice)) {
+          return "Invalid fixed range"
+        }
+      }
     }
-    if ((this.state.tolerancePriceBelowMax === null || this.state.tolerancePriceBelowMax === "") && 
-      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && !isCall) || 
-        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && isCall) || 
-        this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[3])) {
-      return "Set deviation"
-    }
-    if ((this.state.tolerancePriceAboveMin === null || this.state.tolerancePriceAboveMin === "") && 
-      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && !isCall) || 
-        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && isCall))) {
-      return "Set deviation"
-    }
-    if ((this.state.tolerancePriceAboveMax === null || this.state.tolerancePriceAboveMax === "") && 
-      ((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[3]) ||
-      (((this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[2] && !isCall) || 
-        (this.state.priceSettingsType === STRIKE_PRICE_OPTIONS[1] && isCall)) && 
-        !this.state.noMax))) {
-      return "Set deviation"
+    if (this.state.priceMode.value === StrikePriceModes.Percentage || this.state.priceMode.value === StrikePriceModes.Both) {
+      if ((this.state.tolerancePriceBelowMin === null || this.state.tolerancePriceBelowMin === "") && 
+        ((this.state.priceSettingsType.value === StrikePriceOptions.OTM && !isCall) || 
+          (this.state.priceSettingsType.value === StrikePriceOptions.ITM && isCall))) {
+        return "Set percentage range"
+      }
+      if ((this.state.tolerancePriceBelowMax === null || this.state.tolerancePriceBelowMax === "") && 
+        ((this.state.priceSettingsType.value === StrikePriceOptions.OTM && !isCall) || 
+          (this.state.priceSettingsType.value === StrikePriceOptions.ITM && isCall) || 
+          this.state.priceSettingsType.value === StrikePriceOptions.ATM)) {
+        return "Set percentage range"
+      }
+      if ((this.state.tolerancePriceAboveMin === null || this.state.tolerancePriceAboveMin === "") && 
+        ((this.state.priceSettingsType.value === StrikePriceOptions.ITM && !isCall) || 
+          (this.state.priceSettingsType.value === StrikePriceOptions.OTM && isCall))) {
+        return "Set percentage range"
+      }
+      if ((this.state.tolerancePriceAboveMax === null || this.state.tolerancePriceAboveMax === "") && 
+        ((this.state.priceSettingsType.value === StrikePriceOptions.ATM) ||
+        (((this.state.priceSettingsType.value === StrikePriceOptions.ITM && !isCall) || 
+          (this.state.priceSettingsType.value === StrikePriceOptions.OTM && isCall)) && 
+          !this.state.noMax))) {
+        return "Set percentage range"
+      }
     }
     if (this.state.tolerancePriceBelowMin !== null && this.state.tolerancePriceBelowMin !== "" && 
       this.state.tolerancePriceBelowMax !== null && this.state.tolerancePriceBelowMax !== "" && 
       Number(this.state.tolerancePriceBelowMin) > Number(this.state.tolerancePriceBelowMax)) {
-      return "Invalid interval"
+      return "Invalid percentage range"
     }
     if (this.state.tolerancePriceAboveMin !== null && this.state.tolerancePriceAboveMin !== "" && 
       this.state.tolerancePriceAboveMax !== null && this.state.tolerancePriceAboveMax !== "" && 
       Number(this.state.tolerancePriceAboveMin) > Number(this.state.tolerancePriceAboveMax)) {
-      return "Invalid interval"
+        return "Invalid percentage range"
+    }
+    if (this.state.ivValue === null || this.state.ivValue === "") {
+        return "Set implied volatility"
     }
     return null
+  }
+  
+  canConfirm = () => {
+    return (this.getButtonMessage() === null)
   }
 
   render() {
@@ -313,8 +409,8 @@ class CreatePoolModal extends Component {
                   </div>
                 </div>
                 {this.state.priceMode &&
-                  (this.state.priceMode === STRIKE_PRICE_MODE[0] || 
-                    this.state.priceMode === STRIKE_PRICE_MODE[2]) && <>
+                  (this.state.priceMode.value === StrikePriceModes.Fixed || 
+                    this.state.priceMode.value === StrikePriceModes.Both) && <>
                     <div className="subsection-label">Fixed</div>
                     <div className="subsection-label-2">Set min and max strike price</div>
                     <div className="input-row mt-2 no-max-input-row fixed-strike-row">
@@ -351,8 +447,8 @@ class CreatePoolModal extends Component {
                       </div>
                     </div>
                   </>}
-                {(this.state.priceMode === STRIKE_PRICE_MODE[1] || 
-                    this.state.priceMode === STRIKE_PRICE_MODE[2]) && (
+                {(this.state.priceMode.value === StrikePriceModes.Percentage || 
+                    this.state.priceMode.value === StrikePriceModes.Both) && (
                   <>
                     <div className="subsection-label">Percentage</div>
                     <div className="subsection-label-2">Percentage deviation from oracle price</div>
@@ -365,9 +461,9 @@ class CreatePoolModal extends Component {
                     </div>
                     {this.state.priceSettingsType && (
                       <>
-                        {((this.state.priceSettingsType.value === 2 &&
+                        {((this.state.priceSettingsType.value === StrikePriceOptions.OTM &&
                           this.state.selectedType === 1) ||
-                          (this.state.priceSettingsType.value === 3 &&
+                          (this.state.priceSettingsType.value === StrikePriceOptions.ITM &&
                             this.state.selectedType !== 1)) && (
                           <div className="input-row mt-2 no-max-input-row">
                             <div className="label-input-row">
@@ -426,9 +522,9 @@ class CreatePoolModal extends Component {
                             </div>
                           </div>
                         )}
-                        {((this.state.priceSettingsType.value === 2 &&
+                        {((this.state.priceSettingsType.value === StrikePriceOptions.OTM &&
                           this.state.selectedType !== 1) ||
-                          (this.state.priceSettingsType.value === 3 &&
+                          (this.state.priceSettingsType.value === StrikePriceOptions.ITM &&
                             this.state.selectedType === 1)) && (
                           <div className="input-row mt-2">
                             <div className="label-input-row">
@@ -456,7 +552,7 @@ class CreatePoolModal extends Component {
                             </div>
                           </div>
                         )}
-                        {this.state.priceSettingsType.value === 4 && (
+                        {this.state.priceSettingsType.value === StrikePriceOptions.ATM && (
                           <div className="input-row mt-2">
                             <div className="label-input-row">
                               <div>Oracle Price -&nbsp;</div>
@@ -529,6 +625,7 @@ class CreatePoolModal extends Component {
               </div>
             </div>
           </div>
+          {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
         </Modal.Body>
       </Modal>
     );

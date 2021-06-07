@@ -206,9 +206,7 @@ export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwa
 }
 
 export const createPrivatePool = (from, underlying, strikeAsset, isCall, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration) => {
-    return new Promise((resolve, reject) => {
-        const acoPoolFactoryContract = getAcoPoolFactoryContract()
-        var data = acoPoolFactoryContract.methods.newAcoPool(underlying, strikeAsset, isCall, baseVolatility, from, [tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration]).encodeABI()
-        return sendTransaction(null, null, from, acoPoolFactoryContract, null, data)
-    })
+    const acoPoolFactoryContract = getAcoPoolFactoryContract()
+    var data = acoPoolFactoryContract.methods.newAcoPool(underlying, strikeAsset, isCall, baseVolatility, from, [tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration]).encodeABI()
+    return sendTransaction(null, null, from, acoPoolFactoryAddress, null, data)
 }
