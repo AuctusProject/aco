@@ -184,7 +184,7 @@ class PoolDetails extends Component {
       </div>
       <div className="view-details-link" onClick={this.viewDetails(pool)}>
         <div className="view-details-icon"></div>
-        <div className="view-details-label">View Details</div>
+        <div className="view-details-label">{pool.isPrivate ? "Manage" : "View Details"}</div>
       </div>
       <div className="header-separator"></div>
       <div className="pool-header-iv-info">
