@@ -177,7 +177,7 @@ class SimpleWriteStep2 extends Component {
 
   sendWriteTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)    
-    write(this.context.web3.selectedAccount, this.props.option.acoToken, this.isCollateralEth(), this.state.swapQuote.zrxData, nonce)
+    write(this.context.web3.selectedAccount, this.props.option, this.state.swapQuote.zrxData, nonce)
     .then(result => {
       if (result) {
         this.setStepsModalInfo(++stepNumber, needApproval)
