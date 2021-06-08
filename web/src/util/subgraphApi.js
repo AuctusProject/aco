@@ -41,6 +41,7 @@ const basePoolQuery = `{
       decimals
     }
     isCall
+    isPrivate
     symbol
     name
     decimals
@@ -95,6 +96,7 @@ const detailedPoolQuery = `{
       decimals
     }
     isCall
+    isPrivate
     symbol
     name
     decimals

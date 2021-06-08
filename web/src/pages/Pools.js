@@ -32,14 +32,17 @@ class Pools extends Component {
   refreshPoolData = (forceRefresh) => {
     getPools(forceRefresh).then(pools => {
       let discontinuedPools = []
-      let availablePools = []
+      let publicPools = []
+      let privatePools = []
       let poolsToCheckBalance = []
       for (let i = 0; i < pools.length; ++i) {
         if (deprecatedPoolImplementation.some((j) => j.toLowerCase() === pools[i].acoPoolImplementation.toLowerCase())) {
           discontinuedPools.push(pools[i])
         } else {
-          if (pools[i].admin === null || pools[i].admin === undefined || pools[i].admin.toLowerCase() === defaultPoolAdmin.toLowerCase() || pools[i].admin.toLowerCase() === this.getCurrentAccount()) {
-            availablePools.push(pools[i])
+          if (pools[i].admin === null || pools[i].admin === undefined || !pools[i].isPrivate) {
+            publicPools.push(pools[i])
+          } else if (pools[i].admin.toLowerCase() === this.getCurrentAccount()) {
+            privatePools.push(pools[i])
           } else {
             poolsToCheckBalance.push(pools[i])
           }
@@ -48,9 +51,9 @@ class Pools extends Component {
       getPoolsAccountBalances(this.getCurrentAccount(), poolsToCheckBalance.map((c) => c.acoPool)).then((balances) => {
         for (let k = 0; k < balances.length; ++k) {
           let p = poolsToCheckBalance.filter((f) => f.acoPool.toLowerCase() === balances.pool.toLowerCase())
-          availablePools.push(p[0])
+          privatePools.push(p[0])
         }
-        this.setState({pools: availablePools, discontinuedPools: discontinuedPools, loading: false})
+        this.setState({pools: privatePools.concat(publicPools), discontinuedPools: discontinuedPools, loading: false})
       })
     })
   }

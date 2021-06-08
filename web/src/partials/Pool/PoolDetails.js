@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { getBalanceOfAsset, formatPercentage, formatWithPrecision, fromDecimals } from '../../util/constants'
-import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faLock, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import DepositModal from './DepositModal'
 import WithdrawModal from './WithdrawModal'
@@ -24,6 +24,10 @@ class PoolDetails extends Component {
     if (this.props.accountToggle !== prevProps.accountToggle) {
       this.updateBalances()
     }
+  }
+
+  getCurrentAccount() {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount ? this.context.web3.selectedAccount : null
   }
 
   isConnected = () => {
@@ -135,7 +139,7 @@ class PoolDetails extends Component {
   }
 
   getFormattedPoolName = (pool) => {
-    return `WRITE ${pool.underlyingInfo.symbol} ${pool.isCall ? "CALL" : "PUT"} OPTIONS`
+    return `WRITE ${pool.underlyingInfo.symbol} ${pool.isCall ? "CALL" : "PUT"} OPTIONS${pool.isPrivate ? ("  #" + pool.poolId) : ""}`
   }
 
   getAssetIconUrl = () => {
@@ -156,6 +160,8 @@ class PoolDetails extends Component {
   render() {
     let pool = this.props.pool
     let poolAddress = pool.acoPool
+    let currentAccount = this.getCurrentAccount()
+    let canDeposit = currentAccount && pool && (!pool.isPrivate || !pool.admin || pool.admin.toLowerCase() === currentAccount.toLowerCase())
     
     let iconUrl = this.getAssetIconUrl()
 
@@ -166,6 +172,7 @@ class PoolDetails extends Component {
         <div className="pool-header-info">
           <div className="pool-name">
             {this.getFormattedPoolName(pool)}
+            {pool.isPrivate && <div className="pool-private"><FontAwesomeIcon icon={faLock}/>Private</div>}
           </div>
           <div className="pool-liquidity">
             Liquidity Available: {this.formatAssetValue(pool.underlyingInfo, pool.underlyingBalance)} / {this.formatAssetValue(pool.strikeAssetInfo, pool.strikeAssetBalance)}
@@ -196,10 +203,10 @@ class PoolDetails extends Component {
       </div>:
       <div className="card-body">
         <div className="input-row">
-          <div className="input-column">
-          <div className="input-label balance-info">BALANCE:&nbsp;{this.getFormattedDepositBalance()}</div>
+          {canDeposit && <div className="input-column">
+            <div className="input-label balance-info">BALANCE:&nbsp;{this.getFormattedDepositBalance()}</div>
             <div className={"action-btn"} onClick={this.onDepositClick}>DEPOSIT</div>
-          </div>
+          </div>}
           <div className="input-column">
             <div className="input-label balance-info">BALANCE:&nbsp;{(this.getFormattedWithdrawBalance())}</div>
             <div className={"outline-btn"} onClick={this.onWithdrawClick}>WITHDRAW</div>

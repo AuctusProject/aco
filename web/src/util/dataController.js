@@ -257,6 +257,7 @@ const parseSubgraphPool = (pool) => {
     underlying: pool.underlying.id,
     strikeAsset: pool.strikeAsset.id,
     isCall: pool.isCall,
+    isPrivate: pool.isPrivate,
     acoPoolImplementation: pool.implementation,
     admin: pool.poolAdmin,
     poolId: parseInt(pool.poolId),

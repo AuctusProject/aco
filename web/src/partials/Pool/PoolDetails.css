@@ -187,3 +187,20 @@
 .view-details-link:hover .view-details-label {
     color: #5de9d4;    
 }
+
+.pool-private {
+    font-size: 10px;
+    display: flex;
+    flex-direction: row;
+    margin-left: 5px;
+    padding: 0px 6px;
+    border: 0px solid;
+    border-radius: 12px;
+    background-color: #676767;
+    color: #ffffff;
+    line-height: 2;
+    align-items: center;
+}
+.pool-private > svg {
+    margin-right: 3px;
+}
