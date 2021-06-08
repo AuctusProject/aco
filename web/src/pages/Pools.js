@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import Loading from '../partials/Util/Loading'
 import PoolDetails from '../partials/Pool/PoolDetails'
 import DiscontinuedPoolDetails from '../partials/Pool/DiscontinuedPoolDetails'
-import { defaultPoolAdmin, deprecatedPoolImplementation } from '../util/constants'
+import { deprecatedPoolImplementation } from '../util/constants'
 import { getPools, getPoolsAccountBalances } from '../util/dataController'
 import CreatePoolModal from '../partials/Pool/CreatePoolModal'
 
