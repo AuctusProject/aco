@@ -11,7 +11,8 @@ import {
   getPoolDeposits, 
   getPoolRedeems, 
   getPoolSwaps, 
-  getPoolWithdrawals 
+  getPoolWithdrawals,
+  getPoolsAccountBalances as getPoolsAccountBalancesSubgraph 
 } from './subgraphApi'
 
 const percentageDecimals = 5
@@ -101,6 +102,18 @@ export const getPools = async (forceRefresh = false) => {
   let result = await getAllPools()
   allPools = parseSubgraphPools(result)
   return allPools
+}
+
+export const getPoolsAccountBalances = async (account, pools) => {
+  if (!account || !pools || !pools.length) {
+    return []
+  }
+  let data = await getPoolsAccountBalancesSubgraph(account.toLowerCase(), pools.map((c) => c.toLowerCase()))
+  let result = []
+  for (let i = 0; i < data.length; ++i) {
+    result.push(parseSubgraphPoolAccountBalance(data[i]))
+  }
+  return result
 }
 
 export const getPool = async (pool) => {
@@ -244,6 +257,7 @@ const parseSubgraphPool = (pool) => {
     underlying: pool.underlying.id,
     strikeAsset: pool.strikeAsset.id,
     isCall: pool.isCall,
+    isPrivate: pool.isPrivate,
     acoPoolImplementation: pool.implementation,
     admin: pool.poolAdmin,
     poolId: parseInt(pool.poolId),
@@ -284,6 +298,14 @@ const parseSubgraphPool = (pool) => {
       symbol: pool.strikeAsset.symbol,
       decimals: parseInt(pool.strikeAsset.decimals)
     }
+  }
+}
+
+const parseSubgraphPoolAccountBalance = (accountBalance) => {
+  return {
+    account: accountBalance.account,
+    balance: parseSubgraphNum(accountBalance.balance, parseInt(accountBalance.pool.decimals)),
+    pool: accountBalance.pool.id
   }
 }
 

@@ -1,5 +1,5 @@
 import { getWeb3, sendTransactionWithNonce } from './web3Methods'
-import { acoWriterAddress } from './constants'
+import { acoWriterAddress, isEther, toDecimals } from './constants'
 import { acoWriterV2ABI } from './acoWriterV2ABI'
 import { getSwapData } from './Zrx/zrxWeb3'
 import BigNumber from 'bignumber.js'
@@ -16,22 +16,31 @@ const getAcoWriteContract = () => {
     return acoWriterContract
 }
 
-export const write = async (from, acoToken, isCollateralEther, zrxData, nonce) => {
+export const write = async (from, option, zrxData, nonce) => {
     const orders = []
     const takerAmounts = []
-    let totalTaker = new BigNumber(0)
+    const oneUnderlying = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
+    const strikePrice = new BigNumber(option.strikePrice)
+    let totalCollateral = new BigNumber(0)
     for (let i = 0; i < zrxData.length; ++i) {
         orders.push(zrxData[i].order)
         takerAmounts.push(zrxData[i].acoAmount.toString(10))
-        totalTaker = totalTaker.plus(zrxData[i].acoAmount)
+        let collateralAmount = new BigNumber(0)
+        if (option.isCall) {
+            collateralAmount = zrxData[i].acoAmount
+        } else {
+            collateralAmount = zrxData[i].acoAmount.times(strikePrice).div(oneUnderlying).integerValue(BigNumber.ROUND_CEIL)
+        }
+        totalCollateral = totalCollateral.plus(collateralAmount)
     }
     const zrxOrder = await getSwapData(orders, takerAmounts)
     const contract = getAcoWriteContract()
-    const data = contract.methods.write(acoToken, totalTaker.toString(10), zrxOrder.data).encodeABI()
+    const data = contract.methods.write(option.acoToken, totalCollateral.toString(10), zrxOrder.data).encodeABI()
     let ethValue = zrxOrder.ethValue
     let gasPrice = zrxOrder.gasPrice
-    if (isCollateralEther) {
-        ethValue = ethValue.add(new Web3Utils.BN(totalTaker.toString(10)))
+    let collateralAddress = (option.isCall ? option.underlying : option.strikeAsset)
+    if (isEther(collateralAddress)) {
+        ethValue = ethValue.add(new Web3Utils.BN(totalCollateral.toString(10)))
     }
     return sendTransactionWithNonce(gasPrice, null, from, acoWriterAddress, ethValue, data, null, nonce)
 }

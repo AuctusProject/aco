@@ -6,7 +6,7 @@ import Loading from '../partials/Util/Loading'
 import PoolDetails from '../partials/Pool/PoolDetails'
 import DiscontinuedPoolDetails from '../partials/Pool/DiscontinuedPoolDetails'
 import { defaultPoolAdmin, deprecatedPoolImplementation } from '../util/constants'
-import { getPools } from '../util/dataController'
+import { getPools, getPoolsAccountBalances } from '../util/dataController'
 import CreatePoolModal from '../partials/Pool/CreatePoolModal'
 
 class Pools extends Component {
@@ -19,17 +19,42 @@ class Pools extends Component {
     this.refreshPoolData()
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.accountToggle !== prevProps.accountToggle) {
+      this.refreshPoolData()
+    }
+  }
+
   getCurrentAccount = () => {
     return (this.context && this.context.web3 && this.context.web3.selectedAccount) ? this.context.web3.selectedAccount.toLowerCase() : null
   }
 
   refreshPoolData = (forceRefresh) => {
     getPools(forceRefresh).then(pools => {
-      var discontinuedPools = pools.filter(p => deprecatedPoolImplementation.filter(c => c.toLowerCase() === p.acoPoolImplementation.toLowerCase()).length > 0)
-      var availablePools = pools.filter(p => deprecatedPoolImplementation.filter(c => c.toLowerCase() === p.acoPoolImplementation.toLowerCase()).length === 0 && 
-        (p.admin === null || p.admin === undefined || p.admin.toLowerCase() === defaultPoolAdmin.toLowerCase() || p.admin.toLowerCase() === this.getCurrentAccount())
-      )
-      this.setState({pools: availablePools, discontinuedPools: discontinuedPools, loading: false})
+      let discontinuedPools = []
+      let publicPools = []
+      let privatePools = []
+      let poolsToCheckBalance = []
+      for (let i = 0; i < pools.length; ++i) {
+        if (deprecatedPoolImplementation.some((j) => j.toLowerCase() === pools[i].acoPoolImplementation.toLowerCase())) {
+          discontinuedPools.push(pools[i])
+        } else {
+          if (pools[i].admin === null || pools[i].admin === undefined || !pools[i].isPrivate) {
+            publicPools.push(pools[i])
+          } else if (pools[i].admin.toLowerCase() === this.getCurrentAccount()) {
+            privatePools.push(pools[i])
+          } else {
+            poolsToCheckBalance.push(pools[i])
+          }
+        }
+      }
+      getPoolsAccountBalances(this.getCurrentAccount(), poolsToCheckBalance.map((c) => c.acoPool)).then((balances) => {
+        for (let k = 0; k < balances.length; ++k) {
+          let p = poolsToCheckBalance.filter((f) => f.acoPool.toLowerCase() === balances[k].pool.toLowerCase())
+          privatePools.push(p[0])
+        }
+        this.setState({pools: privatePools.concat(publicPools), discontinuedPools: discontinuedPools, loading: false})
+      })
     })
   }
 
