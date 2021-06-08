@@ -7,11 +7,15 @@
     flex: 1;
 }
 
+.pool-header-info {
+    width: 100%;
+}
+
 .pool-card .card-header {
     justify-content: space-between;
 }
 
-.pool-name {
+.pool-name, .pool-name-detail {
     font-size: 18px;
     font-weight: 500;    
     display: flex;
@@ -19,11 +23,15 @@
     align-items: center;
 }
 
+.pool-name-detail {
+    justify-content: space-between;
+}
+
 .pool-name .discontinued-label {
     margin-left: 6px;
 }
 
-.pool-name img {
+.pool-name img, .pool-name-detail img {
     max-height: 40px;
     max-width: 40px;
     margin-right: 12px;
@@ -75,7 +83,7 @@
     }
 
     .pool-name .discontinued-label {
-        margin-left: 0;;
+        margin-left: 0;
     }
 
     .pool-card .input-row {
@@ -200,6 +208,7 @@
     color: #ffffff;
     line-height: 2;
     align-items: center;
+    word-break: keep-all;
 }
 .pool-private > svg {
     margin-right: 3px;

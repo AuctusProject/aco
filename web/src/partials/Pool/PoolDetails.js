@@ -139,7 +139,7 @@ class PoolDetails extends Component {
   }
 
   getFormattedPoolName = (pool) => {
-    return `WRITE ${pool.underlyingInfo.symbol} ${pool.isCall ? "CALL" : "PUT"} OPTIONS${pool.isPrivate ? ("  #" + pool.poolId) : ""}`
+    return `WRITE ${pool.underlyingInfo.symbol} ${pool.isCall ? "CALL" : "PUT"} OPTIONS${pool.isPrivate ? (" #" + pool.poolId) : ""}`
   }
 
   getAssetIconUrl = () => {
@@ -170,7 +170,7 @@ class PoolDetails extends Component {
       <div className="pool-icon-header-info">
         <img className="pool-icon" src={iconUrl} alt="" />
         <div className="pool-header-info">
-          <div className="pool-name">
+          <div className="pool-name-detail">
             {this.getFormattedPoolName(pool)}
             {pool.isPrivate && <div className="pool-private"><FontAwesomeIcon icon={faLock}/>Private</div>}
           </div>

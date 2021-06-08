@@ -50,7 +50,7 @@ class Pools extends Component {
       }
       getPoolsAccountBalances(this.getCurrentAccount(), poolsToCheckBalance.map((c) => c.acoPool)).then((balances) => {
         for (let k = 0; k < balances.length; ++k) {
-          let p = poolsToCheckBalance.filter((f) => f.acoPool.toLowerCase() === balances.pool.toLowerCase())
+          let p = poolsToCheckBalance.filter((f) => f.acoPool.toLowerCase() === balances[k].pool.toLowerCase())
           privatePools.push(p[0])
         }
         this.setState({pools: privatePools.concat(publicPools), discontinuedPools: discontinuedPools, loading: false})
