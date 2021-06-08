@@ -66,7 +66,7 @@ const internalSwapQuote = (acoPools, option, acoAmount, acoPrice, slippage = nul
             }
             if (liquidity.gt(0)) {
                 let amountToQuote = (acoAmount ? BigNumber.minimum(liquidity, acoAmount) : liquidity)
-                indexes[i.toString()] = {
+                indexes[swapPromises.length.toString()] = {
                     acoPool: acoPools[i].acoPool, 
                     amount: amountToQuote
                 }
