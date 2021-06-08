@@ -82,18 +82,18 @@ class ManagePrivatePool extends Component {
     }
     else if (this.state.tolerancePriceBelowMax !== null) {
       if (this.state.tolerancePriceBelowMin !== null) {
-        return "Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
-          " <= Strike Price <= Current Price - "+ formatPercentage(this.state.tolerancePriceBelowMin, 0)
+        return "Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
+          " <= Strike Price <= Oracle Price - "+ formatPercentage(this.state.tolerancePriceBelowMin, 0)
       }
       else if (this.state.tolerancePriceAboveMax !== null) {
-        return "Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
-          " <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
+        return "Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
+          " <= Strike Price <= Oracle Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
       }
       else if (this.state.tolerancePriceAboveMin !== null) {
         return "Invalid Strike Price Configuration"
       }
       else {
-        return "Strike Price >= Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0)
+        return "Strike Price >= Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0)
       }
     }
     else if (this.state.tolerancePriceBelowMin !== null) {
@@ -101,20 +101,20 @@ class ManagePrivatePool extends Component {
         return "Invalid Strike Price Configuration"
       }
       else {
-        return "Strike Price <= Current Price - " + formatPercentage(this.state.tolerancePriceBelowMin, 0)
+        return "Strike Price <= Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMin, 0)
       }
     }
     else if (this.state.tolerancePriceAboveMin !== null) {
       if (this.state.tolerancePriceAboveMax !== null) {
-        return "Current Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0) + 
-          " <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
+        return "Oracle Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0) + 
+          " <= Strike Price <= Oracle Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
       }
       else {
-        return "Strike Price >= Current Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0)
+        return "Strike Price >= Oracle Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0)
       }
     }
     else if (this.state.tolerancePriceAboveMax !== null) {
-      return "Strike Price <= Current Price + " + formatPercentage(this.state.tolerancePriceAboveMax, 0)
+      return "Strike Price <= Oracle Price + " + formatPercentage(this.state.tolerancePriceAboveMax, 0)
     }
   }
 
