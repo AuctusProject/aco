@@ -1,0 +1,75 @@
+.create-pool-modal .modal-dialog {
+    width: 600px;
+    max-width: 100%;
+}
+
+.create-pool-modal .page-title {
+    margin-bottom: 0;
+}
+
+.create-pool-modal .inputs-wrapper-row .input-column {
+    width: 180px;
+}
+
+.create-pool-modal .input-label {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-align: center;
+}
+
+.create-pool-modal .section-label {
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-align: center;
+}
+
+.create-pool-content {
+    padding: 0px 10px;
+    width: 100%;
+    margin: auto;
+    text-align: center;
+}
+
+.create-pool-content .inputs-wrapper-row {
+    display: flex;
+    justify-content: space-between;
+    max-width: 320px;
+    margin: auto;
+}
+
+.aco-modal.create-pool-modal .input-field.input-field-sm {
+    width: 80px;
+}
+
+.expiration-and-price-info {
+    font-size: 12px;
+}
+
+.fixed-strike-row {
+    max-width: 480px;
+    margin: auto;
+}
+
+.subsection-label {
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-align: center;
+    margin-top: 8px;
+}
+
+.subsection-label-2 {
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    text-align: center;   
+}
+
+.create-pool-modal .card-separator {
+    margin-top: 24px;
+    margin-bottom: 24px;
+    height: 1px;
+    background-color: #464646;
+}

@@ -43,7 +43,7 @@ class PoolDashboard extends Component {
 
   getFormattedPoolName = () => {
     var pool = this.state.pool
-    return `WRITE ${pool.underlyingInfo.symbol} ${pool.isCall ? "CALL" : "PUT"} OPTIONS`
+    return `WRITE ${pool.underlyingInfo.symbol} ${pool.isCall ? "CALL" : "PUT"} OPTIONS${pool.isPrivate ? (" #" + pool.poolId) : ""}`
   }
 
   selectTab = (selectedTab) => () => {

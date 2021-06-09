@@ -109,6 +109,32 @@ export const AdvancedOrderStepsType = {
     BuySellLimit: 3
 }
 
+export const StrikePriceOptions = {
+    OTM: 2,
+    ITM: 3,
+    ATM: 4
+}
+
+export const STRIKE_PRICE_OPTIONS = [
+    {value: StrikePriceOptions.OTM, name:"OTM"}, 
+    {value: StrikePriceOptions.ITM, name:"ITM"}, 
+    {value: StrikePriceOptions.ATM, name:"ATM"}
+]
+
+export const StrikePriceModes = {
+    Fixed: 1,
+    Percentage: 2,
+    Both: 3,
+    AnyPrice: 4
+}
+
+export const STRIKE_PRICE_MODE = [
+    {value: StrikePriceModes.Fixed, name:"FIXED"}, 
+    {value: StrikePriceModes.Percentage, name:"PERCENTAGE"}, 
+    {value: StrikePriceModes.Both, name:"BOTH"},
+    {value: StrikePriceModes.AnyPrice, name:"ANY PRICE"},
+]
+
 export function getOptionName(isCall) {
     return isCall ? OPTION_TYPES[1].name : OPTION_TYPES[2].name
 }

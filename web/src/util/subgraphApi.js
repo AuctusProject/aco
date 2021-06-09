@@ -41,12 +41,14 @@ const basePoolQuery = `{
       decimals
     }
     isCall
+    isPrivate
     symbol
     name
     decimals
     baseVolatility
     implementation
     poolAdmin
+    poolId
     fee
     withdrawOpenPositionPenalty
     totalSupply
@@ -54,6 +56,8 @@ const basePoolQuery = `{
     tolerancePriceBelowMax
     tolerancePriceAboveMin
     tolerancePriceAboveMax
+    minStrikePrice
+    maxStrikePrice
     minExpiration
     maxExpiration
     holdersCount
@@ -92,12 +96,14 @@ const detailedPoolQuery = `{
       decimals
     }
     isCall
+    isPrivate
     symbol
     name
     decimals
     baseVolatility
     implementation
     poolAdmin
+    poolId
     fee
     withdrawOpenPositionPenalty
     totalSupply
@@ -105,6 +111,8 @@ const detailedPoolQuery = `{
     tolerancePriceBelowMax
     tolerancePriceAboveMin
     tolerancePriceAboveMax
+    minStrikePrice
+    maxStrikePrice
     minExpiration
     maxExpiration
     holdersCount
@@ -333,6 +341,17 @@ const poolHistoricalSharesQuery = `{
   }
 }`
 
+const poolAccountBalancesQuery = `{
+  poolAccounts {
+    pool {
+      id
+      decimals
+    }
+    account
+    balance
+  }
+}`
+
 const callSubgraph = async (query, restriction = null, maxPages = null, lastId = null, page = 1) => {
   let subgraphData = parseSubgraphQuery(query, restriction, lastId)
   let result = await Axios.post(subgraphUrl, {"query": subgraphData.query})
@@ -400,6 +419,11 @@ export const getPool = async (pool) => {
     return result[0]
   }
   return null
+}
+
+export const getPoolsAccountBalances = async (account, pools) => {
+  let result = await callSubgraph(poolAccountBalancesQuery, {balance_gt:0,account,pool_in:pools})
+  return result || []
 }
 
 export const getPoolSwaps = async (pool) => {

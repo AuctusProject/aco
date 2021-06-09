@@ -7,7 +7,6 @@ interface IACOPool2 is IERC20 {
 
     struct InitData {
         address acoFactory;
-        address chiToken;
         address lendingPool;
         address underlying;
         address strikeAsset;
@@ -15,7 +14,9 @@ interface IACOPool2 is IERC20 {
         uint256 baseVolatility;  
         address admin;
         address strategy;  
-        PoolAcoPermissionConfig acoPermissionConfig;
+        bool isPrivate;
+        uint256 poolId;
+        PoolAcoPermissionConfigV2 acoPermissionConfigV2;
         PoolProtocolConfig protocolConfig;
     }
 
@@ -33,6 +34,17 @@ interface IACOPool2 is IERC20 {
         uint256 tolerancePriceBelowMax;
         uint256 tolerancePriceAboveMin;
         uint256 tolerancePriceAboveMax;
+        uint256 minExpiration;
+        uint256 maxExpiration;
+    }
+    
+    struct PoolAcoPermissionConfigV2 {
+        int256 tolerancePriceBelowMin;
+        int256 tolerancePriceBelowMax;
+        int256 tolerancePriceAboveMin;
+        int256 tolerancePriceAboveMax;
+        uint256 minStrikePrice;
+        uint256 maxStrikePrice;
         uint256 minExpiration;
         uint256 maxExpiration;
     }
@@ -81,6 +93,7 @@ interface IACOPool2 is IERC20 {
 	function setLendingPoolReferral(uint16 newLendingPoolReferral) external;
 	function setPoolDataForAcoPermission(uint256 newTolerancePriceBelow, uint256 newTolerancePriceAbove, uint256 newMinExpiration, uint256 newMaxExpiration) external;
 	function setAcoPermissionConfig(PoolAcoPermissionConfig calldata newConfig) external;
+	function setAcoPermissionConfigV2(PoolAcoPermissionConfigV2 calldata newConfig) external;
 	function setPoolAdmin(uint256 newAdmin) external;
 	function setProtocolConfig(PoolProtocolConfig calldata newConfig) external;
 	function setFeeData(address newFeeDestination, uint256 newFee) external;

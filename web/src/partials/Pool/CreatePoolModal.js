@@ -1,97 +1,139 @@
-import './UpdateSellingOptionsModal.css'
-import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
-import PropTypes from 'prop-types'
-import Modal from 'react-bootstrap/Modal'
-import { fromDecimals, StrikePriceModes, StrikePriceOptions, STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS, toDecimals } from '../../util/constants'
-import { checkTransactionIsMined } from '../../util/web3Methods'
-import StepsModal from '../StepsModal/StepsModal'
-import DecimalInput from '../Util/DecimalInput'
-import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
-import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
-import DoneLargeIcon from '../Util/DoneLargeIcon'
-import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/acoPoolMethodsv5'
-import SimpleDropdown from '../SimpleDropdown'
+import "./CreatePoolModal.css";
+import React, { Component } from "react";
+import Modal from "react-bootstrap/Modal";
+import { withRouter } from "react-router-dom";
+import PropTypes from "prop-types";
+import OptionBadge from "../OptionBadge";
+import SimpleAssetDropdown from "../SimpleAssetDropdown";
+import DecimalInput from "../Util/DecimalInput";
+import { ethAddress, StrikePriceModes, StrikePriceOptions, STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS, toDecimals, usdcAddress, wbtcAddress } from "../../util/constants";
+import SimpleDropdown from "../SimpleDropdown";
+import { createPrivatePool } from "../../util/acoPoolFactoryMethods";
+import { checkTransactionIsMined } from "../../util/web3Methods";
+import MetamaskLargeIcon from "../Util/MetamaskLargeIcon";
+import SpinnerLargeIcon from "../Util/SpinnerLargeIcon";
+import DoneLargeIcon from "../Util/DoneLargeIcon";
+import ErrorLargeIcon from "../Util/ErrorLargeIcon";
+import StepsModal from "../StepsModal/StepsModal";
 
-class UpdateSellingOptionsModal extends Component {
+export const CREATE_POOL_UNDERLYING_OPTIONS = [
+  {
+    value: "ETH",
+    name: "ETH",
+    icon: "/images/eth_icon.png",
+  },
+  {
+    value: "WBTC",
+    name: "WBTC",
+    icon: "/images/wbtc_icon.png",
+  },
+];
+
+class CreatePoolModal extends Component {
   constructor(props) {
-    super(props)
-    this.state = {
+    super(props);
+    this.state = this.getInitialState(props);
+  }
+
+  getInitialState = (props) => {
+    var state = {
+      selectedType: 1,
+      selectedUnderlying: CREATE_POOL_UNDERLYING_OPTIONS[0],
+      priceMode: STRIKE_PRICE_MODE[0],
+      priceSettingsType: STRIKE_PRICE_OPTIONS[0],
+      maxStrikePrice: "",
+      minStrikePrice: "",
       tolerancePriceBelowMin: "",
       tolerancePriceBelowMax: "",
       tolerancePriceAboveMin: "",
       tolerancePriceAboveMax: "",
-      minStrikePrice: "",
-      maxStrikePrice: "",
       minExpiration: "",
       maxExpiration: "",
-      priceSettingsType: "",
-      priceMode: "",
-    }
+      ivValue: "",
+      noFixedMin: "",
+      noFixedMax: "",
+      noMax: ""
+    };
+    return state;
   }
 
-  componentDidMount = () => {
-    let pool = this.props.pool
-    let priceSettingsType = STRIKE_PRICE_OPTIONS[0]
-    let priceMode = null
-    if (this.props.tolerancePriceAboveMin === null && this.props.tolerancePriceBelowMin === null && 
-      this.props.tolerancePriceAboveMax === null && this.props.tolerancePriceBelowMax === null && this.props.minStrikePrice === null && this.props.maxStrikePrice === null) {
-        priceMode = STRIKE_PRICE_MODE[3]
-    }
-    else if (this.props.tolerancePriceAboveMin === null && this.props.tolerancePriceBelowMin === null && 
-      this.props.tolerancePriceAboveMax === null && this.props.tolerancePriceBelowMax === null && 
-      (this.props.minStrikePrice !== null || this.props.maxStrikePrice !== null)) {
-        priceMode = STRIKE_PRICE_MODE[0]
-    }
-    else if (this.props.tolerancePriceAboveMin !== null || this.props.tolerancePriceBelowMin !== null || 
-      this.props.tolerancePriceAboveMax !== null || this.props.tolerancePriceBelowMax !== null) {
-      if (this.props.minStrikePrice === null && this.props.maxStrikePrice === null) {
-        priceMode = STRIKE_PRICE_MODE[1]
-      }
-      else {
-        priceMode = STRIKE_PRICE_MODE[2]
-      }
+  componentDidMount = () => {}
 
-      if (this.props.tolerancePriceBelowMin === null && this.props.tolerancePriceBelowMax === null) {
-        priceSettingsType = pool.isCall ? STRIKE_PRICE_OPTIONS[0] : STRIKE_PRICE_OPTIONS[1]
-      }
-      else if (this.props.tolerancePriceAboveMin === null && this.props.tolerancePriceAboveMax === null) {
-        priceSettingsType = pool.isCall ? STRIKE_PRICE_OPTIONS[1] : STRIKE_PRICE_OPTIONS[0]
-      }
-      else {
-        priceSettingsType = STRIKE_PRICE_OPTIONS[2]
-      }
-    }
-
-    this.setState({
-      tolerancePriceBelowMin: this.getTolerance(this.props.tolerancePriceBelowMin),
-      tolerancePriceBelowMax: this.getTolerance(this.props.tolerancePriceBelowMax),
-      tolerancePriceAboveMin: this.getTolerance(this.props.tolerancePriceAboveMin),
-      tolerancePriceAboveMax: this.getTolerance(this.props.tolerancePriceAboveMax),
-      minStrikePrice: fromDecimals(this.props.minStrikePrice, 6, 6, 0),
-      maxStrikePrice: fromDecimals(this.props.maxStrikePrice, 6, 6, 0),
-      noFixedMin: this.props.minStrikePrice === null,
-      noFixedMax: this.props.maxStrikePrice === null,
-      minExpiration: this.props.minExpiration,
-      maxExpiration: this.props.maxExpiration,
-      noMax: this.props.tolerancePriceAboveMax === null,
-      priceMode: priceMode,
-      priceSettingsType: priceSettingsType
-    })
+  selectType = (type) => {
+    this.setState({ selectedType: type });
   }
 
-  getTolerance = (value) => {
-    if (value !== null) {
-      return value * 100
-    }
-    return ""
+  onAssetSelected = (selectedAsset) => {
+    this.setState({ selectedUnderlying: selectedAsset });
   }
 
-  componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
-      this.props.onHide(false)
-    }
+  isConnected = () => {
+    return (
+      this.context &&
+      this.context.web3 &&
+      this.context.web3.selectedAccount &&
+      this.context.web3.validNetwork
+    );
+  }
+
+  onConnectClick = () => {
+    this.props.signIn(null, this.context);
+  }
+
+  onIVValueChange = (value) => {
+    this.setState({ ivValue: value });
+  }
+
+  onMinExpirationChange = (value) => {
+    this.setState({ minExpiration: value });
+  }
+
+  onMaxExpirationChange = (value) => {
+    this.setState({ maxExpiration: value });
+  }
+
+  onTolerancePriceAboveMinChange = (value) => {
+    this.setState({ tolerancePriceAboveMin: value });
+  }
+
+  onTolerancePriceAboveMaxChange = (value) => {
+    this.setState({ tolerancePriceAboveMax: value });
+  }
+
+  onTolerancePriceBelowMinChange = (value) => {
+    this.setState({ tolerancePriceBelowMin: value });
+  }
+
+  onTolerancePriceBelowMaxChange = (value) => {
+    this.setState({ tolerancePriceBelowMax: value });
+  }
+
+  priceSettingsTypeChange = (option) => {
+    this.setState({ priceSettingsType: option });
+  }
+
+  priceModeChange = (option) => {
+    this.setState({ priceMode: option });
+  }
+
+  onNoMaxChange = (event) => {
+    this.setState({ noMax: event.target.checked, tolerancePriceAboveMax: "" });
+  }
+
+  onNoFixedMinChange = (event) => {
+    this.setState({ noFixedMin: event.target.checked, minStrikePrice: "" });
+  }
+
+  onNoFixedMaxChange = (event) => {
+    this.setState({ noFixedMax: event.target.checked, maxStrikePrice: "" });
+  }  
+
+  onMaxStrikePriceChange = (value) => {
+    this.setState({ maxStrikePrice: value });
+  }
+
+  onMinStrikePriceChange = (value) => {
+    this.setState({ minStrikePrice: value });
   }
 
   getToleranceDecimals = (stateValue) => {
@@ -112,7 +154,7 @@ class UpdateSellingOptionsModal extends Component {
     }
   }
 
-  onConfirmClick = () => {
+  onCreateClick = () => {
     if (this.canConfirm()) {
       var stepNumber = 0
       let pool = this.props.pool
@@ -122,6 +164,7 @@ class UpdateSellingOptionsModal extends Component {
       let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
       let minStrikePrice = this.getStrikePriceDecimals(this.state.minStrikePrice)
       let maxStrikePrice = this.getStrikePriceDecimals(this.state.maxStrikePrice)
+      let underlying = this.state.selectedUnderlying.value === "ETH" ? ethAddress : wbtcAddress
       if (this.state.priceMode.value === StrikePriceModes.AnyPrice || this.state.priceMode.value === StrikePriceModes.Fixed) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceBelowMax = "-1"
@@ -163,48 +206,49 @@ class UpdateSellingOptionsModal extends Component {
 
       let minExpiration = this.state.minExpiration * 86400
       let maxExpiration = this.state.maxExpiration * 86400
+      let baseVolatility = this.getToleranceDecimals(this.state.ivValue)
       this.setStepsModalInfo(++stepNumber)
-      setAcoPermissionConfig(this.context.web3.selectedAccount, pool.address, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration)
-        .then(result => {
-          if (result) {
-            this.setStepsModalInfo(++stepNumber)
-            checkTransactionIsMined(result)
-              .then(result => {
-                if (result) {
-                  this.setStepsModalInfo(++stepNumber)
-                }
-                else {
-                  this.setStepsModalInfo(-1)
-                }
-              })
-              .catch(() => {
+      createPrivatePool(this.context.web3.selectedAccount, underlying, usdcAddress, this.state.selectedType === 1, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration)
+      .then(result => {
+        if (result) {
+          this.setStepsModalInfo(++stepNumber)
+          checkTransactionIsMined(result)
+            .then(result => {
+              if (result) {
+                this.setStepsModalInfo(++stepNumber)
+              }
+              else {
                 this.setStepsModalInfo(-1)
-              })
-          }
-          else {
-            this.setStepsModalInfo(-1)
-          }
-        })
-        .catch(() => {
+              }
+            })
+            .catch(() => {
+              this.setStepsModalInfo(-1)
+            })
+        }
+        else {
           this.setStepsModalInfo(-1)
-        })
+        }
+      })
+      .catch(() => {
+        this.setStepsModalInfo(-1)
+      })
     }
   }
 
   setStepsModalInfo = (stepNumber) => {
-    var title = "Update Selling Options"
+    var title = "Create Pool"
     var subtitle = ""
     var img = null
     if (stepNumber === 1) {
-      subtitle = "Confirm on " + this.context.web3.name + " to send update transaction."
+      subtitle = "Confirm on " + this.context.web3.name + " to send transaction."
       img = <MetamaskLargeIcon />
     }
     else if (stepNumber === 2) {
-      subtitle = "Updating selling options..."
+      subtitle = "Creating pool..."
       img = <SpinnerLargeIcon />
     }
     else if (stepNumber === 3) {
-      subtitle = "You have successfully updated."
+      subtitle = "You have successfully created the pool."
       img = <DoneLargeIcon />
     }
     else if (stepNumber === -1) {
@@ -213,7 +257,7 @@ class UpdateSellingOptionsModal extends Component {
     }
 
     var steps = []
-    steps.push({ title: "Update", progress: stepNumber > 2 ? 100 : 0, active: true })
+    steps.push({ title: "Create", progress: stepNumber > 2 ? 100 : 0, active: true })
     this.setState({
       stepsModalInfo: {
         title: title,
@@ -223,7 +267,7 @@ class UpdateSellingOptionsModal extends Component {
         isDone: (stepNumber === 3 || stepNumber === -1),
         onDoneButtonClick: (stepNumber === 3 ? this.onDoneButtonClick : this.onHideStepsModal)
       }
-    }, () => refreshAcoPermissionConfig(this.props.pool.address))
+    })
   }
 
   onDoneButtonClick = () => {
@@ -236,7 +280,7 @@ class UpdateSellingOptionsModal extends Component {
   }
 
   getButtonMessage = () => {
-    var isCall = this.props.pool.isCall
+    var isCall = this.state.selectedType === 1
     if (this.state.minExpiration === null || this.state.minExpiration === "" || this.state.minExpiration < 0) {
       return "Enter minimum expiration"
     }
@@ -300,72 +344,40 @@ class UpdateSellingOptionsModal extends Component {
     }
     return null
   }
-
+  
   canConfirm = () => {
     return (this.getButtonMessage() === null)
   }
 
-  onMinExpirationChange = (value) => {
-    this.setState({ minExpiration: value })
-  }
-
-  onMaxExpirationChange = (value) => {
-    this.setState({ maxExpiration: value })
-  }
-
-  onTolerancePriceAboveMinChange = (value) => {
-    this.setState({ tolerancePriceAboveMin: value })
-  }
-
-  onTolerancePriceAboveMaxChange = (value) => {
-    this.setState({ tolerancePriceAboveMax: value })
-  }
-
-  onTolerancePriceBelowMinChange = (value) => {
-    this.setState({ tolerancePriceBelowMin: value })
-  }
-
-  onTolerancePriceBelowMaxChange = (value) => {
-    this.setState({ tolerancePriceBelowMax: value })
-  }
-
-  priceSettingsTypeChange = (option) => {
-    this.setState({priceSettingsType: option})
-  }
-
-  priceModeChange = (option) => {
-    this.setState({ priceMode: option });
-  }
-
-  onNoMaxChange = (event) => {
-    this.setState({noMax: event.target.checked, tolerancePriceAboveMax: ""})
-  }
-  
-  onNoFixedMinChange = (event) => {
-    this.setState({ noFixedMin: event.target.checked, minStrikePrice: "" });
-  }
-
-  onNoFixedMaxChange = (event) => {
-    this.setState({ noFixedMax: event.target.checked, maxStrikePrice: "" });
-  }  
-
-  onMaxStrikePriceChange = (value) => {
-    this.setState({ maxStrikePrice: value });
-  }
-
-  onMinStrikePriceChange = (value) => {
-    this.setState({ minStrikePrice: value });
-  }
-
   render() {
-    let isCall = this.props.pool.isCall
-    return (<Modal className="aco-modal update-selling-options-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
-      <Modal.Header closeButton>UPDATE SELLING OPTIONS</Modal.Header>
-      <Modal.Body>
-        <div className="exercise-action">
-          <div className="confirm-card">
-            <div className="confirm-card-body">
-            <div className="expiration-and-price-info">
+    return (
+      <Modal className="aco-modal create-pool-modal" centered={true} show={true} onHide={() => this.props.onHide(false)}>
+        <Modal.Header closeButton>CREATE POOL</Modal.Header>
+        <Modal.Body>
+          <div className="py-3">
+            <div className="page-title">
+              Options to be written
+            </div>
+            <div className="page-subtitle">
+              Set the type and parameters of the options to be written
+            </div>
+            <div className="create-pool-content">
+              <div className="inputs-wrapper-row">
+                <div className="input-column underlying-column">
+                  <div className="input-label">Underlying</div>
+                  <div className="input-field">
+                    <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={CREATE_POOL_UNDERLYING_OPTIONS} onSelectOption={this.onAssetSelected} />
+                  </div>
+                </div>
+                <div className="input-column">
+                  <div className="input-label">Type</div>
+                  <div className="input-field type-toggle">
+                    <OptionBadge onClick={() => this.selectType(1)} className={this.state.selectedType === 1 ? "active" : "unselected"} isCall={true} />
+                    <OptionBadge onClick={() => this.selectType(2)} className={this.state.selectedType === 2 ? "active" : "unselected"} isCall={false} />
+                  </div>
+                </div>
+              </div>
+              <div className="expiration-and-price-info">
                 <div className="card-separator"></div>
                 <div className="section-label">Expiration Range</div>
                 <div className="input-row">
@@ -450,9 +462,9 @@ class UpdateSellingOptionsModal extends Component {
                     {this.state.priceSettingsType && (
                       <>
                         {((this.state.priceSettingsType.value === StrikePriceOptions.OTM &&
-                          isCall) ||
+                          this.state.selectedType === 1) ||
                           (this.state.priceSettingsType.value === StrikePriceOptions.ITM &&
-                            !isCall)) && (
+                            this.state.selectedType !== 1)) && (
                           <div className="input-row mt-2 no-max-input-row">
                             <div className="label-input-row">
                               <div>Oracle Price +&nbsp;</div>
@@ -511,9 +523,9 @@ class UpdateSellingOptionsModal extends Component {
                           </div>
                         )}
                         {((this.state.priceSettingsType.value === StrikePriceOptions.OTM &&
-                          !isCall) ||
+                          this.state.selectedType !== 1) ||
                           (this.state.priceSettingsType.value === StrikePriceOptions.ITM &&
-                            isCall)) && (
+                            this.state.selectedType === 1)) && (
                           <div className="input-row mt-2">
                             <div className="label-input-row">
                               <div>Oracle Price -&nbsp;</div>
@@ -571,21 +583,57 @@ class UpdateSellingOptionsModal extends Component {
                     )}
                   </>
                 )}
+                <div className="card-separator"></div>
+                <div className="section-label">Option Pricing</div>
+                <div className="input-row justify-content-center">
+                  <div className="input-column">
+                    <div className="input-label">Implied Volatility</div>
+                    <div className="input-field">
+                      <DecimalInput
+                        tabIndex="-1"
+                        onChange={this.onIVValueChange}
+                        value={this.state.ivValue}
+                      ></DecimalInput>
+                      <div className="coin-symbol">%</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="confirm-card-actions">
-              <div className="aco-button cancel-btn" onClick={() => this.props.onHide(false)}>Go back</div>
-              <div className={"aco-button action-btn " + (this.canConfirm() ? "" : "disabled")} title={this.getButtonMessage()} onClick={this.onConfirmClick}>Confirm</div>
+
+              <div className="action-button-wrapper">
+                {this.getButtonMessage() === null ? (
+                  this.isConnected() ? (
+                    <div
+                      className="action-btn medium solid-blue"
+                      onClick={this.onCreateClick}
+                    >
+                      <div>CREATE POOL</div>
+                    </div>
+                  ) : (
+                    <div
+                      className="action-btn medium solid-blue"
+                      onClick={this.onConnectClick}
+                    >
+                      <div>CONNECT WALLET</div>
+                    </div>
+                  )
+                ) : (
+                  <div className="action-btn medium solid-blue disabled">
+                    <div>{this.getButtonMessage()}</div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}
-        </div>
-      </Modal.Body>
-    </Modal>)
+        </Modal.Body>
+      </Modal>
+    );
   }
 }
 
-UpdateSellingOptionsModal.contextTypes = {
-  web3: PropTypes.object
-}
-export default withRouter(UpdateSellingOptionsModal)
+CreatePoolModal.contextTypes = {
+  web3: PropTypes.object,
+  ticker: PropTypes.object,
+};
+export default withRouter(CreatePoolModal);

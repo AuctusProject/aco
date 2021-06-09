@@ -44,3 +44,7 @@
 .no-max-checked .coin-symbol {
     color: #4a4a4a;
 }
+
+.no-max-input .form-check-label {
+    margin-top: 3px;
+}

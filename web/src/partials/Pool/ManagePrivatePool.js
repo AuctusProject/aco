@@ -1,10 +1,11 @@
 import './ManagePrivatePool.css'
 import React, { Component } from 'react'
-import { acoPermissionConfig } from '../../util/acoPoolMethodsv4'
-import { formatPercentage, PERCENTAGE_PRECISION } from '../../util/constants'
+import { acoPermissionConfig } from '../../util/acoPoolMethodsv5'
+import { formatPercentage, fromDecimals, PERCENTAGE_PRECISION } from '../../util/constants'
 import Loading from '../Util/Loading'
 import UpdateIVModal from './UpdateIVModal'
 import UpdateSellingOptionsModal from './UpdateSellingOptionsModal'
+import BigNumber from 'bignumber.js'
 
 class ManagePrivatePool extends Component {
   constructor() {
@@ -27,22 +28,49 @@ class ManagePrivatePool extends Component {
       tolerancePriceBelowMax: this.getTolerance(acoPermissionConfig.tolerancePriceBelowMax),
       tolerancePriceAboveMin: this.getTolerance(acoPermissionConfig.tolerancePriceAboveMin),
       tolerancePriceAboveMax: this.getTolerance(acoPermissionConfig.tolerancePriceAboveMax),
+      minStrikePrice: this.getStrikePriceArgument(acoPermissionConfig.minStrikePrice),
+      maxStrikePrice: this.getStrikePriceArgument(acoPermissionConfig.maxStrikePrice),
       loading:false
     })
   }
 
   getTolerance = (tolerance) => {
-    if (tolerance === "0") {
+    if (!tolerance || isNaN(tolerance) || tolerance.startsWith("-")) {
       return null
-    }
-    if (tolerance === "1") {
-      return 0
     }
     return tolerance/PERCENTAGE_PRECISION
   }
 
+  getStrikePriceArgument = (arg) => {
+    if (!arg || isNaN(arg) || arg === "0") {
+      return null
+    }
+    return new BigNumber(arg)
+  }
+
+  formatStrikePrice = (value) => {
+    return fromDecimals(value, 6, 6, 0) + " USDC"
+  }
+
+  getFixedStrikePriceConfig = () => {
+    if (this.state.minStrikePrice === null && this.state.maxStrikePrice === null) {
+      return null
+    }
+    else if (this.state.minStrikePrice !== null && this.state.maxStrikePrice !== null) {
+      return this.formatStrikePrice(this.state.minStrikePrice) + 
+        " <= Strike Price <= "+ this.formatStrikePrice(this.state.maxStrikePrice)
+    }
+    else if (this.state.maxStrikePrice === null) {
+      return this.formatStrikePrice(this.state.minStrikePrice) + 
+        " <= Strike Price"
+    }
+    else if (this.state.minStrikePrice === null) {
+      return "Strike Price <= "+ this.formatStrikePrice(this.state.maxStrikePrice)
+    }
+  }
+
   getStrikePriceConfig = () => {
-    if (this.state.tolerancePriceAboveMin === null && this.state.tolerancePriceAboveMax === null && this.state.tolerancePriceBelowMin === null && this.state.tolerancePriceBelowMax === null) {
+    if (this.getFixedStrikePriceConfig() === null && this.state.tolerancePriceAboveMin === null && this.state.tolerancePriceAboveMax === null && this.state.tolerancePriceBelowMin === null && this.state.tolerancePriceBelowMax === null) {
       return "Any Strike Price"
     }
     else if (((this.state.tolerancePriceAboveMin !== null ? 1 : 0) +
@@ -54,18 +82,18 @@ class ManagePrivatePool extends Component {
     }
     else if (this.state.tolerancePriceBelowMax !== null) {
       if (this.state.tolerancePriceBelowMin !== null) {
-        return "Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
-          " <= Strike Price <= Current Price - "+ formatPercentage(this.state.tolerancePriceBelowMin, 0)
+        return "Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
+          " <= Strike Price <= Oracle Price - "+ formatPercentage(this.state.tolerancePriceBelowMin, 0)
       }
       else if (this.state.tolerancePriceAboveMax !== null) {
-        return "Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
-          " <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
+        return "Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0) + 
+          " <= Strike Price <= Oracle Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
       }
       else if (this.state.tolerancePriceAboveMin !== null) {
         return "Invalid Strike Price Configuration"
       }
       else {
-        return "Strike Price >= Current Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0)
+        return "Strike Price >= Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMax, 0)
       }
     }
     else if (this.state.tolerancePriceBelowMin !== null) {
@@ -73,20 +101,20 @@ class ManagePrivatePool extends Component {
         return "Invalid Strike Price Configuration"
       }
       else {
-        return "Strike Price <= Current Price - " + formatPercentage(this.state.tolerancePriceBelowMin, 0)
+        return "Strike Price <= Oracle Price - " + formatPercentage(this.state.tolerancePriceBelowMin, 0)
       }
     }
     else if (this.state.tolerancePriceAboveMin !== null) {
       if (this.state.tolerancePriceAboveMax !== null) {
-        return "Current Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0) + 
-          " <= Strike Price <= Current Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
+        return "Oracle Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0) + 
+          " <= Strike Price <= Oracle Price + "+ formatPercentage(this.state.tolerancePriceAboveMax, 0)
       }
       else {
-        return "Strike Price >= Current Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0)
+        return "Strike Price >= Oracle Price + " + formatPercentage(this.state.tolerancePriceAboveMin, 0)
       }
     }
     else if (this.state.tolerancePriceAboveMax !== null) {
-      return "Strike Price <= Current Price + " + formatPercentage(this.state.tolerancePriceAboveMax, 0)
+      return "Strike Price <= Oracle Price + " + formatPercentage(this.state.tolerancePriceAboveMax, 0)
     }
   }
 
@@ -138,6 +166,7 @@ class ManagePrivatePool extends Component {
       <div className="manage-private-pool-item">
         <div className="manage-private-pool-item-label">Selling options:</div>
         <div className="manage-private-pool-item-value">
+          {this.getFixedStrikePriceConfig() && <div>{this.getFixedStrikePriceConfig()}</div>}
           <div>{this.getStrikePriceConfig()}</div>
           <div>{this.getExpirationConfig()}</div>
         </div>
@@ -152,7 +181,9 @@ class ManagePrivatePool extends Component {
         tolerancePriceAboveMin={this.state.tolerancePriceAboveMin} 
         tolerancePriceAboveMax={this.state.tolerancePriceAboveMax}
         tolerancePriceBelowMin={this.state.tolerancePriceBelowMin}
-        tolerancePriceBelowMax={this.state.tolerancePriceBelowMax}/>}
+        tolerancePriceBelowMax={this.state.tolerancePriceBelowMax}
+        minStrikePrice={this.state.minStrikePrice}
+        maxStrikePrice={this.state.maxStrikePrice}/>}
     </div>
   }
 }

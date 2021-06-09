@@ -1,10 +1,10 @@
-import { getWeb3 } from './web3Methods'
+import { getWeb3, sendTransaction } from './web3Methods'
 import { acoPoolFactoryAddress, deprecatedPoolImplementation, fromDecimals, getBalanceOfAsset, ONE_SECOND, toDecimals, PERCENTAGE_PRECISION } from './constants';
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 import { getGeneralData } from './acoPoolMethodsv2';
-import { acoPermissionConfig } from './acoPoolMethodsv4';
+import { acoPermissionConfig } from './acoPoolMethodsv5';
 
 var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {
@@ -149,10 +149,12 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
 
                 }
                 var strikePrice = Number(fromDecimals(option.strikePrice, 6))
-                var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) === 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.tolerancePriceBelowMax) === 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.tolerancePriceAboveMin) === 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.tolerancePriceAboveMax) === 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
+                var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) < 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceBelowMax) < 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMin) < 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.tolerancePriceAboveMax) < 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
+                    && (Number(poolConfig.minStrikePrice) <= strikePrice)
+                    && (Number(poolConfig.maxStrikePrice) === 0 || Number(poolConfig.maxStrikePrice) >= strikePrice)
 
                 resolve(isValidStrikePrice)
             })
@@ -201,4 +203,10 @@ export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwa
         })
         .catch(err => reject(err))
     })
+}
+
+export const createPrivatePool = (from, underlying, strikeAsset, isCall, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration) => {
+    const acoPoolFactoryContract = getAcoPoolFactoryContract()
+    var data = acoPoolFactoryContract.methods.newAcoPool(underlying, strikeAsset, isCall, baseVolatility, from, [tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration]).encodeABI()
+    return sendTransaction(null, null, from, acoPoolFactoryAddress, null, data)
 }

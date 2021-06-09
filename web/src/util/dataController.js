@@ -11,7 +11,8 @@ import {
   getPoolDeposits, 
   getPoolRedeems, 
   getPoolSwaps, 
-  getPoolWithdrawals 
+  getPoolWithdrawals,
+  getPoolsAccountBalances as getPoolsAccountBalancesSubgraph 
 } from './subgraphApi'
 
 const percentageDecimals = 5
@@ -94,13 +95,25 @@ export const getOptionsFromPair = (options, selectedPair) => {
 }
 
 let allPools = null
-export const getPools = async () => {
-  if (allPools != null) {
+export const getPools = async (forceRefresh = false) => {
+  if (!forceRefresh && allPools != null) {
     return allPools
   }
   let result = await getAllPools()
   allPools = parseSubgraphPools(result)
   return allPools
+}
+
+export const getPoolsAccountBalances = async (account, pools) => {
+  if (!account || !pools || !pools.length) {
+    return []
+  }
+  let data = await getPoolsAccountBalancesSubgraph(account.toLowerCase(), pools.map((c) => c.toLowerCase()))
+  let result = []
+  for (let i = 0; i < data.length; ++i) {
+    result.push(parseSubgraphPoolAccountBalance(data[i]))
+  }
+  return result
 }
 
 export const getPool = async (pool) => {
@@ -244,8 +257,10 @@ const parseSubgraphPool = (pool) => {
     underlying: pool.underlying.id,
     strikeAsset: pool.strikeAsset.id,
     isCall: pool.isCall,
+    isPrivate: pool.isPrivate,
     acoPoolImplementation: pool.implementation,
     admin: pool.poolAdmin,
+    poolId: parseInt(pool.poolId),
     volatility: parseFloat(pool.baseVolatility) * 100,
     protocolFee: parseFloat(pool.fee) * 100,
     withdrawOpenPositionPenalty: parseFloat(pool.withdrawOpenPositionPenalty) * 100,
@@ -253,6 +268,8 @@ const parseSubgraphPool = (pool) => {
     tolerancePriceBelowMax: parseSubgraphNum(pool.tolerancePriceBelowMax, percentageDecimals),
     tolerancePriceAboveMin: parseSubgraphNum(pool.tolerancePriceAboveMin, percentageDecimals),
     tolerancePriceAboveMax: parseSubgraphNum(pool.tolerancePriceAboveMax, percentageDecimals),
+    minStrikePrice: parseSubgraphNum(pool.minStrikePrice, parseInt(pool.strikeAsset.decimals)),
+    maxStrikePrice: parseSubgraphNum(pool.maxStrikePrice, parseInt(pool.strikeAsset.decimals)),
     minExpiration: parseInt(pool.minExpiration),
     maxExpiration: parseInt(pool.maxExpiration),
     totalSupply: parseSubgraphNum(pool.totalSupply, parseInt(pool.decimals)),
@@ -281,6 +298,14 @@ const parseSubgraphPool = (pool) => {
       symbol: pool.strikeAsset.symbol,
       decimals: parseInt(pool.strikeAsset.decimals)
     }
+  }
+}
+
+const parseSubgraphPoolAccountBalance = (accountBalance) => {
+  return {
+    account: accountBalance.account,
+    balance: parseSubgraphNum(accountBalance.balance, parseInt(accountBalance.pool.decimals)),
+    pool: accountBalance.pool.id
   }
 }
 
@@ -376,6 +401,9 @@ const parseSubgraphTx = (tx) => {
 }
 
 const parseSubgraphNum = (stringNum, decimals) => {
+  if (stringNum && stringNum.startsWith('-')) {
+    return stringNum
+  }
   let splittedNum = stringNum.split('.')
   let fraction = ''
   if (splittedNum.length > 1) {

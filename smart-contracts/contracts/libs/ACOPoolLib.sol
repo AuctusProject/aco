@@ -35,7 +35,7 @@ library ACOPoolLib {
 		uint256 underlyingPrice;
 		uint256 underlyingPrecision;
 		AcoData acoData;
-		IACOPool2.PoolAcoPermissionConfig acoPermissionConfig;
+		IACOPool2.PoolAcoPermissionConfigV2 acoPermissionConfig;
 	}
 	
 	struct AcoData {
@@ -49,14 +49,20 @@ library ACOPoolLib {
 	
 	uint256 public constant PERCENTAGE_PRECISION = 100000;
 	
-	function name(address underlying, address strikeAsset, bool isCall) public view returns(string memory) {
+	function name(
+        address underlying, 
+        address strikeAsset, 
+        bool isCall, 
+        uint256 poolId
+    ) public view returns(string memory) {
         return string(abi.encodePacked(
             "ACO POOL WRITE ",
             _getAssetSymbol(underlying),
             "-",
             _getAssetSymbol(strikeAsset),
             "-",
-            (isCall ? "CALL" : "PUT")
+            (isCall ? "CALL #" : "PUT #"),
+            _formatNumber(poolId)
         ));
     }
     
@@ -64,7 +70,7 @@ library ACOPoolLib {
 		uint256 strikePrice, 
         uint256 acoExpiryTime, 
 		uint256 underlyingPrice,
-        IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig
+        IACOPool2.PoolAcoPermissionConfigV2 memory acoPermissionConfig
     ) public view returns(bool) {
         return _acoExpirationIsValid(acoExpiryTime, acoPermissionConfig) && _acoStrikePriceIsValid(strikePrice, underlyingPrice, acoPermissionConfig);
     }
@@ -204,6 +210,26 @@ library ACOPoolLib {
             
 		(collateralLocked, collateralOnOpenPosition, collateralLockedRedeemable) = _poolOpenPositionCollateralBalance(data, openAcos);
 	}
+
+    function _formatNumber(uint256 value) internal pure returns(string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 digits;
+        uint256 temp = value;
+        while (temp != 0) {
+            temp /= 10;
+            digits++;
+        }
+        bytes memory buffer = new bytes(digits);
+        uint256 index = digits - 1;
+        temp = value;
+        for (uint256 i = 0; i < digits; ++i) {
+            buffer[index--] = byte(uint8(48 + temp % 10));
+            temp /= 10;
+        }
+        return string(buffer);
+    }
 	
 	function _getBaseCollateralData(
 	    bool isDeposit,
@@ -284,17 +310,43 @@ library ACOPoolLib {
 	function _acoStrikePriceIsValid(
 		uint256 strikePrice, 
 		uint256 underlyingPrice,
-		IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig
+		IACOPool2.PoolAcoPermissionConfigV2 memory acoPermissionConfig
 	) internal pure returns(bool) {
 	    return (
-	        (acoPermissionConfig.tolerancePriceBelowMin == 0 || strikePrice <= underlyingPrice.mul(PERCENTAGE_PRECISION.sub(acoPermissionConfig.tolerancePriceBelowMin)).div(PERCENTAGE_PRECISION))
-	        && (acoPermissionConfig.tolerancePriceBelowMax == 0 || strikePrice >= underlyingPrice.mul(PERCENTAGE_PRECISION.sub(acoPermissionConfig.tolerancePriceBelowMax)).div(PERCENTAGE_PRECISION))
-	        && (acoPermissionConfig.tolerancePriceAboveMin == 0 || strikePrice >= underlyingPrice.mul(PERCENTAGE_PRECISION.add(acoPermissionConfig.tolerancePriceAboveMin)).div(PERCENTAGE_PRECISION))
-	        && (acoPermissionConfig.tolerancePriceAboveMax == 0 || strikePrice <= underlyingPrice.mul(PERCENTAGE_PRECISION.add(acoPermissionConfig.tolerancePriceAboveMax)).div(PERCENTAGE_PRECISION))
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMin, false, true) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceBelowMax, false, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMin, true, false) &&
+	        _validatePricePercentageTolerance(strikePrice, underlyingPrice, acoPermissionConfig.tolerancePriceAboveMax, true, true) &&
+	        (acoPermissionConfig.minStrikePrice <= strikePrice) &&
+	        (acoPermissionConfig.maxStrikePrice == 0 || acoPermissionConfig.maxStrikePrice >= strikePrice)
         );
 	}
+	
+	function _validatePricePercentageTolerance(
+	    uint256 strikePrice, 
+	    uint256 underlyingPrice, 
+	    int256 tolerance, 
+	    bool isAbove,
+	    bool shouldBeLesser
+    ) internal pure returns(bool) {
+        if (tolerance < int256(0)) {
+            return true;
+        } else {
+            uint256 value;
+            if (isAbove) {
+                value = underlyingPrice.mul(PERCENTAGE_PRECISION.add(uint256(tolerance))).div(PERCENTAGE_PRECISION);
+            } else {
+                value = underlyingPrice.mul(PERCENTAGE_PRECISION.sub(uint256(tolerance))).div(PERCENTAGE_PRECISION);
+            }
+            if (shouldBeLesser) {
+                return strikePrice <= value;
+            } else {
+                return strikePrice >= value;
+            }
+        }
+    }
 
-	function _acoExpirationIsValid(uint256 acoExpiryTime, IACOPool2.PoolAcoPermissionConfig memory acoPermissionConfig) internal view returns(bool) {
+	function _acoExpirationIsValid(uint256 acoExpiryTime, IACOPool2.PoolAcoPermissionConfigV2 memory acoPermissionConfig) internal view returns(bool) {
 		return acoExpiryTime >= block.timestamp.add(acoPermissionConfig.minExpiration) && acoExpiryTime <= block.timestamp.add(acoPermissionConfig.maxExpiration);
 	}
     
