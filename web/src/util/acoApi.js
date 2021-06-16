@@ -1,5 +1,6 @@
 import Axios from 'axios'
-import { apiUrl, ONE_SECOND, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore } from './constants';
+import { ONE_SECOND, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore } from './constants';
+import { apiUrl } from './network';
 
 var apiTokenList = null
 export function getTokensList() {
@@ -8,7 +9,7 @@ export function getTokensList() {
             resolve(apiTokenList)
             return
         }
-        Axios.get(apiUrl + "tokens")
+        Axios.get(apiUrl() + "tokens")
         .then(res => {
             if (res && res.data) {
                 apiTokenList = removeOptionsToIgnore(res.data)
@@ -28,7 +29,7 @@ export function getAcoAssets() {
             resolve(acoAssets)
             return
         }
-        Axios.get(apiUrl + "assets")
+        Axios.get(apiUrl() + "assets")
         .then(res => {
             if (res && res.data) {
                 acoAssets = res.data
@@ -76,7 +77,7 @@ export function getAcoPools(forceRefresh) {
             resolve(acoPools)
             return
         }
-        Axios.get(apiUrl + "pools")
+        Axios.get(apiUrl() + "pools")
         .then(res => {
             if (res && res.data) {
                 acoPools = res.data
@@ -89,7 +90,7 @@ export function getAcoPools(forceRefresh) {
 
 export function getAcoPoolStatus(poolAddress) {
     return new Promise(function(resolve,reject){
-        Axios.get(apiUrl + "pools/"+poolAddress+"/status")
+        Axios.get(apiUrl() + "pools/"+poolAddress+"/status")
         .then(res => {
             if (res && res.data) {
                 resolve(res.data)
@@ -104,7 +105,7 @@ export function getAcoPoolStatus(poolAddress) {
 
 export function getAcoPoolEvents(poolAddress) {
     return new Promise(function(resolve,reject){
-        Axios.get(apiUrl + "pools/"+poolAddress+"/events")
+        Axios.get(apiUrl() + "pools/"+poolAddress+"/events")
         .then(res => {
             if (res && res.data) {
                 resolve(res.data)
@@ -119,7 +120,7 @@ export function getAcoPoolEvents(poolAddress) {
 
 export function getAcoPoolHistory(poolAddress) {
     return new Promise(function(resolve,reject){
-        Axios.get(apiUrl + "pools/"+poolAddress+"/historical")
+        Axios.get(apiUrl() + "pools/"+poolAddress+"/historical")
         .then(res => {
             if (res && res.data) {
                 resolve(res.data)
@@ -135,7 +136,7 @@ export function getAcoPoolHistory(poolAddress) {
 export function getDeribitOptions(asset, isCall, expiration) {
     return new Promise(function(resolve,reject){
         var assetSymbol = asset !== "TBTC" && asset !== "WBTC" ? asset : "BTC"
-        var url = apiUrl + "deribit/instruments?asset="+assetSymbol+"&isCall="+isCall
+        var url = apiUrl() + "deribit/instruments?asset="+assetSymbol+"&isCall="+isCall
         if (expiration) {
             var unixExpiration = expiration.getTime()/ONE_SECOND 
             url = url + "&expiration="+unixExpiration
@@ -155,7 +156,7 @@ export function getDeribitOptions(asset, isCall, expiration) {
 
 export function getOtcOrder(orderId) {
     return new Promise(function(resolve,reject){
-        Axios.get(apiUrl + "order/" + encodeURIComponent(orderId))
+        Axios.get(apiUrl() + "order/" + encodeURIComponent(orderId))
         .then((res) => {
             if (res && res.data) {
                 resolve(res.data);
@@ -168,7 +169,7 @@ export function getOtcOrder(orderId) {
 
 export function createOtcOrder(isAskOrder, signedOrder) {
     return new Promise(function(resolve,reject){
-        Axios.post(apiUrl + "order", {isAskOrder:isAskOrder,order:signedOrder})
+        Axios.post(apiUrl() + "order", {isAskOrder:isAskOrder,order:signedOrder})
         .then((res) => {
             if (res && res.data) {
                 resolve(res.data);
@@ -198,7 +199,7 @@ export function getDeribiData(optionData) {
                 expiry.toLocaleString('en-us', {month: 'short'}).toUpperCase() + (expiry.getFullYear() % 100) + "-" +
                 (BigInt(optionData.strikePrice) / BigInt(10 ** optionData.strikeAssetInfo.decimals)).toString(10) + "-" + 
                 (optionData.isCall ? "C" : "P")
-            Axios.get(apiUrl + "deribit/ticker?instrument_name=" + deribitName)
+            Axios.get(apiUrl() + "deribit/ticker?instrument_name=" + deribitName)
             .then(res => {
                 if (res && res.data) {
                     resolve(res.data)
@@ -252,7 +253,7 @@ export function getOpynQuote(optionData, isBuy, tokenAmount) {
                         }
                 }
                 if (opynData) {
-                    Axios.get(apiUrl + "opyn/quote?isBuy=" + (isBuy ? "true" : "false") + "&exchange=" + opynData.optionsExchangeAddress + "&token=" + opynData.address + "&swappedToken=" + (optionData.isCall ? opynData.underlying : opynData.strike) + "&amount=" + (BigInt(tokenAmount) * BigInt(10 ** (-1 * parseInt(opynData.oTokenExchangeRateExp))) / BigInt(10 ** optionData.acoTokenInfo.decimals)).toString(10))
+                    Axios.get(apiUrl() + "opyn/quote?isBuy=" + (isBuy ? "true" : "false") + "&exchange=" + opynData.optionsExchangeAddress + "&token=" + opynData.address + "&swappedToken=" + (optionData.isCall ? opynData.underlying : opynData.strike) + "&amount=" + (BigInt(tokenAmount) * BigInt(10 ** (-1 * parseInt(opynData.oTokenExchangeRateExp))) / BigInt(10 ** optionData.acoTokenInfo.decimals)).toString(10))
                     .then(res => {
                         if (res && res.data) {
                             if (optionData.isCall) {

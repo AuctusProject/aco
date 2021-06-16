@@ -6,14 +6,15 @@ import Web3Utils from 'web3-utils'
 import Loading from '../Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClone } from '@fortawesome/free-regular-svg-icons'
-import { ellipsisCenterOfText, etherscanUrl, formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isEther, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
+import { ellipsisCenterOfText, formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isEther, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals } from '../../util/constants'
 import { getAcoAsset } from '../../util/acoApi'
 import CancelOrderModal from './CancelOrderModal'
 import AssetInput from '../Util/AssetInput'
 import TakeOrderModal from './TakeOrderModal'
-import { signerNonceStatus } from '../../util/acoOtcMethods'
+import { signerNonceStatus } from '../../util/contractHelpers/acoOtcMethods'
 import ReactTooltip from 'react-tooltip'
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
+import { explorerUrl, usdcAddress, wethAddress } from '../../util/network'
 
 class OtcTradeTabStep3 extends Component {
   constructor(props) {
@@ -43,14 +44,14 @@ class OtcTradeTabStep3 extends Component {
       var assetToPay = this.getAssetToPay()
       var signerAssetToPay = this.getSignerAssetToPay()
       if (isEther(assetToPay)) {
-        getBalanceOfAsset(wethAddress, userAddress).then(wethBalance => {
+        getBalanceOfAsset(wethAddress(), userAddress).then(wethBalance => {
           this.setState({ wethBalance: wethBalance })
         })
       }
       getBalanceOfAsset(assetToPay, userAddress).then(assetToPayBalance => {
         this.setState({ assetToPayBalance: assetToPayBalance })
       })
-      getBalanceOfAsset(isEther(signerAssetToPay) ? wethAddress : signerAssetToPay, this.props.otcOrder.order.signer.responsible).then(wethBalance => {
+      getBalanceOfAsset(isEther(signerAssetToPay) ? wethAddress() : signerAssetToPay, this.props.otcOrder.order.signer.responsible).then(wethBalance => {
         this.setState({ signerAssetToPayBalance: wethBalance })
       })
     }
@@ -69,7 +70,7 @@ class OtcTradeTabStep3 extends Component {
     if (!this.props.otcOrder.isAskOrder && this.state.optionInfo.isCall)
       return this.state.assetInfo.address
     else
-      return usdcAddress
+      return usdcAddress()
   }
 
   getSignerAmountToPay = () => {
@@ -85,7 +86,7 @@ class OtcTradeTabStep3 extends Component {
     if (this.props.otcOrder.isAskOrder && this.state.optionInfo.isCall)
       return this.state.assetInfo.address
     else
-      return usdcAddress
+      return usdcAddress()
   }
 
   getUnderlyingAddress = () => {
@@ -482,7 +483,7 @@ class OtcTradeTabStep3 extends Component {
                   <div className="input-field">
                     <AssetInput onAssetSelected={this.onAssetSelected} disabled={true} showTokenImportedModal={this.canTakeOrder()} selectedAsset={this.state.assetInfo}></AssetInput>
                   </div>
-                  {this.state.assetInfo.foundByAddress && <a className="address-hint" rel="noopener noreferrer" href={etherscanUrl + this.state.assetInfo.address} target="_blank">
+                  {this.state.assetInfo.foundByAddress && <a className="address-hint" rel="noopener noreferrer" href={explorerUrl() + this.state.assetInfo.address} target="_blank">
                     <div className="truncate">{ellipsisCenterOfText(this.state.assetInfo.address)}</div>
                     <FontAwesomeIcon icon={faExternalLinkAlt}></FontAwesomeIcon>
                   </a>}

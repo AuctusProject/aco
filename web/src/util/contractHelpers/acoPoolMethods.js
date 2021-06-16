@@ -1,17 +1,17 @@
-import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from '../web3Methods'
 import { acoPoolABI } from './acoPoolABI';
 import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
-import { toDecimals } from './constants';
+import { toDecimals } from '../constants';
 import { getCollateralAmountInDecimals } from './acoTokenMethods';
-import { getOption } from './dataController';
+import { getOption } from '../dataController';
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
     if (_web3) {
         return new _web3.eth.Contract(acoPoolABI, acoPoolAddress)
     }
-    return null;
+    return null
 }
 
 const getPoolQuote = (acoPoolAddress, option, amount) => {

@@ -1,34 +1,32 @@
-import { getWeb3, sendTransactionWithNonce, sendTransaction, signTypedData } from './web3Methods'
-import { acoOtcAddress, CHAIN_ID, toDecimals, usdcAddress } from './constants'
+import { getWeb3, sendTransactionWithNonce, sendTransaction, signTypedData } from '../web3Methods'
+import { toDecimals } from '../constants'
 import { acoOtcABI } from './acoOtcABI'
+import { acoOtcAddress, CHAIN_ID, usdcAddress } from '../network'
 
-var acoOtcContract = null
 function getAcoOtcContract() {
-  if (acoOtcContract == null) {
-    const _web3 = getWeb3()
-    if (_web3) {
-      acoOtcContract = new _web3.eth.Contract(acoOtcABI, acoOtcAddress)
-    }
+  const _web3 = getWeb3()
+  if (_web3) {
+    return new _web3.eth.Contract(acoOtcABI, acoOtcAddress())
   }
-  return acoOtcContract
+  return null
 }
 
 export function swapAskOrder(from, signedOrder, nonce) {
   const contract = getAcoOtcContract()
   const data = contract.methods.swapAskOrder(signedOrder).encodeABI()
-  return sendTransactionWithNonce(null, null, from, acoOtcAddress, null, data, null, nonce)
+  return sendTransactionWithNonce(null, null, from, acoOtcAddress(), null, data, null, nonce)
 }
 
 export function swapBidOrder(from, signedOrder, nonce) {
   const contract = getAcoOtcContract()
   const data = contract.methods.swapBidOrder(signedOrder).encodeABI()
-  return sendTransactionWithNonce(null, null, from, acoOtcAddress, null, data, null, nonce)
+  return sendTransactionWithNonce(null, null, from, acoOtcAddress(), null, data, null, nonce)
 }
 
 export function cancel(from, orderNonce) {
   const contract = getAcoOtcContract()
   const data = contract.methods.cancel([orderNonce]).encodeABI()
-  return sendTransaction(null, null, from, acoOtcAddress, null, data)
+  return sendTransaction(null, null, from, acoOtcAddress(), null, data)
 }
 
 export function isValidAskOrder(signedOrder) {
@@ -48,7 +46,7 @@ export function signerNonceStatus(from, nonce) {
 
 export function signOrder(from, isAsk, option, optionAmount, usdcValue, expiry, counterpartyAddress) {
   return new Promise(function (resolve, reject) { 
-    const otcContract = acoOtcAddress;
+    const otcContract = acoOtcAddress()
     if (!counterpartyAddress) {
       counterpartyAddress = "0x0000000000000000000000000000000000000000"
     }
@@ -56,7 +54,7 @@ export function signOrder(from, isAsk, option, optionAmount, usdcValue, expiry, 
       "responsible": isAsk ? from : counterpartyAddress,
       "amount": optionAmount.toString(),
       "underlying": option.selectedUnderlying.address,
-      "strikeAsset": usdcAddress,
+      "strikeAsset": usdcAddress(),
       "isCall": option.selectedType === 1,
       "strikePrice": toDecimals(option.strikeValue, 6).toString(),
       "expiryTime": Math.ceil(option.expirationDate.getTime() / 1000)
@@ -64,7 +62,7 @@ export function signOrder(from, isAsk, option, optionAmount, usdcValue, expiry, 
     var partyToken = {
       "responsible": isAsk ? counterpartyAddress : from,
       "amount": usdcValue.toString(),
-      "token": usdcAddress
+      "token": usdcAddress()
     }
     const order = {
       "nonce": Date.now(), 
@@ -81,7 +79,7 @@ export function signOrder(from, isAsk, option, optionAmount, usdcValue, expiry, 
       "domain": {
         "name": "ACOOTC",
         "version": "1",
-        "chainId": Number.parseInt(CHAIN_ID),
+        "chainId": Number.parseInt(CHAIN_ID()),
         "verifyingContract": otcContract
       },
       "message": order,

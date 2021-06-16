@@ -7,7 +7,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { claimReward, claimRewards } from '../../util/acoRewardsMethods'
+import { claimReward, claimRewards } from '../../util/contractHelpers/acoRewardsMethods'
 
 class ClaimModal extends Component {
   constructor(props) {

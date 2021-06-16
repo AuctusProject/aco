@@ -3,13 +3,13 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
-import { toDecimals, formatWithPrecision, maxAllowance, zrxExchangeAddress, fromDecimals } from '../../util/constants'
+import { getFormattedOpenPositionAmount } from '../../util/contractHelpers/acoTokenMethods'
+import { toDecimals, formatWithPrecision, maxAllowance, fromDecimals } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
 import DecimalInput from '../Util/DecimalInput'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
@@ -17,6 +17,7 @@ import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { getQuote, sell } from '../../util/acoSwapUtil'
+import { zrxExchangeAddress } from '../../util/network'
 
 class SimpleSellModal extends Component {
   constructor(props) {
@@ -38,7 +39,7 @@ class SimpleSellModal extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.position.option.acoToken, zrxExchangeAddress, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.position.option.acoToken, zrxExchangeAddress(), nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -158,7 +159,7 @@ class SimpleSellModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, zrxExchangeAddress).then(result => {
+        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, zrxExchangeAddress()).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(this.getOptionAmountToDecimals()))
         })

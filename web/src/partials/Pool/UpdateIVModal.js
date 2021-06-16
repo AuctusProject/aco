@@ -11,7 +11,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { setBaseVolatility } from '../../util/acoPoolMethodsv3'
+import { setBaseVolatility } from '../../util/contractHelpers/acoPoolMethodsv3'
 
 class UpdateIVModal extends Component {
   constructor(props) {

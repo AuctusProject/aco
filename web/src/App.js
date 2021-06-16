@@ -14,7 +14,7 @@ import Writer from './pages/Writer'
 import Exercise from './pages/Exercise'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getNetworkName, CHAIN_ID, getCurrentRoute, getPairIdFromRoute, isDarkMode, getSlippageConfig, setSlippageConfig } from './util/constants'
+import { getCurrentRoute, getPairIdFromRoute, isDarkMode, getSlippageConfig, setSlippageConfig } from './util/constants'
 import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
@@ -23,6 +23,7 @@ import Otc from './pages/Otc'
 import PoolDashboard from './partials/Pool/PoolDashboard'
 import CreateOption from './pages/CreateOption'
 import Farm from './pages/Farm'
+import { getNetworkName } from './util/network'
 
 class App extends Component {
   constructor() {
@@ -62,7 +63,7 @@ class App extends Component {
         })
       } else {
         this.setState({refreshWeb3: null}, () => {
-          error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
+          error("Please connect to the "+ getNetworkName() + ".", "Wrong Network")
         })
       }
     } else {

@@ -7,7 +7,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { cancel } from '../../util/acoOtcMethods'
+import { cancel } from '../../util/contractHelpers/acoOtcMethods'
 
 class CancelOrderModal extends Component {
   constructor(props) {

@@ -1,5 +1,6 @@
 import Axios from 'axios'
-import { gasStationApiUrl, gasPriceType, defaultGasPrice, gwei } from './constants';
+import { gwei } from './constants'
+import { defaultGasPrice, gasPriceType, gasApiUrl } from './network'
 
 var gasPrice = null
 var lastGasPriceTime = null
@@ -9,28 +10,33 @@ export const getGasPrice = () => {
             resolve(gasPrice)
             return;
         }
-        Axios.get(gasStationApiUrl).then((response) => {
-            if (response && response.data && response.data[gasPriceType]) {
-                gasPrice = Math.ceil(response.data[gasPriceType] * gwei / 10.0)
-                lastGasPriceTime = new Date().getTime()
-                resolve(gasPrice)
-            }
-            else {
-                if (gasPrice > defaultGasPrice) {
+        let gasUrl = gasApiUrl()
+        if (gasUrl) {
+            Axios.get(gasUrl).then((response) => {
+                if (response && response.data && response.data[gasPriceType()]) {
+                    gasPrice = Math.ceil(response.data[gasPriceType()] * gwei / 10.0)
+                    lastGasPriceTime = new Date().getTime()
                     resolve(gasPrice)
                 }
                 else {
-                    resolve(defaultGasPrice)
+                    if (gasPrice > defaultGasPrice()) {
+                        resolve(gasPrice)
+                    }
+                    else {
+                        resolve(defaultGasPrice())
+                    }
                 }
-            }
-        }).catch(() => {
-            if (gasPrice > defaultGasPrice) {
-                resolve(gasPrice)
-            }
-            else {
-                resolve(defaultGasPrice)
-            }
-        })
+            }).catch(() => {
+                if (gasPrice > defaultGasPrice()) {
+                    resolve(gasPrice)
+                }
+                else {
+                    resolve(defaultGasPrice())
+                }
+            })
+        } else {
+            resolve(defaultGasPrice())
+        }
     })
 }
 

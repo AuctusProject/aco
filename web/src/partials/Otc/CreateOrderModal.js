@@ -8,10 +8,11 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { acoOtcAddress, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, toDecimals, usdcAddress, wethAddress, zero } from '../../util/constants'
-import { allowance, allowDeposit } from '../../util/erc20Methods'
-import { signOrder } from '../../util/acoOtcMethods'
+import { fromDecimals, getBalanceOfAsset, isEther, maxAllowance, toDecimals, zero } from '../../util/constants'
+import { allowance, allowDeposit } from '../../util/contractHelpers/erc20Methods'
+import { signOrder } from '../../util/contractHelpers/acoOtcMethods'
 import { createOtcOrder } from '../../util/acoApi'
+import { acoOtcAddress, usdcAddress, wethAddress } from '../../util/network'
 
 class CreateOrderModal extends Component {
   constructor(props) {
@@ -72,7 +73,7 @@ class CreateOrderModal extends Component {
   afterWrap = (stepNumber, nonce, needApproval, needWrap) => {
     if (needApproval) {
       this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
-      allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getAsset(), acoOtcAddress, nonce)
+      allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getAsset(), acoOtcAddress(), nonce)
         .then(result => {
           if (result) {
             this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
@@ -103,8 +104,8 @@ class CreateOrderModal extends Component {
 
   needWrapValue = () => {
     return new Promise((resolve) => {
-      if (this.getAsset() === wethAddress) {
-        getBalanceOfAsset(wethAddress, this.context.web3.selectedAccount).then(result => {
+      if (this.getAsset() === wethAddress()) {
+        getBalanceOfAsset(wethAddress(), this.context.web3.selectedAccount).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(this.getAssetValue().sub(resultValue))
         })
@@ -118,10 +119,10 @@ class CreateOrderModal extends Component {
   getAsset = () => {
     var isCall = this.props.createOrderData.selectedOption.selectedType === 1
     if (this.props.createOrderData.isAsk && isCall) {
-      return isEther(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  wethAddress : this.props.createOrderData.selectedOption.selectedUnderlying.address
+      return isEther(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  wethAddress() : this.props.createOrderData.selectedOption.selectedUnderlying.address
     }
     else {
-      return usdcAddress
+      return usdcAddress()
     }
   }
 
@@ -156,7 +157,7 @@ class CreateOrderModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-      allowance(this.context.web3.selectedAccount, this.getAsset(), acoOtcAddress).then(result => {
+      allowance(this.context.web3.selectedAccount, this.getAsset(), acoOtcAddress()).then(result => {
         var resultValue = new Web3Utils.BN(result)
         resolve(resultValue.lt(this.getAssetValue()))
       })

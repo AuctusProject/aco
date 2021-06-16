@@ -5,8 +5,8 @@ import { formatWithPrecision, fromDecimals, getBalanceOfAsset } from '../../util
 import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import WithdrawModal from './WithdrawModal'
-import { getAccountPoolPosition } from '../../util/acoPoolMethods'
-import { getCollateralInfo } from '../../util/acoTokenMethods'
+import { getAccountPoolPosition } from '../../util/contractHelpers/acoPoolMethods'
+import { getCollateralInfo } from '../../util/contractHelpers/acoTokenMethods'
 import { ASSETS_INFO } from '../../util/assets'
 
 class DiscontinuedPoolDetails extends Component {

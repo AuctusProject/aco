@@ -11,7 +11,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/acoPoolMethodsv5'
+import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/contractHelpers/acoPoolMethodsv5'
 import SimpleDropdown from '../SimpleDropdown'
 
 class UpdateSellingOptionsModal extends Component {

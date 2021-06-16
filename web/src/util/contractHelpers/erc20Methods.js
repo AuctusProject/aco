@@ -1,5 +1,5 @@
-import { getWeb3, sendTransactionWithNonce, sendTransaction } from './web3Methods'
-import { isEther } from './constants'
+import { getWeb3, sendTransactionWithNonce, sendTransaction } from '../web3Methods'
+import { isEther } from '../constants'
 import { erc20ABI } from './erc20ABI'
 
 

@@ -1,15 +1,14 @@
-import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
-import { isEther, fromDecimals, toDecimals, getBalanceOfAsset } from './constants';
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from '../web3Methods'
+import { isEther, fromDecimals, toDecimals, getBalanceOfAsset } from '../constants';
 import { acoTokenABI } from './acoTokenABI';
 import Web3Utils from 'web3-utils';
 
 function getAcoTokenContract(address) {
-    var acoTokenContract = null
     const _web3 = getWeb3()
     if (_web3) {
-        acoTokenContract = new _web3.eth.Contract(acoTokenABI, address)
+        return new _web3.eth.Contract(acoTokenABI, address)
     }
-    return acoTokenContract
+    return null
 }
 
 export function getCollateralAddress(option) {

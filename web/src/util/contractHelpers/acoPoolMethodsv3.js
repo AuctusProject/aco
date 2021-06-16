@@ -1,4 +1,4 @@
-import { getWeb3, sendTransaction } from './web3Methods'
+import { getWeb3, sendTransaction } from '../web3Methods'
 import { acoPoolABIv3 } from './acoPoolABIv3';
 
 function getAcoPoolContract(acoPoolAddress) {
@@ -6,7 +6,7 @@ function getAcoPoolContract(acoPoolAddress) {
     if (_web3) {
         return new _web3.eth.Contract(acoPoolABIv3, acoPoolAddress)
     }
-    return null;
+    return null
 }
 
 export const setBaseVolatility = (from, acoPoolAddress, newBaseVolatility) => {

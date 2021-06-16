@@ -2,10 +2,10 @@ import PropTypes from 'prop-types'
 import { attemptAsync, delayAsync } from "./zrxUtils.js"
 import { w3cwebsocket } from "websocket"
 import WebSocketOrdersChannel from "./WebSocketOrdersChannel"
-import { zrxWSSUrl } from "../constants"
 import { Component } from 'react'
 import { getOrderbook, getUpdatedOrderbook } from '../acoSwapUtil'
 import { getOption } from '../dataController.js'
+import { zrxWSSUrl } from '../network.js'
 
 const childContextTypes = {
     orderbook: PropTypes.object
@@ -17,7 +17,7 @@ class WebsocketOrderProvider extends Component {
     _isDestroyed = false
     _isConnecting = false
     _ordersChannel
-    _websocketEndpoint = zrxWSSUrl
+    _websocketEndpoint = zrxWSSUrl()
 
     constructor(props, context) {
         super(props, context)

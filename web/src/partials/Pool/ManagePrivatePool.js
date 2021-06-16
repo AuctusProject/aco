@@ -1,6 +1,6 @@
 import './ManagePrivatePool.css'
 import React, { Component } from 'react'
-import { acoPermissionConfig } from '../../util/acoPoolMethodsv5'
+import { acoPermissionConfig } from '../../util/contractHelpers/acoPoolMethodsv5'
 import { formatPercentage, fromDecimals, PERCENTAGE_PRECISION } from '../../util/constants'
 import Loading from '../Util/Loading'
 import UpdateIVModal from './UpdateIVModal'

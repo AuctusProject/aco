@@ -5,8 +5,8 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, maxAllowance, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy, acoBuyerAddress, zrxExchangeAddress } from '../../util/constants'
-import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, maxAllowance, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy } from '../../util/constants'
+import { getOptionFormattedPrice } from '../../util/contractHelpers/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
@@ -14,7 +14,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import { getDeribiData } from '../../util/acoApi'
 import StepsModal from '../StepsModal/StepsModal'
 import VerifyModal from '../VerifyModal'
@@ -24,6 +24,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import ReactTooltip from 'react-tooltip'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { buy, getQuote } from '../../util/acoSwapUtil'
+import { acoBuyerAddress, zrxExchangeAddress } from '../../util/network'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -396,12 +397,12 @@ class SimpleBuyTab extends Component {
 
   getAllowanceAddress = () => {
     if (this.state.swapQuote.poolData.length === 0) {
-      return zrxExchangeAddress
+      return zrxExchangeAddress()
     }
     if (this.state.swapQuote.poolData.length === 1 && this.state.swapQuote.zrxData.length === 0) {
       return this.state.swapQuote.poolData[0].acoPool
     }
-    return acoBuyerAddress
+    return acoBuyerAddress()
   }
   
   isPayEth = () => {

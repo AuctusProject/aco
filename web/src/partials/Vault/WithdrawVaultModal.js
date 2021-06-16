@@ -8,7 +8,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { withdraw } from '../../util/acoVaultMethods'
+import { withdraw } from '../../util/contractHelpers/acoVaultMethods'
 
 class WithdrawVaultModal extends Component {
   constructor(props) {

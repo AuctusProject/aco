@@ -1,15 +1,12 @@
-import { getWeb3 } from './web3Methods';
+import { getWeb3 } from '../web3Methods';
 import { uniswapPairABI } from './uniswapPairABI';
 
-var uniswapPairContracts = {}
 function getUniswapPairContract(pair) {
-    if (!uniswapPairContracts[pair.toLowerCase()]) {
-        const _web3 = getWeb3()
-        if (_web3) {
-            uniswapPairContracts[pair.toLowerCase()] = new _web3.eth.Contract(uniswapPairABI, pair)
-        }
+    const _web3 = getWeb3()
+    if (_web3) {
+        return new _web3.eth.Contract(uniswapPairABI, pair)
     }
-    return uniswapPairContracts[pair.toLowerCase()]
+    return null
 }
 
 var uniswapPairData = {}

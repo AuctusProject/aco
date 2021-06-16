@@ -3,16 +3,17 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
-import { uniswapUrl, formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther, zero } from '../../util/constants'
-import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount, getCollateralAddress } from '../../util/acoTokenMethods'
+import { formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther, zero } from '../../util/constants'
+import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount, getCollateralAddress } from '../../util/contractHelpers/acoTokenMethods'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
+import { swapUrl } from '../../util/network'
 
 class WriteStep3 extends Component {
   constructor() {
@@ -257,7 +258,7 @@ class WriteStep3 extends Component {
           </div>
           <div className="balance-row">
             <div className="balance-info">Balance: {this.state.collateralBalance ? (fromDecimals(this.state.collateralBalance.toString(), this.getCollateralDecimals(), 2) + " " + this.getCollaterizeAssetSymbol()) : ""}</div>
-            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</a>}</div>
+            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl()+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</a>}</div>
           </div>
           <div className="card-separator"></div>
           <div>

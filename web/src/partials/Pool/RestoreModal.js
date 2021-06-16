@@ -8,7 +8,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { restoreCollateral } from '../../util/acoPoolMethodsv3'
+import { restoreCollateral } from '../../util/contractHelpers/acoPoolMethodsv3'
 
 class RestoreModal extends Component {
   constructor(props) {

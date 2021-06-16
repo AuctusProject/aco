@@ -1,13 +1,14 @@
-import { getSwapData as getPoolSwapData, getSwapQuote as getPoolQuote } from "./acoPoolMethods"
+import { getSwapData as getPoolSwapData, getSwapQuote as getPoolQuote } from "./contractHelpers/acoPoolMethods"
 import { getSwapQuote as getZrxQuote, getZrxOrdersFormatted } from "./Zrx/zrxApi"
 import { getSwapData as getZrxSwapData } from "./Zrx/zrxWeb3"
 import BigNumber from "bignumber.js"
 import Web3Utils from 'web3-utils'
-import { acoBuyerAddress, ONE_SECOND, toDecimals, zero, zrxExchangeAddress, AdvancedOrderStepsType } from "./constants"
+import { ONE_SECOND, toDecimals, zero, AdvancedOrderStepsType } from "./constants"
 import { sendTransactionWithNonce } from "./web3Methods"
-import { getBuyData } from "./acoBuyerV2Methods"
-import { allowance } from "./erc20Methods"
+import { getBuyData } from "./contractHelpers/acoBuyerV2Methods"
+import { allowance } from "./contractHelpers/erc20Methods"
 import { buildOrder } from "./Zrx/zrxUtils"
+import { acoBuyerAddress, zrxExchangeAddress } from "./network"
 
 let orderbooks = {}
 export const getOrderbook = async (option, slippage) => {
@@ -206,7 +207,7 @@ export const buy = async (from, nonce, zrxData, poolData = null, option = null, 
     const zrxOrder = await getZrxSwapData(orders, takerAmounts)
     ethValue = new Web3Utils.BN(zrxOrder.ethValue.toString(10))
     gasPrice = new Web3Utils.BN(zrxOrder.gasPrice.toString(10))
-    data.push({from: zrxExchangeAddress, ethValue: zrxOrder.ethValue.toString(10), data: zrxOrder.data})
+    data.push({from: zrxExchangeAddress(), ethValue: zrxOrder.ethValue.toString(10), data: zrxOrder.data})
   }
   if (poolData && option && poolData.length > 0) {
     const deadline = parseInt(new Date().getTime()/ONE_SECOND + (20*60))
@@ -220,7 +221,7 @@ export const buy = async (from, nonce, zrxData, poolData = null, option = null, 
   let to
   let finalData
   if (data.length > 1) {
-    to = acoBuyerAddress
+    to = acoBuyerAddress()
     finalData = getBuyData(option.acoToken, option.strikeAsset, totalPayment.toString(10), data)
   } else {
     to = data[0].from
@@ -237,7 +238,7 @@ export const sell = async (from, nonce, zrxData) => {
     takerAmounts.push(zrxData[i].acoAmount.toString(10))
   }
   const zrxOrder = await getZrxSwapData(orders, takerAmounts)
-  return sendTransactionWithNonce(zrxOrder.gasPrice, null, from, zrxExchangeAddress, zrxOrder.ethValue, zrxOrder.data, null, nonce)
+  return sendTransactionWithNonce(zrxOrder.gasPrice, null, from, zrxExchangeAddress(), zrxOrder.ethValue, zrxOrder.data, null, nonce)
 }
 
 export const getAdvancedOrderSteps = async (from, quote, option, acoAmount, acoPrice, isBuy, expirationValue) => {
@@ -273,12 +274,12 @@ export const getAdvancedOrderSteps = async (from, quote, option, acoAmount, acoP
     var marketAmount = !quote ? zero : quote.acoAmount
     var limitAmount = acoAmount.minus(marketAmount)
     var order = await buildOrder(from, isBuy, option, limitAmount, acoPrice, expirationValue)
-    if (marketAllowanceAddress !== zrxExchangeAddress) {
-      var needLimitApprove = await needApprove(from, tokenToApprove, order.makerAmount, zrxExchangeAddress)
+    if (marketAllowanceAddress !== zrxExchangeAddress()) {
+      var needLimitApprove = await needApprove(from, tokenToApprove, order.makerAmount, zrxExchangeAddress())
       if (needLimitApprove) {
         steps.push({
           type: AdvancedOrderStepsType.LimitApprove,
-          address: zrxExchangeAddress,
+          address: zrxExchangeAddress(),
           token: tokenToApprove
         })
       }
@@ -302,10 +303,10 @@ const needApprove = async (from, tokenToApprove, neededApprovalValue, approvalAd
 
 const getMarketOrderAllowanceAddress = (quote) => {
   if (quote.poolData.length === 0) {
-    return zrxExchangeAddress
+    return zrxExchangeAddress()
   }
   if (quote.poolData.length === 1 && quote.zrxData.length === 0) {
     return quote.poolData[0].acoPool
   }
-  return acoBuyerAddress
+  return acoBuyerAddress()
 }

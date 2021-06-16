@@ -1,4 +1,4 @@
-import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from '../web3Methods'
 import { acoPoolABIv2 } from './acoPoolABIv2';
 
 function getAcoPoolContract(acoPoolAddress) {
@@ -6,7 +6,7 @@ function getAcoPoolContract(acoPoolAddress) {
     if (_web3) {
         return new _web3.eth.Contract(acoPoolABIv2, acoPoolAddress)
     }
-    return null;
+    return null
 }
 
 export const deposit = (from, acoPoolAddress, amount, minShares, isEther, nonce) => {

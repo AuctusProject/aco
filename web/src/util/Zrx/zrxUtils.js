@@ -1,5 +1,6 @@
 import BigNumber from "bignumber.js"
-import { CHAIN_ID, toDecimals, zrxExchangeAddress } from "../constants"
+import { toDecimals } from "../constants"
+import { CHAIN_ID, zrxExchangeAddress } from "../network"
 import { signTypedData } from "../web3Methods"
 import { postOrderConfig } from './zrxApi.js'
 
@@ -34,8 +35,8 @@ export async function attemptAsync(fn, opts = { interval: 1000, maxRetries: 10 }
 }
 
 export const getSignedOrder = async (from, order) => {
-    order.chainId = parseInt(CHAIN_ID)
-    order.verifyingContract = zrxExchangeAddress
+    order.chainId = CHAIN_ID()
+    order.verifyingContract = zrxExchangeAddress()
     const msg = getSignatureMessage(order)
     const signature = await signTypedData(from, JSON.stringify(msg))
     order.signature = {
@@ -58,7 +59,7 @@ export const buildOrder = async (from, isBuy, option, amount, price, hoursToExpi
     const maker = from
     const taker = "0x0000000000000000000000000000000000000000"
     const expiry = (Math.ceil(Date.now() / 1000) + parseFloat(hoursToExpirate) * 3600).toString()
-    const verifyingContract = zrxExchangeAddress
+    const verifyingContract = zrxExchangeAddress()
   
     const orderConfigResult = await postOrderConfig({maker,taker,makerToken,takerToken,makerAmount,takerAmount,expiry,verifyingContract})
   

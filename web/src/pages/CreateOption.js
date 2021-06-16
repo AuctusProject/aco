@@ -4,16 +4,17 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ReactDatePicker from 'react-datepicker'
 import OptionBadge from '../partials/OptionBadge'
-import { ONE_SECOND, toDecimals, fromDecimals, usdcAddress, ethAddress, wbtcAddress, formatWithPrecision } from '../util/constants'
+import { ONE_SECOND, toDecimals, fromDecimals, formatWithPrecision } from '../util/constants'
 import SimpleAssetDropdown from '../partials/SimpleAssetDropdown'
 import StrikeValueInput from '../partials/Util/StrikeValueInput'
-import { getAvailablePoolsForNonCreatedOption } from '../util/acoPoolFactoryMethods'
+import { getAvailablePoolsForNonCreatedOption } from '../util/contractHelpers/acoPoolFactoryMethods'
 import BigNumber from 'bignumber.js'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
 import { confirm } from '../util/sweetalert'
 import { getAvailableOptionsByPair } from '../util/dataController'
+import { ethAddress, usdcAddress, wbtcAddress } from '../util/network'
 
 export const CREATE_OPTION_UNDERLYING_OPTIONS = [{
   value: "ETH",
@@ -89,8 +90,8 @@ class CreateOption extends Component {
 
   getOptionData = () => {
     return {
-      underlying: this.state.selectedUnderlying.value === "ETH" ? ethAddress : wbtcAddress,
-      strikeAsset: usdcAddress,
+      underlying: this.state.selectedUnderlying.value === "ETH" ? ethAddress() : wbtcAddress(),
+      strikeAsset: usdcAddress(),
       isCall: this.state.selectedType === 1,
       expiryTime: (this.state.expirationDate.getTime()/ONE_SECOND).toString(),
       strikePrice: toDecimals(this.state.selectedStrike.value, 6).toString()

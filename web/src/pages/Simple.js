@@ -6,11 +6,12 @@ import PairDropdown from '../partials/PairDropdown'
 import SimpleBuyTab from '../partials/Simple/SimpleBuyTab'
 import SimpleWriteTab from '../partials/Simple/SimpleWriteTab'
 import SimpleManageTab from '../partials/Simple/SimpleManageTab'
-import { auctusAddress, getPairIdFromRoute } from '../util/constants'
+import { getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import Pools from './Pools'
 import { getAvailableOptions, getOptionsFromPair, getPairsFromOptions } from '../util/dataController'
+import { auctusAddress } from '../util/network'
 
 class Simple extends Component {
   constructor() {
@@ -41,7 +42,7 @@ class Simple extends Component {
 
   loadAvailableOptions = () => {
     getAvailableOptions().then(result => {
-      result = result.filter(o => o.underlying.toLowerCase() !== auctusAddress)      
+      result = result.filter(o => o.underlying.toLowerCase() !== auctusAddress())      
       var pairs = getPairsFromOptions(result)
 
       this.props.onPairsLoaded(pairs)

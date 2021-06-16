@@ -4,13 +4,13 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Airdrop from '../partials/Farm/Airdrop'
 import LiquidityProgram from '../partials/Farm/LiquidityProgram'
-import { listClaimedAcos } from '../util/acoDistributorMethods'
-import { listClaimedRewards, listUnclaimedRewards } from '../util/acoRewardsMethods'
+import { listClaimedAcos } from '../util/contractHelpers/acoDistributorMethods'
+import { listClaimedRewards, listUnclaimedRewards } from '../util/contractHelpers/acoRewardsMethods'
 import RewardChart from '../partials/Farm/RewardChart'
 import RewardOptionCard from '../partials/Farm/RewardOptionCard'
-import { auctusAddress, defaultAcoCreator } from '../util/constants'
-import { balanceOf } from '../util/erc20Methods'
+import { balanceOf } from '../util/contractHelpers/erc20Methods'
 import { getAvailableOptionsByUnderlying } from '../util/dataController'
+import { auctusAddress, defaultAcoCreators } from '../util/network'
 
 
 class Farm extends Component {
@@ -72,7 +72,7 @@ class Farm extends Component {
 
   getAcoBalances = () => {
     if (this.isConnected()) {
-      getAvailableOptionsByUnderlying(auctusAddress).then((acos) => {
+      getAvailableOptionsByUnderlying(auctusAddress()).then((acos) => {
         const promises = []
         const account = this.context.web3.selectedAccount
         for (let i = 0; i < acos.length; ++i) {
@@ -81,7 +81,7 @@ class Farm extends Component {
         Promise.all(promises).then((balances) => {
           const result = []
           for (let i = 0; i < acos.length; ++i) {
-            if (BigInt(balances[i]) > BigInt(0) && defaultAcoCreator.filter((c) => c === acos[i].creator.toLowerCase()).length > 0) {
+            if (BigInt(balances[i]) > BigInt(0) && defaultAcoCreators().filter((c) => c === acos[i].creator.toLowerCase()).length > 0) {
               result.push({
                 aco: acos[i].acoToken,
                 expiryTime: acos[i].expiryTime,

@@ -7,7 +7,7 @@ import MetamaskLargeIcon from './Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from './Util/SpinnerLargeIcon'
 import DoneLargeIcon from './Util/DoneLargeIcon'
 import ErrorLargeIcon from './Util/ErrorLargeIcon'
-import { newAcoToken } from '../util/acoFactoryMethods'
+import { newAcoToken } from '../util/contractHelpers/acoFactoryMethods'
 import { refreshAvailableOptions } from '../util/dataController'
 
 class CreateOptionModal extends Component {

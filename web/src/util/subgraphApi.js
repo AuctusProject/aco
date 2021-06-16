@@ -1,5 +1,5 @@
 import Axios from 'axios'
-import { subgraphUrl } from './constants'
+import { subgraphUrl } from './network'
 
 const maxQuery = 1000
 
@@ -354,7 +354,7 @@ const poolAccountBalancesQuery = `{
 
 const callSubgraph = async (query, restriction = null, maxPages = null, lastId = null, page = 1) => {
   let subgraphData = parseSubgraphQuery(query, restriction, lastId)
-  let result = await Axios.post(subgraphUrl, {"query": subgraphData.query})
+  let result = await Axios.post(subgraphUrl(), {"query": subgraphData.query})
   if (result && result.data) {
     if (result.data.data) {
       if (result.data.data.length === maxQuery && (!maxPages || maxPages < page)) {

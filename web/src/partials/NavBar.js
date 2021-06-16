@@ -5,10 +5,11 @@ import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faCog, faExternalLinkAlt, faSignOutAlt, faTimes } from '@fortawesome/free-solid-svg-icons'
-import { etherscanUrl, ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
+import { ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/constants'
 import PairDropdown from './PairDropdown'
 import { listAvailablePairs } from '../util/dataController'
 import SlippageConfig from './SlippageConfig'
+import { explorerUrl } from '../util/network'
 
 class NavBar extends Component {
   constructor(props){
@@ -264,7 +265,7 @@ class NavBar extends Component {
                       </div>
                     </div>
                     <div className="dropdown-menu" aria-labelledby="navbarProfile">
-                      <a className="dropdown-item clickable" rel="noopener noreferrer" href={etherscanUrl + this.context.web3.selectedAccount} target="_blank"><FontAwesomeIcon icon={faExternalLinkAlt}></FontAwesomeIcon>&nbsp;OPEN IN ETHERSCAN</a>
+                      <a className="dropdown-item clickable" rel="noopener noreferrer" href={explorerUrl() + this.context.web3.selectedAccount} target="_blank"><FontAwesomeIcon icon={faExternalLinkAlt}></FontAwesomeIcon>&nbsp;OPEN IN ETHERSCAN</a>
                       <div className="dropdown-divider"></div>
                       <div className="dropdown-item clickable" target="_self" onClick={() => this.signOut()}><FontAwesomeIcon icon={faSignOutAlt}></FontAwesomeIcon>&nbsp;SIGN OUT</div>
                     </div>

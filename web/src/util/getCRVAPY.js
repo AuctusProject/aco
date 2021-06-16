@@ -1,4 +1,4 @@
-import { aggregate } from "./multicallMethods";
+import { aggregate } from "./contractHelpers/multicallMethods";
 import { getWeb3 } from "./web3Methods";
 
 const poolInfo = {

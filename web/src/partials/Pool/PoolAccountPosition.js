@@ -4,9 +4,9 @@ import PropTypes from 'prop-types'
 import { formatWithPrecision, fromDecimals } from '../../util/constants'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { getAccountPoolPosition } from '../../util/acoPoolMethods'
+import { getAccountPoolPosition } from '../../util/contractHelpers/acoPoolMethods'
 import BigNumber from 'bignumber.js'
-import { getCollateralInfo } from '../../util/acoTokenMethods'
+import { getCollateralInfo } from '../../util/contractHelpers/acoTokenMethods'
 
 class PoolAccountPosition extends Component {
   constructor(props) {

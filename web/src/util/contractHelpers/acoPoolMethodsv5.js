@@ -1,17 +1,17 @@
-import { getWeb3, sendTransaction } from './web3Methods'
-import { acoPoolABIv4 } from './acoPoolABIv4';
+import { getWeb3, sendTransaction } from '../web3Methods.js'
+import { acoPoolABIv5 } from './acoPoolABIv5.js'
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
     if (_web3) {
-        return new _web3.eth.Contract(acoPoolABIv4, acoPoolAddress)
+        return new _web3.eth.Contract(acoPoolABIv5, acoPoolAddress)
     }
-    return null;
+    return null
 }
 
-export const setAcoPermissionConfig = (from, acoPoolAddress, newTolerancePriceBelowMin, newTolerancePriceBelowMax, newTolerancePriceAboveMin, newTolerancePriceAboveMax, newMinExpiration, newMaxExpiration) => {
+export const setAcoPermissionConfig = (from, acoPoolAddress, newTolerancePriceBelowMin, newTolerancePriceBelowMax, newTolerancePriceAboveMin, newTolerancePriceAboveMax, newMinStrikePrice, newMaxStrikePrice, newMinExpiration, newMaxExpiration) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
-    var data = acoPoolContract.methods.setAcoPermissionConfig([newTolerancePriceBelowMin, newTolerancePriceBelowMax, newTolerancePriceAboveMin, newTolerancePriceAboveMax, newMinExpiration, newMaxExpiration]).encodeABI()
+    var data = acoPoolContract.methods.setAcoPermissionConfig([newTolerancePriceBelowMin, newTolerancePriceBelowMax, newTolerancePriceAboveMin, newTolerancePriceAboveMax, newMinStrikePrice, newMaxStrikePrice, newMinExpiration, newMaxExpiration]).encodeABI()
     return sendTransaction(null, null, from, acoPoolAddress, null, data)
 }
 
@@ -22,7 +22,7 @@ export const acoPermissionConfig = (acoPoolAddress) => {
             resolve(poolPermissionConfig[acoPoolAddress])
         } else {
             const acoPoolContract = getAcoPoolContract(acoPoolAddress)
-            acoPoolContract.methods.acoPermissionConfig().call().then((result) => {
+            acoPoolContract.methods.acoPermissionConfigV2().call().then((result) => {
                 poolPermissionConfig[acoPoolAddress] = result
                 resolve(poolPermissionConfig[acoPoolAddress])
             }).catch((err) => reject(err))

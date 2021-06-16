@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import Modal from 'react-bootstrap/Modal'
 import PoolAccountPosition from '../Pool/PoolAccountPosition'
-import { getCollateralInfo } from '../../util/acoTokenMethods'
+import { getCollateralInfo } from '../../util/contractHelpers/acoTokenMethods'
 
 class AccountPoolPositionModal extends Component {
   constructor(props) {

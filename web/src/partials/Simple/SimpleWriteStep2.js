@@ -2,8 +2,8 @@ import './SimpleWriteStep2.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, acoWriterAddress, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
-import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice, getCollateralAmount } from '../../util/acoTokenMethods'
+import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
+import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice, getCollateralAmount } from '../../util/contractHelpers/acoTokenMethods'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import StepsModal from '../StepsModal/StepsModal'
@@ -11,12 +11,13 @@ import { getNextNonce, checkTransactionIsMined } from '../../util/web3Methods'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { getDeribiData } from '../../util/acoApi'
 import VerifyModal from '../VerifyModal'
 import { getQuote } from '../../util/acoSwapUtil'
-import { write } from '../../util/acoWriterV2Methods'
+import { write } from '../../util/contractHelpers/acoWriterV2Methods'
+import { acoWriterAddress } from '../../util/network'
 
 class SimpleWriteStep2 extends Component {
   constructor(props) {
@@ -107,7 +108,7 @@ class SimpleWriteStep2 extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getCollaterizeAssetAddress(), acoWriterAddress, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getCollaterizeAssetAddress(), acoWriterAddress(), nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -281,7 +282,7 @@ class SimpleWriteStep2 extends Component {
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isCollateralEth()) {
-        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriterAddress).then(result => {
+        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriterAddress()).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())))
         })

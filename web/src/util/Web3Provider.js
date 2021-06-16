@@ -1,13 +1,11 @@
 import PropTypes from 'prop-types'
 import { Component } from 'react'
-import { CHAIN_ID, wssInfuraAddress } from './constants'
 import Web3 from 'web3'
 import WalletConnect from "@walletconnect/client"
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal"
 import detectEthereumProvider from '@metamask/detect-provider'
 import { setWeb3 } from './web3Methods'
-
-const infuraId = "8d03fea006b64542ab9c26af741965b2"
+import { CHAIN_ID, rpcWssUrl } from './network'
 
 const childContextTypes = {
   web3: PropTypes.shape({
@@ -38,7 +36,7 @@ class Web3Provider extends Component {
       web3: {
         selectedAccount: this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[this.state.activeIndex] : null,
         networkId: this.state.networkId,
-        validNetwork: this.state.networkId === parseInt(CHAIN_ID),
+        validNetwork: this.state.networkId === CHAIN_ID(),
         hasWeb3Provider: this.state.hasWeb3Provider,
         name: this.state.name
       }
@@ -256,7 +254,7 @@ class Web3Provider extends Component {
   }
 
   getWeb3 = (web3Provider) => {
-    return new Web3((web3Provider ? web3Provider : new Web3.providers.WebsocketProvider(wssInfuraAddress + infuraId)))
+    return new Web3((web3Provider ? web3Provider : new Web3.providers.WebsocketProvider(rpcWssUrl())))
   }
 
   connect = async (type) => {

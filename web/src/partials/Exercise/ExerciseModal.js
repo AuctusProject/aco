@@ -3,19 +3,20 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/acoTokenMethods'
-import { zero, formatDate, fromDecimals, toDecimals, isEther, PERCENTAGE_PRECISION, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
+import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/contractHelpers/acoTokenMethods'
+import { zero, formatDate, fromDecimals, toDecimals, isEther, PERCENTAGE_PRECISION, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
 import DecimalInput from '../Util/DecimalInput'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import Loading from '../Util/Loading'
-import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/acoFlashExerciseMethods'
+import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/contractHelpers/acoFlashExerciseMethods'
+import { acoFlashExerciseAddress, swapUrl } from '../../util/network'
 
 class ExerciseModal extends Component {
   constructor(props) {
@@ -95,7 +96,7 @@ class ExerciseModal extends Component {
         }
       }
       else {
-        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, acoFlashExerciseAddress).then(result => {
+        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, acoFlashExerciseAddress()).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(this.getOptionAmountToDecimals()))
         })
@@ -108,7 +109,7 @@ class ExerciseModal extends Component {
       return allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseAddress(this.props.position.option), this.props.position.option.acoToken, nonce)
     }
     else {
-      return allowDeposit(this.context.web3.selectedAccount, this.getOptionAmountToDecimals().toString(), this.props.position.option.acoToken, acoFlashExerciseAddress, nonce)
+      return allowDeposit(this.context.web3.selectedAccount, this.getOptionAmountToDecimals().toString(), this.props.position.option.acoToken, acoFlashExerciseAddress(), nonce)
     }
   }
 
@@ -445,7 +446,7 @@ class ExerciseModal extends Component {
                   </table>
                   {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
                   <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
-                  {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
+                  {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl() + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
                   </>}
                   {this.isFlashOutOfMoney() && 
                     <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>

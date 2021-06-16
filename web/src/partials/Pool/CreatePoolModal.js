@@ -6,15 +6,16 @@ import PropTypes from "prop-types";
 import OptionBadge from "../OptionBadge";
 import SimpleAssetDropdown from "../SimpleAssetDropdown";
 import DecimalInput from "../Util/DecimalInput";
-import { ethAddress, StrikePriceModes, StrikePriceOptions, STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS, toDecimals, usdcAddress, wbtcAddress } from "../../util/constants";
+import { StrikePriceModes, StrikePriceOptions, STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS, toDecimals } from "../../util/constants";
 import SimpleDropdown from "../SimpleDropdown";
-import { createPrivatePool } from "../../util/acoPoolFactoryMethods";
+import { createPrivatePool } from "../../util/contractHelpers/acoPoolFactoryMethods";
 import { checkTransactionIsMined } from "../../util/web3Methods";
 import MetamaskLargeIcon from "../Util/MetamaskLargeIcon";
 import SpinnerLargeIcon from "../Util/SpinnerLargeIcon";
 import DoneLargeIcon from "../Util/DoneLargeIcon";
 import ErrorLargeIcon from "../Util/ErrorLargeIcon";
 import StepsModal from "../StepsModal/StepsModal";
+import { ethAddress, usdcAddress, wbtcAddress } from "../../util/network";
 
 export const CREATE_POOL_UNDERLYING_OPTIONS = [
   {
@@ -164,7 +165,7 @@ class CreatePoolModal extends Component {
       let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
       let minStrikePrice = this.getStrikePriceDecimals(this.state.minStrikePrice)
       let maxStrikePrice = this.getStrikePriceDecimals(this.state.maxStrikePrice)
-      let underlying = this.state.selectedUnderlying.value === "ETH" ? ethAddress : wbtcAddress
+      let underlying = this.state.selectedUnderlying.value === "ETH" ? ethAddress() : wbtcAddress()
       if (this.state.priceMode.value === StrikePriceModes.AnyPrice || this.state.priceMode.value === StrikePriceModes.Fixed) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceBelowMax = "-1"
@@ -208,7 +209,7 @@ class CreatePoolModal extends Component {
       let maxExpiration = this.state.maxExpiration * 86400
       let baseVolatility = this.getToleranceDecimals(this.state.ivValue)
       this.setStepsModalInfo(++stepNumber)
-      createPrivatePool(this.context.web3.selectedAccount, underlying, usdcAddress, this.state.selectedType === 1, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration)
+      createPrivatePool(this.context.web3.selectedAccount, underlying, usdcAddress(), this.state.selectedType === 1, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber)

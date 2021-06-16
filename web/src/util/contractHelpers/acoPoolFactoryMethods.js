@@ -1,20 +1,18 @@
-import { getWeb3, sendTransaction } from './web3Methods'
-import { acoPoolFactoryAddress, deprecatedPoolImplementation, fromDecimals, getBalanceOfAsset, ONE_SECOND, toDecimals, PERCENTAGE_PRECISION } from './constants';
+import { getWeb3, sendTransaction } from '../web3Methods'
+import { fromDecimals, getBalanceOfAsset, ONE_SECOND, toDecimals, PERCENTAGE_PRECISION } from '../constants';
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 import { getGeneralData } from './acoPoolMethodsv2';
 import { acoPermissionConfig } from './acoPoolMethodsv5';
+import { acoPoolFactoryAddress, deprecatedPoolImplementation } from '../network';
 
-var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {
-    if (acoPoolFactoryContract == null) {
-        const _web3 = getWeb3()
-        if (_web3) {
-            acoPoolFactoryContract = new _web3.eth.Contract(acoPoolFactoryABI, acoPoolFactoryAddress)
-        }
+    const _web3 = getWeb3()
+    if (_web3) {
+        return new _web3.eth.Contract(acoPoolFactoryABI, acoPoolFactoryAddress())
     }
-    return acoPoolFactoryContract
+    return null
 }
 
 var availablePools = null
@@ -36,7 +34,7 @@ export const getAllAvailablePools = (fillExtraData = true) => {
                     var pools = []
                     for (let i = 0; i < events.length; i++) {
                         const eventValues = events[i].returnValues;
-                        if (deprecatedPoolImplementation.filter(c => c.toLowerCase() === eventValues.acoPoolImplementation.toLowerCase()).length === 0) {                       
+                        if (deprecatedPoolImplementation().filter(c => c.toLowerCase() === eventValues.acoPoolImplementation.toLowerCase()).length === 0) {                       
                             pools.push(eventValues)
                             if (!assetsAddresses.includes(eventValues.strikeAsset)) {
                                 assetsAddresses.push(eventValues.strikeAsset)
@@ -208,5 +206,5 @@ export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwa
 export const createPrivatePool = (from, underlying, strikeAsset, isCall, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration) => {
     const acoPoolFactoryContract = getAcoPoolFactoryContract()
     var data = acoPoolFactoryContract.methods.newAcoPool(underlying, strikeAsset, isCall, baseVolatility, from, [tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration]).encodeABI()
-    return sendTransaction(null, null, from, acoPoolFactoryAddress, null, data)
+    return sendTransaction(null, null, from, acoPoolFactoryAddress(), null, data)
 }

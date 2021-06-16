@@ -1,5 +1,4 @@
-
-import { ethAddress, optionsToIgnore, usdcAddress, wbtcAddress, defaultAcoCreator } from './constants'
+import { defaultAcoCreators, ethAddress, optionsToIgnore, usdcAddress, wbtcAddress } from './network'
 import { 
   getAllPools, 
   getExercisedData, 
@@ -183,7 +182,7 @@ const parseSubgraphAcos = (acos, onlyWhitelisted, removeExpired) => {
 }
 
 const parseSubgraphAco = (aco, onlyWhitelisted, removeExpired) => {
-  if (optionsToIgnore.some((c) => c === aco.id)) {
+  if (optionsToIgnore().some((c) => c === aco.id)) {
     return null
   }
   if (removeExpired && parseInt(aco.expiryTime) < Math.ceil(Date.now()/1000)) {
@@ -191,9 +190,9 @@ const parseSubgraphAco = (aco, onlyWhitelisted, removeExpired) => {
   } 
   if (onlyWhitelisted && 
     (
-      aco.strikeAsset.id !== usdcAddress || 
-      (aco.underlying.id !== ethAddress && aco.underlying.id !== wbtcAddress 
-        && aco.creator && !defaultAcoCreator.some((c) => c === aco.creator))
+      aco.strikeAsset.id !== usdcAddress() || 
+      (aco.underlying.id !== ethAddress() && aco.underlying.id !== wbtcAddress() 
+        && aco.creator && !defaultAcoCreators().some((c) => c === aco.creator))
     )) { 
     return null
   }
@@ -423,10 +422,10 @@ const parseSubgraphNum = (stringNum, decimals) => {
 const baseEthPair = () => {
   return {
     id: "ETH_USDC",
-    underlying: ethAddress,
+    underlying: ethAddress(),
     underlyingInfo: {symbol: "ETH", decimals: 18},
     underlyingSymbol: "ETH",
-    strikeAsset: usdcAddress,
+    strikeAsset: usdcAddress(),
     strikeAssetInfo: {symbol: "USDC", decimals: 6},
     strikeAssetSymbol: "USDC"
   }
@@ -435,10 +434,10 @@ const baseEthPair = () => {
 const baseWbtcPair = () => {
   return {
     id: "WBTC_USDC",
-    underlying: wbtcAddress,
+    underlying: wbtcAddress(),
     underlyingInfo: {symbol: "WBTC", decimals: 8},
     underlyingSymbol: "WBTC",
-    strikeAsset: usdcAddress,
+    strikeAsset: usdcAddress(),
     strikeAssetInfo: {symbol: "USDC", decimals: 6},
     strikeAssetSymbol: "USDC"
   }

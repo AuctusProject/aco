@@ -7,7 +7,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { claim } from '../../util/acoDistributorMethods'
+import { claim } from '../../util/contractHelpers/acoDistributorMethods'
 
 class AirdropClaimModal extends Component {
   constructor(props) {

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import OptionBadge from '../OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { getOptionFormattedPrice } from '../../util/contractHelpers/acoTokenMethods'
 import { formatDate } from '../../util/constants'
 import { getAvailableOptionsByPair } from '../../util/dataController'
 

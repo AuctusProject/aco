@@ -5,12 +5,13 @@ import PropTypes from 'prop-types'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatWithPrecision, getBalanceOfAsset, isEther, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, saveToLocalOrders, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
+import { formatWithPrecision, getBalanceOfAsset, isEther, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, saveToLocalOrders, toDecimals } from '../../util/constants'
 import CreateOrderModal from './CreateOrderModal'
 import { faUserCircle, faClock } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalculator } from '@fortawesome/free-solid-svg-icons'
 import CalculatorModal from './CalculatorModal'
+import { usdcAddress, wethAddress } from '../../util/network'
 
 class OtcTradeTabStep2 extends Component {
   constructor(props) {
@@ -41,14 +42,14 @@ class OtcTradeTabStep2 extends Component {
     var underlyingAddress = this.getUnderlyingAddress()
     if (userAddress && underlyingAddress) {
       if (isEther(underlyingAddress)) {
-        getBalanceOfAsset(wethAddress, userAddress).then(wethBalance => {
+        getBalanceOfAsset(wethAddress(), userAddress).then(wethBalance => {
           this.setState({ wethBalance: wethBalance })
         })
       }
       getBalanceOfAsset(underlyingAddress, userAddress).then(underlyingBalance => {
         this.setState({ underlyingBalance: underlyingBalance })
       })
-      getBalanceOfAsset(usdcAddress, userAddress).then(usdcBalance => {
+      getBalanceOfAsset(usdcAddress(), userAddress).then(usdcBalance => {
         this.setState({usdcBalance: usdcBalance})
       })
     }
@@ -201,13 +202,13 @@ class OtcTradeTabStep2 extends Component {
     if (this.state.actionType === OTC_ACTION_OPTIONS[1] && this.props.selectedOption.selectedType === 1)
       return this.props.selectedOption.selectedUnderlying.address
     else
-      return usdcAddress
+      return usdcAddress()
   }
 
   hasBalanceToCreate = () => {
     var amountToPay = this.getAmountToPay()
     var assetToPay = this.getAssetToPay()
-    if (assetToPay.toLowerCase() === usdcAddress.toLowerCase()) {
+    if (assetToPay.toLowerCase() === usdcAddress().toLowerCase()) {
       return new Web3Utils.BN(this.state.usdcBalance).gte(new Web3Utils.BN(amountToPay))
     }
     else if (isEther(assetToPay)) {
