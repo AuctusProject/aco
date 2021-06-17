@@ -69,16 +69,20 @@ class SimpleBuyTab extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair || !this.state.currentPairPrice) {
-      this.setPairCurrentPrice()
-    }
-    if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
-      this.selectType(this.state.selectedType)
-    }
-    if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.accountToggle !== prevProps.accountToggle) {
-      this.refreshAccountBalance()
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else {
+      if (this.props.selectedPair !== prevProps.selectedPair || !this.state.currentPairPrice) {
+        this.setPairCurrentPrice()
+      }
+      if (this.props.selectedPair !== prevProps.selectedPair ||
+        this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
+        this.selectType(this.state.selectedType)
+      }
+      if (this.props.selectedPair !== prevProps.selectedPair ||
+        this.props.accountToggle !== prevProps.accountToggle) {
+        this.refreshAccountBalance()
+      }
     }
   }
   

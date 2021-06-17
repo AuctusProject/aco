@@ -12,6 +12,6 @@ import JavascriptTimeAgo from 'javascript-time-ago'
 import en from 'javascript-time-ago/locale/en'
 JavascriptTimeAgo.locale(en)
 
-setLoggedNetworkByName(window && window.localStorage && window.localStorage.getItem('DEFAULT_NETWORK'))
+setLoggedNetworkByName()
 
 ReactDOM.render(<BrowserRouter><App /></BrowserRouter>, document.getElementById('root'))

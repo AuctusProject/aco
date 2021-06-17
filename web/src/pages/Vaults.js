@@ -18,6 +18,12 @@ class Vaults extends Component {
   componentDidMount = () => {
     getCRVAPY().then(CRVAPYs => this.setState({CRVAPYs: CRVAPYs}))
   }
+  
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+  }
 
   render() {
     return <div className="vaults">

@@ -1,6 +1,7 @@
 export const arbitrum = {
     name: "ARBITRUM",
     CHAIN_ID: 42161,
+    customRpc: {"chainId":"0xa4b1","chainName":"Arbitrum","nativeCurrency":{"name":"ETH","symbol":"ETH","decimals":18},"rpcUrls":["todo"],"blockExplorerUrls":["https://explorer.arbitrum.io"]},
     apiUrl: null,
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/auctusproject/auctus-options-arbitrum",
     rpcWssUrl: null,

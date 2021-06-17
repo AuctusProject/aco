@@ -20,6 +20,12 @@ class ManagePrivatePool extends Component {
     acoPermissionConfig(pool.address).then(acoPermissionConfig => this.setConfig(acoPermissionConfig))
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+  }
+
   setConfig = (acoPermissionConfig) => {
     this.setState({
       minExpiration: acoPermissionConfig.minExpiration/86400,
@@ -172,8 +178,9 @@ class ManagePrivatePool extends Component {
         </div>
         <div className="aco-button action-btn" onClick={this.onUpdateSellingOptionsClick}>Update</div>
       </div>
-      {this.state.showUpdateIVModal && <UpdateIVModal onHide={this.onHideUpdateIVModal} pool={pool}/>}
+      {this.state.showUpdateIVModal && <UpdateIVModal {...this.props} onHide={this.onHideUpdateIVModal} pool={pool}/>}
       {this.state.showUpdateSellingOptionsModal && <UpdateSellingOptionsModal 
+        {...this.props}
         onHide={this.onHideUpdateSellingOptionsModal} 
         pool={pool} 
         minExpiration={this.state.minExpiration} 

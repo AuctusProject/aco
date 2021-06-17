@@ -14,7 +14,11 @@ function getAcoFactoryContract() {
     return null
 }
 
-var availableOptions = null
+export const resetOptions = () => {
+    availableOptions = null
+}
+
+let availableOptions = null
 function getAllAvailableOptions() {
     return new Promise((resolve, reject) => {
         if (availableOptions != null) {

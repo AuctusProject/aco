@@ -11,6 +11,11 @@ import { buildOrder } from "./Zrx/zrxUtils"
 import { acoBuyerAddress, zrxExchangeAddress } from "./network"
 
 let orderbooks = {}
+
+export const clearOrderbook = () => {
+  orderbooks = {}
+}
+
 export const getOrderbook = async (option, slippage) => {
   if (orderbooks[option.acoToken]) {
     return (await reprocessOrderbook(option, orderbooks[option.acoToken], slippage))

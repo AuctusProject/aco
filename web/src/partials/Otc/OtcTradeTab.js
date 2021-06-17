@@ -24,7 +24,10 @@ class OtcTradeTab extends Component {
   }
   
   componentDidUpdate = (prevProps) => {    
-    if (!this.props.match.params.orderId && this.state.otcOrder) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+    else if (!this.props.match.params.orderId && this.state.otcOrder) {
       this.setState({otcOrder: null, selectedOption: null, step: 1})
     }
     else if (this.props.match.params.orderId && this.props.match.params.orderId !== prevProps.match.params.orderId) {

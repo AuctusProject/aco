@@ -16,6 +16,10 @@ function getAcoRewardsContract() {
     return null
 }
 
+export const resetRewardData = () => {
+    rewardsBaseData = null
+}
+
 let rewardsBaseData = null
 export const listRewardsData = (forceLoad = false) => {
     return new Promise((resolve, reject) => {

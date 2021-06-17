@@ -19,7 +19,7 @@ class PoolAccountPosition extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.balance !== prevProps.balance) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.balance !== prevProps.balance) {
       this.getCurrentAccountPosition()
     }
   }

@@ -9,7 +9,11 @@ function getUniswapPairContract(pair) {
     return null
 }
 
-var uniswapPairData = {}
+export const resetSwapPairData = () => {
+    uniswapPairData = {}
+}
+
+let uniswapPairData = {}
 export const getPairData = (pair) => {
     return new Promise((resolve, reject) => {
         if (uniswapPairData[pair.toLowerCase()]) {

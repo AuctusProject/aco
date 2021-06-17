@@ -22,6 +22,12 @@ class Exercise extends Component {
     }
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+  }
+
   canLoad = () => {
     return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
   }

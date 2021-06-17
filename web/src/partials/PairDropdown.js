@@ -14,7 +14,7 @@ class PairDropdown extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (prevProps.pairs === null && this.props.pairs != null) {
+    if (this.props.networkToggle !== prevProps.networkToggle || (prevProps.pairs === null && this.props.pairs != null)) {
       this.componentDidMount()
     }
   }

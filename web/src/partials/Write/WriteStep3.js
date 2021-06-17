@@ -32,7 +32,7 @@ class WriteStep3 extends Component {
       this.props.optionType !== prevProps.optionType) {
         this.props.onCancelClick()
     }
-    else if (this.props.accountToggle !== prevProps.accountToggle) {
+    else if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.componentDidMount()
     }
   }

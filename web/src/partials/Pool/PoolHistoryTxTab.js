@@ -17,7 +17,10 @@ class PoolHistoryTxTab extends Component {
     getPoolEvents(this.props.pool.address).then(events => this.setState({events:events}))
   }
 
-  componentDidUpdate = (prevProps) => {    
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
   }
 
   getUnderlyingAmount = (event) => {

@@ -21,7 +21,8 @@ class WrittenOptionsPositions extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair ||
+    if (this.props.networkToggle !== prevProps.networkToggle || 
+        this.props.selectedPair !== prevProps.selectedPair ||
         this.props.accountToggle !== prevProps.accountToggle ||
         (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
       if (this.props.loadedPositions) {

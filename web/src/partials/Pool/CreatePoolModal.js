@@ -58,6 +58,12 @@ class CreatePoolModal extends Component {
     return state;
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
+      this.props.onHide(false)
+    }
+  }
+
   componentDidMount = () => {}
 
   selectType = (type) => {

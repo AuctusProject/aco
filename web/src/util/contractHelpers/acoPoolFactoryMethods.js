@@ -15,8 +15,13 @@ function getAcoPoolFactoryContract() {
     return null
 }
 
-var availablePools = null
-var availablePoolsWithExtraData = null
+export const resetPools = () => {
+    availablePools = null
+    availablePoolsWithExtraData = null
+}
+
+let availablePools = null
+let availablePoolsWithExtraData = null
 export const getAllAvailablePools = (fillExtraData = true) => {
     return new Promise((resolve, reject) => {
         if (availablePools != null && !fillExtraData) {

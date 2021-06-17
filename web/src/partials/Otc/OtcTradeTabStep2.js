@@ -31,7 +31,7 @@ class OtcTradeTabStep2 extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.loadAssetsBalances()
     }
   } 
@@ -332,8 +332,8 @@ class OtcTradeTabStep2 extends Component {
         <div className="active-step"></div>
         <div></div>
       </div>
-      {this.state.createOrderModal && <CreateOrderModal createOrderData={this.state.createOrderModal} onHide={this.onCreateOrderHide} onCreated={this.onCreated} />}
-      {this.state.calcModal && <CalculatorModal calcModal={this.state.calcModal} onHide={this.onCalcModalHide}/>}
+      {this.state.createOrderModal && <CreateOrderModal {...this.props} createOrderData={this.state.createOrderModal} onHide={this.onCreateOrderHide} onCreated={this.onCreated} />}
+      {this.state.calcModal && <CalculatorModal {...this.props} calcModal={this.state.calcModal} onHide={this.onCalcModalHide}/>}
     </div>
   }
 }

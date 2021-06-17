@@ -25,7 +25,10 @@ class VaultDetails extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+    else if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
       this.updateBalances()
     }
   }
@@ -259,8 +262,8 @@ class VaultDetails extends Component {
         </div>}
       </div>}
     </div>
-    {this.state.depositVaultModalInfo && <DepositVaultModal info={this.state.depositVaultModalInfo} onHide={this.onDepositHide} />}
-    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
+    {this.state.depositVaultModalInfo && <DepositVaultModal {...this.props} info={this.state.depositVaultModalInfo} onHide={this.onDepositHide} />}
+    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal {...this.props} info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
   </div>
   }
 }

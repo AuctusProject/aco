@@ -16,6 +16,11 @@ import {
 
 const percentageDecimals = 5
 
+export const clearData = () => {
+  availableOptions = null
+  allPools = null
+}
+
 let availableOptions = null
 export const getAvailableOptions = async () => {
   if (availableOptions != null) {

@@ -23,7 +23,17 @@ import Otc from './pages/Otc'
 import PoolDashboard from './partials/Pool/PoolDashboard'
 import CreateOption from './pages/CreateOption'
 import Farm from './pages/Farm'
-import { getNetworkName } from './util/network'
+import { getCustomRpc, getNetworkName } from './util/network'
+import { switchNetwork } from './util/web3Methods'
+import { clearData } from './util/dataController'
+import { clearOrderbook } from './util/acoSwapUtil'
+import { resetZrxRateLimit } from './util/Zrx/zrxApi'
+import { resetZrxData } from './util/Zrx/zrxWeb3'
+import { resetOptions } from './util/contractHelpers/acoFactoryMethods'
+import { resetPools } from './util/contractHelpers/acoPoolFactoryMethods'
+import { resetPoolsData } from './util/contractHelpers/acoPoolMethodsv5'
+import { resetRewardData } from './util/contractHelpers/acoRewardsMethods'
+import { resetSwapPairData } from './util/contractHelpers/uniswapPairMethods'
 
 class App extends Component {
   constructor() {
@@ -33,6 +43,7 @@ class App extends Component {
       loading: true,
       selectedPair: null,
       accountToggle: false,
+      networkToggle: false,
       toggleAdvancedTooltip: false,
       orderBooks:{},
       connecting: null,
@@ -52,23 +63,40 @@ class App extends Component {
     this.setState({slippage: slippage})
   }  
 
-  showSignInModal = (redirectUrl, context) => {
-    if (context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
-      if (!this.state.refreshWeb3) {
-        this.setState({refreshWeb3: true}, () => {
-          let self = this
-          setTimeout(() => {
-            self.showSignInModal(redirectUrl, context)
-          }, 1000)
-        })
+  setSignIn = (redirectUrl, context) => {
+    let invalidNetwork = context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork
+    if (invalidNetwork) {
+      if (context.web3.isBrowserProvider) {
+        let customRpc = getCustomRpc()
+        if (customRpc) {
+          switchNetwork(customRpc).then(() => this.showSignInModal(redirectUrl)).catch((err) => {
+            console.error(err)
+            this.setInvalidNetworkMessage(redirectUrl)
+          })
+        } else {
+          this.setInvalidNetworkMessage(redirectUrl)
+        }
       } else {
-        this.setState({refreshWeb3: null}, () => {
-          error("Please connect to the "+ getNetworkName() + ".", "Wrong Network")
-        })
+        this.setInvalidNetworkMessage(redirectUrl)
       }
     } else {
-      this.setState({showSignIn: true, redirectUrl: redirectUrl, refreshWeb3: null})
+      this.showSignInModal(redirectUrl)
     }    
+  }
+
+  showSignInModal = (redirectUrl) => {
+    getGasPrice(true)
+    this.setState({showSignIn: true, redirectUrl: redirectUrl, refreshWeb3: null})
+  }
+
+  setInvalidNetworkMessage(redirectUrl) {
+    if (!this.state.refreshWeb3) {
+      this.setState({refreshWeb3: {redirectUrl}})
+    } else {
+      this.setState({refreshWeb3: null}, () => {
+        error("Please connect to the "+ getNetworkName() + ".", "Wrong Network")
+      })
+    }
   }
 
   onCloseSignIn = (navigate) => {
@@ -92,8 +120,25 @@ class App extends Component {
     }
   }
 
-  onLoaded = () => {
-    this.setState({loading: false})
+  onChangeNetwork = (chainId, previousChainId) => {
+    clearOrderbook()
+    clearData()
+    resetZrxRateLimit()
+    resetZrxData()
+    resetOptions()
+    resetPools()
+    resetPoolsData()
+    resetRewardData()
+    resetSwapPairData()
+    this.setState({networkToggle:!this.state.networkToggle})
+  }
+
+  onLoaded = (context) => {
+    this.setState({loading: false}, () => {
+      if (this.state.refreshWeb3) {
+        this.setSignIn(this.state.refreshWeb3.redirectUrl, context)
+      }
+    })
   }
 
   onPairSelected = (pair) => {
@@ -141,7 +186,7 @@ class App extends Component {
     var showFooter = window.location.pathname.indexOf("advanced/trade") < 0
     var darkMode = isDarkMode()
     return (
-      <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
+      <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onChangeNetwork={this.onChangeNetwork} onLoaded={this.onLoaded}>
         <ApiCoingeckoDataProvider>
           {this.state.loading ? 
           <div className="initial-loading">
@@ -152,7 +197,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair} slippage={this.state.slippage} setSlippage={this.setSlippage}/>}
+            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.setSignIn} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair} slippage={this.state.slippage} setSlippage={this.setSlippage}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -170,6 +215,7 @@ class App extends Component {
                     darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                   /> }
                 />
                 <Route 
@@ -179,6 +225,7 @@ class App extends Component {
                     darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                   /> }
                 />
                 <Route 
@@ -188,6 +235,7 @@ class App extends Component {
                     darkMode={darkMode}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
@@ -196,8 +244,9 @@ class App extends Component {
                   render={ routeProps => <PoolDashboard
                     {...routeProps}
                     darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
@@ -206,11 +255,12 @@ class App extends Component {
                   render={ routeProps => <Simple 
                     {...routeProps}
                     darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     onPairSelected={this.onPairSelected} 
                     onPairsLoaded={this.onPairsLoaded}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
@@ -220,8 +270,9 @@ class App extends Component {
                   render={ routeProps => <Vaults
                     {...routeProps}
                     darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
@@ -230,8 +281,9 @@ class App extends Component {
                   render={ routeProps => <Otc
                     {...routeProps}
                     darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                   /> }
                 />
                 <Route 
@@ -239,8 +291,9 @@ class App extends Component {
                   render={ routeProps => <CreateOption
                     {...routeProps}
                     darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                   /> }
                 />
                 <Route 
@@ -248,8 +301,9 @@ class App extends Component {
                   render={ routeProps => <Farm
                     {...routeProps}
                     darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                   /> }
                 />
                 <Redirect to="/buy"></Redirect>

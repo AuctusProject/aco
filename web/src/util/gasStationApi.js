@@ -4,9 +4,9 @@ import { defaultGasPrice, gasPriceType, gasApiUrl } from './network'
 
 var gasPrice = null
 var lastGasPriceTime = null
-export const getGasPrice = () => {
+export const getGasPrice = (forceRefresh = false) => {
     return new Promise((resolve, reject) => {
-        if (hasValidGasPrice()) {
+        if (!forceRefresh && hasValidGasPrice()) {
             resolve(gasPrice)
             return;
         }

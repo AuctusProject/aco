@@ -19,7 +19,8 @@ class PoolHistoricalChart extends Component {
   }
 
   componentDidUpdate(prevProps) {
-    if ((!prevProps.pool && this.props.pool) 
+    if ((this.props.networkToggle !== prevProps.networkToggle)
+    || (!prevProps.pool && this.props.pool) 
     || (prevProps.pool && !this.props.pool)
     || (prevProps.pool.address !== this.props.pool.address)) {
       this.setState({lastPerShare: this.getLastPerShare(this.state.isUnderlyingValue)})

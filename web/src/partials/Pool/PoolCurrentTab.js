@@ -209,8 +209,8 @@ class PoolCurrentTab extends Component {
                 </tr>)}
             </tbody>
           </table>}
-          {this.state.showRestoreModal && <RestoreModal onHide={this.onHideRestoreModal} title={this.getRestoreButtonLabel()} pool={pool}/>}
-          {this.state.showRedeemModal && <RedeemModal onHide={this.onHideRedeemModal} pool={pool}/>}
+          {this.state.showRestoreModal && <RestoreModal {...this.props} onHide={this.onHideRestoreModal} title={this.getRestoreButtonLabel()} pool={pool}/>}
+          {this.state.showRedeemModal && <RedeemModal {...this.props} onHide={this.onHideRedeemModal} pool={pool}/>}
       </div>)
   }
 }

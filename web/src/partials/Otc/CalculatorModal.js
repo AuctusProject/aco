@@ -29,6 +29,12 @@ class CalculatorModal extends Component {
     .catch(() => this.setState({currentPrice: null, loading: false}))
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
+      this.props.onHide(false)
+    }
+  }
+
   setInputFocus = () => {
     this.setState({setIVFocus:true})
   }

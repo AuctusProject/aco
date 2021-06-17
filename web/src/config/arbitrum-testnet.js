@@ -1,6 +1,7 @@
 export const arbitrumTestnet = {
     name: "ARBITRUM-TESTNET",
     CHAIN_ID: 421611,
+    customRpc: {"chainId":"0x66eeb","chainName":"Arbitrum Testnet","nativeCurrency":{"name":"ETH","symbol":"ETH","decimals":18},"rpcUrls":["https://rinkeby.arbitrum.io/rpc"],"blockExplorerUrls":["https://rinkeby-explorer.arbitrum.io"]},
     apiUrl: null,
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/auctusproject/auctus-options-arbitrum-rinkeby",
     rpcWssUrl: null,

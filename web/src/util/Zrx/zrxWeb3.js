@@ -47,3 +47,7 @@ export const getFeeData = async (ordersAmount) => {
     value: gas.mul(new Web3Utils.BN(data[1])).mul(new Web3Utils.BN(ordersAmount))
   }
 }
+
+export const resetZrxData = () => {
+  protocolFeeMultiplier = null
+}

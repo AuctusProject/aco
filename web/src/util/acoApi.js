@@ -2,7 +2,13 @@ import Axios from 'axios'
 import { ONE_SECOND, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore } from './constants';
 import { apiUrl } from './network';
 
-var apiTokenList = null
+export const clearApiData = () => {
+    apiTokenList = null
+    acoAssets = null
+    acoPools = null
+}
+
+let apiTokenList = null
 export function getTokensList() {
     return new Promise(function(resolve,reject){
         if (apiTokenList != null) {
@@ -22,7 +28,7 @@ export function getTokensList() {
     })
 }
 
-var acoAssets = null
+let acoAssets = null
 export function getAcoAssets() {
     return new Promise(function(resolve,reject){
         if (acoAssets != null) {
@@ -70,7 +76,7 @@ export function getAcoAssetBySymbol(symbol) {
     })
 }
 
-var acoPools = null
+let acoPools = null
 export function getAcoPools(forceRefresh) {
     return new Promise(function(resolve,reject){
         if (acoPools != null && !forceRefresh) {
@@ -212,7 +218,7 @@ export function getDeribiData(optionData) {
     })
 }
 
-var opynList = null
+let opynList = null
 function getOpynTokenList() {
     return new Promise(function(resolve,reject) {
         if (opynList != null) {

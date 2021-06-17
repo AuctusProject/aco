@@ -30,7 +30,6 @@ class SimpleWriteStep2 extends Component {
     this.setState({collaterizeValue: getCollateralAmount(this.props.option, 1)}, this.refresh)
     this.startQuoteRefresh()
   }
-
   
   componentWillUnmount = () => {
     this.stopQuoteRefresh()  
@@ -62,7 +61,7 @@ class SimpleWriteStep2 extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.refreshAccountBalance()
     }
   }

@@ -1,6 +1,7 @@
 export const mainnet = {
-    name: "MAINNET",
+    name: "ETHEREUM",
     CHAIN_ID: 1,
+    customRpc: null,
     apiUrl: "https://cu3pxr9ydi.execute-api.us-east-1.amazonaws.com/prod/",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/auctusproject/auctus-options",
     rpcWssUrl: "wss://mainnet.infura.io/ws/v3/8d03fea006b64542ab9c26af741965b2",

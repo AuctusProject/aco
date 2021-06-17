@@ -27,11 +27,14 @@ class Simple extends Component {
   
   componentDidMount = () => {
     this.props.toggleAdvancedTooltip()
-    this.loadAvailableOptions()
+    this.loadAvailableOptions(false)
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+    else if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
       this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
     }
   }
@@ -40,8 +43,8 @@ class Simple extends Component {
     return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
   }  
 
-  loadAvailableOptions = () => {
-    getAvailableOptions().then(result => {
+  loadAvailableOptions = (forceRefresh) => {
+    getAvailableOptions(forceRefresh).then(result => {
       result = result.filter(o => o.underlying.toLowerCase() !== auctusAddress())      
       var pairs = getPairsFromOptions(result)
 

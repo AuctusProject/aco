@@ -20,7 +20,9 @@ class Pools extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else if (this.props.accountToggle !== prevProps.accountToggle) {
       this.refreshPoolData()
     }
   }

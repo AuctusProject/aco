@@ -29,11 +29,15 @@ class OtcTradeTabStep3 extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.otcOrder !== prevProps.otcOrder) {
-      this.loadOrderInfo()
-    }
-    if (this.props.accountToggle !== prevProps.accountToggle) {
-      this.loadAssetsBalances()
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else {
+      if (this.props.otcOrder !== prevProps.otcOrder) {
+        this.loadOrderInfo()
+      }
+      if (this.props.accountToggle !== prevProps.accountToggle) {
+        this.loadAssetsBalances()
+      }
     }
   }
 
@@ -542,8 +546,8 @@ class OtcTradeTabStep3 extends Component {
               </div>
             </>}
         </>}
-      {this.state.cancelOrderData && <CancelOrderModal cancelOrderData={this.state.cancelOrderData} onHide={this.onCancelOrderHide} />}
-      {this.state.takeOrderData && <TakeOrderModal orderData={this.state.takeOrderData} onHide={this.onTakeOrderHide} />}
+      {this.state.cancelOrderData && <CancelOrderModal {...this.props} cancelOrderData={this.state.cancelOrderData} onHide={this.onCancelOrderHide} />}
+      {this.state.takeOrderData && <TakeOrderModal {...this.props} orderData={this.state.takeOrderData} onHide={this.onTakeOrderHide} />}
     </div>
   }
 }

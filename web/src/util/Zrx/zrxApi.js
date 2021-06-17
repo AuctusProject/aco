@@ -96,7 +96,11 @@ const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
   return sortedOrders
 }
 
-var rateLimit = new RateLimit(zrxRequestPerSecond())
+export const resetZrxRateLimit = () => {
+  rateLimit = new RateLimit(zrxRequestPerSecond())
+}
+
+let rateLimit = new RateLimit(zrxRequestPerSecond())
 export const getOrders = async (makerToken, takerToken, page = 1, perPage = 100) => {
   await rateLimit()
   let url = zrxApiUrl() + "sra/v4/orders?"

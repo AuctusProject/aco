@@ -15,7 +15,7 @@ class AccountPoolPositionModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.pool !== prevProps.pool) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.pool !== prevProps.pool) {
       this.setPool()
     }
   }

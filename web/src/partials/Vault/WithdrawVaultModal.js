@@ -21,7 +21,7 @@ class WithdrawVaultModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

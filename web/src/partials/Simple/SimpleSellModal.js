@@ -26,7 +26,8 @@ class SimpleSellModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair ||
+    if (this.props.networkToggle !== prevProps.networkToggle || 
+      this.props.selectedPair !== prevProps.selectedPair ||
       this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }

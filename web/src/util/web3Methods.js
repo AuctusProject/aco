@@ -155,3 +155,24 @@ export function signTypedData(from, data){
     }).catch((err) => reject(err))
   })
 }
+
+export function switchNetwork(connectionData) {
+  return new Promise((resolve, reject) => { 
+    if (_connector !== null) {
+      reject("It is Walletconnect")
+    } else {
+      let promise
+      const web3 = getWeb3()
+      const requestData = {
+        method: 'wallet_addEthereumChain',
+        params: [connectionData]
+      }
+      if (web3.eth.currentProvider.request) {
+        promise = web3.eth.currentProvider.request(requestData)
+      } else {
+        promise = web3.eth.currentProvider.send(requestData)
+      }
+      promise.then(() => resolve()).catch((err) => reject(err))
+    }
+  })
+}

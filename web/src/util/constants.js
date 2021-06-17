@@ -1,6 +1,6 @@
 import Web3Utils from 'web3-utils'
 import { balanceOf, getERC20AssetInfo } from './contractHelpers/erc20Methods';
-import { allAcoOtcAddresses, defaultAcoCreators, ethAddress, optionsToIgnore, usdcAddress, wbtcAddress } from './network';
+import { allAcoOtcAddresses, CHAIN_ID, defaultAcoCreators, ethAddress, optionsToIgnore, usdcAddress, wbtcAddress } from './network';
 import { checkEthBalanceOf } from './web3Methods';
 
 export const zero = new Web3Utils.BN(0);
@@ -422,11 +422,11 @@ export const getByAddress = (address) => {
 export const saveToLocalOrders = (order) => {
     var localOrders = getLocalOrders()
     localOrders.push(order)
-    window.localStorage.setItem('OTC_LOCAL_ORDERS', JSON.stringify(localOrders))
+    window.localStorage.setItem('OTC_LOCAL_ORDERS_'+CHAIN_ID(), JSON.stringify(localOrders))
 }
 
 export const getLocalOrders = () => {
-    var localOrders = window.localStorage.getItem('OTC_LOCAL_ORDERS')
+    var localOrders = window.localStorage.getItem('OTC_LOCAL_ORDERS_'+CHAIN_ID())
     if (!localOrders) {
         return []
     }

@@ -23,7 +23,9 @@ class DiscontinuedVaultDetails extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
       this.updateBalances()
     }
   }
@@ -188,7 +190,7 @@ class DiscontinuedVaultDetails extends Component {
         </div>}
       </div>
     </div>
-    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
+    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal {...this.props} info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
   </div>
   }
 }

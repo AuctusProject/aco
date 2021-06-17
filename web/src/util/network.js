@@ -4,17 +4,20 @@ import { kovan } from "../config/kovan"
 import { mainnet } from "../config/mainnet"
 import { ropsten } from "../config/ropsten"
 
+const networkNameStorage = 'DEFAULT_NETWORK'
+
 export const networks = JSON.parse(process.env.REACT_APP_NETWORKS)
 
 let loggedNetworkData = null
 export const setLoggedNetworkById = (chainId) => {
-  loggedNetworkData = getNetworkById(chainId)
+  setLoggedNetwork(getValidNetworkById(chainId))
 }
 export const setLoggedNetworkByName = (chainName) => {
-  loggedNetworkData = getNetworkByName(chainName)
+  setLoggedNetwork(getValidNetworkByName(chainName))
 }
 
 export const getNetworkName = () => getNetworkData("name")
+export const getCustomRpc = () => getNetworkData("customRpc")
 export const acoFactoryAddress = () => getNetworkData("acoFactoryAddress")
 export const acoPoolFactoryAddress = () => getNetworkData("acoPoolFactoryAddress")
 export const acoFlashExerciseAddress = () => getNetworkData("acoFlashExerciseAddress")
@@ -63,26 +66,65 @@ export const acoOtcAddress = () => {
   return null
 }
 
+export const getDefaultChainId = () => {
+  let network = getValidNetworkByName(getDefaultNetworkName())
+  if (network) {
+    return network.CHAIN_ID
+  }
+  return null
+}
+
+const setLoggedNetwork = (network) => {
+  loggedNetworkData = network
+  if (network && window && window.localStorage) {
+    let name = getNetworkName()
+    if (name) {
+      window.localStorage.setItem(networkNameStorage, name)
+    }
+  }
+}
+
 const getNetworkData = (propertyName) => {
   return loggedNetworkData && loggedNetworkData[propertyName]
 }
 
-const getNetworkById = (chainId) => {
+const getValidNetworkById = (chainId) => {
+  let availableNetworks = getAvailableNetworksData()
   if (chainId && !isNaN(chainId)) {
     chainId = parseInt(chainId)
-    if (chainId === mainnet.CHAIN_ID) {
-      return mainnet
-    } else if (chainId === arbitrum.CHAIN_ID) {
-      return arbitrum
-    } else if (chainId === ropsten.CHAIN_ID) {
-      return ropsten
-    } else if (chainId === kovan.CHAIN_ID) {
-      return kovan
-    } else if (chainId === arbitrumTestnet.CHAIN_ID) {
-      return arbitrumTestnet
-    } 
+    for (let i = 0; i < availableNetworks.length; ++i) {
+      if (availableNetworks[i].CHAIN_ID === chainId) {
+        return availableNetworks[i]
+      }
+    }
   }
-  return null
+  return getValidNetworkByName()
+}
+
+const getValidNetworkByName = (chainName) => {
+  let availableNetworks = getAvailableNetworksData()
+  let defaultNetwork = getDefaultNetworkName()
+  if (chainName) {
+    chainName = chainName.toUpperCase()
+    for (let i = 0; i < availableNetworks.length; ++i) {
+      if (availableNetworks[i].name === chainName) {
+        return availableNetworks[i]
+      }
+    }
+    if (chainName === defaultNetwork) {
+      return availableNetworks[0]
+    }
+  }
+  return getValidNetworkByName(defaultNetwork)
+}
+
+const getDefaultNetworkName = () => {
+  let networkName = window && window.localStorage && window.localStorage.getItem(networkNameStorage)
+  if (networkName) {
+    return networkName
+  } else {
+    return networks[0]
+  }
 }
 
 const getNetworkByName = (chainName) => {
@@ -98,7 +140,18 @@ const getNetworkByName = (chainName) => {
       return kovan
     } else if (chainName === arbitrumTestnet.name) {
       return arbitrumTestnet
-    } 
+    }
   }
-  return getNetworkByName(networks[0])
+  return null
+}
+
+export const getAvailableNetworksData = () => {
+  let result = []
+  for (let i = 0; i < networks.length; ++i) {
+    let network = getNetworkByName(networks[i])
+    if (network) {
+      result.push(network)
+    }
+  }
+  return result
 }

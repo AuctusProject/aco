@@ -17,7 +17,13 @@ class SimpleManageTab extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.setState({refreshExercise: true, refreshWrite: true}, () => {
+        this.props.exerciseUpdated()
+        this.props.writeUpdated()
+      })
+    }
+    else if (
       (this.props.refreshExercise !== prevProps.refreshExercise && this.props.refreshExercise) ||
       (this.props.refreshWrite !== prevProps.refreshWrite && this.props.refreshWrite)
       ) {

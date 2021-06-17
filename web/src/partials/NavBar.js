@@ -37,11 +37,15 @@ class NavBar extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
-      this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
-    }
-    if (this.props.darkMode !== prevProps.darkMode && this.props.darkMode !== this.state.darkMode) {
-      this.setState({darkMode: this.props.darkMode})
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else {
+      if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
+        this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
+      }
+      if (this.props.darkMode !== prevProps.darkMode && this.props.darkMode !== this.state.darkMode) {
+        this.setState({darkMode: this.props.darkMode})
+      }
     }
   }
 
@@ -258,7 +262,7 @@ class NavBar extends Component {
                           <img src="/images/icon_metamask.png" alt=""></img>
                           <div>
                             <span className="wallet-address">{username}</span>
-                            {validNetwork && <span className="connected-label">Connected</span>}
+                            {validNetwork && <span className="connected-label">{this.context.web3.networkName}</span>}
                             {!validNetwork && <span className="invalid-network-label">Incorrect Network</span>}
                           </div>
                         </div>

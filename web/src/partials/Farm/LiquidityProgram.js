@@ -17,6 +17,12 @@ class LiquidityProgram extends Component {
     this.loadData()
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+  }
+
   loadData = (force = false) => {
     listRewardsData(force).then((rewardsData) => {
       var selectedPool = this.state.selectedPool

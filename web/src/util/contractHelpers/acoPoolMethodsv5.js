@@ -34,3 +34,7 @@ export const refreshAcoPermissionConfig = (acoPoolAddress) => {
     poolPermissionConfig[acoPoolAddress] = undefined
     return acoPermissionConfig(acoPoolAddress)
 }
+
+export const resetPoolsData = () => {
+    poolPermissionConfig = {}
+}
