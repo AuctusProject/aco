@@ -1,5 +1,6 @@
 export const arbitrum = {
     name: "ARBITRUM",
+    iconUrl: "/images/arbitrum_icon.svg",
     CHAIN_ID: 42161,
     customRpc: {"chainId":"0xa4b1","chainName":"Arbitrum","nativeCurrency":{"name":"ETH","symbol":"ETH","decimals":18},"rpcUrls":["todo"],"blockExplorerUrls":["https://explorer.arbitrum.io"]},
     apiUrl: null,

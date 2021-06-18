@@ -5,13 +5,12 @@ import WalletConnect from "@walletconnect/client"
 import WalletConnectQRCodeModal from "@walletconnect/qrcode-modal"
 import detectEthereumProvider from '@metamask/detect-provider'
 import { setWeb3 } from './web3Methods'
-import { CHAIN_ID, getDefaultChainId, getNetworkName, rpcApiUrl, rpcWssUrl, setLoggedNetworkById } from './network'
+import { CHAIN_ID, getDefaultChainId, rpcApiUrl, rpcWssUrl, setLoggedNetworkById } from './network'
 
 const childContextTypes = {
   web3: PropTypes.shape({
     selectedAccount: PropTypes.string,
     networkId: PropTypes.number,
-    networkName: PropTypes.string,
     hasWeb3Provider: PropTypes.bool,
     name: PropTypes.string,
     isBrowserProvider: PropTypes.bool
@@ -24,7 +23,6 @@ class Web3Provider extends Component {
     this.state = { 
       accounts: [],
       networkId: null,
-      networkName: null,
       activeIndex: null,
       walletConnector: null,
       web3: null,
@@ -39,7 +37,6 @@ class Web3Provider extends Component {
       web3: {
         selectedAccount: this.state.accounts && this.state.accounts.length > 0 ? this.state.accounts[this.state.activeIndex] : null,
         networkId: this.state.networkId,
-        networkName: this.state.networkName,
         validNetwork: this.state.networkId === CHAIN_ID(),
         hasWeb3Provider: this.state.hasWeb3Provider,
         name: this.state.name,
@@ -120,7 +117,6 @@ class Web3Provider extends Component {
         web3: _web3,
         hasWeb3Provider: !!web3Provider,
         networkId: chainId,
-        networkName: getNetworkName(),
         name: this.getProviderName(web3Provider),
         isBrowserProvider: false
        }, () => {
@@ -243,7 +239,6 @@ class Web3Provider extends Component {
         web3: _web3, 
         hasWeb3Provider: false, 
         networkId: null, 
-        networkName: null, 
         name: null,
         isBrowserProvider: false
       }, () => {
@@ -295,7 +290,6 @@ class Web3Provider extends Component {
       isBrowserProvider: (_walletConnector === null),
       accounts: accounts ? accounts : [],
       networkId: chainId !== null && chainId !== undefined ? chainId : null,
-      networkName: getNetworkName(),
       name: name !== null && name !== undefined ? name : this.state.name,
       activeIndex: accounts && accounts.length > 0 ? accounts.indexOf(accounts[0]) : null
      }, () => {
@@ -409,7 +403,6 @@ class Web3Provider extends Component {
       hasWeb3Provider: !!web3Provider,
       isBrowserProvider: false,
       networkId: chainId,
-      networkName: getNetworkName(),
       web3: _web3,
       name: this.getProviderName(web3Provider)
     }, () => {

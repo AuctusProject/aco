@@ -6,7 +6,7 @@ import { ropsten } from "../config/ropsten"
 
 const networkNameStorage = 'DEFAULT_NETWORK'
 
-export const networks = JSON.parse(process.env.REACT_APP_NETWORKS)
+const networks = JSON.parse(process.env.REACT_APP_NETWORKS)
 
 let loggedNetworkData = null
 export const setLoggedNetworkById = (chainId) => {
@@ -17,6 +17,7 @@ export const setLoggedNetworkByName = (chainName) => {
 }
 
 export const getNetworkName = () => getNetworkData("name")
+export const getNetworkIconUrl = () => getNetworkData("iconUrl")
 export const getCustomRpc = () => getNetworkData("customRpc")
 export const acoFactoryAddress = () => getNetworkData("acoFactoryAddress")
 export const acoPoolFactoryAddress = () => getNetworkData("acoPoolFactoryAddress")
@@ -74,6 +75,23 @@ export const getDefaultChainId = () => {
   return null
 }
 
+export const getDefaultNetworkName = () => {
+  let networkName = window && window.localStorage && window.localStorage.getItem(networkNameStorage)
+  if (networkName) {
+    return networkName
+  } else {
+    return networks[0]
+  }
+}
+
+export const getDefaultNetworkIconUrl = () => {
+  let network = getValidNetworkByName(getDefaultNetworkName())
+  if (network) {
+    return network.iconUrl
+  }
+  return null
+}
+
 const setLoggedNetwork = (network) => {
   loggedNetworkData = network
   if (network && window && window.localStorage) {
@@ -116,15 +134,6 @@ const getValidNetworkByName = (chainName) => {
     }
   }
   return getValidNetworkByName(defaultNetwork)
-}
-
-const getDefaultNetworkName = () => {
-  let networkName = window && window.localStorage && window.localStorage.getItem(networkNameStorage)
-  if (networkName) {
-    return networkName
-  } else {
-    return networks[0]
-  }
 }
 
 const getNetworkByName = (chainName) => {

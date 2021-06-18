@@ -1,5 +1,6 @@
 export const kovan = {
     name: "KOVAN",
+    iconUrl: "/images/eth_icon.png",
     CHAIN_ID: 42,
     customRpc: null,
     apiUrl: "https://bl37dtsnsc.execute-api.us-east-1.amazonaws.com/dev/",

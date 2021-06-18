@@ -1,5 +1,6 @@
 export const mainnet = {
     name: "ETHEREUM",
+    iconUrl: "/images/eth_icon.png",
     CHAIN_ID: 1,
     customRpc: null,
     apiUrl: "https://cu3pxr9ydi.execute-api.us-east-1.amazonaws.com/prod/",

@@ -9,7 +9,7 @@ import { ellipsisCenterOfText, getPairIdFromRoute, isDarkMode } from '../util/co
 import PairDropdown from './PairDropdown'
 import { listAvailablePairs } from '../util/dataController'
 import SlippageConfig from './SlippageConfig'
-import { explorerUrl } from '../util/network'
+import { explorerUrl, getDefaultNetworkName, getDefaultNetworkIconUrl, getNetworkName, getNetworkIconUrl } from '../util/network'
 
 class NavBar extends Component {
   constructor(props){
@@ -148,6 +148,9 @@ class NavBar extends Component {
   render() {
     var username = this.context && this.context.web3 && this.context.web3.selectedAccount
     var validNetwork = this.context && this.context.web3 && this.context.web3.validNetwork
+    var isWalletConnect = validNetwork && !this.context.web3.isBrowserProvider
+    var networkName = validNetwork ? getNetworkName() : getDefaultNetworkName()
+    var networkIcon = validNetwork ? getNetworkIconUrl() : getDefaultNetworkIconUrl()
     username = ellipsisCenterOfText(username)
     return (
       <div>
@@ -255,15 +258,16 @@ class NavBar extends Component {
                     </div>
                     {this.state.showSlippageDropdown && <div className="slippage-backdrop" onClick={this.closeSlippageDropdown}></div>}
                   </li>
-                  <li className="nav-item dropdown metamask">                  
+                  <li className="nav-item dropdown metamask">  
+                    <div className={("dark-btn small network-btn" + (validNetwork ? " active" : ""))} onClick={() => this.props.signIn(null, this.context)}><img src={networkIcon} alt=""/>{networkName}</div>
                     <div className="dropdown-toggle clickable" target="_self" id="navbarProfile" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                       <div className="user-nav-container">
                         <div className="user-nav-wrap">
-                          <img src="/images/icon_metamask.png" alt=""></img>
+                          <img src={(isWalletConnect ? "/images/icon_walletconnect.svg" : "/images/icon_metamask.png")} alt=""></img>
                           <div>
                             <span className="wallet-address">{username}</span>
-                            {validNetwork && <span className="connected-label">{this.context.web3.networkName}</span>}
-                            {!validNetwork && <span className="invalid-network-label">Incorrect Network</span>}
+                            {validNetwork && <span className="connected-label">Connected</span>}
+                            {!validNetwork && <span className="invalid-network-label">Invalid Network</span>}
                           </div>
                         </div>
                       </div>

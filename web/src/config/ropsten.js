@@ -1,5 +1,6 @@
 export const ropsten = {
     name: "ROPSTEN",
+    iconUrl: "/images/eth_icon.png",
     CHAIN_ID: 3,
     customRpc: null,
     apiUrl: "https://bl37dtsnsc.execute-api.us-east-1.amazonaws.com/dev/",

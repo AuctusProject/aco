@@ -1,5 +1,6 @@
 export const arbitrumTestnet = {
     name: "ARBITRUM-TESTNET",
+    iconUrl: "/images/arbitrum_icon.svg",
     CHAIN_ID: 421611,
     customRpc: {"chainId":"0x66eeb","chainName":"Arbitrum Testnet","nativeCurrency":{"name":"ETH","symbol":"ETH","decimals":18},"rpcUrls":["https://rinkeby.arbitrum.io/rpc"],"blockExplorerUrls":["https://rinkeby-explorer.arbitrum.io"]},
     apiUrl: null,

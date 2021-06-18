@@ -123,6 +123,7 @@
   font-size: 21px;
   line-height: 1;
   margin-right: 10px;
+  max-height: 22px;
 }
 
 .user-nav-wrap > div {
@@ -189,6 +190,8 @@ li.dropdown {
   margin-top: 8px;
   margin-bottom: 8px;
   color: white !important;  
+  display: flex;
+  flex-direction: row;
 }
 
 .nav-item.dropdown.slippage-config {
@@ -530,6 +533,10 @@ li.dropdown {
   color: #656565;
 }
 
+.network-btn {
+  margin-right: 10px;
+}
+
 @media(max-width:991px){  
   .options-nav-item .nav-chevron {
     transform: rotate(0deg);
@@ -538,6 +545,13 @@ li.dropdown {
   .options-nav-item.options-expanded .nav-chevron {
     transform: rotate(-180deg);
     transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1) 0ms;
+  }
+  .network-btn {
+    margin-right: 0px;
+    margin-bottom: 10px;
+  }
+  .nav-item.dropdown.metamask {
+    flex-direction: column;
   }
 }
 

@@ -15,7 +15,6 @@ import Exercise from './pages/Exercise'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
 import { getCurrentRoute, getPairIdFromRoute, isDarkMode, getSlippageConfig, setSlippageConfig } from './util/constants'
-import { error } from './util/sweetalert'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 import Vaults from './pages/Vaults'
@@ -23,8 +22,6 @@ import Otc from './pages/Otc'
 import PoolDashboard from './partials/Pool/PoolDashboard'
 import CreateOption from './pages/CreateOption'
 import Farm from './pages/Farm'
-import { getCustomRpc, getNetworkName } from './util/network'
-import { switchNetwork } from './util/web3Methods'
 import { clearData } from './util/dataController'
 import { clearOrderbook } from './util/acoSwapUtil'
 import { resetZrxRateLimit } from './util/Zrx/zrxApi'
@@ -34,12 +31,14 @@ import { resetPools } from './util/contractHelpers/acoPoolFactoryMethods'
 import { resetPoolsData } from './util/contractHelpers/acoPoolMethodsv5'
 import { resetRewardData } from './util/contractHelpers/acoRewardsMethods'
 import { resetSwapPairData } from './util/contractHelpers/uniswapPairMethods'
+import NetworkModal from './partials/NetworkModal'
 
 class App extends Component {
   constructor() {
     super()
     this.state = {
       showSignIn: false,
+      showSelectNetwork: false,
       loading: true,
       selectedPair: null,
       accountToggle: false,
@@ -64,39 +63,36 @@ class App extends Component {
   }  
 
   setSignIn = (redirectUrl, context) => {
-    let invalidNetwork = context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork
-    if (invalidNetwork) {
-      if (context.web3.isBrowserProvider) {
-        let customRpc = getCustomRpc()
-        if (customRpc) {
-          switchNetwork(customRpc).then(() => this.showSignInModal(redirectUrl)).catch((err) => {
-            console.error(err)
-            this.setInvalidNetworkMessage(redirectUrl)
-          })
-        } else {
-          this.setInvalidNetworkMessage(redirectUrl)
-        }
+    let isConnected = context && context.web3 && context.web3.hasWeb3Provider && context.web3.selectedAccount
+    if (isConnected) {
+      if (!context.web3.validNetwork) {
+        this.handleInvalidNetwork(redirectUrl)
       } else {
-        this.setInvalidNetworkMessage(redirectUrl)
+        this.showNetworkModal()
       }
     } else {
       this.showSignInModal(redirectUrl)
-    }    
+    }   
   }
 
   showSignInModal = (redirectUrl) => {
-    getGasPrice(true)
     this.setState({showSignIn: true, redirectUrl: redirectUrl, refreshWeb3: null})
   }
 
-  setInvalidNetworkMessage(redirectUrl) {
+  showNetworkModal = () => {
+    this.setState({showSelectNetwork: true, refreshWeb3: null})
+  }
+
+  handleInvalidNetwork(redirectUrl) {
     if (!this.state.refreshWeb3) {
       this.setState({refreshWeb3: {redirectUrl}})
     } else {
-      this.setState({refreshWeb3: null}, () => {
-        error("Please connect to the "+ getNetworkName() + ".", "Wrong Network")
-      })
+      this.setState({refreshWeb3: null, showSelectNetwork: true})
     }
+  }
+
+  onCloseNetworkModal = () => {
+    this.setState({showSelectNetwork: false})
   }
 
   onCloseSignIn = (navigate) => {
@@ -130,6 +126,7 @@ class App extends Component {
     resetPoolsData()
     resetRewardData()
     resetSwapPairData()
+    getGasPrice(true)
     this.setState({networkToggle:!this.state.networkToggle})
   }
 
@@ -311,6 +308,7 @@ class App extends Component {
               {showFooter && <Footer />}
             </div>
             {this.state.showSignIn && <MetamaskModal darkMode={darkMode} connecting={this.state.connecting} connect={(type) => this.setState({connecting: type})} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
+            {this.state.showSelectNetwork && <NetworkModal onHide={() => this.onCloseNetworkModal()}/>}
           </main>}
         </ApiCoingeckoDataProvider>
       </Web3Provider>
