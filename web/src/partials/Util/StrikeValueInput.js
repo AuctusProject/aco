@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { getDeribitOptions } from '../../util/acoApi'
 import Modal from 'react-bootstrap/Modal'
 import ReactTooltip from 'react-tooltip'
-import { groupBy, sortBy } from '../../util/constants'
+import { groupBy } from '../../util/constants'
 
 class StrikeValueInput extends Component {
   constructor(props) {
@@ -38,19 +38,31 @@ class StrikeValueInput extends Component {
     if (this.props.selectedUnderlying !== null) {
       getDeribitOptions(this.props.selectedUnderlying.value, this.props.selectedType === 1, null).then(result => {
         var grouppedOptions = groupBy(result, "strikePrice")
+        var strikePrices = this.filterStrikePricesRange(Object.keys(grouppedOptions))
         var hasCurrentSelectedStrikePrice = false
-        var strikeOptions = sortBy(Object.keys(grouppedOptions).map((strikePrice) => {
+        var strikeOptions = strikePrices.map((strikePrice) => {
           if (this.props.selectedStrike && this.props.selectedStrike.value === Number(strikePrice)) {
             hasCurrentSelectedStrikePrice = true
           }
           return { value: Number(strikePrice), name: strikePrice + " USDC"}
-        }), "value")
+        })
         this.setState({selectedStrike: !hasCurrentSelectedStrikePrice ? null : this.props.selectedStrike, strikeValues: strikeOptions, filteredStrikes: strikeOptions})
       })
     }
     else  {
       this.setState({selectedStrike: null, strikeOptions: null})
     }
+  }
+
+  filterStrikePricesRange = (strikePrices) => {
+    var underlyingPrice = this.context.ticker && this.context.ticker[this.props.selectedUnderlying.value]
+    var filtered = strikePrices.filter(s => 
+      (this.props.selectedType === 1 ? (Number(s) > (underlyingPrice * 0.8) && Number(s) < (underlyingPrice * 3)) :
+        (Number(s) < (underlyingPrice * 1.2))
+    ))
+    return filtered.sort((a,b) => {
+      return this.props.selectedType === 1 ? a-b : b-a
+    })
   }
 
 
@@ -135,6 +147,6 @@ class StrikeValueInput extends Component {
   }
 }
 StrikeValueInput.contextTypes = {
-  strikeValuesImages: PropTypes.object
+  ticker: PropTypes.object
 }
 export default withRouter(StrikeValueInput)

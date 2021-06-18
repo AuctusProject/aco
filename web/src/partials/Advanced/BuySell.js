@@ -4,12 +4,13 @@ import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet } from '@fortawesome/free-solid-svg-icons'
 import { balanceOf } from '../../util/erc20Methods'
-import { fromDecimals, toDecimals } from '../../util/constants'
+import { fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
 import DecimalInput from '../Util/DecimalInput'
-import { getAdvancedOrderSteps, getQuote, buildQuotedData } from '../../util/acoSwapUtil'
+import { getAdvancedOrderSteps, getQuote, buildQuotedData, getMintSteps } from '../../util/acoSwapUtil'
 import BigNumber from 'bignumber.js'
 import { error } from '../../util/sweetalert'
 import CreateAdvancedOrderModal from './CreateAdvancedOrderModal'
+import { getCollateralAmountInDecimals, getCollateralInfo } from '../../util/acoTokenMethods'
 
 class BuySell extends Component {
   constructor() {
@@ -45,6 +46,11 @@ class BuySell extends Component {
     balanceOf(this.props.option.strikeAsset, userAddress).then(result => {
       this.setState({strikeAssetBalance: result})
     })
+    if (this.props.option.isCall) {
+      getBalanceOfAsset(this.props.option.underlying, userAddress).then(result => {
+        this.setState({underlyingBalance: result})
+      })
+    }
   }
 
   selectBuySellTab = (selectedBuySellTab) => () => {
@@ -76,6 +82,31 @@ class BuySell extends Component {
     return formattedBalance
   }
 
+  formatCollateralBalance = () => {
+    var formattedBalance = "-"
+    var collateralBalance = this.getCollateralBalance()    
+    if (collateralBalance) {
+      var collateralInfo = getCollateralInfo(this.props.option)
+      formattedBalance = fromDecimals(collateralBalance, collateralInfo.decimals, 4)
+      formattedBalance += " "+ collateralInfo.symbol;
+    }
+    return formattedBalance
+  }
+
+  getCollateralBalance = () => {
+    return this.props.option.isCall ? this.state.underlyingBalance : this.state.strikeAssetBalance
+  }
+
+  getCollateralSymbol = () => {
+    return getCollateralInfo(this.props.option).symbol
+  }
+
+  formatCollateralValue = () => {
+    var collateralAmount = this.getAmountToCollaterizeInDecimals()
+    var collateralInfo = getCollateralInfo(this.props.option)
+    return fromDecimals(collateralAmount, collateralInfo.decimals)
+  }
+
   onPriceChange = (value) => {
     this.setState({priceInputValue: value})
   }
@@ -94,19 +125,33 @@ class BuySell extends Component {
 
   onSubmitOrder = async () => {
     if (this.canSubmit()) {
-      var isBuy = this.state.selectedBuySellTab === 1
-      var isLimit = this.state.selectedLimitMarketTab === 1
-      var amountValue = this.state.amountInputValue
-      var priceValue = isLimit ? this.state.priceInputValue : null
-      var quote = await getQuote(isBuy, this.props.option, amountValue, false, priceValue, this.props.slippage)
-      var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
-      if (!isLimit && quote.acoAmount.isLessThan(amountInDecimals)) {
-          error("There are not enough orders to fill this amount")
-          return
+      this.placeOrder(false)
+    }
+  }
+
+  placeOrder = async (minted) => {
+    var isBuy = this.state.selectedBuySellTab === 1
+    var isLimit = this.state.selectedLimitMarketTab === 1
+    var amountValue = this.state.amountInputValue
+    var priceValue = isLimit ? this.state.priceInputValue : null
+    var quote = await getQuote(isBuy, this.props.option, amountValue, false, priceValue, this.props.slippage)
+    var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
+    if (!isLimit && quote.acoAmount.isLessThan(amountInDecimals)) {
+        error("There are not enough orders to fill this amount")
+        return
+    }
+    var hasBalances = await this.checkBalances(isBuy, amountValue, priceValue)
+    if (hasBalances) {
+      if (!minted) {
+        var mintAmount = this.getAmountToCollaterizeInDecimals()
+        minted = mintAmount.isLessThanOrEqualTo(0)
+        if (!minted) {
+          var mintSteps = await getMintSteps(this.context.web3.selectedAccount, this.props.option, this.getAmountToCollaterizeInDecimals())
+          this.setState({mintSteps: mintSteps})
+        }
       }
-      var hasBalances = await this.checkBalances(isBuy, amountValue, priceValue)
-      if (hasBalances) {
-        var steps = await getAdvancedOrderSteps(this.context.web3.selectedAccount, quote, this.props.option, amountValue, priceValue, isBuy, this.state.expirationInputValue)
+      if (minted) {
+        var steps = await getAdvancedOrderSteps(this.context.web3.selectedAccount, quote, this.props.option, amountValue, priceValue, isBuy, this.state.expirationInputValue, this.getAmountToCollaterizeInDecimals())
         this.setState({steps: steps})
       }
     }
@@ -121,13 +166,30 @@ class BuySell extends Component {
       }
     }
     else {
-      var amountInDecimals = new BigNumber(toDecimals(amountValue, this.props.option.acoTokenInfo.decimals))
-      if (new BigNumber(this.state.acoTokenBalance).isLessThan(amountInDecimals)) {
-        error("You don't have enough ACO")
+      var amountToCollaterizeInDecimals = this.getAmountToCollaterizeInDecimals()
+      var collateralBalance = this.getCollateralBalance()
+      if (new BigNumber(collateralBalance).isLessThan(amountToCollaterizeInDecimals)) {
+        error("You don't have enough " + this.getCollateralSymbol() + " to collaterize")
         return false
       }
     }
     return true
+  }
+
+  getAmountToMint = () => {
+    if (this.state.selectedBuySellTab === 2) {
+      var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
+      var acoBalance = new BigNumber(this.state.acoTokenBalance)
+      if (acoBalance.isLessThan(amountInDecimals)) {
+        return amountInDecimals.minus(acoBalance)
+      }
+    }
+    return new BigNumber(0)
+  }
+
+  getAmountToCollaterizeInDecimals = () => {
+    var amountToMint = this.getAmountToMint()
+    return new BigNumber(getCollateralAmountInDecimals(this.props.option, amountToMint.toString()))
   }
 
   getTotalCost = () => {
@@ -142,7 +204,7 @@ class BuySell extends Component {
         var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
         var quotedData = buildQuotedData(this.props.option, orders, amountInDecimals)
         if (!quotedData.acoAmount.isLessThan(amountInDecimals)) {
-          return fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals).toFixed(2) + " USDC"
+          return new BigNumber(fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals)).toFixed(2) + " USDC"
         }        
       }
     }
@@ -164,6 +226,15 @@ class BuySell extends Component {
     }
     this.setState({ steps: null })
   }
+
+  onMintHide = (isDone) => {
+    if (isDone) {
+      this.loadBalances()
+      this.props.loadBalances()
+      this.placeOrder(true)
+    }
+    this.setState({ mintSteps: null })
+  }
   
   render() {
     return (
@@ -184,6 +255,10 @@ class BuySell extends Component {
                 {this.formatBalance()}
                 {this.state.selectedBuySellTab === 2 && <span>(<div onClick={this.goToMint}>Mint</div>)</span>}
               </div>
+              {this.state.selectedBuySellTab === 2 && <div className="place-order-balance-row">
+                <FontAwesomeIcon icon={faWallet}/>
+                {this.formatCollateralBalance()}
+              </div>}
               <div className="place-order-label-input-row amount-row">
                 <div className="place-order-label-item">
                   Amount
@@ -234,8 +309,14 @@ class BuySell extends Component {
                 <label className="fee-cost-label">Fee</label>
                 <div className="fee-cost-value">0.00</div>
               </div>
+              {this.state.selectedBuySellTab === 2 && this.getAmountToCollaterizeInDecimals().isGreaterThan(0) &&
+                <div className="fee-cost-row">
+                  <label className="fee-cost-label">{this.getCollateralSymbol()} to collaterize</label>
+                  <div className="fee-cost-value">{this.formatCollateralValue()}</div>
+                </div>
+              }
               <div className="fee-cost-row">
-                <label className="fee-cost-label">{this.state.selectedBuySellTab === 1 ? "Cost" : "Total" }</label>
+                <label className="fee-cost-label">{this.state.selectedBuySellTab === 1 ? "Cost" : "Total to receive" }</label>
                 <div className="fee-cost-value bold">{this.getTotalCost()}</div>
               </div>
               <div className={"action-btn " + (!this.canSubmit() ? "disabled" : "")} onClick={this.onSubmitOrder}>
@@ -244,6 +325,7 @@ class BuySell extends Component {
             </div>
           </div>
         </div>
+        {this.state.mintSteps && <CreateAdvancedOrderModal steps={this.state.mintSteps} onHide={this.onMintHide} ></CreateAdvancedOrderModal>}
         {this.state.steps && <CreateAdvancedOrderModal steps={this.state.steps} onHide={this.onCreateOrderHide} ></CreateAdvancedOrderModal>}
       </div>
     );
