@@ -258,7 +258,7 @@ export const getMintSteps = async (from, option, amountToCollaterizeInDecimals) 
     steps.push({
       type: AdvancedOrderStepsType.Mint,
       option: option,
-      mintValue: amountToCollaterizeInDecimals
+      mintValue: amountToCollaterizeInDecimals.toString()
     })
     return steps
   }
