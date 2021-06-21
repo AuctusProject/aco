@@ -12,6 +12,7 @@ import { allowDeposit } from '../../util/contractHelpers/erc20Methods'
 import { buy, sell } from '../../util/acoSwapUtil'
 import { getSignedOrder } from '../../util/Zrx/zrxUtils'
 import { postOrder } from '../../util/Zrx/zrxApi'
+import { mint } from '../../util/contractHelpers/acoTokenMethods'
 
 class CreateAdvancedOrderModal extends Component {
   constructor(props) {
@@ -50,7 +51,8 @@ class CreateAdvancedOrderModal extends Component {
       this.setStepsModalInfo(currentStep)
       switch (currentStep.type) {
         case AdvancedOrderStepsType.LimitApprove:
-        case AdvancedOrderStepsType.MarketApprove: {
+        case AdvancedOrderStepsType.MarketApprove:
+        case AdvancedOrderStepsType.MintApprove: {
           allowDeposit(from, maxAllowance, currentStep.token, currentStep.address, nonce).then(result => {
             this.checkTransactionResult(result, currentStep, index, nonce)
           })
@@ -90,6 +92,16 @@ class CreateAdvancedOrderModal extends Component {
           })
           break;
         }
+        case AdvancedOrderStepsType.Mint: {
+          mint(this.context.web3.selectedAccount, currentStep.option, currentStep.mintValue, nonce)
+          .then(result => {
+            this.checkTransactionResult(result, currentStep, index, nonce)
+          })
+          .catch(() => {
+            this.setStepError(currentStep)
+          })
+          break;
+        }
         default:
           break;
       }
@@ -99,7 +111,8 @@ class CreateAdvancedOrderModal extends Component {
   getTitle = (step) => {
     switch (step.type) {
       case AdvancedOrderStepsType.LimitApprove:
-      case AdvancedOrderStepsType.MarketApprove: {
+      case AdvancedOrderStepsType.MarketApprove: 
+      case AdvancedOrderStepsType.MintApprove: {
           return "Unlock"
       }
       case AdvancedOrderStepsType.BuySellMarket: {
@@ -108,6 +121,9 @@ class CreateAdvancedOrderModal extends Component {
       case AdvancedOrderStepsType.BuySellLimit: {
         return "Sign"
       }
+      case AdvancedOrderStepsType.Mint: {
+        return "Mint"
+      }
       default:
         break;
     }
@@ -115,7 +131,12 @@ class CreateAdvancedOrderModal extends Component {
 
   getSubtitle = (step, isPending, isDone, isError) => {
     if (isDone) {
-      return "You have placed your order."
+      if (step.type === AdvancedOrderStepsType.Mint) {
+        return "You have successfully minted options. Proceed to place your order."
+      }
+      else {
+        return "You have placed your order."
+      }
     }
     else if (isError) {
       return "An error ocurred. Please try again."
@@ -129,6 +150,12 @@ class CreateAdvancedOrderModal extends Component {
         }
         return "Confirm on " + this.context.web3.name + " to unlock."
       }
+      case AdvancedOrderStepsType.MintApprove: {
+        if (isPending) {
+          return "Waiting unlock confirmation..."
+        }
+        return "Before placing your order, you need to mint options. Confirm on " + this.context.web3.name + " to unlock the collateral."
+      }
       case AdvancedOrderStepsType.BuySellMarket: {
         if (isPending) {
           return "Submitting order..."
@@ -140,6 +167,12 @@ class CreateAdvancedOrderModal extends Component {
           return "Submitting order..."
         }
         return "Confirm signature on " + this.context.web3.name + " to submit limit order."
+      }
+      case AdvancedOrderStepsType.Mint: {
+        if (isPending) {
+          return "Waiting confirmation..."
+        }
+        return "Before placing your order, you need to mint options. Confirm on " + this.context.web3.name + " to mint."
       }
       default:
         break;
@@ -162,7 +195,7 @@ class CreateAdvancedOrderModal extends Component {
   }
 
   setStepsModalInfo = (currentStep, isPending, isDone, isError) => {
-    var title = "Place Order"
+    var title = (currentStep.type === AdvancedOrderStepsType.Mint || currentStep.type === AdvancedOrderStepsType.MintApprove) ? "Mint Options" :  "Place Order"
     var subtitle = this.getSubtitle(currentStep, isPending, isDone, isError)
     var img = this.getImg(isPending, isDone, isError)
     var steps = []

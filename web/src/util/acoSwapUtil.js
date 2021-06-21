@@ -3,12 +3,13 @@ import { getSwapQuote as getZrxQuote, getZrxOrdersFormatted } from "./Zrx/zrxApi
 import { getSwapData as getZrxSwapData } from "./Zrx/zrxWeb3"
 import BigNumber from "bignumber.js"
 import Web3Utils from 'web3-utils'
-import { ONE_SECOND, toDecimals, zero, AdvancedOrderStepsType } from "./constants"
+import { ONE_SECOND, toDecimals, zero, AdvancedOrderStepsType, isEther } from "./constants"
 import { sendTransactionWithNonce } from "./web3Methods"
 import { getBuyData } from "./contractHelpers/acoBuyerV2Methods"
 import { allowance } from "./contractHelpers/erc20Methods"
 import { buildOrder } from "./Zrx/zrxUtils"
 import { acoBuyerAddress, zrxExchangeAddress } from "./network"
+import { getCollateralAddress } from "./contractHelpers/acoTokenMethods"
 
 let orderbooks = {}
 
@@ -244,6 +245,30 @@ export const sell = async (from, nonce, zrxData) => {
   }
   const zrxOrder = await getZrxSwapData(orders, takerAmounts)
   return sendTransactionWithNonce(zrxOrder.gasPrice, null, from, zrxExchangeAddress(), zrxOrder.ethValue, zrxOrder.data, null, nonce)
+}
+
+export const getMintSteps = async (from, option, amountToCollaterizeInDecimals) => {
+  var steps = []
+  if (amountToCollaterizeInDecimals.isGreaterThan(0)) {
+    var collateral = getCollateralAddress(option)
+    if (!isEther(collateral)) {
+      var needMintApprove = await needApprove(from, collateral, amountToCollaterizeInDecimals, option.acoToken)
+      if (needMintApprove) {
+        steps.push({
+          type: AdvancedOrderStepsType.MintApprove,
+          address: option.acoToken,
+          token: collateral
+        })
+      }
+    }
+    steps.push({
+      type: AdvancedOrderStepsType.Mint,
+      option: option,
+      mintValue: amountToCollaterizeInDecimals
+    })
+    return steps
+  }
+  return null  
 }
 
 export const getAdvancedOrderSteps = async (from, quote, option, acoAmount, acoPrice, isBuy, expirationValue) => {

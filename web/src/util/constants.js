@@ -68,7 +68,9 @@ export const AdvancedOrderStepsType = {
     MarketApprove: 0,
     BuySellMarket: 1,
     LimitApprove: 2,
-    BuySellLimit: 3
+    BuySellLimit: 3,
+    MintApprove: 4,
+    Mint: 5
 }
 
 export const StrikePriceOptions = {
