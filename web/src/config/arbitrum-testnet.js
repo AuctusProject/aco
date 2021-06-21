@@ -3,7 +3,7 @@ export const arbitrumTestnet = {
     iconUrl: "/images/arbitrum_icon.svg",
     CHAIN_ID: 421611,
     customRpc: {"chainId":"0x66eeb","chainName":"Arbitrum Testnet","nativeCurrency":{"name":"ETH","symbol":"ETH","decimals":18},"rpcUrls":["https://rinkeby.arbitrum.io/rpc"],"blockExplorerUrls":["https://rinkeby-explorer.arbitrum.io"]},
-    apiUrl: null,
+    apiUrl: "https://bl37dtsnsc.execute-api.us-east-1.amazonaws.com/dev/",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/auctusproject/auctus-options-arbitrum-rinkeby",
     rpcWssUrl: null,
     rpcApiUrl: "https://rinkeby.arbitrum.io/rpc",

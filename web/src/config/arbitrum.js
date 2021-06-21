@@ -3,7 +3,7 @@ export const arbitrum = {
     iconUrl: "/images/arbitrum_icon.svg",
     CHAIN_ID: 42161,
     customRpc: {"chainId":"0xa4b1","chainName":"Arbitrum","nativeCurrency":{"name":"ETH","symbol":"ETH","decimals":18},"rpcUrls":["todo"],"blockExplorerUrls":["https://explorer.arbitrum.io"]},
-    apiUrl: null,
+    apiUrl: "https://cu3pxr9ydi.execute-api.us-east-1.amazonaws.com/prod/",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/auctusproject/auctus-options-arbitrum",
     rpcWssUrl: null,
     rpcApiUrl: null,
