@@ -87,17 +87,16 @@ class SimpleBuyTab extends Component {
 
   stopQuoteRefresh = () => {
     clearTimeout(this.quoteTimeout)
+    this.quoteTimeout = null
   }
 
   quoteTimeout = null
   startQuoteRefresh = () => {
-    if (!this.quoteTimeout) {
-      this.quoteTimeout = setTimeout(() => {
-        if (this.quoteTimeout) {
-          this.internalRefreshSwapQuote(this.state.selectedOption, this.startQuoteRefresh)
-        }
-      }, 15000)
-    }
+    this.quoteTimeout = setTimeout(() => {
+      if (this.quoteTimeout) {
+        this.internalRefreshSwapQuote(this.state.selectedOption, this.startQuoteRefresh)
+      }
+    }, 60000)
   }
 
   onQtyChange = (value) => {
@@ -368,16 +367,19 @@ class SimpleBuyTab extends Component {
 
   onHideStepsModal = () => {
     let redirect = (this.props.selectedPair && this.state.stepsModalInfo && this.state.stepsModalInfo.success)
-    this.setState({ stepsModalInfo: null, selectedStrike: null, qtyValue: "1.00", selectedExpiration: null }, () => {
-      this.setSelectedOption()
-      if (redirect) {
+    if (redirect) {
+      this.setState({ stepsModalInfo: null, selectedStrike: null, qtyValue: "1.00", selectedExpiration: null }, () => {
+        this.setSelectedOption()
         this.props.refreshExercise()
         var self = this
         setTimeout(() => {
           self.props.history.push('/manage/'+self.props.selectedPair.id)
         },300)
-      }
-    })
+      })
+    }
+    else {
+      this.setState({ stepsModalInfo: null })
+    }
   }
 
   needApprove = () => {
@@ -436,7 +438,7 @@ class SimpleBuyTab extends Component {
   }
   
   getAcoOptionPrice = () => {    
-    if (this.state.swapQuote) {
+    if (this.state.swapQuote && this.state.selectedOption) {
       return parseFloat(fromDecimals(this.state.swapQuote.price.toString(10), this.state.selectedOption.strikeAssetInfo.decimals, this.state.selectedOption.strikeAssetInfo.decimals, this.state.selectedOption.strikeAssetInfo.decimals))
     }
     return null
@@ -448,7 +450,7 @@ class SimpleBuyTab extends Component {
   }
 
   refreshSwapQuote = (selectedOption, callback) => {
-    this.setState({poolQuote: null, swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
+    this.setState({swapQuote: null, errorMessage: null, loadingSwap: true}, () => {
       this.internalRefreshSwapQuote(selectedOption, callback)
     })
   }
