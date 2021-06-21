@@ -26,21 +26,21 @@ const callApi = (pathUrl, method, body = null) => {
   });
 };
 
-module.exports.assets = (queryStringParameters) => {   
+module.exports.assets = (network, queryStringParameters) => {   
   return new Promise((resolve, reject) => { 
-    callApi("assets" + getComplement(queryStringParameters), "GET").then((response) => resolve(response)).catch((err) => reject(err));
+    callApi(network + "/assets" + getComplement(queryStringParameters), "GET").then((response) => resolve(response)).catch((err) => reject(err));
   });
 };
 
-module.exports.getOrder = (id) => {   
+module.exports.getOrder = (network, id) => {   
   return new Promise((resolve, reject) => { 
-    callApi("otc/" + encodeURIComponent(id), "GET").then((response) => resolve(response)).catch((err) => reject(err));
+    callApi(network + "/otc/" + encodeURIComponent(id), "GET").then((response) => resolve(response)).catch((err) => reject(err));
   });
 };
 
-module.exports.createOrder = (body) => {   
+module.exports.createOrder = (network, body) => {   
   return new Promise((resolve, reject) => { 
-    callApi("otc", "POST", body).then((response) => resolve(response)).catch((err) => reject(err));
+    callApi(network + "/otc", "POST", body).then((response) => resolve(response)).catch((err) => reject(err));
   });
 };
 
