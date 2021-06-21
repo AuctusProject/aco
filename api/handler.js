@@ -111,17 +111,32 @@ module.exports.opynQuote = (event, context, callback) => {
 };
 
 module.exports.assets = (event, context, callback) => {
-  handle(internalInterface.assets(event.queryStringParameters), callback, event, "assets");
+  const network = event.pathParameters ? event.pathParameters.network : "";
+  if (!network) {
+    callback(null, getResponse(null, 400));
+  } else {
+    handle(internalInterface.assets(network, event.queryStringParameters), callback, event, "assets");
+  }
 };
 
 module.exports.getOrder = (event, context, callback) => {
+  const network = event.pathParameters ? event.pathParameters.network : "";
   const orderId = event.pathParameters ? event.pathParameters.orderId : "";
-  handle(internalInterface.getOrder(orderId), callback, event, "getOrder");
+  if (!network || !orderId) {
+    callback(null, getResponse(null, 400));
+  } else {
+    handle(internalInterface.getOrder(network, orderId), callback, event, "getOrder");
+  }
 };
 
 module.exports.createOrder = (event, context, callback) => {
+  const network = event.pathParameters ? event.pathParameters.network : "";
   const body = (event.body ? JSON.parse(event.body) : null);
-  handle(internalInterface.createOrder(body), callback, event, "createOrder");
+  if (!network || !body) {
+    callback(null, getResponse(null, 400));
+  } else {
+    handle(internalInterface.createOrder(network, body), callback, event, "createOrder");
+  }
 };
 
 module.exports.getAirdrop = (event, context, callback) => {

@@ -91,22 +91,34 @@ functions:
     timeout: 30
     events:
       - http:
-          path: /assets
+          path: /{network}/assets
           method: get
-          cors: true      
+          cors: true
+          request:
+            parameters:
+              paths:
+                network: true  
   getOrder:
     handler: handler.getOrder
     timeout: 30
     events:
       - http:
-          path: /order/{orderId}
+          path: /{network}/order/{orderId}
           method: get
-          cors: true       
+          cors: true
+          request:
+            parameters:
+              paths:
+                network: true   
   createOrder:
     handler: handler.createOrder
     timeout: 30
     events:
       - http:
-          path: /order
+          path: /{network}/order
           method: post
           cors: true
+          request:
+            parameters:
+              paths:
+                network: true

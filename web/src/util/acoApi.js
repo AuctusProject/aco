@@ -1,6 +1,6 @@
 import Axios from 'axios'
 import { ONE_SECOND, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore } from './constants';
-import { apiUrl } from './network';
+import { apiUrl, getNetworkName } from './network';
 
 export const clearApiData = () => {
     apiTokenList = null
@@ -35,7 +35,7 @@ export function getAcoAssets() {
             resolve(acoAssets)
             return
         }
-        Axios.get(apiUrl() + "assets")
+        Axios.get(apiUrl() + getNetworkName() + "/assets")
         .then(res => {
             if (res && res.data) {
                 acoAssets = res.data
@@ -162,7 +162,7 @@ export function getDeribitOptions(asset, isCall, expiration) {
 
 export function getOtcOrder(orderId) {
     return new Promise(function(resolve,reject){
-        Axios.get(apiUrl() + "order/" + encodeURIComponent(orderId))
+        Axios.get(apiUrl() + getNetworkName() + "/order/" + encodeURIComponent(orderId))
         .then((res) => {
             if (res && res.data) {
                 resolve(res.data);
@@ -175,7 +175,7 @@ export function getOtcOrder(orderId) {
 
 export function createOtcOrder(isAskOrder, signedOrder) {
     return new Promise(function(resolve,reject){
-        Axios.post(apiUrl() + "order", {isAskOrder:isAskOrder,order:signedOrder})
+        Axios.post(apiUrl() + getNetworkName() + "/order", {isAskOrder:isAskOrder,order:signedOrder})
         .then((res) => {
             if (res && res.data) {
                 resolve(res.data);
