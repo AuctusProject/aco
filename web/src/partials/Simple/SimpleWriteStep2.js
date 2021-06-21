@@ -37,17 +37,16 @@ class SimpleWriteStep2 extends Component {
 
   stopQuoteRefresh = () => {
     clearTimeout(this.quoteTimeout)
+    this.quoteTimeout = null
   }
 
   quoteTimeout = null
   startQuoteRefresh = () => {
-    if (!this.quoteTimeout) {
-      this.quoteTimeout = setTimeout(() => {
-        if (this.quoteTimeout) {
-          this.internalRefreshSwapQuote(this.startQuoteRefresh)
-        }
-      }, 15000)
-    }
+    this.quoteTimeout = setTimeout(() => {
+      if (this.quoteTimeout) {
+        this.internalRefreshSwapQuote(this.startQuoteRefresh)
+      }
+    }, 60000)
   }
 
   refreshAccountBalance = () => {
