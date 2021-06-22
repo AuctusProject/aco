@@ -3,6 +3,7 @@ import { Component } from 'react'
 import { getCoingeckoPrice } from './coingeckoApi'
 import { getAcoAssets } from './acoApi'
 
+let coingeckoTimeout = null
 const checkTimeout = 20000
 const childContextTypes = {
   assetsImages: PropTypes.object,
@@ -23,6 +24,13 @@ class ApiCoingeckoDataProvider extends Component {
     })
   }
 
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      clearTimeout(coingeckoTimeout)
+      this.componentDidMount()
+    }
+  }
+
   formatAssetImages = (assets) => {
     var assetImages = {}
     assets.forEach(element  => {
@@ -34,7 +42,7 @@ class ApiCoingeckoDataProvider extends Component {
   }
   
   startCoingeckoPriceMonitor = () => {
-    setTimeout(this.internalCoingeckoPriceMonitor, checkTimeout)
+    coingeckoTimeout = setTimeout(this.internalCoingeckoPriceMonitor, checkTimeout)
   }
 
   internalCoingeckoPriceMonitor = () => {

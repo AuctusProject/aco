@@ -184,7 +184,7 @@ class App extends Component {
     var darkMode = isDarkMode()
     return (
       <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onChangeNetwork={this.onChangeNetwork} onLoaded={this.onLoaded}>
-        <ApiCoingeckoDataProvider>
+        <ApiCoingeckoDataProvider networkToggle={this.state.networkToggle}>
           {this.state.loading ? 
           <div className="initial-loading">
             <img src={darkMode ? "/logo_white.svg" : "/logo.svg"} className="aco-logo" alt="" />
