@@ -1,12 +1,14 @@
 import { getWeb3, sendTransactionWithNonce, sendTransaction } from '../web3Methods'
-import { isEther } from '../constants'
+import { isBaseAsset } from '../constants'
 import { erc20ABI } from './erc20ABI'
+import { baseAsset } from '../network'
 
 
 export const getERC20AssetInfo = (assetAddress) => {
     return new Promise((resolve, reject) => {
-        if (isEther(assetAddress)) {
-            resolve({address: assetAddress, name: "Ethereum", symbol: "ETH", decimals: 18})
+        if (isBaseAsset(assetAddress)) {
+            var base = baseAsset()
+            resolve({address: assetAddress, name: (base.symbol === "ETH" ? "Ethereum" : base.symbol), symbol: base.symbol, decimals: base.decimals})
         }
         else {
             var _web3 = getWeb3()

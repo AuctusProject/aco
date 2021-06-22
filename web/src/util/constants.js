@@ -1,6 +1,6 @@
 import Web3Utils from 'web3-utils'
 import { balanceOf, getERC20AssetInfo } from './contractHelpers/erc20Methods';
-import { allAcoOtcAddresses, CHAIN_ID, defaultAcoCreators, ethAddress, optionsToIgnore, usdcAddress, wbtcAddress } from './network';
+import { allAcoOtcAddresses, CHAIN_ID, defaultAcoCreators, ethAddress, optionsToIgnore, usdAddress, btcAddress, usdAsset, baseAddress } from './network';
 import { checkEthBalanceOf } from './web3Methods';
 
 export const zero = new Web3Utils.BN(0);
@@ -121,14 +121,14 @@ export const formatDate = (expiryTime, shortDate= false, shortMonth = false) => 
     return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + (shortDate ? "" : " UTC")
 }
 
-export const isEther = (assetAddress) => {
-    return assetAddress === ethAddress()
+export const isBaseAsset = (assetAddress) => {
+    return assetAddress === baseAddress()
 }
 
 export function getBalanceOfAsset(assetAddress, userAddress) {
     return new Promise(function (resolve, reject) {
         let balance
-        if (isEther(assetAddress)) {
+        if (isBaseAsset(assetAddress)) {
             balance = checkEthBalanceOf(userAddress)
         }
         else {
@@ -387,9 +387,9 @@ export const removeOtcOptions = (options) => {
 }
 
 export const removeNotWhitelistedOptions = (options) => {
-    return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress() && 
-        (o.underlying.toLowerCase() === wbtcAddress() || o.underlying.toLowerCase() === ethAddress() || !o.creator ||
-            (defaultAcoCreators().filter(c => c === o.creator.toLowerCase()).length > 0)))
+    return options.filter(o => o.strikeAsset.toLowerCase() === usdAddress() && 
+        (o.underlying.toLowerCase() === btcAddress() || o.underlying.toLowerCase() === ethAddress() || o.underlying.toLowerCase() === baseAddress()
+         || !o.creator || (defaultAcoCreators().filter(c => c === o.creator.toLowerCase()).length > 0)))
 }
 
 export const isExpired = (expiryTime) => {
@@ -456,7 +456,8 @@ export const capitalizeFirstLetter = (string) => {
 }
 
 export const formatAcoRewardName = (acoReward) => {
-    var strikePrice = Number(fromDecimals(acoReward.strikePrice, 6)).toFixed(2)
+    var usd = usdAsset()
+    var strikePrice = Number(fromDecimals(acoReward.strikePrice, usd.decimals)).toFixed(2)
     var formattedDate = formatDate(acoReward.expiryTime, true)
     return `AUC CALL $${strikePrice} Expiration: ${formattedDate}`
 }

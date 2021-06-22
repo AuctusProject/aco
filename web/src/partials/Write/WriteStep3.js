@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
-import { formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther, zero } from '../../util/constants'
+import { formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isBaseAsset, zero } from '../../util/constants'
 import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount, getCollateralAddress } from '../../util/contractHelpers/acoTokenMethods'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
@@ -88,7 +88,7 @@ class WriteStep3 extends Component {
   }
 
   isCollateralEth = () => {
-    return isEther(this.getCollaterizeAssetAddress())
+    return isBaseAsset(this.getCollaterizeAssetAddress())
   }
 
   onConfirm = () => {
@@ -258,7 +258,7 @@ class WriteStep3 extends Component {
           </div>
           <div className="balance-row">
             <div className="balance-info">Balance: {this.state.collateralBalance ? (fromDecimals(this.state.collateralBalance.toString(), this.getCollateralDecimals(), 2) + " " + this.getCollaterizeAssetSymbol()) : ""}</div>
-            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl()+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</a>}</div>
+            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl()+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap {this.props.selectedPair.underlyingSymbol} for {this.getCollaterizeAssetSymbol()}</a>}</div>
           </div>
           <div className="card-separator"></div>
           <div>

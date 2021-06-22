@@ -3,7 +3,7 @@ import { getSwapQuote as getZrxQuote, getZrxOrdersFormatted } from "./Zrx/zrxApi
 import { getSwapData as getZrxSwapData } from "./Zrx/zrxWeb3"
 import BigNumber from "bignumber.js"
 import Web3Utils from 'web3-utils'
-import { ONE_SECOND, toDecimals, zero, AdvancedOrderStepsType, isEther } from "./constants"
+import { ONE_SECOND, toDecimals, zero, AdvancedOrderStepsType, isBaseAsset } from "./constants"
 import { sendTransactionWithNonce } from "./web3Methods"
 import { getBuyData } from "./contractHelpers/acoBuyerV2Methods"
 import { allowance } from "./contractHelpers/erc20Methods"
@@ -251,7 +251,7 @@ export const getMintSteps = async (from, option, amountToCollaterizeInDecimals) 
   var steps = []
   if (amountToCollaterizeInDecimals.isGreaterThan(0)) {
     var collateral = getCollateralAddress(option)
-    if (!isEther(collateral)) {
+    if (!isBaseAsset(collateral)) {
       var needMintApprove = await needApprove(from, collateral, amountToCollaterizeInDecimals, option.acoToken)
       if (needMintApprove) {
         steps.push({

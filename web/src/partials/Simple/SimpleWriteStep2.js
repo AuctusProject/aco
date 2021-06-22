@@ -2,7 +2,7 @@ import './SimpleWriteStep2.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
+import { fromDecimals, isBaseAsset, ethTransactionTolerance, toDecimals, maxAllowance, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
 import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice, getCollateralAmount } from '../../util/contractHelpers/acoTokenMethods'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
@@ -78,7 +78,7 @@ class SimpleWriteStep2 extends Component {
   }
 
   isCollateralEth = () => {
-    return isEther(this.getCollaterizeAssetAddress())
+    return isBaseAsset(this.getCollaterizeAssetAddress())
   }
 
   onCollaterizeChange = (value) => {

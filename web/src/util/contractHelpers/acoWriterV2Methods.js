@@ -1,5 +1,5 @@
 import { getWeb3, sendTransactionWithNonce } from '../web3Methods'
-import { isEther, toDecimals } from '../constants'
+import { isBaseAsset, toDecimals } from '../constants'
 import { acoWriterV2ABI } from './acoWriterV2ABI'
 import { getSwapData } from '../Zrx/zrxWeb3'
 import BigNumber from 'bignumber.js'
@@ -37,7 +37,7 @@ export const write = async (from, option, zrxData, nonce) => {
     let ethValue = zrxOrder.ethValue
     let gasPrice = zrxOrder.gasPrice
     let collateralAddress = (option.isCall ? option.underlying : option.strikeAsset)
-    if (isEther(collateralAddress)) {
+    if (isBaseAsset(collateralAddress)) {
         ethValue = ethValue.add(new Web3Utils.BN(totalCollateral.toString(10)))
     }
     return sendTransactionWithNonce(gasPrice, null, from, acoWriterAddress(), ethValue, data, null, nonce)

@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, maxAllowance, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy } from '../../util/constants'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isBaseAsset, maxAllowance, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy } from '../../util/constants'
 import { getOptionFormattedPrice } from '../../util/contractHelpers/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
@@ -412,7 +412,7 @@ class SimpleBuyTab extends Component {
   }
   
   isPayEth = () => {
-    return isEther(this.state.selectedOption.strikeAsset)
+    return isBaseAsset(this.state.selectedOption.strikeAsset)
   }
 
   onConnectClick = () => {

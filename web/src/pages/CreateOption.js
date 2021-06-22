@@ -14,18 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
 import { confirm } from '../util/sweetalert'
 import { getAvailableOptionsByPair } from '../util/dataController'
-import { ethAddress, usdcAddress, wbtcAddress } from '../util/network'
-
-export const CREATE_OPTION_UNDERLYING_OPTIONS = [{
-  value: "ETH",
-  name: "ETH",
-  icon: "/images/eth_icon.png"
-},
-{
-  value: "WBTC",
-  name: "WBTC",
-  icon: "/images/wbtc_icon.png"
-}]
+import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress } from '../util/network'
 
 class CreateOption extends Component {
   constructor(props) {
@@ -33,10 +22,34 @@ class CreateOption extends Component {
     this.state = this.getInitialState(props)
   }
 
+  underlyingOptions() {
+    let base = baseAsset()
+    let result = []
+    if (base.symbol !== "ETH") {
+      result.push({
+        value: base.symbol,
+        name: base.symbol,
+        icon: base.icon
+      })
+    }
+    result.push({
+      value: "ETH",
+      name: "ETH",
+      icon: "/images/eth_icon.png"
+    })
+    let btc = btcAsset()
+    result.push({
+      value: btc.symbol,
+      name: btc.symbol,
+      icon: btc.icon
+    })
+    return result
+  }
+
   getInitialState = (props) => {
     var state = { 
       selectedType: 1, 
-      selectedUnderlying: CREATE_OPTION_UNDERLYING_OPTIONS[0],
+      selectedUnderlying: this.underlyingOptions()[0],
       expirationDate: "",
       selectedStrike: "",
       strikeOptions: null,
@@ -67,11 +80,12 @@ class CreateOption extends Component {
     if (this.state.selectedUnderlying && this.state.selectedType && this.state.selectedStrike && this.state.expirationDate) {
       var pair = {
         underlyingSymbol: this.state.selectedUnderlying.name,
-        strikeAssetSymbol: "USDC",
+        strikeAssetSymbol: usdSymbol(),
       }
+      let usd = usdAsset()
       getAvailableOptionsByPair(pair, this.state.selectedType).then(options => {      
         var filteredOptions = options.filter(o => 
-          o.strikePrice === toDecimals(this.state.selectedStrike.value, 6).toString() &&
+          o.strikePrice === toDecimals(this.state.selectedStrike.value, usd.decimals).toString() &&
           o.expiryTime.toString() === (this.state.expirationDate.getTime()/ONE_SECOND).toString())
         if (filteredOptions && filteredOptions.length === 1) {
           this.setState({selectedOption: filteredOptions[0]})
@@ -89,12 +103,13 @@ class CreateOption extends Component {
   }
 
   getOptionData = () => {
+    let usd = usdAsset()
     return {
-      underlying: this.state.selectedUnderlying.value === "ETH" ? ethAddress() : wbtcAddress(),
-      strikeAsset: usdcAddress(),
+      underlying: this.state.selectedUnderlying.value === "ETH" ? ethAddress() : this.state.selectedUnderlying.value === btcSymbol() ? btcAddress() : baseAddress(),
+      strikeAsset: usdAddress(),
       isCall: this.state.selectedType === 1,
       expiryTime: (this.state.expirationDate.getTime()/ONE_SECOND).toString(),
-      strikePrice: toDecimals(this.state.selectedStrike.value, 6).toString()
+      strikePrice: toDecimals(this.state.selectedStrike.value, usd.decimals).toString()
     }
   }
 
@@ -115,8 +130,9 @@ class CreateOption extends Component {
           pool.strikeAssetBalance))
       }
       var convertedTotalLiquidity = Number(fromDecimals(totalLiquidity, this.getPoolLiquidityDecimals()))
+      var usd = usdAsset()
       var optionsLiquidity = this.state.selectedType === 1 ? convertedTotalLiquidity : 
-        convertedTotalLiquidity/Number(fromDecimals(optionData.strikePrice, 6))
+        convertedTotalLiquidity/Number(fromDecimals(optionData.strikePrice, usd.decimals))
       this.setState({optionsLiquidity: optionsLiquidity, loadingLiquidity: false})
     })
   }
@@ -134,7 +150,8 @@ class CreateOption extends Component {
 
   getPoolLiquidityDecimals = () => {
     if (this.state.selectedType !== 1) {
-      return 6
+      let usd = usdAsset()
+      return usd.decimals
     }
     else if (this.state.selectedUnderlying.value === "WBTC") {
       return 8
@@ -146,7 +163,7 @@ class CreateOption extends Component {
 
   getPoolLiquiditySymbol = () => {
     if (this.state.selectedType !== 1) {
-      return "USDC"
+      return usdSymbol()
     }
     return this.state.selectedUnderlying.value
   }
@@ -225,7 +242,7 @@ class CreateOption extends Component {
             <div className="input-column underlying-column">
               <div className="input-label">Underlying</div>
               <div className="input-field">
-                <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={CREATE_OPTION_UNDERLYING_OPTIONS} onSelectOption={this.onAssetSelected}/>
+                <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={this.underlyingOptions()} onSelectOption={this.onAssetSelected}/>
               </div>
             </div>
             <div className="input-column">

@@ -11,6 +11,7 @@ import BigNumber from 'bignumber.js'
 import { error } from '../../util/sweetalert'
 import CreateAdvancedOrderModal from './CreateAdvancedOrderModal'
 import { getCollateralAmountInDecimals, getCollateralInfo } from '../../util/contractHelpers/acoTokenMethods'
+import { usdSymbol } from '../../util/network'
 
 class BuySell extends Component {
   constructor() {
@@ -75,7 +76,7 @@ class BuySell extends Component {
     var formattedBalance = "-"
     if (this.state.selectedBuySellTab === 1 && this.state.strikeAssetBalance) {
       formattedBalance = fromDecimals(this.state.strikeAssetBalance, this.props.option.strikeAssetInfo.decimals, 4)
-      formattedBalance += " USDC";
+      formattedBalance += " " + usdSymbol();
     }
     else if (this.state.selectedBuySellTab === 2 && this.state.acoTokenBalance) {
       formattedBalance = fromDecimals(this.state.acoTokenBalance, this.props.option.acoTokenInfo.decimals, 4)
@@ -197,7 +198,7 @@ class BuySell extends Component {
   getTotalCost = () => {
     if (this.state.selectedLimitMarketTab === 1) {
       if (this.state.amountInputValue && this.state.priceInputValue) {
-        return new BigNumber(this.state.amountInputValue).times(this.state.priceInputValue).toFixed(2) + " USDC"
+        return new BigNumber(this.state.amountInputValue).times(this.state.priceInputValue).toFixed(2) + " " + usdSymbol()
       }
     }
     else {
@@ -206,7 +207,7 @@ class BuySell extends Component {
         var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
         var quotedData = buildQuotedData(this.props.option, orders, amountInDecimals)
         if (!quotedData.acoAmount.isLessThan(amountInDecimals)) {
-          return new BigNumber(fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals)).toFixed(2) + " USDC"
+          return new BigNumber(fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals)).toFixed(2) + " " + usdSymbol()
         }        
       }
     }
@@ -284,7 +285,7 @@ class BuySell extends Component {
                       value={this.state.priceInputValue}
                       placeholder="0.00"></DecimalInput>
                   <div className="order-input-right-label">
-                    USDC
+                    {usdSymbol()}
                   </div>
                 </div>
               </div>}

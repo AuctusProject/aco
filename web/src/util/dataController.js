@@ -1,4 +1,4 @@
-import { defaultAcoCreators, ethAddress, optionsToIgnore, usdcAddress, wbtcAddress } from './network'
+import { defaultAcoCreators, ethAddress, optionsToIgnore, usdAddress, btcAddress, usdAsset, btcAsset, baseAddress, baseAsset } from './network'
 import { 
   getAllPools, 
   getExercisedData, 
@@ -80,6 +80,10 @@ export const getPairsFromOptions = (options) => {
         strikeAssetSymbol: option.strikeAssetInfo.symbol
       }
     }
+  }
+  var baseP = basePair()
+  if (!pairs[baseP.id]) {
+    pairs[baseP.id] = baseP
   }
   var ethPair = baseEthPair()
   if (!pairs[ethPair.id]) {
@@ -195,8 +199,8 @@ const parseSubgraphAco = (aco, onlyWhitelisted, removeExpired) => {
   } 
   if (onlyWhitelisted && 
     (
-      aco.strikeAsset.id !== usdcAddress() || 
-      (aco.underlying.id !== ethAddress() && aco.underlying.id !== wbtcAddress() 
+      aco.strikeAsset.id !== usdAddress() || 
+      (aco.underlying.id !== ethAddress() && aco.underlying.id !== btcAddress() && aco.underlying.id !== baseAddress()
         && aco.creator && !defaultAcoCreators().some((c) => c === aco.creator))
     )) { 
     return null
@@ -424,26 +428,43 @@ const parseSubgraphNum = (stringNum, decimals) => {
   return ((start > 0) ? num.substring(start) : num) || "0"
 }
 
-const baseEthPair = () => {
+const basePair = () => {
+  let usd = usdAsset()
+  let base = baseAsset()
   return {
-    id: "ETH_USDC",
+    id: base.symbol+"_"+usd.symbol,
+    underlying: baseAddress(),
+    underlyingInfo: {symbol: base.symbol, decimals: base.decimals},
+    underlyingSymbol: base.symbol,
+    strikeAsset: usdAddress(),
+    strikeAssetInfo: {symbol: usd.symbol, decimals: usd.decimals},
+    strikeAssetSymbol: usd.symbol
+  }
+}
+
+const baseEthPair = () => {
+  let usd = usdAsset()
+  return {
+    id: "ETH_"+usd.symbol,
     underlying: ethAddress(),
     underlyingInfo: {symbol: "ETH", decimals: 18},
     underlyingSymbol: "ETH",
-    strikeAsset: usdcAddress(),
-    strikeAssetInfo: {symbol: "USDC", decimals: 6},
-    strikeAssetSymbol: "USDC"
+    strikeAsset: usdAddress(),
+    strikeAssetInfo: {symbol: usd.symbol, decimals: usd.decimals},
+    strikeAssetSymbol: usd.symbol
   }
 }
 
 const baseWbtcPair = () => {
+  let usd = usdAsset()
+  let btc = btcAsset()
   return {
-    id: "WBTC_USDC",
-    underlying: wbtcAddress(),
-    underlyingInfo: {symbol: "WBTC", decimals: 8},
-    underlyingSymbol: "WBTC",
-    strikeAsset: usdcAddress(),
-    strikeAssetInfo: {symbol: "USDC", decimals: 6},
-    strikeAssetSymbol: "USDC"
+    id: btc.symbol+"_"+usd.symbol,
+    underlying: btcAddress(),
+    underlyingInfo: {symbol: btc.symbol, decimals: btc.decimals},
+    underlyingSymbol: btc.symbol,
+    strikeAsset: usdAddress(),
+    strikeAssetInfo: {symbol: usd.symbol, decimals: usd.decimals},
+    strikeAssetSymbol: usd.symbol
   }
 }

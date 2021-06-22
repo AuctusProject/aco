@@ -209,10 +209,10 @@ export const tolerancePriceBelow = (acoPoolAddress) => {
     return acoPoolContract.methods.tolerancePriceBelow().call()
 }
 
-export const deposit = (from, acoPoolAddress, amount, minShares, isEther, nonce) => {
+export const deposit = (from, acoPoolAddress, amount, minShares, isBaseAsset, nonce) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
     var data = acoPoolContract.methods.deposit(amount, minShares, from).encodeABI()
-    var value = isEther ? amount : 0
+    var value = isBaseAsset ? amount : 0
     return sendTransactionWithNonce(null, null, from, acoPoolAddress, value, data, null, nonce)
 }
 

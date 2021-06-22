@@ -8,6 +8,7 @@ import { fromDecimals, getTimeToExpiry } from '../../util/constants'
 import CancelAdvancedOrderModal from './CancelAdvancedOrderModal'
 import ExpiryCountdown from './ExpiryCountdown'
 import BigNumber from 'bignumber.js'
+import { usdSymbol } from '../../util/network'
 
 class OpenOrders extends Component {
   constructor() {
@@ -84,7 +85,7 @@ class OpenOrders extends Component {
                 <th className="orders-table-header-item orders-table-number-col">Amount</th>
                 <th className="orders-table-header-item orders-table-number-col">Filled</th>
                 <th className="orders-table-header-item orders-table-number-col">Remaining</th>
-                <th className="orders-table-header-item orders-table-number-col">Price (USDC)</th>
+                <th className="orders-table-header-item orders-table-number-col">Price ({usdSymbol()})</th>
                 <th className="orders-table-header-item orders-table-text-col">Expires in</th>
                 <th className="orders-table-header-item orders-table-text-col">&nbsp;</th>
               </tr>

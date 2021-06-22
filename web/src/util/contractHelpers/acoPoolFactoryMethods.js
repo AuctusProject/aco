@@ -5,7 +5,7 @@ import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 import { getGeneralData } from './acoPoolMethodsv2';
 import { acoPermissionConfig } from './acoPoolMethodsv5';
-import { acoPoolFactoryAddress, deprecatedPoolImplementation } from '../network';
+import { acoPoolFactoryAddress, deprecatedPoolImplementation, usdAsset } from '../network';
 
 function getAcoPoolFactoryContract() {
     const _web3 = getWeb3()
@@ -151,7 +151,8 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
                     return
 
                 }
-                var strikePrice = Number(fromDecimals(option.strikePrice, 6))
+                var usd = usdAsset()
+                var strikePrice = Number(fromDecimals(option.strikePrice, usd.decimals))
                 var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) < 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
                     && (Number(poolConfig.tolerancePriceBelowMax) < 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
                     && (Number(poolConfig.tolerancePriceAboveMin) < 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))

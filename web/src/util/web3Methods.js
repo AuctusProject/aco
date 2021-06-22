@@ -1,5 +1,5 @@
 import Web3Utils from 'web3-utils'
-import { wethAddress } from './network'
+import { wrapperAddress } from './network'
 
 let _web3 = null
 let _connector = null
@@ -63,7 +63,7 @@ function isTransactionMined(hash) {
 }
 
 export function wrapEth(from, value, nonce) {
-  return sendTransactionWithNonce(null, null, from, wethAddress(), value, null, null, nonce)
+  return sendTransactionWithNonce(null, null, from, wrapperAddress(), value, null, null, nonce)
 }
 
 export function getNextNonce(from) {

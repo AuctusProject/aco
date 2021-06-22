@@ -1,7 +1,7 @@
 import { getWeb3, sendTransactionWithNonce, sendTransaction, signTypedData } from '../web3Methods'
 import { toDecimals } from '../constants'
 import { acoOtcABI } from './acoOtcABI'
-import { acoOtcAddress, CHAIN_ID, usdcAddress } from '../network'
+import { acoOtcAddress, CHAIN_ID, usdAddress, usdAsset } from '../network'
 
 function getAcoOtcContract() {
   const _web3 = getWeb3()
@@ -50,19 +50,20 @@ export function signOrder(from, isAsk, option, optionAmount, usdcValue, expiry, 
     if (!counterpartyAddress) {
       counterpartyAddress = "0x0000000000000000000000000000000000000000"
     }
+    var usd = usdAsset()
     var partyAco = {
       "responsible": isAsk ? from : counterpartyAddress,
       "amount": optionAmount.toString(),
       "underlying": option.selectedUnderlying.address,
-      "strikeAsset": usdcAddress(),
+      "strikeAsset": usdAddress(),
       "isCall": option.selectedType === 1,
-      "strikePrice": toDecimals(option.strikeValue, 6).toString(),
+      "strikePrice": toDecimals(option.strikeValue, usd.decimals).toString(),
       "expiryTime": Math.ceil(option.expirationDate.getTime() / 1000)
     }
     var partyToken = {
       "responsible": isAsk ? counterpartyAddress : from,
       "amount": usdcValue.toString(),
-      "token": usdcAddress()
+      "token": usdAddress()
     }
     const order = {
       "nonce": Date.now(), 

@@ -6,6 +6,7 @@ import Loading from '../Util/Loading'
 import UpdateIVModal from './UpdateIVModal'
 import UpdateSellingOptionsModal from './UpdateSellingOptionsModal'
 import BigNumber from 'bignumber.js'
+import { usdAsset } from '../../util/network'
 
 class ManagePrivatePool extends Component {
   constructor() {
@@ -55,7 +56,8 @@ class ManagePrivatePool extends Component {
   }
 
   formatStrikePrice = (value) => {
-    return fromDecimals(value, 6, 6, 0) + " USDC"
+    let usd = usdAsset()
+    return fromDecimals(value, usd.decimals, usd.decimals, 0) + " " + usd.symbol
   }
 
   getFixedStrikePriceConfig = () => {

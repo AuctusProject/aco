@@ -141,7 +141,7 @@ export function getAcoPoolHistory(poolAddress) {
 
 export function getDeribitOptions(asset, isCall, expiration) {
     return new Promise(function(resolve,reject){
-        var assetSymbol = asset !== "TBTC" && asset !== "WBTC" ? asset : "BTC"
+        var assetSymbol = asset !== "TBTC" && asset !== "WBTC" && asset !== "BTCB" ? asset : "BTC"
         var url = apiUrl() + "deribit/instruments?asset="+assetSymbol+"&isCall="+isCall
         if (expiration) {
             var unixExpiration = expiration.getTime()/ONE_SECOND 
@@ -187,19 +187,21 @@ export function createOtcOrder(isAskOrder, signedOrder) {
 }
 
 export function isStrikeStableCoin(optionData) {
-    return (optionData.strikeAssetInfo.symbol === "USDC" || optionData.strikeAssetInfo.symbol === "DAI"
-    || optionData.strikeAssetInfo.symbol === "USDT")
+    return (optionData.strikeAssetInfo.symbol === "BUSD" || optionData.strikeAssetInfo.symbol === "USDC" 
+    || optionData.strikeAssetInfo.symbol === "DAI" || optionData.strikeAssetInfo.symbol === "USDT")
 }
 
 export function getDeribiData(optionData) {
     return new Promise(function(resolve,reject) {
         if (!isStrikeStableCoin(optionData) || (optionData.underlyingInfo.symbol !== "TBTC" &&
-        optionData.underlyingInfo.symbol !== "WBTC" && optionData.underlyingInfo.symbol !== "ETH")) {
+        optionData.underlyingInfo.symbol !== "WBTC" && optionData.underlyingInfo.symbol !== "BTCB" && 
+        optionData.underlyingInfo.symbol !== "ETH")) {
             resolve(null)
         } else {
             var expiry = new Date(optionData.expiryTime * 1000)
             var underlyingSymbol = 
-                optionData.underlyingInfo.symbol !== "TBTC" && optionData.underlyingInfo.symbol !== "WBTC" ?
+                optionData.underlyingInfo.symbol !== "TBTC" && optionData.underlyingInfo.symbol !== "WBTC"
+                && optionData.underlyingInfo.symbol !== "BTCB" ?
                 optionData.underlyingInfo.symbol : "BTC"
             var deribitName = underlyingSymbol + "-" + expiry.getDate() + 
                 expiry.toLocaleString('en-us', {month: 'short'}).toUpperCase() + (expiry.getFullYear() % 100) + "-" +

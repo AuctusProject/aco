@@ -5,13 +5,13 @@ import PropTypes from 'prop-types'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatWithPrecision, getBalanceOfAsset, isEther, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, saveToLocalOrders, toDecimals } from '../../util/constants'
+import { formatWithPrecision, getBalanceOfAsset, isBaseAsset, ONE_MINUTE, OTC_ACTION_OPTIONS, OTC_EXPIRATION_OPTIONS, saveToLocalOrders, toDecimals } from '../../util/constants'
 import CreateOrderModal from './CreateOrderModal'
 import { faUserCircle, faClock } from '@fortawesome/free-regular-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalculator } from '@fortawesome/free-solid-svg-icons'
 import CalculatorModal from './CalculatorModal'
-import { usdcAddress, wethAddress } from '../../util/network'
+import { usdAddress, usdAsset, usdSymbol, wrapperAddress } from '../../util/network'
 
 class OtcTradeTabStep2 extends Component {
   constructor(props) {
@@ -41,15 +41,15 @@ class OtcTradeTabStep2 extends Component {
     var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
     var underlyingAddress = this.getUnderlyingAddress()
     if (userAddress && underlyingAddress) {
-      if (isEther(underlyingAddress)) {
-        getBalanceOfAsset(wethAddress(), userAddress).then(wethBalance => {
+      if (isBaseAsset(underlyingAddress)) {
+        getBalanceOfAsset(wrapperAddress(), userAddress).then(wethBalance => {
           this.setState({ wethBalance: wethBalance })
         })
       }
       getBalanceOfAsset(underlyingAddress, userAddress).then(underlyingBalance => {
         this.setState({ underlyingBalance: underlyingBalance })
       })
-      getBalanceOfAsset(usdcAddress(), userAddress).then(usdcBalance => {
+      getBalanceOfAsset(usdAddress(), userAddress).then(usdcBalance => {
         this.setState({usdcBalance: usdcBalance})
       })
     }
@@ -90,7 +90,7 @@ class OtcTradeTabStep2 extends Component {
       return "Enter quantity"
     }
     if (!this.state.usdcValue || this.state.usdcValue <= 0) {
-      return "Enter USDC value"
+      return "Enter "+ usdSymbol() +" value"
     }
     if (!this.state.expirationValue) {
       return "Select expiration"
@@ -106,12 +106,13 @@ class OtcTradeTabStep2 extends Component {
   }
 
   onCreateClick = () => {
+    var usd = usdAsset()
     var isAsk = this.state.actionType === OTC_ACTION_OPTIONS[1]
     var orderData = {
       isAsk: isAsk,
       selectedOption: this.props.selectedOption,
       optionQty: toDecimals(this.state.optionQty, this.props.selectedOption.selectedUnderlying.decimals),
-      usdcValue: toDecimals(this.state.usdcValue, 6),
+      usdcValue: toDecimals(this.state.usdcValue, usd.decimals),
       expiry: this.getExpiry(),
       counterpartyAddress: this.state.counterpartyAddress
     }
@@ -175,7 +176,7 @@ class OtcTradeTabStep2 extends Component {
       selectedOption.selectedUnderlying.symbol +
       "-" +
       selectedOption.strikeValue +
-      "USDC-" +
+      usdSymbol() + "-" +
       (selectedOption.selectedType === 1 ? "C" : "P") +
       "-" +
       this.getFormattedDate()
@@ -190,28 +191,29 @@ class OtcTradeTabStep2 extends Component {
   }
 
   getAmountToPay = () => {
+    let usd = usdAsset()
     if (this.state.actionType === OTC_ACTION_OPTIONS[0]) 
-      return toDecimals(this.state.usdcValue, 6)
+      return toDecimals(this.state.usdcValue, usd.decimals)
     else if (this.props.selectedOption.selectedType === 1)
       return toDecimals(this.state.optionQty, this.props.selectedOption.selectedUnderlying.decimals)
     else
-      return toDecimals(this.getUSDCToCollaterize(), 6)
+      return toDecimals(this.getUSDCToCollaterize(), usd.decimals)
   }
 
   getAssetToPay = () => {
     if (this.state.actionType === OTC_ACTION_OPTIONS[1] && this.props.selectedOption.selectedType === 1)
       return this.props.selectedOption.selectedUnderlying.address
     else
-      return usdcAddress()
+      return usdAddress()
   }
 
   hasBalanceToCreate = () => {
     var amountToPay = this.getAmountToPay()
     var assetToPay = this.getAssetToPay()
-    if (assetToPay.toLowerCase() === usdcAddress().toLowerCase()) {
+    if (assetToPay.toLowerCase() === usdAddress().toLowerCase()) {
       return new Web3Utils.BN(this.state.usdcBalance).gte(new Web3Utils.BN(amountToPay))
     }
-    else if (isEther(assetToPay)) {
+    else if (isBaseAsset(assetToPay)) {
       return new Web3Utils.BN(this.state.wethBalance).gte(new Web3Utils.BN(amountToPay)) ||
       new Web3Utils.BN(this.state.underlyingBalance).gte(new Web3Utils.BN(amountToPay))
     }
@@ -282,7 +284,7 @@ class OtcTradeTabStep2 extends Component {
         </div>
         <div className="label-column">
           <div className="label-text">
-            USDC
+            {usdSymbol()}
           </div>
         </div>
       </div>
@@ -304,13 +306,13 @@ class OtcTradeTabStep2 extends Component {
       </div>
       <div className="collateral-and-premium-info">
         {this.state.actionType === OTC_ACTION_OPTIONS[0] ? <div>
-          Total premium to be paid: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}
+          Total premium to be paid: {this.state.usdcValue ? <>{this.state.usdcValue} {usdSymbol()} {this.getPremiumPerOption()}</> : "-"}
         </div> :
           <>{this.props.selectedOption.selectedType === 1 ?
             <div>{this.props.selectedOption.selectedUnderlying.symbol} to collaterize: {this.state.optionQty ? this.state.optionQty : "-"}</div> :
-            <div>USDC to collaterize: {this.getUSDCToCollaterize() ? this.getUSDCToCollaterize() : "-"}</div>
+            <div>{usdSymbol()} to collaterize: {this.getUSDCToCollaterize() ? this.getUSDCToCollaterize() : "-"}</div>
           }
-            <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}</div>
+            <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} {usdSymbol()} {this.getPremiumPerOption()}</> : "-"}</div>
           </>}
       </div>
       <div className="action-button-wrapper">

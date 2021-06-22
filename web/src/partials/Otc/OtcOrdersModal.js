@@ -7,6 +7,7 @@ import { fromDecimals, getLocalOrders, getTimeToExpiry, ONE_SECOND } from '../..
 import Loading from '../Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLongArrowAltRight } from '@fortawesome/free-solid-svg-icons'
+import { usdAsset } from '../../util/network'
 
 class OtcOrdersModal extends Component {
   constructor(props) {
@@ -50,7 +51,8 @@ class OtcOrdersModal extends Component {
       return fromDecimals(amount, otcOrder.option.selectedUnderlying.decimals) + " " + otcOrder.optionName
     }
     else {
-      return fromDecimals(amount, 6) + " USDC"
+      let usd = usdAsset()
+      return fromDecimals(amount, usd.decimals) + " " + usd.symbol
     }
   }
 
@@ -60,7 +62,8 @@ class OtcOrdersModal extends Component {
       return fromDecimals(amount, otcOrder.option.selectedUnderlying.decimals) + " " + otcOrder.optionName
     }
     else {
-      return fromDecimals(amount, 6) + " USDC"
+      let usd = usdAsset()
+      return fromDecimals(amount, usd.decimals) + " " + usd.symbol
     }
   }
 

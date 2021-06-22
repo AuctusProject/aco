@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
 import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/contractHelpers/acoTokenMethods'
-import { zero, formatDate, fromDecimals, toDecimals, isEther, PERCENTAGE_PRECISION, formatWithPrecision } from '../../util/constants'
+import { zero, formatDate, fromDecimals, toDecimals, isBaseAsset, PERCENTAGE_PRECISION, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
@@ -16,7 +16,7 @@ import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import Loading from '../Util/Loading'
 import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/contractHelpers/acoFlashExerciseMethods'
-import { acoFlashExerciseAddress, swapUrl } from '../../util/network'
+import { acoFlashExerciseAddress, baseSymbol, swapUrl } from '../../util/network'
 
 class ExerciseModal extends Component {
   constructor(props) {
@@ -322,7 +322,7 @@ class ExerciseModal extends Component {
 
   isPayEth = () => {
     var option = this.props.position.option
-    return isEther(getExerciseAddress(option))
+    return isBaseAsset(getExerciseAddress(option))
   }
 
   getReceiveSymbol = () => {
@@ -447,7 +447,7 @@ class ExerciseModal extends Component {
                   </table>
                   {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
                   <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
-                  {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl() + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
+                  {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl() + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap {baseSymbol()} for {this.getPaySymbol()}</a>}
                   </>}
                   {this.isFlashOutOfMoney() && 
                     <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>

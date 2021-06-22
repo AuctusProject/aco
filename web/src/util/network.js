@@ -1,8 +1,11 @@
 import { arbitrum } from "../config/arbitrum"
 import { arbitrumTestnet } from "../config/arbitrum-testnet"
+import { bsc } from "../config/bsc"
+import { bscTestnet } from "../config/bsc-testnet"
 import { kovan } from "../config/kovan"
 import { mainnet } from "../config/mainnet"
 import { ropsten } from "../config/ropsten"
+import { ASSETS_INFO } from "./assets"
 
 const networkNameStorage = 'DEFAULT_NETWORK'
 
@@ -50,14 +53,20 @@ export const swapUrl = () => getNetworkData("swapUrl")
 export const rpcWssUrl = () => getNetworkData("rpcWssUrl")
 export const rpcApiUrl = () => getNetworkData("rpcApiUrl")
 export const ethAddress = () => getNetworkData("ethAddress")
-export const usdcAddress = () => getNetworkData("usdcAddress")
-export const wethAddress = () => getNetworkData("wethAddress")
-export const wbtcAddress = () => getNetworkData("wbtcAddress")
+export const usdAddress = () => getNetworkData("usdAddress")
+export const baseAddress = () => getNetworkData("baseAddress")
+export const wrapperAddress = () => getNetworkData("wrapperAddress")
+export const btcAddress = () => getNetworkData("btcAddress")
+export const usdSymbol = () => getNetworkData("usdSymbol")
+export const btcSymbol = () => getNetworkData("btcSymbol")
+export const baseSymbol = () => getNetworkData("baseSymbol")
 export const zrxRequestPerSecond = () => getNetworkData("zrxRequestPerSecond")
 export const acoRewardsPools = () => getNetworkData("acoRewardsPools")
 export const acoAirdropAmounts = () => getNetworkData("acoAirdropAmounts")
 export const airdropClaimStart = () => getNetworkData("airdropClaimStart")
 export const optionsToIgnore = () => getNetworkData("optionsToIgnore")
+export const coingeckoPlataform = () => getNetworkData("coingeckoPlataform")
+export const coingeckoBaseAsset = () => getNetworkData("coingeckoBaseAsset")
 
 export const acoOtcAddress = () => {
   let allOtcs = allAcoOtcAddresses()
@@ -143,12 +152,16 @@ const getNetworkByName = (chainName) => {
       return mainnet
     } else if (chainName === arbitrum.name) {
       return arbitrum
+    } else if (chainName === bsc.name) {
+      return bsc
     } else if (chainName === ropsten.name) {
       return ropsten
     } else if (chainName === kovan.name) {
       return kovan
     } else if (chainName === arbitrumTestnet.name) {
       return arbitrumTestnet
+    } else if (chainName === bscTestnet.name) {
+      return bscTestnet
     }
   }
   return null
@@ -163,4 +176,16 @@ export const getAvailableNetworksData = () => {
     }
   }
   return result
+}
+
+export const usdAsset = () => {
+  return ASSETS_INFO[usdSymbol()]
+}
+
+export const btcAsset = () => {
+  return ASSETS_INFO[btcSymbol()]
+}
+
+export const baseAsset = () => {
+  return ASSETS_INFO[baseSymbol()]
 }

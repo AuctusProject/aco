@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import PairInfo from './PairInfo'
 import { getPairIdFromRoute } from '../util/constants'
+import { baseSymbol, usdSymbol } from '../util/network'
 
 class PairDropdown extends Component {  
   componentDidMount = () => {
@@ -32,7 +33,8 @@ class PairDropdown extends Component {
       this.selectPair(pairs[0])
     }
     else {
-      var defaultIndex = this.props.pairs.findIndex((el) => el.id === "ETH_USDC")
+      let basePair = baseSymbol()+"_"+usdSymbol()
+      var defaultIndex = this.props.pairs.findIndex((el) => el.id === basePair)
       if (defaultIndex === -1)
         defaultIndex = 0
       this.selectPair(pairs[defaultIndex])
