@@ -11,7 +11,7 @@ import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { fromDecimals, getBalanceOfAsset, isBaseAsset, maxAllowance, toDecimals, zero } from '../../util/constants'
 import { allowance, allowDeposit } from '../../util/contractHelpers/erc20Methods'
 import { signOrder } from '../../util/contractHelpers/acoOtcMethods'
-import { createOtcOrder } from '../../util/acoApi'
+import { createOtcOrder } from '../../util/baseApi'
 import { acoOtcAddress, baseSymbol, usdAddress, usdAsset, usdSymbol, wrapperAddress } from '../../util/network'
 
 class CreateOrderModal extends Component {

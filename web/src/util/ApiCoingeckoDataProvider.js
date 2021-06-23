@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types'
 import { Component } from 'react'
 import { getCoingeckoPrice } from './coingeckoApi'
-import { getAcoAssets } from './acoApi'
+import { getAcoAssets } from './baseApi'
 
 let coingeckoTimeout = null
 const checkTimeout = 20000

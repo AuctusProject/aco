@@ -36,6 +36,7 @@ export const bsc = {
     baseAddress: "0x0000000000000000000000000000000000000000",
     usdSymbol: "BUSD",
     btcSymbol: "BTCB",
+    ethSymbol: "ETH",
     baseSymbol: "BNB",
     deprecatedPoolImplementation: ["0x8933f1924c8a05f972b3d94093a090d679bf089d","todo"],
     acoVaults: null,

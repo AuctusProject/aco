@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/contractHelpers/acoTokenMethods'
+import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts, acoFee } from '../../util/contractHelpers/acoTokenMethods'
 import { zero, formatDate, fromDecimals, toDecimals, isBaseAsset, PERCENTAGE_PRECISION, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
@@ -25,6 +25,7 @@ class ExerciseModal extends Component {
   }
 
   componentDidMount = () => {
+    this.setAcoFee()
     getMaxExercisedAccounts(this.props.position.option).then(result => this.setState({ maxExercisedAccounts: result }))
 
     getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result => {
@@ -298,7 +299,15 @@ class ExerciseModal extends Component {
 
   getExerciseFee = (optionsAmount) => {
     var totalCollateralValue = this.getTotalCollateralValue(optionsAmount)
-    return (totalCollateralValue * (this.props.position.option.acoFee / PERCENTAGE_PRECISION))
+    return (totalCollateralValue * (this.state.acoFee / PERCENTAGE_PRECISION))
+  }
+
+  setAcoFee() {
+    if (this.props.position.option.acoFee !== null && this.props.position.option.acoFee !== undefined) {
+      this.setState({acoFee:this.props.position.option.acoFee})
+    } else {
+      acoFee(this.props.position.option).then((fee) => this.setState({acoFee:fee}))
+    }
   }
 
   getPayValue = (optionsAmount) => {

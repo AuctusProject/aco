@@ -1,5 +1,6 @@
 export const ropsten = {
     name: "ROPSTEN",
+    prodNet: "ETHEREUM",
     iconUrl: "/images/eth_icon.png",
     CHAIN_ID: 3,
     customRpc: null,
@@ -34,8 +35,9 @@ export const ropsten = {
     btcAddress: "0xb52beb1e2d4edb5867f9e051af2ec64a7017426d",
     ethAddress: "0x0000000000000000000000000000000000000000",
     baseAddress: "0x0000000000000000000000000000000000000000",
-    usdSymbol: "USDC",
-    btcSymbol: "WBTC",
+    usdSymbol: "T06D",
+    btcSymbol: "T08D",
+    ethSymbol: "ETH",
     baseSymbol: "ETH",
     deprecatedPoolImplementation: [],
     acoVaults: null,

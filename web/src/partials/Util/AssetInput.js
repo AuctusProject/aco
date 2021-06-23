@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faInfoCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
-import { getAcoAssets } from '../../util/acoApi'
+import { getAcoAssets } from '../../util/baseApi'
 import Modal from 'react-bootstrap/Modal'
 import ReactTooltip from 'react-tooltip'
 import { getByAddress } from '../../util/constants'
@@ -33,6 +33,12 @@ class AssetInput extends Component {
     this.setState({selectedAsset: this.props.selectedAsset})
     if (this.props.showTokenImportedModal) {
       this.setState({showTokenImportedModal: true})
+    }
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
     }
   }
 

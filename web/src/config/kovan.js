@@ -1,5 +1,6 @@
 export const kovan = {
     name: "KOVAN",
+    prodNet: "ETHEREUM",
     iconUrl: "/images/eth_icon.png",
     CHAIN_ID: 42,
     customRpc: null,
@@ -35,7 +36,8 @@ export const kovan = {
     ethAddress: "0x0000000000000000000000000000000000000000",
     baseAddress: "0x0000000000000000000000000000000000000000",
     usdSymbol: "USDC",
-    btcSymbol: "WBTC",
+    btcSymbol: "T08D",
+    ethSymbol: "ETH",
     baseSymbol: "ETH",
     deprecatedPoolImplementation: ["0xf77fc0c2a21cf44047fdf45115901389eab9240a","0x77ad4ffe20f32b88d3bf915450c0b4a2ede59a81","0x65b83b913d0f0a4f6d82d0903de09c31f5e2e56c","0xea0c6266863209d045de9dfee1b5438e595e739b"],
     acoVaults: {"0x0e76b8cc3b16a3f1dd286550d05d489b5cf00456":{"name":"CRV3POOL","img":"logo_crv3pool.svg"}},

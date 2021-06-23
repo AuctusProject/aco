@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import OtcTradeTabStep2 from './OtcTradeTabStep2'
 import OtcTradeTabStep1 from './OtcTradeTabStep1'
-import { getOtcOrder } from '../../util/acoApi'
+import { getOtcOrder } from '../../util/baseApi'
 import OtcTradeTabStep3 from './OtcTradeTabStep3'
 
 class OtcTradeTab extends Component {

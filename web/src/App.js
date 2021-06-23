@@ -32,6 +32,8 @@ import { resetPoolsData } from './util/contractHelpers/acoPoolMethodsv5'
 import { resetRewardData } from './util/contractHelpers/acoRewardsMethods'
 import { resetSwapPairData } from './util/contractHelpers/uniswapPairMethods'
 import NetworkModal from './partials/NetworkModal'
+import { clearBaseApiData } from './util/baseApi'
+import { clearApiData } from './util/acoApi'
 
 class App extends Component {
   constructor() {
@@ -117,8 +119,10 @@ class App extends Component {
   }
 
   onChangeNetwork = (chainId, previousChainId) => {
-    clearOrderbook()
+    clearBaseApiData()
+    clearApiData()
     clearData()
+    clearOrderbook()
     resetZrxRateLimit()
     resetZrxData()
     resetOptions()

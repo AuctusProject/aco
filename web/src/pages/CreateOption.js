@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
 import { confirm } from '../util/sweetalert'
 import { getAvailableOptionsByPair } from '../util/dataController'
-import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress } from '../util/network'
+import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress, ethSymbol, ethAsset } from '../util/network'
 
 class CreateOption extends Component {
   constructor(props) {
@@ -25,17 +25,18 @@ class CreateOption extends Component {
   underlyingOptions() {
     let base = baseAsset()
     let result = []
-    if (base.symbol !== "ETH") {
+    if (base.symbol !== ethSymbol()) {
       result.push({
         value: base.symbol,
         name: base.symbol,
         icon: base.icon
       })
     }
+    let eth = ethAsset()
     result.push({
-      value: "ETH",
-      name: "ETH",
-      icon: "/images/eth_icon.png"
+      value: eth.symbol,
+      name: eth.symbol,
+      icon: eth.icon
     })
     let btc = btcAsset()
     result.push({
@@ -105,7 +106,7 @@ class CreateOption extends Component {
   getOptionData = () => {
     let usd = usdAsset()
     return {
-      underlying: this.state.selectedUnderlying.value === "ETH" ? ethAddress() : this.state.selectedUnderlying.value === btcSymbol() ? btcAddress() : baseAddress(),
+      underlying: this.state.selectedUnderlying.value === ethSymbol() ? ethAddress() : this.state.selectedUnderlying.value === btcSymbol() ? btcAddress() : baseAddress(),
       strikeAsset: usdAddress(),
       isCall: this.state.selectedType === 1,
       expiryTime: (this.state.expirationDate.getTime()/ONE_SECOND).toString(),
@@ -153,8 +154,16 @@ class CreateOption extends Component {
       let usd = usdAsset()
       return usd.decimals
     }
-    else if (this.state.selectedUnderlying.value === "WBTC") {
-      return 8
+    if (this.state.selectedUnderlying.value === "WBTC" 
+      || this.state.selectedUnderlying.value === "BTCB" 
+      || this.state.selectedUnderlying.value === btcSymbol()) {
+      let btc = btcAsset()
+      return btc.decimals
+    }
+    if (this.state.selectedUnderlying.value === "ETH" 
+      || this.state.selectedUnderlying.value === ethSymbol()) {
+      let eth = ethAsset()
+      return eth.decimals
     }
     else {
       return 18

@@ -1,5 +1,6 @@
 export const bscTestnet = {
     name: "BSC-TESTNET",
+    prodNet: "BSC",
     iconUrl: "/images/bsc_icon.svg",
     CHAIN_ID: 97,
     customRpc: {"chainId":"0x61","chainName":"Binance Smart Chain Testnet","nativeCurrency":{"name":"BNB","symbol":"BNB","decimals":18},"rpcUrls":["https://data-seed-prebsc-1-s1.binance.org:8545/"],"blockExplorerUrls":["https://testnet.bscscan.com"]},
@@ -34,8 +35,9 @@ export const bscTestnet = {
     btcAddress: "0x952703308fe5be62e857ab453d1664589662d834",
     ethAddress: "0x5627949e60e8dc1290a8617019cbb6b5dd36edb3",
     baseAddress: "0x0000000000000000000000000000000000000000",
-    usdSymbol: "BUSD",
-    btcSymbol: "BTCB",
+    usdSymbol: "T18D",
+    btcSymbol: "T18D3",
+    ethSymbol: "T18D2",
     baseSymbol: "BNB",
     deprecatedPoolImplementation: ["0xf5b411b9bf2a28877ae560665885617c9bfe54be","todo"],
     acoVaults: null,

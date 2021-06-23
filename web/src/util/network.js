@@ -59,6 +59,7 @@ export const wrapperAddress = () => getNetworkData("wrapperAddress")
 export const btcAddress = () => getNetworkData("btcAddress")
 export const usdSymbol = () => getNetworkData("usdSymbol")
 export const btcSymbol = () => getNetworkData("btcSymbol")
+export const ethSymbol = () => getNetworkData("ethSymbol")
 export const baseSymbol = () => getNetworkData("baseSymbol")
 export const zrxRequestPerSecond = () => getNetworkData("zrxRequestPerSecond")
 export const acoRewardsPools = () => getNetworkData("acoRewardsPools")
@@ -67,6 +68,7 @@ export const airdropClaimStart = () => getNetworkData("airdropClaimStart")
 export const optionsToIgnore = () => getNetworkData("optionsToIgnore")
 export const coingeckoPlataform = () => getNetworkData("coingeckoPlataform")
 export const coingeckoBaseAsset = () => getNetworkData("coingeckoBaseAsset")
+const prodNet = () => getNetworkData("prodNet")
 
 export const acoOtcAddress = () => {
   let allOtcs = allAcoOtcAddresses()
@@ -179,13 +181,57 @@ export const getAvailableNetworksData = () => {
 }
 
 export const usdAsset = () => {
-  return ASSETS_INFO[usdSymbol()]
+  let asset = ASSETS_INFO[usdSymbol()]
+  if (asset) {
+    return asset
+  } else {
+    let prod = prodNet()
+    if (prod) {
+      let net = getNetworkByName(prod)
+      return ASSETS_INFO[net.usdSymbol]
+    }
+  }
+  return null
 }
 
 export const btcAsset = () => {
-  return ASSETS_INFO[btcSymbol()]
+  let asset = ASSETS_INFO[btcSymbol()]
+  if (asset) {
+    return asset
+  } else {
+    let prod = prodNet()
+    if (prod) {
+      let net = getNetworkByName(prod)
+      return ASSETS_INFO[net.btcSymbol]
+    }
+  }
+  return null
+}
+
+export const ethAsset = () => {
+  let asset = ASSETS_INFO[ethSymbol()]
+  if (asset) {
+    return asset
+  } else {
+    let prod = prodNet()
+    if (prod) {
+      let net = getNetworkByName(prod)
+      return ASSETS_INFO[net.ethSymbol]
+    }
+  }
+  return null
 }
 
 export const baseAsset = () => {
-  return ASSETS_INFO[baseSymbol()]
+  let asset = ASSETS_INFO[baseSymbol()]
+  if (asset) {
+    return asset
+  } else {
+    let prod = prodNet()
+    if (prod) {
+      let net = getNetworkByName(prod)
+      return ASSETS_INFO[net.baseSymbol]
+    }
+  }
+  return null
 }

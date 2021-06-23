@@ -15,7 +15,7 @@ import SpinnerLargeIcon from "../Util/SpinnerLargeIcon";
 import DoneLargeIcon from "../Util/DoneLargeIcon";
 import ErrorLargeIcon from "../Util/ErrorLargeIcon";
 import StepsModal from "../StepsModal/StepsModal";
-import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress } from "../../util/network";
+import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress, ethAsset, ethSymbol } from "../../util/network";
 
 class CreatePoolModal extends Component {
   constructor(props) {
@@ -26,17 +26,18 @@ class CreatePoolModal extends Component {
   underlyingOptions() {
     let base = baseAsset()
     let result = []
-    if (base.symbol !== "ETH") {
+    if (base.symbol !== ethSymbol()) {
       result.push({
         value: base.symbol,
         name: base.symbol,
         icon: base.icon
       })
     }
+    let eth = ethAsset()
     result.push({
-      value: "ETH",
-      name: "ETH",
-      icon: "/images/eth_icon.png"
+      value: eth.symbol,
+      name: eth.symbol,
+      icon: eth.icon
     })
     let btc = btcAsset()
     result.push({

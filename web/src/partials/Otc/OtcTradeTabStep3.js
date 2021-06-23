@@ -7,7 +7,7 @@ import Loading from '../Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClone } from '@fortawesome/free-regular-svg-icons'
 import { ellipsisCenterOfText, formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isBaseAsset, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals } from '../../util/constants'
-import { getAcoAsset } from '../../util/acoApi'
+import { getAcoAsset } from '../../util/baseApi'
 import CancelOrderModal from './CancelOrderModal'
 import AssetInput from '../Util/AssetInput'
 import TakeOrderModal from './TakeOrderModal'
@@ -490,7 +490,7 @@ class OtcTradeTabStep3 extends Component {
                 <div className="input-column">
                   <div className="input-label">Underlying</div>
                   <div className="input-field">
-                    <AssetInput onAssetSelected={this.onAssetSelected} disabled={true} showTokenImportedModal={this.canTakeOrder()} selectedAsset={this.state.assetInfo}></AssetInput>
+                    <AssetInput {...this.props} onAssetSelected={this.onAssetSelected} disabled={true} showTokenImportedModal={this.canTakeOrder()} selectedAsset={this.state.assetInfo}></AssetInput>
                   </div>
                   {this.state.assetInfo.foundByAddress && <a className="address-hint" rel="noopener noreferrer" href={explorerUrl() + this.state.assetInfo.address} target="_blank">
                     <div className="truncate">{ellipsisCenterOfText(this.state.assetInfo.address)}</div>

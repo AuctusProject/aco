@@ -36,6 +36,7 @@ export const mainnet = {
     baseAddress: "0x0000000000000000000000000000000000000000",
     usdSymbol: "USDC",
     btcSymbol: "WBTC",
+    ethSymbol: "ETH",
     baseSymbol: "ETH",
     deprecatedPoolImplementation: ["0x68153d392966d38b7ae4415bd5778d02a579a437","0x1275c3070bba4c88031a726ab2cbd2f31605226a","0xb4f28d9aa4ae8070ba1dea1f2fd888a64b45aa17"],
     acoVaults: {"0x5d28b41bbad874b5efeee0b4158bc50d0af5f637":{"name":"CRV3POOL","img":"logo_crv3pool.svg"}},
