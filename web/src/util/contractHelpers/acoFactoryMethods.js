@@ -3,7 +3,7 @@ import { getOtcOptions, isExpired, removeExpiredOptions, removeNotWhitelistedOpt
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
-import { getPairsFromOptions } from '../dataController';
+import { getOptions, getPairsFromOptions } from '../dataController';
 import { acoFactoryAddress } from '../network';
 
 function getAcoFactoryContract() {
@@ -161,15 +161,19 @@ export const listPairs = () => {
 
 export const listOptions = (pair, optionType = null, removeExpired = false, onlyOtcOptions = false) => {
     return new Promise((resolve, reject) => {
-        var optionsMethod = !onlyOtcOptions ? getAllAvailableOptionsWhitelisted : getOtcAvailableOptions
-        optionsMethod().then(availableOptions => {
+        getOptions().then(allOptions => {
+            if (removeExpired) {
+                allOptions = removeExpiredOptions(allOptions)
+            }
+            if (onlyOtcOptions) {
+                allOptions = getOtcOptions(allOptions)
+            }
             var options = []
-            for (let i = 0; i < availableOptions.length; i++) {
-                const option = availableOptions[i];
+            for (let i = 0; i < allOptions.length; i++) {
+                const option = allOptions[i];
                 if ((!pair || (option.underlying.toLowerCase() === pair.underlying.toLowerCase() && 
                     option.strikeAsset.toLowerCase() === pair.strikeAsset.toLowerCase())) && 
-                    (!optionType || (optionType === 1 ? option.isCall : !option.isCall)) && 
-                    (!removeExpired || !isExpired(option.expiryTime))) {
+                    (!optionType || (optionType === 1 ? option.isCall : !option.isCall))) {
                     options.push(option)
                 }
             }

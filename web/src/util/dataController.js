@@ -19,7 +19,7 @@ import { removeExpiredOptions, removeNotWhitelistedOptions } from './constants'
 const percentageDecimals = 5
 
 export const clearData = () => {
-  availableOptions = null
+  allOptions = null
   allPools = null
 }
 
@@ -27,21 +27,27 @@ const hasSubgraph = () => {
   return !!subgraphUrl()
 }
 
-let availableOptions = null
-export const getAvailableOptions = async () => {
-  if (availableOptions != null) {
-    return availableOptions
-  }
-  if (hasSubgraph()) {
-    let result = await getNotExpiredOptions()
-    availableOptions = parseSubgraphAcos(result, true, true)
+let allOptions = null
+export const getOptions = async () => {
+  if (allOptions !== null) {
+    return allOptions
   } else {
-    let options = await getAcoOptions()
-    if (options) {
-      availableOptions = removeNotWhitelistedOptions(removeExpiredOptions(options))
+    if (hasSubgraph()) {
+      let result = await getAllOptions()
+      allOptions = parseSubgraphAcos(result, false, false)
+    } else {
+      let options = await getAcoOptions()
+      if (options) {
+        allOptions = options
+      }
     }
   }
-  return availableOptions
+  return allOptions
+}
+
+export const getAvailableOptions = async () => {
+  let result = await getOptions()
+  return (result ? removeNotWhitelistedOptions(removeExpiredOptions(result)) : null)
 }
 
 export const getAvailableOptionsByUnderlying = async (underlying) => {
@@ -91,7 +97,7 @@ export const listAvailablePairs = async () => {
 }
 
 export const refreshAvailableOptions = async () => {
-  availableOptions = null
+  allOptions = null
   return getAvailableOptions()
 }
 

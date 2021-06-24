@@ -6,6 +6,7 @@ import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './
 import { getGeneralData } from './acoPoolMethodsv2';
 import { acoPermissionConfig } from './acoPoolMethodsv5';
 import { acoPoolFactoryAddress, deprecatedPoolImplementation, usdAsset } from '../network';
+import { getPools } from '../dataController';
 
 function getAcoPoolFactoryContract() {
     const _web3 = getWeb3()
@@ -157,8 +158,8 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
                     && (Number(poolConfig.tolerancePriceBelowMax) < 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
                     && (Number(poolConfig.tolerancePriceAboveMin) < 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
                     && (Number(poolConfig.tolerancePriceAboveMax) < 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.minStrikePrice) <= strikePrice)
-                    && (Number(poolConfig.maxStrikePrice) === 0 || Number(poolConfig.maxStrikePrice) >= strikePrice)
+                    && (Number(fromDecimals(poolConfig.minStrikePrice, usd.decimals)) <= strikePrice)
+                    && (Number(poolConfig.maxStrikePrice) === 0 || Number(fromDecimals(poolConfig.maxStrikePrice, usd.decimals)) >= strikePrice)
 
                 resolve(isValidStrikePrice)
             })
@@ -168,7 +169,7 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
 
 export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwapPromise) => {
     return new Promise((resolve, reject) => {
-        getAllAvailablePools(false).then(pools => {
+        getPools(false).then(pools => {
             let canSwapPromises = []
             let filteredPools = []
             for (let i = 0; i < pools.length; i++) {
