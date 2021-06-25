@@ -16,6 +16,7 @@ export const arbitrum = {
     gasApiUrl: null,
     gasPriceType: null,
     defaultGasPrice: null,
+    hasAave: true,
     acoFactoryAddress: null,
     acoPoolFactoryAddress: null,
     acoFlashExerciseAddress: null,

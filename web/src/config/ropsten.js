@@ -17,6 +17,7 @@ export const ropsten = {
     gasApiUrl: "https://ethgasstation.info/json/ethgasAPI.json",
     gasPriceType: "safeLow",
     defaultGasPrice: 21000000000,
+    hasAave: true,
     acoFactoryAddress: "0xf44e41ef2487dff9db6449e299ac8f7c07f7f3ca",
     acoPoolFactoryAddress: "0x7fec33c33a9b9a3a3521ee2eed7196372edb5f00",
     acoFlashExerciseAddress: "0xfa832466086fafb1b9b18ffe462a0998343b75dc",

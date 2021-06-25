@@ -17,6 +17,7 @@ export const bscTestnet = {
     gasApiUrl: null,
     gasPriceType: null,
     defaultGasPrice: null,
+    hasAave: false,
     acoFactoryAddress: "0xed5f507fec2854d85bebfb62b9085532bba3a912",
     acoPoolFactoryAddress: "0x6045b669ce9b31b1b851ca8e0b578efb5645d3df",
     acoFlashExerciseAddress: "0xce4b9b40a88cf1cbd8958b153cbe25325e4ce4f2",
