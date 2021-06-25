@@ -2,7 +2,6 @@ import { defaultAcoCreators, ethAddress, optionsToIgnore, usdAddress, btcAddress
 import { 
   getAllPools, 
   getExercisedData, 
-  getNotExpiredOptions, 
   getOption as getOptionSubgraph, 
   getPool as getPoolSubgraph, 
   getPoolHistoricalShares as getPoolHistoricalSharesSubgraph,
@@ -11,7 +10,8 @@ import {
   getPoolRedeems, 
   getPoolSwaps, 
   getPoolWithdrawals,
-  getPoolsAccountBalances as getPoolsAccountBalancesSubgraph 
+  getPoolsAccountBalances as getPoolsAccountBalancesSubgraph, 
+  getAllOptions
 } from './subgraphApi'
 import { getAcoOptions, getAcoPoolHistory, getAcoPools, getAcoPoolStatus } from './acoApi'
 import { removeExpiredOptions, removeNotWhitelistedOptions } from './constants'

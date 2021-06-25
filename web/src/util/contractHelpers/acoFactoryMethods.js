@@ -82,16 +82,16 @@ function getAllAvailableOptionsWhitelisted() {
     })
 }
 
-function getOtcAvailableOptions() {
-    return new Promise((resolve, reject) => {
-        getAllAvailableOptions()
-        .then(allOptions => {
-            var otcOptions = getOtcOptions(allOptions)
-            resolve(otcOptions)
-        })
-        .catch((err) => reject(err))
-    })
-}
+// function getOtcAvailableOptions() {
+//     return new Promise((resolve, reject) => {
+//         getAllAvailableOptions()
+//         .then(allOptions => {
+//             var otcOptions = getOtcOptions(allOptions)
+//             resolve(otcOptions)
+//         })
+//         .catch((err) => reject(err))
+//     })
+// }
 
 function parseAcoCreationEvent(events) {
     return new Promise((resolve, reject) => {

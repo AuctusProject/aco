@@ -5,12 +5,6 @@ import { RateLimit } from 'async-sema';
 import { zrxApiUrl, zrxRequestPerSecond } from '../network';
 
 export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {
-  if (!zrxApiUrl()) {
-    return {
-      zrxData: [], 
-      filledAmount: new BigNumber(0) 
-    }
-  }
   let makerToken = (isBuy ? option.acoToken : option.strikeAsset)
   let takerToken = (isBuy ? option.strikeAsset : option.acoToken)
   const orders = await getOrders(makerToken, takerToken)
@@ -108,6 +102,9 @@ export const resetZrxRateLimit = () => {
 
 let rateLimit = new RateLimit(zrxRequestPerSecond())
 export const getOrders = async (makerToken, takerToken, page = 1, perPage = 100) => {
+  if (!zrxApiUrl()) {
+    return []
+  }
   await rateLimit()
   let url = zrxApiUrl() + "sra/v4/orders?"
   url += "makerToken=" + makerToken

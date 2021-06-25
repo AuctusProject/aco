@@ -159,13 +159,15 @@ export const getAccountPoolPosition = (acoPoolAddress, shares) => {
             accountSituation.acoTokensInfos = {}
             var promises = []
             for (let i = 0; i < accountSituation[2].length; ++i) {
-                if (accountSituation[3][i] > 0) {
+                if (BigInt(accountSituation[3][i]) > BigInt(0)) {
                     promises.push(new Promise((resolve) => {
                         var acoTokenAddress = accountSituation[2][i]
                         getOption(acoTokenAddress, false).then(result => {
-                            accountSituation.acoTokensInfos[acoTokenAddress] = result
-                            accountSituation.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
-                            accountSituation.acoTokensInfos[acoTokenAddress].collateralAmount = getCollateralAmountInDecimals(result, accountSituation[3][i])
+                            if (result) {
+                                accountSituation.acoTokensInfos[acoTokenAddress] = result
+                                accountSituation.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
+                                accountSituation.acoTokensInfos[acoTokenAddress].collateralAmount = getCollateralAmountInDecimals(result, accountSituation[3][i])
+                            }
                             resolve()
                         })
                     }))
