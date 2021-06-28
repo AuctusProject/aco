@@ -24,7 +24,7 @@ export const bscTestnet = {
     acoWriterAddress: null,
     zrxExchangeAddress: null,
     multicallAddress: null,
-    allAcoOtcAddresses: [],
+    allAcoOtcAddresses: ["0xf3fa7b01450c03655330198b3145f75bfdcf0aca"],
     acoBuyerAddress: "0x0c819d1ddaca1c98cd12a19c13f5716de6e5bdb9",
     acoDistributorAddress: null,
     acoRewardAddress: null,

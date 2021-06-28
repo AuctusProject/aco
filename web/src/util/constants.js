@@ -367,7 +367,8 @@ export const dataToAddress = (data) => {
 }
 
 export const numberToData = (num) => {
-    return num.toString(16).padStart(64, '0')
+    let value = (typeof(num) === "string" ? BigInt(num) : num)
+    return value.toString(16).padStart(64, '0')
 }
 
 export const booleanToData = (bool) => {

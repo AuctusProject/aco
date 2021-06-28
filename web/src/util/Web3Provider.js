@@ -338,7 +338,7 @@ class Web3Provider extends Component {
         bridge: "https://bridge.walletconnect.org"
       })
       if (!connector.connected) {
-        await connector.createSession()
+        await connector.createSession({chainId: CHAIN_ID()})
         WalletConnectQRCodeModal.open(connector.uri, () => {
           this.disconnect(web3Provider)
         })

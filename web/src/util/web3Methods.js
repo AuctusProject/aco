@@ -156,6 +156,34 @@ export function signTypedData(from, data){
   })
 }
 
+export function signPersonalData(from, hash){
+  return new Promise(function (resolve, reject) { 
+    const params = [from, hash]  
+    let promise
+    if (_connector !== null) {
+      promise = _connector.signMessage(params)
+    } else {
+      const web3 = getWeb3()
+      const requestData = {
+        method: 'eth_sign',
+        params: params
+      }
+      if (web3.eth.currentProvider.request) {
+        promise = web3.eth.currentProvider.request(requestData)
+      } else {
+        promise = web3.eth.currentProvider.send(requestData)
+      }
+    }
+    promise.then((result) => {
+      let signature = result.substring(2)
+      const r = '0x' + signature.slice(0, 64)
+      const s = '0x' + signature.slice(64, 128)
+      const v = parseInt('0x' + signature.slice(128, 130), 16)
+      resolve({v: v, r: r, s: s})
+    }).catch((err) => reject(err))
+  })
+}
+
 export function switchNetwork(connectionData) {
   return new Promise((resolve, reject) => { 
     if (_connector !== null) {
