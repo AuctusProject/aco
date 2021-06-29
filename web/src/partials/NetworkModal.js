@@ -58,7 +58,6 @@ class NetworkModal extends Component {
             {this.context.web3.networkId === CHAIN_ID() && <div className="network-modal-header-subtitle">You are currently connected to the <span>{networkName}</span> network</div>}
             {this.context.web3.networkId !== CHAIN_ID() && <div className="network-modal-header-subtitle">Select one of the supported networks below</div>}
           </div>
-          <div className="separator"></div>
           <div className="network-modal-body">
             {getAvailableNetworksData().map(network => 
               <div key={network.CHAIN_ID} className={("dark-btn" + (this.context.web3.networkId === network.CHAIN_ID ? " active" : ""))} onClick={() => this.selectNetwork(network)}><img src={network.iconUrl} alt=""/>{network.name}</div>
