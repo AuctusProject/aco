@@ -451,6 +451,10 @@ class SimpleWriteStep2 extends Component {
                 <div className="summary-item-value">{this.getFormattedAnnualizedReturn()}</div>
               </div>
               <div className="summary-item">
+                <div className="summary-item-label">Price per option</div>
+                <div className="summary-item-value">{this.formatPrice(this.getAcoOptionPrice())}</div>
+              </div>
+              <div className="summary-item">
                 <div className="summary-item-label">Return if flat</div>
                 <div className="summary-item-value">{this.getFormattedReturnIfFlat()}</div>
               </div>
@@ -466,12 +470,6 @@ class SimpleWriteStep2 extends Component {
                 <div className="summary-item-label">Expiration</div>
                 <div className="summary-item-value">{this.getExpiration()}</div>
               </div>
-            </div>
-            <div className="similar-prices">
-              <div className="ref-label">REF</div>
-              <div className="similar-label">(similar options)</div>
-              <div className="price-value"><div className="price-origin">Auctus:</div><div>{this.formatPrice(this.getAcoOptionPrice())}</div></div>
-              <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
             </div>
           </div>
         </div>

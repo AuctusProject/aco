@@ -49,5 +49,5 @@ export const arbitrum = {
     acoAirdropAmounts: null,
     coingeckoPlataform: "ethereum",
     coingeckoBaseAsset: "ethereum",
-    menuConfig: { hasAdvanced: true, hasVaults: false, hasOtc: true, hasFarm: false, hasCreateOption: true }
+    menuConfig: { hasAdvanced: true, hasVaults: false, hasOtc: true, hasFarm: false, hasCreateOption: true, hasPoolHistory: true }
 }

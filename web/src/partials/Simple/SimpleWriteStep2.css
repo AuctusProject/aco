@@ -84,8 +84,7 @@
 .summary-items {
     display: flex;
     flex-direction: column;
-    width: calc(100% - 150px);
-    border-right: solid 1px #464646;
+    width: 100%;
 }
 
 .summary-wrapper .summary-title-wrapper {
@@ -184,38 +183,6 @@
 .light-mode .summary-highlight .summary-item-value {
     color: #5de9d4;
 }
-
-.similar-prices {
-    width: 150px;
-    margin: 0 auto;
-}
-
-.ref-label {
-    font-size: 15px;
-    font-weight: 300;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.38px;
-    text-align: center;
-    color: #e6e6e6;
-    margin-top: 20px;
-}
-
-.light-mode .ref-label {
-    color: #333333;
-}
-
-.similar-label {
-    font-size: 12px;
-    font-weight: 300;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.3px;
-    text-align: center;
-    color: #7d7d7d;
-    margin-bottom: 20px;
-}
-
 
 @media (max-width: 400px) {
     .summary-item {

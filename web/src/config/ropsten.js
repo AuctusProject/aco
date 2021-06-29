@@ -50,5 +50,5 @@ export const ropsten = {
     acoAirdropAmounts: [{"aco":"0xbd5e21d2651089a87a70beebcdc0c1a2e96d574e","amount":"1000000000000000000000000"}],
     coingeckoPlataform: "ethereum",
     coingeckoBaseAsset: "ethereum",
-    menuConfig: { hasAdvanced: true, hasVaults: true, hasOtc: true, hasFarm: true, hasCreateOption: true }
+    menuConfig: { hasAdvanced: true, hasVaults: true, hasOtc: true, hasFarm: true, hasCreateOption: true, hasPoolHistory: true }
 }

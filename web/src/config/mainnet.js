@@ -49,5 +49,5 @@ export const mainnet = {
     acoAirdropAmounts: [{"aco":"0x53125350574a2fc46cb49cabc9c4677489c04184","amount":"500000000000000000000000"},{"aco":"0xcc4a861df6aece576b109fb8187eed97b034b621","amount":"1500000000000000000000000"},{"aco":"0xb51a3b33a6ae736a1ae1b120d50083ba003e4110","amount":"5000000000000000000000000"},{"aco":"0x58ea371c3d7bca0ed0c3a4e4dc9bb92702310489","amount":"2000000000000000000000000"},{"aco":"0xb50947a52c15e7d02cbf12d6faba7995f93af3e0","amount":"1000000000000000000000000"}],
     coingeckoPlataform: "ethereum",
     coingeckoBaseAsset: "ethereum",
-    menuConfig: { hasAdvanced: true, hasVaults: true, hasOtc: true, hasFarm: true, hasCreateOption: true }
+    menuConfig: { hasAdvanced: true, hasVaults: true, hasOtc: true, hasFarm: true, hasCreateOption: true, hasPoolHistory: true }
 }

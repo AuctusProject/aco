@@ -50,5 +50,5 @@ export const kovan = {
     acoAirdropAmounts: [{"aco":"0xd036f35507533ac5cafd71b34e9ffd833d7b732a","amount":"1000000000000000000000000"},{"aco":"0x3ed41d263dd947783709cd80e08727d085f3ff91","amount":"7000000000000000000000000"},{"aco":"0x81d048a3ab3617d07c93e48214b641f314d2c14f","amount":"2000000000000000000000000"},{"aco":"0x55cffc43cff76e4541cb0a875232ee628f11db3c","amount":"1000000000000000000000000"}],
     coingeckoPlataform: "ethereum",
     coingeckoBaseAsset: "ethereum",
-    menuConfig: { hasAdvanced: true, hasVaults: true, hasOtc: true, hasFarm: true, hasCreateOption: true }
+    menuConfig: { hasAdvanced: true, hasVaults: true, hasOtc: true, hasFarm: true, hasCreateOption: true, hasPoolHistory: true }
 }
