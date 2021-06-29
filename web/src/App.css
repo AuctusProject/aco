@@ -150,6 +150,7 @@ main {
 .dark-btn img {
   max-height: 20px;
   margin-right: 8px;
+  width: 20px;
 }
 
 .dark-btn svg {

@@ -5,8 +5,6 @@ import { withRouter } from 'react-router-dom'
 import Modal from 'react-bootstrap/Modal'
 import { CHAIN_ID, getAvailableNetworksData, getNetworkName } from '../util/network.js'
 import { switchNetwork } from '../util/web3Methods'
-import { error } from '../util/sweetalert'
-
 
 class NetworkModal extends Component {
   constructor(props){
