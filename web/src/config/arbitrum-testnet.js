@@ -17,7 +17,6 @@ export const arbitrumTestnet = {
     gasApiUrl: null,
     gasPriceType: null,
     defaultGasPrice: null,
-    hasAave: true,
     acoFactoryAddress: "0x4027c2f9ddf0edd831cb70c043d53ec6217a48eb",
     acoPoolFactoryAddress: "0xae7a8e93a6f9dab37b92b65d3d6d8536da9f6db5",
     acoFlashExerciseAddress: "0xb9c0b905677a22b5ce2e1d72927924430aaf1d94",
@@ -49,5 +48,6 @@ export const arbitrumTestnet = {
     acoRewardsPools: null,
     acoAirdropAmounts: null,
     coingeckoPlataform: "ethereum",
-    coingeckoBaseAsset: "ethereum"
+    coingeckoBaseAsset: "ethereum",
+    menuConfig: { hasAdvanced: true, hasVaults: false, hasOtc: true, hasFarm: false, hasCreateOption: true }
 }

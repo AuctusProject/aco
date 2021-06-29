@@ -187,6 +187,7 @@ main {
 .dark-btn.active {
   color: #5de9d4;
   border-color: #5de9d4;
+  border: solid 1px;
 }
 
 .cancel-btn {

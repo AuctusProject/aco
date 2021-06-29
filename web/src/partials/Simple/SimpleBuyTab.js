@@ -24,7 +24,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import ReactTooltip from 'react-tooltip'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { buy, getQuote } from '../../util/acoSwapUtil'
-import { acoBuyerAddress, zrxExchangeAddress } from '../../util/network'
+import { acoBuyerAddress, menuConfig, zrxExchangeAddress } from '../../util/network'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -580,9 +580,9 @@ class SimpleBuyTab extends Component {
           </div>
         </div>
       </div>
-      <div className="create-link-wrapper">
+      {menuConfig().hasCreateOption && <div className="create-link-wrapper">
         <NavLink className="nav-link" to="/new-option">Want more flexibility? Create your custom option!</NavLink>
-      </div>
+      </div>}
       <div className="chart-and-prices">
         <div className="option-chart-wrapper">
           <OptionChart isCall={this.state.selectedType === 1} currentPrice={(!!this.state.currentPairPrice ? parseFloat(this.state.currentPairPrice) : null)} isBuy={true} strikePrice={priceFromDecimals} optionPrice={optionPrice} quantity={(!!this.state.qtyValue ? parseFloat(this.state.qtyValue) : null)}/>

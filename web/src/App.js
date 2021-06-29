@@ -33,6 +33,7 @@ import NetworkModal from './partials/NetworkModal'
 import { clearBaseApiData } from './util/baseApi'
 import { clearApiData } from './util/acoApi'
 import Pools from './pages/Pools'
+import { menuConfig } from './util/network'
 
 class App extends Component {
   constructor() {
@@ -162,6 +163,11 @@ class App extends Component {
   render() {
     var showNavbar = window.location.pathname !== "/"
     var showFooter = window.location.pathname.indexOf("advanced") < 0
+    var menuConfigData = menuConfig()
+    var simplePaths = [`/buy/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]
+    if (menuConfigData.hasAdvanced) {
+      simplePaths.push(`/write/:pair?/:tokenAddress?`)
+    }
     return (
       <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onChangeNetwork={this.onChangeNetwork} onLoaded={this.onLoaded}>
         <ApiCoingeckoDataProvider networkToggle={this.state.networkToggle}>
@@ -185,7 +191,7 @@ class App extends Component {
                   path={`/terms`}
                   render={ routeProps => <Terms {...routeProps} /> }
                 />                
-                <Route 
+                {menuConfigData.hasAdvanced && <Route 
                   path={[`/advanced/trade/:pair?/:tokenAddress?`, `/advanced/mint/:pair?/:tokenAddress?`, `/advanced/exercise/:pair?/`]}
                   render={ routeProps => <Trade 
                     {...routeProps}
@@ -200,7 +206,7 @@ class App extends Component {
                     modeView={this.state.modeView} 
                     setModeView={this.setModeView}
                   />}
-                />
+                />}
                 <Route 
                   path={`/pools/details/:poolAddress?`}
                   render={ routeProps => <PoolDashboard
@@ -222,7 +228,7 @@ class App extends Component {
                   /> }
                 />                
                 <Route 
-                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
+                  path={simplePaths}
                   render={ routeProps => <Simple 
                     {...routeProps}
                     signIn={this.setSignIn}
@@ -237,7 +243,7 @@ class App extends Component {
                     setModeView={this.setModeView}
                   /> }
                 />
-                <Route 
+                {menuConfigData.hasVaults && <Route 
                   path={`/vaults`}
                   render={ routeProps => <Vaults
                     {...routeProps}
@@ -246,8 +252,8 @@ class App extends Component {
                     networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
-                />
-                <Route 
+                />}
+                {menuConfigData.hasOtc && <Route 
                   path={[`/otc/trade/:orderId?`, `/otc/manage`]}
                   render={ routeProps => <Otc
                     {...routeProps}
@@ -255,8 +261,8 @@ class App extends Component {
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
                   /> }
-                />
-                <Route 
+                />}
+                {menuConfigData.hasCreateOption && <Route 
                   path={`/new-option`}
                   render={ routeProps => <CreateOption
                     {...routeProps}
@@ -265,8 +271,8 @@ class App extends Component {
                     networkToggle={this.state.networkToggle}
                     modeView={this.state.modeView}
                   /> }
-                />
-                <Route 
+                />}
+                {menuConfigData.hasFarm && <Route 
                   path={`/farm`}
                   render={ routeProps => <Farm
                     {...routeProps}
@@ -274,8 +280,8 @@ class App extends Component {
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
                   /> }
-                />
-                <Redirect to={this.state.modeView === ModeView.Advanced ? "/advanced/trade" : "/buy"}></Redirect>
+                />}
+                <Redirect to={menuConfigData.hasAdvanced && this.state.modeView === ModeView.Advanced ? "/advanced/trade" : "/buy"}></Redirect>
               </Switch>
               {showFooter && <Footer />}
             </div>

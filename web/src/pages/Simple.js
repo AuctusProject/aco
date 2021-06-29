@@ -10,7 +10,7 @@ import { getPairIdFromRoute, ModeView } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons'
 import { getAvailableOptions, getOptionsFromPair, getPairsFromOptions } from '../util/dataController'
-import { auctusAddress } from '../util/network'
+import { auctusAddress, menuConfig } from '../util/network'
 
 class Simple extends Component {
   constructor() {
@@ -72,6 +72,7 @@ class Simple extends Component {
 
   render() {
     var filteredOptions = this.getOptionsFromPair()
+    var menuConfigData = menuConfig()
     return <div className="py-4 simple-page">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}></FontAwesomeIcon>Exercise is not automatic, please remember manually exercising in-the-money options before expiration.</div>    
         <div className="pair-and-mode-wrapper">
@@ -84,9 +85,9 @@ class Simple extends Component {
             <li className="nav-item">
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/buy`)}>Buy</NavLink>
             </li>
-            <li className="nav-item">
+            {menuConfigData.hasAdvanced && <li className="nav-item">
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/write`)}>Write</NavLink>
-            </li>
+            </li>}
             <li className="nav-item">
               <NavLink className="nav-link" to={this.getUrlWithPairId(`/manage`)}>Manage</NavLink>
             </li>
@@ -95,9 +96,9 @@ class Simple extends Component {
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("buy") > 0 ? " show active" : "")}>
               <SimpleBuyTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded} refreshExercise={() => this.setState({refreshExercise:true})}/>
             </div>
-            <div className={"tab-pane fade" + (window.location.pathname.indexOf("write") > 0 ? " show active" : "")}>
+            {menuConfigData.hasAdvanced && <div className={"tab-pane fade" + (window.location.pathname.indexOf("write") > 0 ? " show active" : "")}>
               <SimpleWriteTab {...this.props} isConnected={this.isConnected()} options={filteredOptions} toggleOptionsLoaded={this.state.toggleOptionsLoaded} refreshWrite={() => this.setState({refreshWrite:true})}/>
-            </div>
+            </div>}
             <div className={"tab-pane fade" + (window.location.pathname.indexOf("manage") > 0 ? " show active" : "")}>
               <SimpleManageTab {...this.props} isConnected={this.isConnected()} exerciseUpdated={() => this.setState({refreshExercise:false})} refreshExercise={this.state.refreshExercise} writeUpdated={() => this.setState({refreshWrite:false})} refreshWrite={this.state.refreshWrite}/>
             </div>

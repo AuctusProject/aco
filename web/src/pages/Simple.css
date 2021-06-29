@@ -6,7 +6,8 @@
 
 .simple-box .nav-tabs {
     background-color: #000000;
-    border-bottom: 0;
+    border-bottom: 0;    
+    justify-content: center;
 }
 
 .light-mode .simple-box .nav-tabs {
@@ -74,6 +75,7 @@
     max-width: 880px;
     margin: auto;    
     position: relative;
+    justify-content: center;
 }
 
 .simple-page .nav-modes {

@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
 import { confirm } from '../util/sweetalert'
 import { getAvailableOptionsByPair } from '../util/dataController'
-import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress, ethSymbol, ethAsset } from '../util/network'
+import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress, ethSymbol, ethAsset, menuConfig } from '../util/network'
 
 class CreateOption extends Component {
   constructor(props) {
@@ -235,7 +235,7 @@ class CreateOption extends Component {
   onCreateOptionHide = (completed) => {
     this.setState({ createOption: null })
     if (completed) {
-      this.props.history.push(this.props.modeView === ModeView.Advanced ? "/advanced/trade" : "/buy")
+      this.props.history.push(menuConfig().hasAdvanced && this.props.modeView === ModeView.Advanced ? "/advanced/trade" : "/buy")
     }
   }
 

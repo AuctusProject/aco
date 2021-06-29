@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretDown, faCog, faExternalLinkAlt, faSignOutAlt, faSortDown, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { ellipsisCenterOfText, getPairIdFromRoute, ModeView } from '../util/constants'
 import SlippageConfig from './SlippageConfig'
-import { explorerUrl, getDefaultNetworkName, getDefaultNetworkIconUrl, getNetworkName, getNetworkIconUrl } from '../util/network'
+import { explorerUrl, getDefaultNetworkName, getDefaultNetworkIconUrl, getNetworkName, getNetworkIconUrl, menuConfig } from '../util/network'
 
 class NavBar extends Component {
   constructor(props){
@@ -116,6 +116,7 @@ class NavBar extends Component {
     var networkName = validNetwork ? getNetworkName() : getDefaultNetworkName()
     var networkIcon = validNetwork ? getNetworkIconUrl() : getDefaultNetworkIconUrl()
     username = ellipsisCenterOfText(username)
+    var menuConfigData = menuConfig()
     return (
       <div>
         <nav className={"navbar navbar-expand-lg navbar-aco navbar-dark"}>
@@ -138,18 +139,18 @@ class NavBar extends Component {
                 >
                   <div className="link-title">TRADE</div>
                 </NavLink>
-                <NavLink className="nav-item link-nav" to={"/vaults"}>
+                {menuConfigData.hasVaults && <NavLink className="nav-item link-nav" to={"/vaults"}>
                   <div className="link-title">VAULTS</div>
-                </NavLink>
+                </NavLink>}
                 <NavLink className="nav-item link-nav pools-link" to={"/pools"}>
                   <div className="link-title">POOLS<div className="earn-badge">Earn</div></div>
                 </NavLink>
-                <NavLink className="nav-item link-nav" to={"/farm"}>
+                {menuConfigData.hasFarm && <NavLink className="nav-item link-nav" to={"/farm"}>
                   <div className="link-title">FARM &amp; AIRDROP</div>
-                </NavLink>
-                <NavLink className="nav-item link-nav" to={"/otc/trade"} isActive={() => window.location.pathname.indexOf("otc/trade") > 0 || window.location.pathname.indexOf("otc/manage") > 0}>
+                </NavLink>}
+                {menuConfigData.hasOtc && <NavLink className="nav-item link-nav" to={"/otc/trade"} isActive={() => window.location.pathname.indexOf("otc/trade") > 0 || window.location.pathname.indexOf("otc/manage") > 0}>
                   <div className="link-title">OTC</div>
-                </NavLink>
+                </NavLink>}
               </ul>
               <ul className="navbar-nav ml-auto align-items-center">
                 <li className="nav-item dropdown slippage-config"> 
@@ -159,7 +160,7 @@ class NavBar extends Component {
                   <div className={"dropdown-menu " + (this.state.showSlippageDropdown ? "show" : "")} aria-labelledby="slippageConfig">
                     <FontAwesomeIcon className="close-slippage-dropdown" icon={faTimes} onClick={this.closeSlippageDropdown}></FontAwesomeIcon>
                     <SlippageConfig {...this.props}></SlippageConfig>
-                    <div className="row">
+                    {menuConfigData.hasAdvanced && <div className="row">
                       <div className="col-md-12">
                         <div className="steps-container text-center">
                           <div className="steps-modal-title">Mode View</div>
@@ -169,7 +170,7 @@ class NavBar extends Component {
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </div>}
                   </div>
                   {this.state.showSlippageDropdown && <div className="slippage-backdrop" onClick={this.closeSlippageDropdown}></div>}
                 </li>

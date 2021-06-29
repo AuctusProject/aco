@@ -69,6 +69,7 @@ export const airdropClaimStart = () => getNetworkData("airdropClaimStart")
 export const optionsToIgnore = () => getNetworkData("optionsToIgnore")
 export const coingeckoPlataform = () => getNetworkData("coingeckoPlataform")
 export const coingeckoBaseAsset = () => getNetworkData("coingeckoBaseAsset")
+export const menuConfig = () => getNetworkData("menuConfig")
 const prodNet = () => getNetworkData("prodNet")
 
 export const acoOtcAddress = () => {

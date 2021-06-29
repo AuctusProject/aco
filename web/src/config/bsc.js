@@ -48,5 +48,6 @@ export const bsc = {
     acoRewardsPools: null,
     acoAirdropAmounts: null,
     coingeckoPlataform: "binance-smart-chain",
-    coingeckoBaseAsset: "binancecoin"
+    coingeckoBaseAsset: "binancecoin",
+    menuConfig: { hasAdvanced: false, hasVaults: false, hasOtc: false, hasFarm: false, hasCreateOption: false }
 }
