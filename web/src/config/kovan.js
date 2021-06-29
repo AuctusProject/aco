@@ -17,6 +17,7 @@ export const kovan = {
     gasApiUrl: "https://ethgasstation.info/json/ethgasAPI.json",
     gasPriceType: "safeLow",
     defaultGasPrice: 21000000000,
+    hasAave: true,
     acoFactoryAddress: "0x53661cec8d21b1c5f362b05f682070f3f6116c55",
     acoPoolFactoryAddress: "0xd5f37ae12385184752a9cecdbe57f12253c973b9",
     acoFlashExerciseAddress: "0x9c8362ab1c13c083bafc2451158eb16fc0567499",

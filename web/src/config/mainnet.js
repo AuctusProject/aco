@@ -16,6 +16,7 @@ export const mainnet = {
     gasApiUrl: "https://ethgasstation.info/json/ethgasAPI.json",
     gasPriceType: "fastest",
     defaultGasPrice: 21000000000,
+    hasAave: true,
     acoFactoryAddress: "0x176b98ab38d1ae8ff3f30bf07f9b93e26f559c17",
     acoPoolFactoryAddress: "0xe28520ddb1b419ac37ecdbb2c0f97c8cf079ccc3",
     acoFlashExerciseAddress: "0x9e8a4b05ba9e5720a4ea8b04b3cb2dfcdf500103",
