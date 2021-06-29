@@ -10,11 +10,9 @@ import Web3Provider from './util/Web3Provider'
 import MetamaskModal from './partials/MetamaskModal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
-import Writer from './pages/Writer'
-import Exercise from './pages/Exercise'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getCurrentRoute, getPairIdFromRoute, isDarkMode, getSlippageConfig, setSlippageConfig } from './util/constants'
+import { getCurrentRoute, getModeView, getPairIdFromRoute, getSlippageConfig, ModeView, setModeView, setSlippageConfig } from './util/constants'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 import Vaults from './pages/Vaults'
@@ -34,6 +32,7 @@ import { resetSwapPairData } from './util/contractHelpers/uniswapPairMethods'
 import NetworkModal from './partials/NetworkModal'
 import { clearBaseApiData } from './util/baseApi'
 import { clearApiData } from './util/acoApi'
+import Pools from './pages/Pools'
 
 class App extends Component {
   constructor() {
@@ -50,9 +49,10 @@ class App extends Component {
       connecting: null,
       disconnecting: null,
       refreshWeb3: null,
-      slippage: getSlippageConfig()
+      slippage: getSlippageConfig(),
+      modeView: getModeView(),
+      pairs: null
     }
-    this.loadLayoutMode()
   }
 
   componentDidMount = () => {
@@ -102,20 +102,13 @@ class App extends Component {
   }
 
   onChangeAccount = (account, previousAccount) => {
-    if (!account) {
-      if (window.location.pathname.indexOf("advanced") >= 0) {
-        this.props.history.push('/')
+    if (!previousAccount) {
+      if (this.state.redirectUrl) {
+        this.props.history.push(this.state.redirectUrl) 
+        this.setState({redirectUrl: null})
       }
     }
-    else {
-      if (!previousAccount) {
-        if (this.state.redirectUrl) {
-          this.props.history.push(this.state.redirectUrl) 
-          this.setState({redirectUrl: null})
-        }
-      }
-      this.setState({accountToggle:!this.state.accountToggle})
-    }
+    this.setState({accountToggle:!this.state.accountToggle})  
   }
 
   onChangeNetwork = (chainId, previousChainId) => {
@@ -157,25 +150,9 @@ class App extends Component {
     this.setState({pairs: pairs})
   }
 
-  setLayoutMode = (isDarkMode) => {
-    if (isDarkMode) {
-      if (!document.body.classList.contains("dark-mode")) {
-        document.body.classList.remove('light-mode')
-        document.body.classList.add('dark-mode')
-      }
-      window.localStorage.setItem('LAYOUT_MODE', '1')
-    }
-    else {
-      if (!document.body.classList.contains("light-mode")) {
-        document.body.classList.remove('dark-mode')
-        document.body.classList.add('light-mode')
-      }
-      window.localStorage.setItem('LAYOUT_MODE', '0')
-    }
-  }
-
-  loadLayoutMode = () => {
-    this.setLayoutMode(isDarkMode())
+  setModeView = (modeView) => {
+    this.setState({modeView: modeView})
+    setModeView(modeView)
   }
 
   onConnect = (ok) => {
@@ -184,21 +161,20 @@ class App extends Component {
 
   render() {
     var showNavbar = window.location.pathname !== "/"
-    var showFooter = window.location.pathname.indexOf("advanced/trade") < 0
-    var darkMode = isDarkMode()
+    var showFooter = window.location.pathname.indexOf("advanced") < 0
     return (
       <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onChangeNetwork={this.onChangeNetwork} onLoaded={this.onLoaded}>
         <ApiCoingeckoDataProvider networkToggle={this.state.networkToggle}>
           {this.state.loading ? 
           <div className="initial-loading">
-            <img src={darkMode ? "/logo_white.svg" : "/logo.svg"} className="aco-logo" alt="" />
+            <img src="/logo_white.svg" className="aco-logo" alt="" />
             <div className="mt-3">
               <FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>&nbsp;
               Loading Auctus...
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.setSignIn} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair} slippage={this.state.slippage} setSlippage={this.setSlippage}/>}
+            {showNavbar && <NavBar toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.setSignIn} slippage={this.state.slippage} setSlippage={this.setSlippage} modeView={this.state.modeView} setModeView={this.setModeView}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -208,43 +184,27 @@ class App extends Component {
                 <Route 
                   path={`/terms`}
                   render={ routeProps => <Terms {...routeProps} /> }
-                />
+                />                
                 <Route 
-                  path={`/advanced/mint/:pair?/:tokenAddress?`}
-                  render={ routeProps => <Writer 
-                    {...routeProps}
-                    darkMode={darkMode}
-                    selectedPair={this.state.selectedPair}
-                    accountToggle={this.state.accountToggle}
-                    networkToggle={this.state.networkToggle}
-                  /> }
-                />
-                <Route 
-                  path={`/advanced/exercise/:pair?/`}
-                  render={ routeProps => <Exercise 
-                    {...routeProps}
-                    darkMode={darkMode}
-                    selectedPair={this.state.selectedPair}
-                    accountToggle={this.state.accountToggle}
-                    networkToggle={this.state.networkToggle}
-                  /> }
-                />
-                <Route 
-                  path={`/advanced/trade/:pair?/:tokenAddress?`}
+                  path={[`/advanced/trade/:pair?/:tokenAddress?`, `/advanced/mint/:pair?/:tokenAddress?`, `/advanced/exercise/:pair?/`]}
                   render={ routeProps => <Trade 
                     {...routeProps}
-                    darkMode={darkMode}
+                    onPairSelected={this.onPairSelected}
+                    onPairsLoaded={this.onPairsLoaded}
+                    pairs={this.state.pairs}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
-                  /> }
+                    signIn={this.setSignIn}
+                    modeView={this.state.modeView} 
+                    setModeView={this.setModeView}
+                  />}
                 />
                 <Route 
                   path={`/pools/details/:poolAddress?`}
                   render={ routeProps => <PoolDashboard
                     {...routeProps}
-                    darkMode={darkMode}
                     signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
@@ -252,25 +212,35 @@ class App extends Component {
                   /> }
                 />
                 <Route 
-                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/pools/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
+                  path={`/pools/`}
+                  render={ routeProps => <Pools
+                    {...routeProps}
+                    signIn={this.setSignIn}
+                    accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
+                  /> }
+                />                
+                <Route 
+                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
                   render={ routeProps => <Simple 
                     {...routeProps}
-                    darkMode={darkMode}
                     signIn={this.setSignIn}
-                    onPairSelected={this.onPairSelected} 
+                    onPairSelected={this.onPairSelected}
                     onPairsLoaded={this.onPairsLoaded}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
                     toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
+                    modeView={this.state.modeView} 
+                    setModeView={this.setModeView}
                   /> }
                 />
                 <Route 
-                  path={[`/vaults`, `/advanced/vaults`]}
+                  path={`/vaults`}
                   render={ routeProps => <Vaults
                     {...routeProps}
-                    darkMode={darkMode}
                     signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
@@ -281,7 +251,6 @@ class App extends Component {
                   path={[`/otc/trade/:orderId?`, `/otc/manage`]}
                   render={ routeProps => <Otc
                     {...routeProps}
-                    darkMode={darkMode}
                     signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
@@ -291,27 +260,26 @@ class App extends Component {
                   path={`/new-option`}
                   render={ routeProps => <CreateOption
                     {...routeProps}
-                    darkMode={darkMode}
                     signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
+                    modeView={this.state.modeView}
                   /> }
                 />
                 <Route 
                   path={`/farm`}
                   render={ routeProps => <Farm
                     {...routeProps}
-                    darkMode={darkMode}
                     signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
                     networkToggle={this.state.networkToggle}
                   /> }
                 />
-                <Redirect to="/buy"></Redirect>
+                <Redirect to={this.state.modeView === ModeView.Advanced ? "/advanced/trade" : "/buy"}></Redirect>
               </Switch>
               {showFooter && <Footer />}
             </div>
-            {this.state.showSignIn && <MetamaskModal darkMode={darkMode} connecting={this.state.connecting} connect={(type) => this.setState({connecting: type})} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
+            {this.state.showSignIn && <MetamaskModal connecting={this.state.connecting} connect={(type) => this.setState({connecting: type})} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
             {this.state.showSelectNetwork && <NetworkModal onHide={() => this.onCloseNetworkModal()}/>}
           </main>}
         </ApiCoingeckoDataProvider>

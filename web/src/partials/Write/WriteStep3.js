@@ -21,10 +21,18 @@ class WriteStep3 extends Component {
     this.state = { collaterizeValue: "", optionsAmount: "", collateralBalance: null }
   }
 
+  isLogged = () => {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount
+  }
+
   componentDidMount = () => {
-    getBalanceOfCollateralAsset(this.props.option, this.context.web3.selectedAccount).then(result => 
-      this.setState({collateralBalance: result})
-      )
+    if (this.isLogged()) {
+      getBalanceOfCollateralAsset(this.props.option, this.context.web3.selectedAccount).then(result => 
+        this.setState({collateralBalance: result}))
+    }
+    else {
+      this.setState({collateralBalance: null})
+    }
   }
 
   componentDidUpdate = (prevProps) => {
@@ -231,7 +239,11 @@ class WriteStep3 extends Component {
   }
 
   canConfirm = () => {
-    return this.state.optionsAmount !== null && this.state.optionsAmount !== "" && !this.isInsufficientFunds()
+    return this.isLogged() && this.state.optionsAmount !== null && this.state.optionsAmount !== "" && !this.isInsufficientFunds()
+  }
+
+  onConnectClick = () => {
+    this.props.signIn(null, this.context)
   }
 
   render() {
@@ -267,7 +279,9 @@ class WriteStep3 extends Component {
         </div>
         <div className="confirm-card-actions">
           <div className="aco-button cancel-btn" onClick={this.props.onCancelClick}>Cancel</div>
-          <div className={"aco-button action-btn "+(this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
+          {this.isLogged() ? 
+            <div className={"aco-button action-btn "+(this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div> :
+            <div className="aco-button action-btn" onClick={this.onConnectClick}>CONNECT</div>}
         </div>
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}

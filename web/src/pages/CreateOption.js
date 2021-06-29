@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import ReactDatePicker from 'react-datepicker'
 import OptionBadge from '../partials/OptionBadge'
-import { ONE_SECOND, toDecimals, fromDecimals, formatWithPrecision } from '../util/constants'
+import { ONE_SECOND, toDecimals, fromDecimals, formatWithPrecision, ModeView } from '../util/constants'
 import SimpleAssetDropdown from '../partials/SimpleAssetDropdown'
 import StrikeValueInput from '../partials/Util/StrikeValueInput'
 import { getAvailablePoolsForNonCreatedOption } from '../util/contractHelpers/acoPoolFactoryMethods'
@@ -235,7 +235,7 @@ class CreateOption extends Component {
   onCreateOptionHide = (completed) => {
     this.setState({ createOption: null })
     if (completed) {
-      this.props.history.push('/buy')
+      this.props.history.push(this.props.modeView === ModeView.Advanced ? "/advanced/trade" : "/buy")
     }
   }
 

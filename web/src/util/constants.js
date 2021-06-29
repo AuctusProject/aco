@@ -332,7 +332,9 @@ export const getPairIdFromRoute = (location) => {
         var paths = location.pathname.split(route)
         if (paths.length >= 2) {
             var params = paths[1].split("/")
-            return params[0]
+            if (params[0].indexOf("_") > 0) {
+                return params[0]
+            }
         }
     }
     return null
@@ -340,23 +342,21 @@ export const getPairIdFromRoute = (location) => {
 
 export const getCurrentRoute = (location) => {
     var routes = [
-      "/advanced/exercise",
-      "/advanced/mint",
-      "/advanced/trade",
-      "/advanced/pools",
-      "/buy",
-      "/write",
-      "/manage",
-      "/pools"
-    ]
+        "/advanced/exercise",
+        "/advanced/mint",
+        "/advanced/trade",
+        "/buy",
+        "/write",
+        "/manage",
+    ];
     for (let i = 0; i < routes.length; i++) {
-      const route = routes[i];
-      if (location.pathname.indexOf(route) !== -1) {
-        return route  + "/"
-      }
+        const route = routes[i];
+        if (location.pathname.indexOf(route) !== -1) {
+            return route + "/";
+        }
     }
     return null;
-}
+};
 
 export const addressToData = (address) => {
     return address.substring(2).toLowerCase().padStart(64, '0');
@@ -372,10 +372,6 @@ export const numberToData = (num) => {
 
 export const booleanToData = (bool) => {
     return "000000000000000000000000000000000000000000000000000000000000000" + (bool ? "1" : "0")
-}
-
-export const isDarkMode = () => {
-    return window.localStorage.getItem('LAYOUT_MODE') !== "0"
 }
 
 export const removeOptionsToIgnore = (options) => {
@@ -448,6 +444,25 @@ export const getSlippageConfig = () => {
     }
     else {
         return parseFloat(slippageConfig)
+    }
+}
+
+export const ModeView = {
+    Basic: 1,
+    Advanced: 2
+}
+
+export const setModeView = (modeView) => {
+    window.localStorage.setItem('MODE_VIEW', modeView.toString())
+}
+
+export const getModeView = () => {
+    var modeView = window.localStorage.getItem('MODE_VIEW')
+    if (!modeView) {
+        return ModeView.Basic
+    }
+    else {
+        return parseInt(modeView)
     }
 }
 

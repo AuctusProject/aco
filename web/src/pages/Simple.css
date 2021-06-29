@@ -15,7 +15,7 @@
 
 .simple-box #simpleTabs .nav-item {
     margin-bottom: 0;
-    max-width: 25%;
+    max-width: 33.3%;
     position: relative;
 }
 
@@ -30,22 +30,6 @@
 
 .simple-box .nav-tabs .nav-item:first-child:before {
     display: none !important;
-}
-
-.earn-badge {
-    border-radius: 5px;
-    background-color: #5de9d4;
-    font-size: 14px;
-    font-weight: 500;
-    font-stretch: normal;
-    font-style: normal;
-    letter-spacing: 0.35px;
-    text-align: center;
-    color: #242424;
-    position: absolute;    
-    top: 10px;
-    left: calc(50% + 22px);
-    padding: 0px 5px;
 }
 
 .simple-box .nav-tabs .nav-link {
@@ -102,10 +86,6 @@
 
 
 @media(max-width:570px) {
-    .earn-badge {
-        display: none;
-    }
-
     .simple-box .nav-tabs .nav-link {
         font-size: 13px;
     }

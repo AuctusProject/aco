@@ -11,7 +11,7 @@
 }
 
 .trade-menu-pair-balance-info {
-    padding: 8px 15px;
+    padding: 0px 15px 8px;
 }
 
 .trade-menu-balance-title {
@@ -20,6 +20,30 @@
     color: #5de9d4;
     text-align: left;
     padding: 10px 0;    
+}
+
+.trade-menu-manage {
+    padding-bottom: 8px;
+}
+
+.trade-menu-manage .trade-menu-balance-title {
+    padding: 10px 15px;
+}
+
+.trade-menu-manage-link {
+    font-size: 14px;
+    font-weight: 300;
+    padding: 6px 21px;
+    cursor: pointer;
+    color: white;
+    display: block;
+}
+
+.trade-menu-manage-link:hover,
+.trade-menu-manage-link.active  {    
+    text-decoration: none;
+    color: white;
+    background-color: #1a1a1a;
 }
 
 .pair-balance-items {
@@ -199,4 +223,26 @@
 .trade-menu-footer-media svg {
     font-size: 15px;
     margin-left: 17px;
+}
+
+.trade-menu-content .pair-dropdown,
+.trade-menu-content .dropdown-toggle,
+.trade-menu-content .pair-nav-container {
+    width: 100%;
+}
+
+.trade-menu-content .pair-dropdown {
+    padding: 8px;
+    border-bottom: solid 1px #464646;
+}
+
+.trade-menu-content .pair-dropdown .pair-img-symbol > div {
+    display: flex;
+    flex-direction: row;    
+    justify-content: space-between;
+    width: 100%;
+}
+
+.trade-menu-content .pair-price {
+    color: #5de9d4;
 }

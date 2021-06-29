@@ -41,7 +41,7 @@ class TradeOptionsList extends Component {
     if (!this.props.orderBooks[option.acoToken]) {
       return <>
         <td className="clickable" onClick={() => this.onSelectOption(option)} colSpan="4"><FontAwesomeIcon icon={faSpinner} className="fa-spin"/></td>
-        <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
+        <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</td>
       </>
     }
     var bestBid = getBestBid(option, this.props.orderBooks[option.acoToken])
@@ -58,7 +58,7 @@ class TradeOptionsList extends Component {
          : "-"}
       </td>
       <td className="size-col clickable" onClick={() => this.onSelectOption(option)}>{bestAsk ? fromDecimals(bestAsk.totalSize, option.underlyingInfo.decimals) : "-"}</td>
-      <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</td>
+      <td className="balance-col clickable" onClick={() => this.onSelectOption(option)}>{this.props.balances[option.acoToken] ? fromDecimals(this.props.balances[option.acoToken], option.underlyingInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</td>
     </>
   }
 
@@ -77,6 +77,10 @@ class TradeOptionsList extends Component {
     return timeToExpiry.days > 0 ? 
         `${timeToExpiry.days}d ${timeToExpiry.hours}h` :
         `${timeToExpiry.hours}h ${timeToExpiry.minutes}m`;
+  }
+
+  isLogged = () => {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount
   }
 
   render() {

@@ -264,10 +264,8 @@ li.dropdown {
 }
 
 .navbar-items .nav-item {
-  min-width: 80px;
   text-align: center;
   padding: 14px;
-  padding-bottom: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -313,7 +311,7 @@ li.dropdown {
 
 .nav-separator {
   width: 1px;
-  background-color: #b2b2b2;
+  background-color: #464646;
   margin: 8px;  
   align-self: stretch;
 }
@@ -535,6 +533,9 @@ li.dropdown {
 
 .network-btn {
   margin-right: 10px;
+  border-radius: 22px;
+  border: solid 1px #464646;
+  background-color: transparent;
 }
 
 @media(max-width:991px){  
@@ -561,4 +562,25 @@ li.dropdown {
 
 .dropdown-divider {  
   border-top: 1px solid #464646 !important;
+}
+
+.pools-link .link-title {
+  width: 88px;
+  position: relative;
+}
+
+.earn-badge {
+  border-radius: 5px;
+  background-color: #5de9d4;
+  font-size: 14px;
+  font-weight: 500;
+  font-stretch: normal;
+  font-style: normal;
+  letter-spacing: 0.35px;
+  text-align: center;
+  color: #242424;
+  position: absolute;    
+  top: -11px;
+  right: 0px;
+  padding: 0px 5px;
 }

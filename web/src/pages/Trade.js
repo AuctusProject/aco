@@ -4,11 +4,13 @@ import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
 import TradeMenu from '../partials/TradeMenu'
 import TradeOptionsList from '../partials/TradeOptionsList'
-import { getBalanceOfAsset } from '../util/constants'
+import { getBalanceOfAsset, ModeView } from '../util/constants'
 import { balanceOf } from '../util/contractHelpers/acoTokenMethods'
-import { getAvailableOptionsByPair } from '../util/dataController'
+import { getAvailableOptionsByPair, listAvailablePairs } from '../util/dataController'
 import AdvancedTrade from '../partials/Advanced/AdvancedTrade'
 import { getOrderbook } from '../util/acoSwapUtil'
+import Exercise from './Exercise'
+import Writer from './Writer'
 
 export const ALL_OPTIONS_KEY = "all"
 
@@ -19,17 +21,20 @@ class Trade extends Component {
   }
   
   componentDidMount = () => {
-    if (!this.canLoad()) {
-      this.props.history.push('/')
+    if (this.props.modeView !== ModeView.Advanced) {
+      this.props.setModeView(ModeView.Advanced)
     }
-    else {
+    listAvailablePairs().then(pairs => {
+      this.props.onPairsLoaded(pairs)
+    })
+    if (this.props.selectedPair) {
       this.loadOptions()
     }
   }
 
   componentDidUpdate = (prevProps) => {
     if (this.props.networkToggle !== prevProps.networkToggle) {
-      this.componentDidMount()
+      this.loadOptions()
     }
     else if (this.props.selectedPair !== prevProps.selectedPair) {
       this.loadOptions()
@@ -40,7 +45,7 @@ class Trade extends Component {
     else if (!this.props.match.params.tokenAddress && prevProps.match.params.tokenAddress) {
       this.onSelectOption(null)
     }
-  }
+  }  
 
   loadOptions = () => {
     if (this.props.selectedPair) {
@@ -88,26 +93,31 @@ class Trade extends Component {
   }
 
   loadBalances = () => {
-    for (let i = 0; i < this.state.options.length; i++) {
-      let option = this.state.options[i]
-      balanceOf(option, this.context.web3.selectedAccount).then(balance => {
+    if (this.context.web3.selectedAccount) {
+      for (let i = 0; i < this.state.options.length; i++) {
+        let option = this.state.options[i]
+        balanceOf(option, this.context.web3.selectedAccount).then(balance => {
+          var balances = this.state.balances
+          balances[option.acoToken] = balance
+          this.setState({balances: balances})
+        })
+      }
+
+      getBalanceOfAsset(this.props.selectedPair.underlying, this.context.web3.selectedAccount).then(balance => {
         var balances = this.state.balances
-        balances[option.acoToken] = balance
+        balances[this.props.selectedPair.underlying] = balance
         this.setState({balances: balances})
       })
+
+      getBalanceOfAsset(this.props.selectedPair.strikeAsset, this.context.web3.selectedAccount).then(balance => {
+        var balances = this.state.balances
+        balances[this.props.selectedPair.strikeAsset] = balance
+        this.setState({balances: balances})
+      })
+    }    
+    else {
+      this.setState({balances: {}})
     }
-
-    getBalanceOfAsset(this.props.selectedPair.underlying, this.context.web3.selectedAccount).then(balance => {
-      var balances = this.state.balances
-      balances[this.props.selectedPair.underlying] = balance
-      this.setState({balances: balances})
-    })
-
-    getBalanceOfAsset(this.props.selectedPair.strikeAsset, this.context.web3.selectedAccount).then(balance => {
-      var balances = this.state.balances
-      balances[this.props.selectedPair.strikeAsset] = balance
-      this.setState({balances: balances})
-    })
   }
 
   canLoad = () => {
@@ -120,7 +130,9 @@ class Trade extends Component {
         this.props.history.push('/advanced/trade/'+this.props.selectedPair.id+"/"+option.acoToken)
       }
       else {
-        this.props.history.push('/advanced/trade/'+this.props.selectedPair.id)
+        if (!this.isMintMenu() && !this.isExerciseMenu()) {
+          this.props.history.push('/advanced/trade/'+this.props.selectedPair.id)
+        }
       }
     })
   }
@@ -130,13 +142,27 @@ class Trade extends Component {
     this.props.history.push('/advanced/trade/'+this.props.selectedPair.id)
   }
 
+  isMintMenu = () => {
+    return window.location.pathname.indexOf("mint") > 0
+  }
+
+  isExerciseMenu = () => {
+    return window.location.pathname.indexOf("exercise") > 0
+  }
+
   render() {
     return <div className="trade-page">
-      {this.props.selectedPair && this.canLoad() && 
+      <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
+      {this.props.selectedPair &&
       <>
-        <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
-        {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
-        {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption} loadBalances={this.loadBalances}></AdvancedTrade>}
+        <div className="advanced-content">
+        {this.isMintMenu() && <Writer {...this.props}/>}
+        {this.isExerciseMenu() && <Exercise {...this.props}/>}
+        {!this.isMintMenu() && !this.isExerciseMenu() && <>
+          {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
+          {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption} loadBalances={this.loadBalances}></AdvancedTrade>}
+        </>}
+        </div>
       </>}
     </div>
     

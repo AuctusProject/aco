@@ -21,24 +21,19 @@ class Writer extends Component {
   }
 
   componentDidMount = () => {
-    if (!this.canLoad()) {
-      this.props.history.push('/')
+    var tokenAddress = this.props.match.params.tokenAddress && this.props.match.params.tokenAddress.toLowerCase()
+    if (tokenAddress) {
+      getOption(tokenAddress).then(option => {
+        if (option) {
+          this.setState({optionType: option.isCall ? 1 : 2, option: option, currentStep: 3})
+        }
+        else {
+          this.setState({currentStep: 1})
+        }
+      })
     }
     else {
-      var tokenAddress = this.props.match.params.tokenAddress && this.props.match.params.tokenAddress.toLowerCase()
-      if (tokenAddress) {
-        getOption(tokenAddress).then(option => {
-          if (option) {
-            this.setState({optionType: option.isCall ? 1 : 2, option: option, currentStep: 3})
-          }
-          else {
-            this.setState({currentStep: 1})
-          }
-        })
-      }
-      else {
-        this.setState({currentStep: 1})
-      }
+      this.setState({currentStep: 1})
     }
   }
 
@@ -46,10 +41,6 @@ class Writer extends Component {
     if (this.props.networkToggle !== prevProps.networkToggle) {
       this.componentDidMount()
     }
-  }
-
-  canLoad = () => {
-    return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
   }
 
   setOptionType = (optionType) => {
@@ -72,9 +63,12 @@ class Writer extends Component {
     this.setState({position: position, currentStep: 4})
   }
 
+  isLogged = () => {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount
+  }
+
   render() {
-    return <div className="py-4">
-      {this.canLoad() && <>
+    return <div className="p-4">
         <div className="beta-alert"><FontAwesomeIcon icon={faExclamationCircle}/>Exercise is not automatic, please remember manually exercising in-the-money options before expiration.</div>
         <div className="page-title">MINT OPTIONS</div>
         <StepIndicator totalSteps={3} current={this.state.currentStep} setCurrentStep={this.setCurrentStep}></StepIndicator>
@@ -84,9 +78,8 @@ class Writer extends Component {
           {this.state.currentStep === 2 && <WriteStep2 {...this.props} optionType={this.state.optionType} setOption={this.setOption}></WriteStep2>}
           {this.state.currentStep === 3 && <WriteStep3 {...this.props} option={this.state.option} onCancelClick={this.onCancelClick}></WriteStep3>}
           {this.state.currentStep === 4 && <BurnModal {...this.props} position={this.state.position} onHide={(shouldRefresh) => this.onCancelClick(shouldRefresh)}></BurnModal>}
-          <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Advanced} onBurnPositionSelect={this.onBurnPositionSelect} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></WrittenOptionsPositions>
+          {this.isLogged() && <WrittenOptionsPositions {...this.props} mode={PositionsLayoutMode.Advanced} onBurnPositionSelect={this.onBurnPositionSelect} refresh={this.state.refresh} updated={() => this.setState({refresh: false})}></WrittenOptionsPositions>}
         </>}
-      </>}
       </div>
   }
 }

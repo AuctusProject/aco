@@ -43,16 +43,21 @@ class BuySell extends Component {
 
   loadBalances = () => {
     var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
-    balanceOf(this.props.option.acoToken, userAddress).then(result => {
-      this.setState({acoTokenBalance: result})
-    })
-    balanceOf(this.props.option.strikeAsset, userAddress).then(result => {
-      this.setState({strikeAssetBalance: result})
-    })
-    if (this.props.option.isCall) {
-      getBalanceOfAsset(this.props.option.underlying, userAddress).then(result => {
-        this.setState({underlyingBalance: result})
+    if (userAddress) {
+      balanceOf(this.props.option.acoToken, userAddress).then(result => {
+        this.setState({acoTokenBalance: result})
       })
+      balanceOf(this.props.option.strikeAsset, userAddress).then(result => {
+        this.setState({strikeAssetBalance: result})
+      })
+      if (this.props.option.isCall) {
+        getBalanceOfAsset(this.props.option.underlying, userAddress).then(result => {
+          this.setState({underlyingBalance: result})
+        })
+      }
+    }
+    else {
+      this.setState({acoTokenBalance: null, underlyingBalance: null, strikeAssetBalance: null})
     }
   }
 
@@ -239,6 +244,14 @@ class BuySell extends Component {
     this.setState({ mintSteps: null })
   }
   
+  isConnected = () => {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
+  }
+
+  onConnectClick = () => {
+    this.props.signIn(null, this.context)
+  }
+  
   render() {
     return (
       <div>
@@ -322,9 +335,12 @@ class BuySell extends Component {
                 <label className="fee-cost-label">{this.state.selectedBuySellTab === 1 ? "Cost" : "Total to receive" }</label>
                 <div className="fee-cost-value bold">{this.getTotalCost()}</div>
               </div>
-              <div className={"action-btn " + (!this.canSubmit() ? "disabled" : "")} onClick={this.onSubmitOrder}>
+              {this.isConnected() ? <div className={"action-btn " + (!this.canSubmit() ? "disabled" : "")} onClick={this.onSubmitOrder}>
                 Place {this.state.selectedLimitMarketTab === 1 ? "Limit" : "Market"} Order
-              </div>
+              </div> : 
+              <div className={"action-btn"} onClick={this.onConnectClick}>
+              CONNECT WALLET
+              </div>}
             </div>
           </div>
         </div>
