@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import { Link, NavLink } from 'react-router-dom'
 import { withRouter } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCaretDown, faCog, faExternalLinkAlt, faSignOutAlt, faSortDown, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faCaretDown, faCog, faEllipsisH, faExternalLinkAlt, faSignOutAlt, faSortDown, faTimes } from '@fortawesome/free-solid-svg-icons'
 import { ellipsisCenterOfText, getPairIdFromRoute, ModeView } from '../util/constants'
 import SlippageConfig from './SlippageConfig'
 import { explorerUrl, getDefaultNetworkName, getDefaultNetworkIconUrl, getNetworkName, getNetworkIconUrl, menuConfig } from '../util/network'
@@ -202,10 +202,23 @@ class NavBar extends Component {
                   </>
                 }
                 {!username && 
-                  <li className="nav-item my-2 connect-nav">
+                  <li className="nav-item m-2 connect-nav">
                     <div className="outline-btn connect-btn" onClick={() => this.props.signIn(null, this.context)}><img src="/images/icon_metamask.png" alt=""></img>CONNECT WALLET</div>
                   </li>
                 }
+                <li className="nav-separator"></li>
+                <li className="nav-item dropdown">
+                  <div className="dropdown clickable" data-toggle="dropdown" target="_self" id="moreMenu" role="button" aria-haspopup="true" aria-expanded="false">
+                    <FontAwesomeIcon icon={faEllipsisH}></FontAwesomeIcon>
+                  </div>
+                  <div className="dropdown-menu" aria-labelledby="moreMenu">
+                    <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/faq">FAQ</a>
+                    <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/">DOCS</a>
+                    <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://t.me/AuctusOptions">TELEGRAM</a>
+                    <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://discord.gg/9JqeMxs">DISCORD</a>
+                    <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://auctus.org">ABOUT</a>
+                  </div>
+                </li>
               </ul>
             </div>
           </div>
