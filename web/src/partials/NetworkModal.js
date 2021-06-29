@@ -26,6 +26,7 @@ class NetworkModal extends Component {
         let customRpc = network.customRpc
         if (customRpc) {
           switchNetwork(customRpc)
+          this.props.onHide()
         } else {
           this.setNetwokrMessage(network.name)
         }
