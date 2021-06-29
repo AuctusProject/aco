@@ -34,7 +34,10 @@ class Trade extends Component {
 
   componentDidUpdate = (prevProps) => {
     if (this.props.networkToggle !== prevProps.networkToggle) {
-      this.loadOptions()
+      listAvailablePairs().then(pairs => {
+        this.props.onPairsLoaded(pairs)
+        this.loadOptions()
+      })      
     }
     else if (this.props.selectedPair !== prevProps.selectedPair) {
       this.loadOptions()

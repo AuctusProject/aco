@@ -9,15 +9,25 @@ import { baseSymbol, usdSymbol } from '../util/network'
 
 class PairDropdown extends Component {  
   componentDidMount = () => {
-    if (this.props.pairs && this.props.pairs.length > 0 && !this.props.selectedPair) {
+    if (this.props.pairs && this.props.pairs.length > 0 && (!this.props.selectedPair || !this.hasSelectedPair())) {
       this.selectInitialPair()
     }
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.networkToggle !== prevProps.networkToggle || (prevProps.pairs === null && this.props.pairs != null)) {
+    if (this.props.networkToggle !== prevProps.networkToggle || prevProps.pairs !== this.props.pairs) {
       this.componentDidMount()
     }
+  }
+
+  hasSelectedPair = () => {
+    var pairs = this.props.pairs
+    for (let i = 0; i < pairs.length; i++) {
+      if (pairs[i].id === this.props.selectedPair.id) {
+        return true
+      }
+    }
+    return false
   }
 
   selectInitialPair = () => {
