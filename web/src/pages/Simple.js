@@ -24,6 +24,7 @@ class Simple extends Component {
   }
   
   componentDidMount = () => {
+    this.props.toggleAdvancedTooltip()
     if (this.props.modeView !== ModeView.Basic) {
       this.props.setModeView(ModeView.Basic)
     }

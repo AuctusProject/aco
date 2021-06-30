@@ -30,7 +30,7 @@ class NavBar extends Component {
       this.componentDidMount()
     } else {
       if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
-        this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP')})
+        this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP_V2')})
       }
     }
   }
@@ -45,7 +45,7 @@ class NavBar extends Component {
 
   onDismissAdvancedTooltip = () => {
     this.setState({showAdvancedTootlip: false})
-    window.localStorage.setItem('DISMISS_ADVANCED_TOOLTIP', '1')
+    window.localStorage.setItem('DISMISS_ADVANCED_TOOLTIP_V2', '1')
   }
 
   getUrlWithPairId = (baseUrl) => {
@@ -153,6 +153,11 @@ class NavBar extends Component {
                 </NavLink>}
               </ul>
               <ul className="navbar-nav ml-auto align-items-center">
+                {this.state.showAdvancedTootlip && window.innerWidth >= 992 && !this.isAdvanced() &&
+                <div className="advanced-tooltip">
+                  Go to advanced mode to trade options with limit orders.
+                <div className="action-btn" onClick={() => this.onDismissAdvancedTooltip()}>Dismiss</div>
+                </div>}
                 <li className="nav-item dropdown slippage-config"> 
                   <div className="dropdown-toggle clickable" target="_self" id="slippageConfig" role="button" aria-haspopup="true" aria-expanded="false" onClick={this.toggleSlippageDropdown}>
                     <FontAwesomeIcon icon={faCog}></FontAwesomeIcon>

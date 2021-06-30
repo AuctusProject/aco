@@ -371,15 +371,15 @@ li.dropdown {
   max-width: 160px;
   z-index: 1;
   padding: 6px 16px;
-  background-color: #111111;
+  background-color: #000000;
   border-radius: 5px;
   font-size: 12px;
   letter-spacing: 0.3px;
   position: absolute;
-  border: 1px solid transparent;
+  border: 1px solid #464646;
   color: #ffffff;
-  top: 45px;
-  right: 0;
+  top: 50px;
+  margin-left: -55px;
 }
 
 .advanced-tooltip::after {
@@ -388,7 +388,7 @@ li.dropdown {
   top: -6px;
   left: 50%;
   margin-left: -8px;
-  border-bottom-color: #111111;
+  border-bottom-color: #464646;
   border-bottom-style: solid;
   border-bottom-width: 6px;
   content: "";
