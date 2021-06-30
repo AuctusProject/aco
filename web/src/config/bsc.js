@@ -23,8 +23,8 @@ export const bsc = {
     acoWriterAddress: null,
     zrxExchangeAddress: null,
     multicallAddress: null,
-    allAcoOtcAddresses: [],
-    acoBuyerAddress: "todo",
+    allAcoOtcAddresses: ["0x4c9cd2bbc74290bc1b8da8af94c2836e341f1f78"],
+    acoBuyerAddress: "0xb4f28d9aa4ae8070ba1dea1f2fd888a64b45aa17",
     acoDistributorAddress: null,
     acoRewardAddress: null,
     airdropClaimStart: null,
@@ -39,7 +39,7 @@ export const bsc = {
     btcSymbol: "BTCB",
     ethSymbol: "ETH",
     baseSymbol: "BNB",
-    deprecatedPoolImplementation: ["0x8933f1924c8a05f972b3d94093a090d679bf089d","todo"],
+    deprecatedPoolImplementation: ["0x8933f1924c8a05f972b3d94093a090d679bf089d"],
     acoVaults: null,
     acoVaultsV2: null,
     defaultPoolAdmin: "0x56803ed55c7182461f587fbbec509d45a0eb1260",
@@ -49,5 +49,5 @@ export const bsc = {
     acoAirdropAmounts: null,
     coingeckoPlataform: "binance-smart-chain",
     coingeckoBaseAsset: "binancecoin",
-    menuConfig: { hasAdvanced: false, hasVaults: false, hasOtc: false, hasFarm: false, hasCreateOption: false, hasPoolHistory: false }
+    menuConfig: { hasAdvanced: false, hasVaults: false, hasOtc: true, hasFarm: false, hasCreateOption: false, hasPoolHistory: false }
 }

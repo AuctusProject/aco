@@ -50,5 +50,5 @@ export const bscTestnet = {
     acoAirdropAmounts: null,
     coingeckoPlataform: "binance-smart-chain",
     coingeckoBaseAsset: "binancecoin",
-    menuConfig: { hasAdvanced: false, hasVaults: false, hasOtc: false, hasFarm: false, hasCreateOption: false, hasPoolHistory: false }
+    menuConfig: { hasAdvanced: false, hasVaults: false, hasOtc: true, hasFarm: false, hasCreateOption: false, hasPoolHistory: false }
 }
