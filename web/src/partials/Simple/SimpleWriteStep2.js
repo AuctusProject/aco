@@ -2,8 +2,8 @@ import './SimpleWriteStep2.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { fromDecimals, isEther, ethTransactionTolerance, toDecimals, maxAllowance, acoWriterAddress, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
-import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice, getCollateralAmount } from '../../util/acoTokenMethods'
+import { fromDecimals, isBaseAsset, ethTransactionTolerance, toDecimals, maxAllowance, zero, formatPercentage, formatDate, formatWithPrecision } from '../../util/constants'
+import { getCollateralInfo, getBalanceOfCollateralAsset, getTokenAmount, getCollateralAddress, getOptionFormattedPrice, getCollateralAmount } from '../../util/contractHelpers/acoTokenMethods'
 import Web3Utils from 'web3-utils'
 import DecimalInput from '../Util/DecimalInput'
 import StepsModal from '../StepsModal/StepsModal'
@@ -11,12 +11,13 @@ import { getNextNonce, checkTransactionIsMined } from '../../util/web3Methods'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { getDeribiData } from '../../util/acoApi'
+import { getDeribiData } from '../../util/baseApi'
 import VerifyModal from '../VerifyModal'
 import { getQuote } from '../../util/acoSwapUtil'
-import { write } from '../../util/acoWriterV2Methods'
+import { write } from '../../util/contractHelpers/acoWriterV2Methods'
+import { acoWriterAddress } from '../../util/network'
 
 class SimpleWriteStep2 extends Component {
   constructor(props) {
@@ -29,7 +30,6 @@ class SimpleWriteStep2 extends Component {
     this.setState({collaterizeValue: getCollateralAmount(this.props.option, 1)}, this.refresh)
     this.startQuoteRefresh()
   }
-
   
   componentWillUnmount = () => {
     this.stopQuoteRefresh()  
@@ -60,7 +60,7 @@ class SimpleWriteStep2 extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.refreshAccountBalance()
     }
   }
@@ -78,7 +78,7 @@ class SimpleWriteStep2 extends Component {
   }
 
   isCollateralEth = () => {
-    return isEther(this.getCollaterizeAssetAddress())
+    return isBaseAsset(this.getCollaterizeAssetAddress())
   }
 
   onCollaterizeChange = (value) => {
@@ -106,7 +106,7 @@ class SimpleWriteStep2 extends Component {
         this.needApprove().then(needApproval => {
           if (needApproval) {
             this.setStepsModalInfo(++stepNumber, needApproval)
-            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getCollaterizeAssetAddress(), acoWriterAddress, nonce)
+            allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getCollaterizeAssetAddress(), acoWriterAddress(), nonce)
               .then(result => {
                 if (result) {
                   this.setStepsModalInfo(++stepNumber, needApproval)
@@ -280,7 +280,7 @@ class SimpleWriteStep2 extends Component {
   needApprove = () => {
     return new Promise((resolve) => {
       if (!this.isCollateralEth()) {
-        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriterAddress).then(result => {
+        allowance(this.context.web3.selectedAccount, getCollateralAddress(this.props.option), acoWriterAddress()).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(toDecimals(this.state.collaterizeValue, this.getCollateralDecimals())))
         })
@@ -451,6 +451,10 @@ class SimpleWriteStep2 extends Component {
                 <div className="summary-item-value">{this.getFormattedAnnualizedReturn()}</div>
               </div>
               <div className="summary-item">
+                <div className="summary-item-label">Price per option</div>
+                <div className="summary-item-value">{this.formatPrice(this.getAcoOptionPrice())}</div>
+              </div>
+              <div className="summary-item">
                 <div className="summary-item-label">Return if flat</div>
                 <div className="summary-item-value">{this.getFormattedReturnIfFlat()}</div>
               </div>
@@ -466,12 +470,6 @@ class SimpleWriteStep2 extends Component {
                 <div className="summary-item-label">Expiration</div>
                 <div className="summary-item-value">{this.getExpiration()}</div>
               </div>
-            </div>
-            <div className="similar-prices">
-              <div className="ref-label">REF</div>
-              <div className="similar-label">(similar options)</div>
-              <div className="price-value"><div className="price-origin">Auctus:</div><div>{this.formatPrice(this.getAcoOptionPrice())}</div></div>
-              <div className="price-value"><div className="price-origin">Deribit:</div><div>{this.formatPrice(this.state.deribitPrice)}</div></div>
             </div>
           </div>
         </div>

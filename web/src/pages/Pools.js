@@ -5,9 +5,9 @@ import PropTypes from 'prop-types'
 import Loading from '../partials/Util/Loading'
 import PoolDetails from '../partials/Pool/PoolDetails'
 import DiscontinuedPoolDetails from '../partials/Pool/DiscontinuedPoolDetails'
-import { deprecatedPoolImplementation } from '../util/constants'
 import { getPools, getPoolsAccountBalances } from '../util/dataController'
 import CreatePoolModal from '../partials/Pool/CreatePoolModal'
+import { deprecatedPoolImplementation } from '../util/network'
 
 class Pools extends Component {
   constructor() {
@@ -20,7 +20,9 @@ class Pools extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else if (this.props.accountToggle !== prevProps.accountToggle) {
       this.refreshPoolData()
     }
   }
@@ -36,7 +38,7 @@ class Pools extends Component {
       let privatePools = []
       let poolsToCheckBalance = []
       for (let i = 0; i < pools.length; ++i) {
-        if (deprecatedPoolImplementation.some((j) => j.toLowerCase() === pools[i].acoPoolImplementation.toLowerCase())) {
+        if (deprecatedPoolImplementation().some((j) => j.toLowerCase() === pools[i].acoPoolImplementation.toLowerCase())) {
           discontinuedPools.push(pools[i])
         } else {
           if (pools[i].admin === null || pools[i].admin === undefined || !pools[i].isPrivate) {

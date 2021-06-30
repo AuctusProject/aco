@@ -1,17 +1,14 @@
-import { getWeb3, sendTransaction } from './web3Methods';
-import { acoDistributorAddress } from './constants';
+import { getWeb3, sendTransaction } from '../web3Methods';
 import { acoDistributorABI } from './acoDistributorABI';
 import { acoTokenData } from './acoFactoryMethods';
+import { acoDistributorAddress } from '../network';
 
-var acoDistributorContract = null
 function getAcoDistributorContract() {
-    if (acoDistributorContract == null) {
-        const _web3 = getWeb3()
-        if (_web3) {
-            acoDistributorContract = new _web3.eth.Contract(acoDistributorABI, acoDistributorAddress)
-        }
+    const _web3 = getWeb3()
+    if (_web3) {
+        return new _web3.eth.Contract(acoDistributorABI, acoDistributorAddress())
     }
-    return acoDistributorContract
+    return null
 }
 
 export const listClaimedAcos = (from) => {
@@ -111,7 +108,7 @@ export const claimed = (id) => {
 export const claim = (id, from, amount, v, r, s) => {
     const acoDistributorContract = getAcoDistributorContract()
     const data = acoDistributorContract.methods.claim(id, from, amount, v, r, s).encodeABI()
-    return sendTransaction(null, null, from, acoDistributorAddress, null, data, null)
+    return sendTransaction(null, null, from, acoDistributorAddress(), null, data, null)
 }
 
 const getClaimable = (amount) => {

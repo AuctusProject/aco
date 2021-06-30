@@ -4,8 +4,8 @@
     flex-direction: row;
 }
 
-.advanced-trade,
-.trade-options-list {
-    width: calc(100% - 300px);
+.advanced-content {
     height: calc(100vh - 63px) !important;
+    width: calc(100% - 300px);
+    overflow-y: auto;
 }

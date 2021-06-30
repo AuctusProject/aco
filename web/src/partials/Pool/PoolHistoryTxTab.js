@@ -1,9 +1,10 @@
 import './PoolHistoryTxTab.css'
 import React, { Component } from 'react'
-import { getCollateralInfo } from '../../util/acoTokenMethods'
-import { capitalizeFirstLetter, etherscanTxUrl, fromDecimals } from '../../util/constants'
+import { getCollateralInfo } from '../../util/contractHelpers/acoTokenMethods'
+import { capitalizeFirstLetter, fromDecimals } from '../../util/constants'
 import Loading from '../Util/Loading'
 import { getPoolEvents } from '../../util/dataController'
+import { explorerTxUrl } from '../../util/network'
 
 class PoolHistoryTxTab extends Component {
   constructor() {
@@ -16,7 +17,10 @@ class PoolHistoryTxTab extends Component {
     getPoolEvents(this.props.pool.address).then(events => this.setState({events:events}))
   }
 
-  componentDidUpdate = (prevProps) => {    
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
   }
 
   getUnderlyingAmount = (event) => {
@@ -136,7 +140,7 @@ class PoolHistoryTxTab extends Component {
                   <td className="value-highlight">{this.getUnderlyingAmount(event)}</td>
                   <td className="value-highlight">{this.getStrikeAmount(event)}</td>
                   <td className="value-highlight">{this.getCollateralAmount(event)}</td>
-                  <td className="value-highlight"><a href={etherscanTxUrl + event.tx.split('-')[0]} target="_blank" rel="noopener noreferrer">View</a></td>
+                  <td className="value-highlight"><a href={explorerTxUrl() + event.tx.split('-')[0]} target="_blank" rel="noopener noreferrer">View</a></td>
                 </tr>)}
             </tbody>
           </table>}

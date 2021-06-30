@@ -10,6 +10,7 @@ import ManagePrivatePool from './ManagePrivatePool'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons'
 import { getPool } from '../../util/dataController'
+import { menuConfig } from '../../util/network'
 
 class PoolDashboard extends Component {
   constructor(props) {
@@ -22,15 +23,20 @@ class PoolDashboard extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.match.params.poolAddress !== prevProps.match.params.poolAddress) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.match.params.poolAddress !== prevProps.match.params.poolAddress) {
       this.updatePoolStatus()
     }
   }
 
   updatePoolStatus = () => {
-    getPool(this.props.match.params.poolAddress).then(pool => 
-      this.setState({pool: pool})
-    )
+    getPool(this.props.match.params.poolAddress).then(pool => {
+      if (pool) {
+        this.setState({pool: pool})
+      }
+      else {
+        this.goToPools()
+      }
+    })
   }
 
   isAdmin = () => {
@@ -56,7 +62,7 @@ class PoolDashboard extends Component {
 
   render() {
     let pool = this.state.pool
-    
+    var menuConfigData = menuConfig()
     return <div className="pool-dashboard">
       {!pool ? <Loading></Loading> :
         <>
@@ -65,18 +71,18 @@ class PoolDashboard extends Component {
             {this.getFormattedPoolName()}
           </div>
           {<div>
-            <PoolHistoricalChart pool={pool}></PoolHistoricalChart>
+            <PoolHistoricalChart {...this.props} pool={pool}></PoolHistoricalChart>
           </div>}
           {this.isAdmin() && <div>
-            <ManagePrivatePool pool={pool} refresh={this.updatePoolStatus}/>
+            <ManagePrivatePool {...this.props} pool={pool} refresh={this.updatePoolStatus}/>
           </div>}
           <div className="pool-info-tabs">
-            <div className="btn-group pill-button-group">
+            {menuConfigData.hasPoolHistory && <div className="btn-group pill-button-group">
               <button onClick={this.selectTab(1)} type="button" className={"pill-button " + (this.state.selectedTab === 1 ? "active" : "")}>CURRENT</button>
               <button onClick={this.selectTab(2)} type="button" className={"pill-button " + (this.state.selectedTab === 2 ? "active" : "")}>HISTORY TX</button>
-            </div>
-            {this.state.selectedTab === 1 && <PoolCurrentTab isAdmin={this.isAdmin()} pool={pool} refresh={this.updatePoolStatus}/>}
-            {this.state.selectedTab === 2 && <PoolHistoryTxTab pool={pool}/>}
+            </div>}
+            {(!menuConfigData.hasPoolHistory || this.state.selectedTab === 1) && <PoolCurrentTab {...this.props} isAdmin={this.isAdmin()} pool={pool} refresh={this.updatePoolStatus}/>}
+            {menuConfigData.hasPoolHistory && this.state.selectedTab === 2 && <PoolHistoryTxTab {...this.props} pool={pool}/>}
 
           </div>
         </>

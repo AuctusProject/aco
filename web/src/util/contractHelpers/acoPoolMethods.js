@@ -1,17 +1,17 @@
-import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from '../web3Methods'
 import { acoPoolABI } from './acoPoolABI';
 import { getAvailablePoolsForOption } from './acoPoolFactoryMethods';
 import BigNumber from 'bignumber.js';
-import { toDecimals } from './constants';
+import { toDecimals } from '../constants';
 import { getCollateralAmountInDecimals } from './acoTokenMethods';
-import { getOption } from './dataController';
+import { getOption } from '../dataController';
 
 function getAcoPoolContract(acoPoolAddress) {
     const _web3 = getWeb3()
     if (_web3) {
         return new _web3.eth.Contract(acoPoolABI, acoPoolAddress)
     }
-    return null;
+    return null
 }
 
 const getPoolQuote = (acoPoolAddress, option, amount) => {
@@ -159,13 +159,15 @@ export const getAccountPoolPosition = (acoPoolAddress, shares) => {
             accountSituation.acoTokensInfos = {}
             var promises = []
             for (let i = 0; i < accountSituation[2].length; ++i) {
-                if (accountSituation[3][i] > 0) {
+                if (BigInt(accountSituation[3][i]) > BigInt(0)) {
                     promises.push(new Promise((resolve) => {
                         var acoTokenAddress = accountSituation[2][i]
                         getOption(acoTokenAddress, false).then(result => {
-                            accountSituation.acoTokensInfos[acoTokenAddress] = result
-                            accountSituation.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
-                            accountSituation.acoTokensInfos[acoTokenAddress].collateralAmount = getCollateralAmountInDecimals(result, accountSituation[3][i])
+                            if (result) {
+                                accountSituation.acoTokensInfos[acoTokenAddress] = result
+                                accountSituation.acoTokensInfos[acoTokenAddress].balance = accountSituation[3][i]
+                                accountSituation.acoTokensInfos[acoTokenAddress].collateralAmount = getCollateralAmountInDecimals(result, accountSituation[3][i])
+                            }
                             resolve()
                         })
                     }))
@@ -209,10 +211,10 @@ export const tolerancePriceBelow = (acoPoolAddress) => {
     return acoPoolContract.methods.tolerancePriceBelow().call()
 }
 
-export const deposit = (from, acoPoolAddress, amount, minShares, isEther, nonce) => {
+export const deposit = (from, acoPoolAddress, amount, minShares, isBaseAsset, nonce) => {
     const acoPoolContract = getAcoPoolContract(acoPoolAddress)
     var data = acoPoolContract.methods.deposit(amount, minShares, from).encodeABI()
-    var value = isEther ? amount : 0
+    var value = isBaseAsset ? amount : 0
     return sendTransactionWithNonce(null, null, from, acoPoolAddress, value, data, null, nonce)
 }
 

@@ -7,6 +7,7 @@ import DecimalInput from '../Util/DecimalInput'
 import { blackScholesData } from '../../util/blackScholes'
 import { getCoingeckoUsdPriceFromAddress } from '../../util/coingeckoApi'
 import Loading from '../Util/Loading'
+import { usdSymbol } from '../../util/network'
 
 class CalculatorModal extends Component {
   constructor(props) {
@@ -27,6 +28,12 @@ class CalculatorModal extends Component {
       })
     })
     .catch(() => this.setState({currentPrice: null, loading: false}))
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
+      this.props.onHide(false)
+    }
   }
 
   setInputFocus = () => {
@@ -86,7 +93,7 @@ class CalculatorModal extends Component {
                 <div className="input-column">
                   <div className="input-label">Option Price</div>
                   <div className="calculated-price">
-                    {this.state.calculatedPrice ? (this.state.calculatedPrice.toFixed(2) + " USDC"): "-"}
+                    {this.state.calculatedPrice ? (this.state.calculatedPrice.toFixed(2) + " " + usdSymbol()): "-"}
                   </div>
                 </div>
               </div>

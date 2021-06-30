@@ -3,18 +3,18 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { toDecimals, maxAllowance, fromDecimals, isEther, formatPercentage } from '../../util/constants'
+import { toDecimals, maxAllowance, fromDecimals, isBaseAsset, formatPercentage } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
 import DecimalInput from '../Util/DecimalInput'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { getDepositShares } from '../../util/acoPoolMethods'
-import { deposit } from '../../util/acoPoolMethodsv2'
+import { getDepositShares } from '../../util/contractHelpers/acoPoolMethods'
+import { deposit } from '../../util/contractHelpers/acoPoolMethodsv2'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCog, faInfoCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import SlippageModal from '../SlippageModal'
@@ -31,7 +31,7 @@ class DepositModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }
@@ -104,7 +104,7 @@ class DepositModal extends Component {
   sendDepositTransaction = (stepNumber, nonce, needApproval) => {
     this.setStepsModalInfo(++stepNumber, needApproval)
     this.getDepositMinValue().then(minShares => {
-      deposit(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getDepositAssetValue(), minShares, isEther(this.getDepositAsset()), nonce)
+      deposit(this.context.web3.selectedAccount, this.props.pool.acoPool, this.getDepositAssetValue(), minShares, isBaseAsset(this.getDepositAsset()), nonce)
         .then(result => {
           if (result) {
             this.setStepsModalInfo(++stepNumber, needApproval)
@@ -191,7 +191,7 @@ class DepositModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-      if (!isEther(this.getDepositAsset())) {
+      if (!isBaseAsset(this.getDepositAsset())) {
         allowance(this.context.web3.selectedAccount, this.getDepositAsset(), this.props.pool.acoPool).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(this.getDepositAssetValue()))

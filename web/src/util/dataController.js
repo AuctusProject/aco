@@ -1,9 +1,7 @@
-
-import { ethAddress, optionsToIgnore, usdcAddress, wbtcAddress, defaultAcoCreator } from './constants'
+import { defaultAcoCreators, ethAddress, optionsToIgnore, usdAddress, btcAddress, usdAsset, btcAsset, baseAddress, baseAsset, ethAsset, subgraphUrl } from './network'
 import { 
   getAllPools, 
   getExercisedData, 
-  getNotExpiredOptions, 
   getOption as getOptionSubgraph, 
   getPool as getPoolSubgraph, 
   getPoolHistoricalShares as getPoolHistoricalSharesSubgraph,
@@ -12,19 +10,44 @@ import {
   getPoolRedeems, 
   getPoolSwaps, 
   getPoolWithdrawals,
-  getPoolsAccountBalances as getPoolsAccountBalancesSubgraph 
+  getPoolsAccountBalances as getPoolsAccountBalancesSubgraph, 
+  getAllOptions
 } from './subgraphApi'
+import { getAcoOptions, getAcoPoolHistory, getAcoPools, getAcoPoolStatus } from './acoApi'
+import { removeExpiredOptions, removeNotWhitelistedOptions } from './constants'
 
 const percentageDecimals = 5
 
-let availableOptions = null
-export const getAvailableOptions = async () => {
-  if (availableOptions != null) {
-    return availableOptions
+export const clearData = () => {
+  allOptions = null
+  allPools = null
+}
+
+const hasSubgraph = () => {
+  return !!subgraphUrl()
+}
+
+let allOptions = null
+export const getOptions = async () => {
+  if (allOptions !== null) {
+    return allOptions
+  } else {
+    if (hasSubgraph()) {
+      let result = await getAllOptions()
+      allOptions = parseSubgraphAcos(result, false, false)
+    } else {
+      let options = await getAcoOptions()
+      if (options) {
+        allOptions = options
+      }
+    }
   }
-  let result = await getNotExpiredOptions()
-  availableOptions = parseSubgraphAcos(result, true, true)
-  return availableOptions
+  return allOptions
+}
+
+export const getAvailableOptions = async () => {
+  let result = await getOptions()
+  return (result ? removeNotWhitelistedOptions(removeExpiredOptions(result)) : null)
 }
 
 export const getAvailableOptionsByUnderlying = async (underlying) => {
@@ -44,9 +67,26 @@ export const getOption = async (acoToken, removeExpired = true) => {
   if (!acoToken) {
     return null
   }
-  let result = await getOptionSubgraph(acoToken.toLowerCase())
-  if (result) {
-    return parseSubgraphAco(result, false, removeExpired)
+  if (hasSubgraph()) {
+    let result = await getOptionSubgraph(acoToken.toLowerCase())
+    if (result) {
+      return parseSubgraphAco(result, false, removeExpired)
+    }
+  } else {
+    let options = await getAcoOptions()
+    if (options) {
+      let option = options.filter((c) => c.acoToken.toLowerCase() === acoToken.toLowerCase())
+      if (option && option.length) {
+        if (removeExpired) {
+          let aco = removeExpiredOptions(option)
+          if (aco && aco.length) {
+            return aco[0]
+          }
+        } else {
+          return option[0]
+        }
+      }
+    }
   }
   return null
 }
@@ -57,7 +97,7 @@ export const listAvailablePairs = async () => {
 }
 
 export const refreshAvailableOptions = async () => {
-  availableOptions = null
+  allOptions = null
   return getAvailableOptions()
 }
 
@@ -76,6 +116,10 @@ export const getPairsFromOptions = (options) => {
         strikeAssetSymbol: option.strikeAssetInfo.symbol
       }
     }
+  }
+  var baseP = basePair()
+  if (!pairs[baseP.id]) {
+    pairs[baseP.id] = baseP
   }
   var ethPair = baseEthPair()
   if (!pairs[ethPair.id]) {
@@ -99,13 +143,17 @@ export const getPools = async (forceRefresh = false) => {
   if (!forceRefresh && allPools != null) {
     return allPools
   }
-  let result = await getAllPools()
-  allPools = parseSubgraphPools(result)
+  if (hasSubgraph()) {
+    let result = await getAllPools()
+    allPools = parseSubgraphPools(result)
+  } else {
+    allPools = await getAcoPools(forceRefresh)
+  }
   return allPools
 }
 
 export const getPoolsAccountBalances = async (account, pools) => {
-  if (!account || !pools || !pools.length) {
+  if (!account || !pools || !pools.length || !hasSubgraph()) {
     return []
   }
   let data = await getPoolsAccountBalancesSubgraph(account.toLowerCase(), pools.map((c) => c.toLowerCase()))
@@ -120,14 +168,21 @@ export const getPool = async (pool) => {
   if (!pool) {
     return null
   }
-  let result = await getPoolSubgraph(pool.toLowerCase())
-  if (result) {
-    return parseSubgraphPool(result)
+  if (hasSubgraph()) {
+    let result = await getPoolSubgraph(pool.toLowerCase())
+    if (result) {
+      return parseSubgraphPool(result)
+    }
+  } else {
+    return await getAcoPoolStatus(pool)
   }
   return null
 }
 
 export const getPoolEvents = async (pool) => {
+  if (!hasSubgraph()) {
+    return null
+  }
   const events = await Promise.all([
     getPoolDeposits(pool),
     getPoolSwaps(pool),
@@ -167,8 +222,12 @@ export const getPoolEvents = async (pool) => {
 }
 
 export const getPoolHistoricalShares = async (pool) => {
-  let result = await getPoolHistoricalSharesSubgraph(pool)
-  return parseSubgraphPoolHistoricalShares(result)
+  if (hasSubgraph()) {
+    let result = await getPoolHistoricalSharesSubgraph(pool)
+    return parseSubgraphPoolHistoricalShares(result)
+  } else {
+    return await getAcoPoolHistory(pool)
+  }
 }
 
 const parseSubgraphAcos = (acos, onlyWhitelisted, removeExpired) => {
@@ -183,7 +242,7 @@ const parseSubgraphAcos = (acos, onlyWhitelisted, removeExpired) => {
 }
 
 const parseSubgraphAco = (aco, onlyWhitelisted, removeExpired) => {
-  if (optionsToIgnore.some((c) => c === aco.id)) {
+  if (optionsToIgnore().some((c) => c === aco.id)) {
     return null
   }
   if (removeExpired && parseInt(aco.expiryTime) < Math.ceil(Date.now()/1000)) {
@@ -191,9 +250,9 @@ const parseSubgraphAco = (aco, onlyWhitelisted, removeExpired) => {
   } 
   if (onlyWhitelisted && 
     (
-      aco.strikeAsset.id !== usdcAddress || 
-      (aco.underlying.id !== ethAddress && aco.underlying.id !== wbtcAddress 
-        && aco.creator && !defaultAcoCreator.some((c) => c === aco.creator))
+      aco.strikeAsset.id !== usdAddress() || 
+      (aco.underlying.id !== ethAddress() && aco.underlying.id !== btcAddress() && aco.underlying.id !== baseAddress()
+        && aco.creator && !defaultAcoCreators().some((c) => c === aco.creator))
     )) { 
     return null
   }
@@ -420,26 +479,44 @@ const parseSubgraphNum = (stringNum, decimals) => {
   return ((start > 0) ? num.substring(start) : num) || "0"
 }
 
-const baseEthPair = () => {
+const basePair = () => {
+  let usd = usdAsset()
+  let base = baseAsset()
   return {
-    id: "ETH_USDC",
-    underlying: ethAddress,
-    underlyingInfo: {symbol: "ETH", decimals: 18},
-    underlyingSymbol: "ETH",
-    strikeAsset: usdcAddress,
-    strikeAssetInfo: {symbol: "USDC", decimals: 6},
-    strikeAssetSymbol: "USDC"
+    id: base.symbol+"_"+usd.symbol,
+    underlying: baseAddress(),
+    underlyingInfo: {symbol: base.symbol, decimals: base.decimals},
+    underlyingSymbol: base.symbol,
+    strikeAsset: usdAddress(),
+    strikeAssetInfo: {symbol: usd.symbol, decimals: usd.decimals},
+    strikeAssetSymbol: usd.symbol
+  }
+}
+
+const baseEthPair = () => {
+  let usd = usdAsset()
+  let eth = ethAsset()
+  return {
+    id: eth.symbol+"_"+usd.symbol,
+    underlying: ethAddress(),
+    underlyingInfo: {symbol: eth.symbol, decimals: eth.decimals},
+    underlyingSymbol: eth.symbol,
+    strikeAsset: usdAddress(),
+    strikeAssetInfo: {symbol: usd.symbol, decimals: usd.decimals},
+    strikeAssetSymbol: usd.symbol
   }
 }
 
 const baseWbtcPair = () => {
+  let usd = usdAsset()
+  let btc = btcAsset()
   return {
-    id: "WBTC_USDC",
-    underlying: wbtcAddress,
-    underlyingInfo: {symbol: "WBTC", decimals: 8},
-    underlyingSymbol: "WBTC",
-    strikeAsset: usdcAddress,
-    strikeAssetInfo: {symbol: "USDC", decimals: 6},
-    strikeAssetSymbol: "USDC"
+    id: btc.symbol+"_"+usd.symbol,
+    underlying: btcAddress(),
+    underlyingInfo: {symbol: btc.symbol, decimals: btc.decimals},
+    underlyingSymbol: btc.symbol,
+    strikeAsset: usdAddress(),
+    strikeAssetInfo: {symbol: usd.symbol, decimals: usd.decimals},
+    strikeAssetSymbol: usd.symbol
   }
 }

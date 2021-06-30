@@ -7,7 +7,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { withdraw } from '../../util/acoRewardsMethods'
+import { withdraw } from '../../util/contractHelpers/acoRewardsMethods'
 import { toDecimals } from '../../util/constants'
 
 class UnstakeModal extends Component {
@@ -21,7 +21,7 @@ class UnstakeModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

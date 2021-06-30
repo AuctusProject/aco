@@ -8,8 +8,8 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { getWithdrawNoLockedData, getWithdrawWithLocked, withdrawNoLocked, withdrawWithLocked } from '../../util/acoPoolMethods'
-import { withdrawNoLocked as withdrawNoLockedv2, withdrawWithLocked as withdrawWithLockedv2} from '../../util/acoPoolMethodsv2'
+import { getWithdrawNoLockedData, getWithdrawWithLocked, withdrawNoLocked, withdrawWithLocked } from '../../util/contractHelpers/acoPoolMethods'
+import { withdrawNoLocked as withdrawNoLockedv2, withdrawWithLocked as withdrawWithLockedv2} from '../../util/contractHelpers/acoPoolMethodsv2'
 import Modal from 'react-bootstrap/Modal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCog, faInfoCircle, faSpinner } from '@fortawesome/free-solid-svg-icons'
@@ -33,7 +33,7 @@ class WithdrawModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

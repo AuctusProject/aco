@@ -1,18 +1,18 @@
-import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from '../web3Methods'
 import { acoVaultABI } from './acoVaultABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { getIsCall } from './acoTokenMethods';
 import BigNumber from 'bignumber.js';
-import { fromDecimals } from './constants';
-import { getOption } from './dataController';
-import { getQuote } from './acoSwapUtil';
+import { fromDecimals } from '../constants';
+import { getOption } from '../dataController';
+import { getQuote } from '../acoSwapUtil';
 
 function getAcoVaultContract(acoVaultAddress) {
     const _web3 = getWeb3()
     if (_web3) {
         return new _web3.eth.Contract(acoVaultABI, acoVaultAddress)
     }
-    return null;
+    return null
 }
 
 export const getAcoVaultInfo = (acoVaultAddress) => {

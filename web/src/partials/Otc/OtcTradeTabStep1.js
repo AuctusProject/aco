@@ -7,6 +7,7 @@ import OptionBadge from '../OptionBadge'
 import ReactDatePicker from 'react-datepicker'
 import "../../customDatePicker.css";
 import AssetInput from '../Util/AssetInput'
+import { usdSymbol } from '../../util/network'
 
 class OtcTradeTabStep1 extends Component {
   constructor(props) {
@@ -99,7 +100,7 @@ class OtcTradeTabStep1 extends Component {
         <div className="input-column underlying-column">
           <div className="input-label">Underlying</div>
           <div className="input-field">
-            <AssetInput selectedAsset={this.state.selectedUnderlying} onAssetSelected={this.onAssetSelected}></AssetInput>
+            <AssetInput {...this.props} selectedAsset={this.state.selectedUnderlying} onAssetSelected={this.onAssetSelected}></AssetInput>
           </div>
         </div>
         <div className="input-column">
@@ -119,7 +120,7 @@ class OtcTradeTabStep1 extends Component {
           <div className="input-label">Strike</div>
           <div className="input-field">
             <DecimalInput tabIndex="-1" placeholder="" onChange={this.onStrikeChange} value={this.state.strikeValue}></DecimalInput>
-            <div className="coin-symbol">USDC</div>
+            <div className="coin-symbol">{usdSymbol()}</div>
           </div>
         </div>
       </div>

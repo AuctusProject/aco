@@ -3,16 +3,17 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
-import { uniswapUrl, formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isEther, zero } from '../../util/constants'
-import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount, getCollateralAddress } from '../../util/acoTokenMethods'
+import { formatDate, fromDecimals, toDecimals, ethTransactionTolerance, isBaseAsset, zero } from '../../util/constants'
+import { getBalanceOfCollateralAsset, mint, getCollateralInfo, getTokenAmount, getOptionFormattedPrice, getCollateralAmount, getCollateralAddress } from '../../util/contractHelpers/acoTokenMethods'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
+import { swapUrl } from '../../util/network'
 
 class WriteStep3 extends Component {
   constructor() {
@@ -20,10 +21,18 @@ class WriteStep3 extends Component {
     this.state = { collaterizeValue: "", optionsAmount: "", collateralBalance: null }
   }
 
+  isLogged = () => {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount
+  }
+
   componentDidMount = () => {
-    getBalanceOfCollateralAsset(this.props.option, this.context.web3.selectedAccount).then(result => 
-      this.setState({collateralBalance: result})
-      )
+    if (this.isLogged()) {
+      getBalanceOfCollateralAsset(this.props.option, this.context.web3.selectedAccount).then(result => 
+        this.setState({collateralBalance: result}))
+    }
+    else {
+      this.setState({collateralBalance: null})
+    }
   }
 
   componentDidUpdate = (prevProps) => {
@@ -31,7 +40,7 @@ class WriteStep3 extends Component {
       this.props.optionType !== prevProps.optionType) {
         this.props.onCancelClick()
     }
-    else if (this.props.accountToggle !== prevProps.accountToggle) {
+    else if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.componentDidMount()
     }
   }
@@ -87,7 +96,7 @@ class WriteStep3 extends Component {
   }
 
   isCollateralEth = () => {
-    return isEther(this.getCollaterizeAssetAddress())
+    return isBaseAsset(this.getCollaterizeAssetAddress())
   }
 
   onConfirm = () => {
@@ -230,7 +239,11 @@ class WriteStep3 extends Component {
   }
 
   canConfirm = () => {
-    return this.state.optionsAmount !== null && this.state.optionsAmount !== "" && !this.isInsufficientFunds()
+    return this.isLogged() && this.state.optionsAmount !== null && this.state.optionsAmount !== "" && !this.isInsufficientFunds()
+  }
+
+  onConnectClick = () => {
+    this.props.signIn(null, this.context)
   }
 
   render() {
@@ -257,7 +270,7 @@ class WriteStep3 extends Component {
           </div>
           <div className="balance-row">
             <div className="balance-info">Balance: {this.state.collateralBalance ? (fromDecimals(this.state.collateralBalance.toString(), this.getCollateralDecimals(), 2) + " " + this.getCollaterizeAssetSymbol()) : ""}</div>
-            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap ETH for {this.getCollaterizeAssetSymbol()}</a>}</div>
+            <div className="swap-link-wrapper">{this.isInsufficientFunds() && !this.isCollateralEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl()+this.getCollaterizeAssetAddress()}>Need {this.getCollaterizeAssetSymbol()}? Swap {this.props.selectedPair.underlyingSymbol} for {this.getCollaterizeAssetSymbol()}</a>}</div>
           </div>
           <div className="card-separator"></div>
           <div>
@@ -266,7 +279,9 @@ class WriteStep3 extends Component {
         </div>
         <div className="confirm-card-actions">
           <div className="aco-button cancel-btn" onClick={this.props.onCancelClick}>Cancel</div>
-          <div className={"aco-button action-btn "+(this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div>
+          {this.isLogged() ? 
+            <div className={"aco-button action-btn "+(this.canConfirm() ? "" : "disabled")} onClick={this.onConfirm}>Confirm</div> :
+            <div className="aco-button action-btn" onClick={this.onConnectClick}>CONNECT</div>}
         </div>
       </div>
       {this.state.stepsModalInfo && <StepsModal {...this.state.stepsModalInfo} onHide={this.onHideStepsModal}></StepsModal>}

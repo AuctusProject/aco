@@ -7,10 +7,11 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { allowance, allowDeposit } from '../../util/erc20Methods'
-import { acoRewardAddress, maxAllowance, toDecimals } from '../../util/constants'
-import { deposit } from '../../util/acoRewardsMethods'
+import { allowance, allowDeposit } from '../../util/contractHelpers/erc20Methods'
+import { maxAllowance, toDecimals } from '../../util/constants'
+import { deposit } from '../../util/contractHelpers/acoRewardsMethods'
 import Web3Utils from 'web3-utils'
+import { acoRewardAddress } from '../../util/network'
 
 class StakeModal extends Component {
   constructor(props) {
@@ -23,14 +24,14 @@ class StakeModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }
   
   needApprove = () => {
     return new Promise((resolve) => {
-      allowance(this.context.web3.selectedAccount, this.props.data.pool.address, acoRewardAddress).then(result => {
+      allowance(this.context.web3.selectedAccount, this.props.data.pool.address, acoRewardAddress()).then(result => {
         var resultValue = new Web3Utils.BN(result)
         resolve(resultValue.lt(new Web3Utils.BN(toDecimals(this.props.data.stakeValue, this.props.data.pool.decimals))))
       })
@@ -43,7 +44,7 @@ class StakeModal extends Component {
       this.needApprove().then(needApproval => {
         if (needApproval) {
           this.setStepsModalInfo(++stepNumber, needApproval)
-          allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.data.pool.address, acoRewardAddress, nonce)
+          allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.props.data.pool.address, acoRewardAddress(), nonce)
             .then(result => {
               if (result) {
                 this.setStepsModalInfo(++stepNumber, needApproval)

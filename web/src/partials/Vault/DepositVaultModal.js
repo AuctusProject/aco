@@ -8,8 +8,8 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { deposit } from '../../util/acoVaultMethods'
-import { allowance, allowDeposit } from '../../util/erc20Methods'
+import { deposit } from '../../util/contractHelpers/acoVaultMethods'
+import { allowance, allowDeposit } from '../../util/contractHelpers/erc20Methods'
 import { maxAllowance } from '../../util/constants'
 import Web3Utils from 'web3-utils'
 
@@ -24,7 +24,7 @@ class DepositVaultModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

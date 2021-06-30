@@ -8,11 +8,11 @@ import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import { AdvancedOrderStepsType, maxAllowance } from '../../util/constants'
-import { allowDeposit } from '../../util/erc20Methods'
+import { allowDeposit } from '../../util/contractHelpers/erc20Methods'
 import { buy, sell } from '../../util/acoSwapUtil'
 import { getSignedOrder } from '../../util/Zrx/zrxUtils'
 import { postOrder } from '../../util/Zrx/zrxApi'
-import { mint } from '../../util/acoTokenMethods'
+import { mint } from '../../util/contractHelpers/acoTokenMethods'
 
 class CreateAdvancedOrderModal extends Component {
   constructor(props) {
@@ -25,7 +25,7 @@ class CreateAdvancedOrderModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

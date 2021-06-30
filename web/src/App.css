@@ -91,6 +91,7 @@ main {
 .swal2-styled.swal2-cancel.cancel-btn,
 .outline-btn,
 .swal2-styled.swal2-confirm.outline-btn
+.dark-btn
  {
   display: inline-block;
   padding: 8px 24px;
@@ -118,8 +119,14 @@ main {
 }
 
 .action-btn:not(:disabled):not(.disabled):hover,
-.outline-btn:not(:disabled):not(.disabled):hover {
+.outline-btn:not(:disabled):not(.disabled):hover,
+.dark-btn:hover {
   box-shadow: 0px 0px 12px 0 #5de9d4 !important;
+}
+
+.dark-btn:hover {
+  color: #5de9d4;
+  border-color: #5de9d4;
 }
 
 .action-btn.disabled, .action-btn:disabled {
@@ -139,9 +146,15 @@ main {
   background-color: transparent;
 }
 
-.outline-btn img {
+.outline-btn img,
+.dark-btn img {
   max-height: 20px;
   margin-right: 8px;
+  width: 20px;
+}
+
+.dark-btn svg {
+  margin-left: 8px;
 }
 
 /* .outline-btn:not(:disabled):not(.disabled):hover {
@@ -159,6 +172,25 @@ main {
   min-width: 180px;
 }
 
+.dark-btn {
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 22px;
+  height: 44px;
+  width: 100%;
+  color: white;
+  background-color: #1a1a1a;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.dark-btn.active {
+  color: #5de9d4;
+  border-color: #5de9d4;
+  border: solid 1px;
+}
+
 .cancel-btn {
   color: #5de9d4 !important;
   text-decoration: none;
@@ -168,7 +200,6 @@ main {
 .cancel-btn:not(:disabled):not(.disabled):hover {
   text-shadow: 0 2px 5px #5de9d4;
 }
-
 
 .light-mode .cancel-btn:not(:disabled):not(.disabled):hover {
   color: #33333388 !important;

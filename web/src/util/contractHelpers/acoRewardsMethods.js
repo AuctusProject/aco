@@ -1,21 +1,23 @@
-import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods';
-import { acoRewardAddress, acoRewardsPools, auctusAddress, parseBigIntToNumber } from './constants';
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from '../web3Methods';
+import { parseBigIntToNumber } from '../constants';
 import { acoRewardsABI } from './acoRewardsABI';
 import { acoTokenData } from './acoFactoryMethods';
 import { balanceOf } from './erc20Methods';
 import { getPairData } from './uniswapPairMethods';
-import { getCoingeckoPrice } from './coingeckoApi';
-import { getPool } from './dataController';
+import { getCoingeckoPrice } from '../coingeckoApi';
+import { getPool } from '../dataController';
+import { acoRewardAddress, acoRewardsPools, auctusAddress } from '../network';
 
-var acoRewardsContract = null
 function getAcoRewardsContract() {
-    if (acoRewardsContract == null) {
-        const _web3 = getWeb3()
-        if (_web3) {
-            acoRewardsContract = new _web3.eth.Contract(acoRewardsABI, acoRewardAddress)
-        }
+    const _web3 = getWeb3()
+    if (_web3) {
+        return new _web3.eth.Contract(acoRewardsABI, acoRewardAddress())
     }
-    return acoRewardsContract
+    return null
+}
+
+export const resetRewardData = () => {
+    rewardsBaseData = null
 }
 
 let rewardsBaseData = null
@@ -24,18 +26,19 @@ export const listRewardsData = (forceLoad = false) => {
         if (!forceLoad && rewardsBaseData !== null) {
             resolve(rewardsBaseData)
         } else {
+            const _acoRewardsPools = acoRewardsPools()
             Promise.all([totalAllocPoint(), currentReward()]).then((base) => {
                 const totalAlloc = BigInt(base[0])
                 const promises = []
-                for (let i = 0; i < acoRewardsPools.length; ++i) {
-                    promises.push(poolInfo(acoRewardsPools[i].pid))
+                for (let i = 0; i < _acoRewardsPools.length; ++i) {
+                    promises.push(poolInfo(_acoRewardsPools[i].pid))
                 }
                 promises.push(acoTokenData(base[1].aco))
                 Promise.all(promises).then((data) => {
                     const valuePromises = []
-                    for (let i = 0; i < acoRewardsPools.length; ++i) {
-                        valuePromises.push(balanceOf(data[i].lpToken, acoRewardAddress))
-                        if (acoRewardsPools[i].pid === 0) {
+                    for (let i = 0; i < _acoRewardsPools.length; ++i) {
+                        valuePromises.push(balanceOf(data[i].lpToken, acoRewardAddress()))
+                        if (_acoRewardsPools[i].pid === 0) {
                             valuePromises.push(getPairData(data[i].lpToken))
                         } else {
                             valuePromises.push(getPool(data[i].lpToken))
@@ -43,7 +46,7 @@ export const listRewardsData = (forceLoad = false) => {
                     }
                     valuePromises.push(getCoingeckoPrice(["auctus","ethereum","bitcoin"]))
                     Promise.all(valuePromises).then((values) => {
-                        const currentAcoData = data[acoRewardsPools.length]
+                        const currentAcoData = data[_acoRewardsPools.length]
                         const monthlyAmount = BigInt(base[1].rewardRate) * BigInt("2592000")
                         const coingeckoValues = values[values.length -1]
                         let aucPrice = coingeckoValues["auctus"] && coingeckoValues["auctus"].usd ? coingeckoValues["auctus"].usd : 0
@@ -51,17 +54,17 @@ export const listRewardsData = (forceLoad = false) => {
                         let btcPrice = coingeckoValues["bitcoin"] && coingeckoValues["bitcoin"].usd ? coingeckoValues["bitcoin"].usd : 0
                         const result = []
                         let index = 0
-                        for (let i = 0; i < acoRewardsPools.length; ++i) {
+                        for (let i = 0; i < _acoRewardsPools.length; ++i) {
                             let monthlyReward = parseBigIntToNumber(monthlyAmount * BigInt(data[i].allocPoint) / totalAlloc, 18)
                             let lpValuePerShare = 0
                             let poolData = null
-                            let poolDecimals = (acoRewardsPools[i].pid === 3 ? 8 : acoRewardsPools[i].pid === 2 || acoRewardsPools[i].pid === 4 ? 6 : 18)
+                            let poolDecimals = (_acoRewardsPools[i].pid === 3 ? 8 : _acoRewardsPools[i].pid === 2 || _acoRewardsPools[i].pid === 4 ? 6 : 18)
                             let balance = parseBigIntToNumber(BigInt(values[index]), poolDecimals)
-                            if (acoRewardsPools[i].pid === 0) {
+                            if (_acoRewardsPools[i].pid === 0) {
                                 let uniData = values[index+1]
                                 let ts = parseBigIntToNumber(BigInt(uniData.totalSupply), 18)
                                 if (ts > 0) {
-                                    if (uniData.token0.toLowerCase() === auctusAddress) {
+                                    if (uniData.token0.toLowerCase() === auctusAddress()) {
                                         lpValuePerShare = parseBigIntToNumber(BigInt(uniData.reserve0), 18) * aucPrice + parseBigIntToNumber(BigInt(uniData.reserve1), 18) * ethPrice
                                     } else {
                                         lpValuePerShare = parseBigIntToNumber(BigInt(uniData.reserve0), 18) * ethPrice + parseBigIntToNumber(BigInt(uniData.reserve1), 18) * aucPrice
@@ -71,7 +74,7 @@ export const listRewardsData = (forceLoad = false) => {
                             } else {
                                 poolData = values[index+1]
                                 lpValuePerShare = parseBigIntToNumber(BigInt(poolData.strikeAssetPerShare), 6)
-                                if (acoRewardsPools[i].pid === 1 || acoRewardsPools[i].pid === 2) {
+                                if (_acoRewardsPools[i].pid === 1 || _acoRewardsPools[i].pid === 2) {
                                     lpValuePerShare += parseBigIntToNumber(BigInt(poolData.underlyingPerShare), 18) * ethPrice
                                 } else {
                                     lpValuePerShare += parseBigIntToNumber(BigInt(poolData.underlyingPerShare), 8) * btcPrice
@@ -87,9 +90,9 @@ export const listRewardsData = (forceLoad = false) => {
                             }
                             index = index + 2
                             result.push({
-                                pid: acoRewardsPools[i].pid,
-                                name: acoRewardsPools[i].name,
-                                image: acoRewardsPools[i].image,
+                                pid: _acoRewardsPools[i].pid,
+                                name: _acoRewardsPools[i].name,
+                                image: _acoRewardsPools[i].image,
                                 address: data[i].lpToken,
                                 decimals: poolDecimals,
                                 lpValuePerShare: lpValuePerShare,
@@ -118,8 +121,9 @@ export const listRewardsData = (forceLoad = false) => {
 export const listUnclaimedRewards = (from) => {
     return new Promise((resolve, reject) => {
         const promises = []
-        for (let i = 0; i < acoRewardsPools.length; ++i) {
-            promises.push(pendingReward(acoRewardsPools[i].pid, from))
+        const _acoRewardsPools = acoRewardsPools()
+        for (let i = 0; i < _acoRewardsPools.length; ++i) {
+            promises.push(pendingReward(_acoRewardsPools[i].pid, from))
         }
         Promise.all(promises).then((rewards) => {
             const acoPromises = []
@@ -128,10 +132,10 @@ export const listUnclaimedRewards = (from) => {
                 for (let j = 0; j < rewards[i][0].length; ++j) { 
                     let amount = BigInt(rewards[i][1][j])
                     if (acoIndexes[rewards[i][0][j]] === undefined) {
-                        acoIndexes[rewards[i][0][j]] = {p: [{pid: acoRewardsPools[i].pid, amount: amount.toString()}], i: acoPromises.length, a: amount}
+                        acoIndexes[rewards[i][0][j]] = {p: [{pid: _acoRewardsPools[i].pid, amount: amount.toString()}], i: acoPromises.length, a: amount}
                         acoPromises.push(acoTokenData(rewards[i][0][j]))
                     } else {
-                        acoIndexes[rewards[i][0][j]].p.push({pid: acoRewardsPools[i].pid, amount: amount.toString()})
+                        acoIndexes[rewards[i][0][j]].p.push({pid: _acoRewardsPools[i].pid, amount: amount.toString()})
                         acoIndexes[rewards[i][0][j]].a += amount
                     }
                 }
@@ -196,25 +200,25 @@ export const accountBalance = (pid, from) => {
 export const deposit = (from, pid, amount, nonce) => {
     const acoRewardsContract = getAcoRewardsContract()
     const data = acoRewardsContract.methods.deposit(pid, amount).encodeABI()
-    return sendTransactionWithNonce(null, null, from, acoRewardAddress, null, data, null, nonce)
+    return sendTransactionWithNonce(null, null, from, acoRewardAddress(), null, data, null, nonce)
 }
 
 export const withdraw = (from, pid, amount) => {
     const acoRewardsContract = getAcoRewardsContract()
     const data = acoRewardsContract.methods.withdraw(pid, amount).encodeABI()
-    return sendTransaction(null, null, from, acoRewardAddress, null, data, null)
+    return sendTransaction(null, null, from, acoRewardAddress(), null, data, null)
 }
 
 export const claimReward = (from, pid) => {
     const acoRewardsContract = getAcoRewardsContract()
     const data = acoRewardsContract.methods.claimReward(pid).encodeABI()
-    return sendTransaction(null, null, from, acoRewardAddress, null, data, null)
+    return sendTransaction(null, null, from, acoRewardAddress(), null, data, null)
 }
 
 export const claimRewards = (from, pids) => {
     const acoRewardsContract = getAcoRewardsContract()
     const data = acoRewardsContract.methods.claimRewards(pids).encodeABI()
-    return sendTransaction(null, null, from, acoRewardAddress, null, data, null)
+    return sendTransaction(null, null, from, acoRewardAddress(), null, data, null)
 }
 
 const poolInfo = (pid) => {

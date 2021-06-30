@@ -1,11 +1,12 @@
 import './ManagePrivatePool.css'
 import React, { Component } from 'react'
-import { acoPermissionConfig } from '../../util/acoPoolMethodsv5'
+import { acoPermissionConfig } from '../../util/contractHelpers/acoPoolMethodsv5'
 import { formatPercentage, fromDecimals, PERCENTAGE_PRECISION } from '../../util/constants'
 import Loading from '../Util/Loading'
 import UpdateIVModal from './UpdateIVModal'
 import UpdateSellingOptionsModal from './UpdateSellingOptionsModal'
 import BigNumber from 'bignumber.js'
+import { usdAsset } from '../../util/network'
 
 class ManagePrivatePool extends Component {
   constructor() {
@@ -18,6 +19,12 @@ class ManagePrivatePool extends Component {
   componentDidMount = () => {
     let pool = this.props.pool
     acoPermissionConfig(pool.address).then(acoPermissionConfig => this.setConfig(acoPermissionConfig))
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
   }
 
   setConfig = (acoPermissionConfig) => {
@@ -49,7 +56,8 @@ class ManagePrivatePool extends Component {
   }
 
   formatStrikePrice = (value) => {
-    return fromDecimals(value, 6, 6, 0) + " USDC"
+    let usd = usdAsset()
+    return fromDecimals(value, usd.decimals, usd.decimals, 0) + " " + usd.symbol
   }
 
   getFixedStrikePriceConfig = () => {
@@ -172,8 +180,9 @@ class ManagePrivatePool extends Component {
         </div>
         <div className="aco-button action-btn" onClick={this.onUpdateSellingOptionsClick}>Update</div>
       </div>
-      {this.state.showUpdateIVModal && <UpdateIVModal onHide={this.onHideUpdateIVModal} pool={pool}/>}
+      {this.state.showUpdateIVModal && <UpdateIVModal {...this.props} onHide={this.onHideUpdateIVModal} pool={pool}/>}
       {this.state.showUpdateSellingOptionsModal && <UpdateSellingOptionsModal 
+        {...this.props}
         onHide={this.onHideUpdateSellingOptionsModal} 
         pool={pool} 
         minExpiration={this.state.minExpiration} 

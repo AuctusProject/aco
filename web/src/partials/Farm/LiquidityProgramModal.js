@@ -7,8 +7,8 @@ import DecimalInput from '../Util/DecimalInput'
 import { fromDecimals, toDecimals, zero } from '../../util/constants'
 import BigNumber from 'bignumber.js'
 import RewardOptionCard from './RewardOptionCard'
-import { balanceOf } from '../../util/erc20Methods'
-import { accountBalance } from '../../util/acoRewardsMethods'
+import { balanceOf } from '../../util/contractHelpers/erc20Methods'
+import { accountBalance } from '../../util/contractHelpers/acoRewardsMethods'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import StakeModal from './StakeModal'
@@ -28,7 +28,7 @@ class LiquidityProgramModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {    
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.loadData()
     }
     if (this.props.toggleRewardUnclaimed !== prevProps.toggleRewardUnclaimed) {

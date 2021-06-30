@@ -2,7 +2,7 @@ import './PoolCurrentTab.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { formatPercentage, fromDecimals, numberWithCommas } from '../../util/constants'
-import { getCollateralInfo, getExerciseInfo } from '../../util/acoTokenMethods'
+import { getCollateralInfo, getExerciseInfo } from '../../util/contractHelpers/acoTokenMethods'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import RestoreModal from './RestoreModal'
@@ -209,8 +209,8 @@ class PoolCurrentTab extends Component {
                 </tr>)}
             </tbody>
           </table>}
-          {this.state.showRestoreModal && <RestoreModal onHide={this.onHideRestoreModal} title={this.getRestoreButtonLabel()} pool={pool}/>}
-          {this.state.showRedeemModal && <RedeemModal onHide={this.onHideRedeemModal} pool={pool}/>}
+          {this.state.showRestoreModal && <RestoreModal {...this.props} onHide={this.onHideRestoreModal} title={this.getRestoreButtonLabel()} pool={pool}/>}
+          {this.state.showRedeemModal && <RedeemModal {...this.props} onHide={this.onHideRedeemModal} pool={pool}/>}
       </div>)
   }
 }

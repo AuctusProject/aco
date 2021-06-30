@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import Modal from 'react-bootstrap/Modal'
 import PoolAccountPosition from '../Pool/PoolAccountPosition'
-import { getCollateralInfo } from '../../util/acoTokenMethods'
+import { getCollateralInfo } from '../../util/contractHelpers/acoTokenMethods'
 
 class AccountPoolPositionModal extends Component {
   constructor(props) {
@@ -15,7 +15,7 @@ class AccountPoolPositionModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.pool !== prevProps.pool) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.pool !== prevProps.pool) {
       this.setPool()
     }
   }

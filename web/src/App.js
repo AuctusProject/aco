@@ -10,12 +10,9 @@ import Web3Provider from './util/Web3Provider'
 import MetamaskModal from './partials/MetamaskModal'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
-import Writer from './pages/Writer'
-import Exercise from './pages/Exercise'
 import Trade from './pages/Trade'
 import Simple from './pages/Simple'
-import { getNetworkName, CHAIN_ID, getCurrentRoute, getPairIdFromRoute, isDarkMode, getSlippageConfig, setSlippageConfig } from './util/constants'
-import { error } from './util/sweetalert'
+import { getCurrentRoute, getModeView, getPairIdFromRoute, getSlippageConfig, ModeView, setModeView, setSlippageConfig } from './util/constants'
 import { getGasPrice } from './util/gasStationApi'
 import ApiCoingeckoDataProvider from './util/ApiCoingeckoDataProvider'
 import Vaults from './pages/Vaults'
@@ -23,23 +20,40 @@ import Otc from './pages/Otc'
 import PoolDashboard from './partials/Pool/PoolDashboard'
 import CreateOption from './pages/CreateOption'
 import Farm from './pages/Farm'
+import { clearData } from './util/dataController'
+import { clearOrderbook } from './util/acoSwapUtil'
+import { resetZrxRateLimit } from './util/Zrx/zrxApi'
+import { resetZrxData } from './util/Zrx/zrxWeb3'
+import { resetOptions } from './util/contractHelpers/acoFactoryMethods'
+import { resetPools } from './util/contractHelpers/acoPoolFactoryMethods'
+import { resetPoolsData } from './util/contractHelpers/acoPoolMethodsv5'
+import { resetRewardData } from './util/contractHelpers/acoRewardsMethods'
+import { resetSwapPairData } from './util/contractHelpers/uniswapPairMethods'
+import NetworkModal from './partials/NetworkModal'
+import { clearBaseApiData } from './util/baseApi'
+import { clearApiData } from './util/acoApi'
+import Pools from './pages/Pools'
+import { menuConfig } from './util/network'
 
 class App extends Component {
   constructor() {
     super()
     this.state = {
       showSignIn: false,
+      showSelectNetwork: false,
       loading: true,
       selectedPair: null,
       accountToggle: false,
+      networkToggle: false,
       toggleAdvancedTooltip: false,
       orderBooks:{},
       connecting: null,
       disconnecting: null,
       refreshWeb3: null,
-      slippage: getSlippageConfig()
+      slippage: getSlippageConfig(),
+      modeView: getModeView(),
+      pairs: null
     }
-    this.loadLayoutMode()
   }
 
   componentDidMount = () => {
@@ -51,23 +65,37 @@ class App extends Component {
     this.setState({slippage: slippage})
   }  
 
-  showSignInModal = (redirectUrl, context) => {
-    if (context && context.web3 && context.web3.networkId && context.web3.hasWeb3Provider && !context.web3.validNetwork) {
-      if (!this.state.refreshWeb3) {
-        this.setState({refreshWeb3: true}, () => {
-          let self = this
-          setTimeout(() => {
-            self.showSignInModal(redirectUrl, context)
-          }, 1000)
-        })
+  setSignIn = (redirectUrl, context) => {
+    let isConnected = context && context.web3 && context.web3.hasWeb3Provider && context.web3.selectedAccount
+    if (isConnected) {
+      if (!context.web3.validNetwork) {
+        this.handleInvalidNetwork(redirectUrl)
       } else {
-        this.setState({refreshWeb3: null}, () => {
-          error("Please connect to the "+ getNetworkName(CHAIN_ID) + ".", "Wrong Network")
-        })
+        this.showNetworkModal()
       }
     } else {
-      this.setState({showSignIn: true, redirectUrl: redirectUrl, refreshWeb3: null})
-    }    
+      this.showSignInModal(redirectUrl)
+    }   
+  }
+
+  showSignInModal = (redirectUrl) => {
+    this.setState({showSignIn: true, redirectUrl: redirectUrl, refreshWeb3: null})
+  }
+
+  showNetworkModal = () => {
+    this.setState({showSelectNetwork: true, refreshWeb3: null})
+  }
+
+  handleInvalidNetwork(redirectUrl) {
+    if (!this.state.refreshWeb3) {
+      this.setState({refreshWeb3: {redirectUrl}})
+    } else {
+      this.setState({refreshWeb3: null, showSelectNetwork: true})
+    }
+  }
+
+  onCloseNetworkModal = () => {
+    this.setState({showSelectNetwork: false})
   }
 
   onCloseSignIn = (navigate) => {
@@ -75,24 +103,37 @@ class App extends Component {
   }
 
   onChangeAccount = (account, previousAccount) => {
-    if (!account) {
-      if (window.location.pathname.indexOf("advanced") >= 0) {
-        this.props.history.push('/')
+    if (!previousAccount) {
+      if (this.state.redirectUrl) {
+        this.props.history.push(this.state.redirectUrl) 
+        this.setState({redirectUrl: null})
       }
     }
-    else {
-      if (!previousAccount) {
-        if (this.state.redirectUrl) {
-          this.props.history.push(this.state.redirectUrl) 
-          this.setState({redirectUrl: null})
-        }
-      }
-      this.setState({accountToggle:!this.state.accountToggle})
-    }
+    this.setState({accountToggle:!this.state.accountToggle})  
   }
 
-  onLoaded = () => {
-    this.setState({loading: false})
+  onChangeNetwork = (chainId, previousChainId) => {
+    clearBaseApiData()
+    clearApiData()
+    clearData()
+    clearOrderbook()
+    resetZrxRateLimit()
+    resetZrxData()
+    resetOptions()
+    resetPools()
+    resetPoolsData()
+    resetRewardData()
+    resetSwapPairData()
+    getGasPrice(true)
+    this.setState({networkToggle:!this.state.networkToggle})
+  }
+
+  onLoaded = (context) => {
+    this.setState({loading: false}, () => {
+      if (this.state.refreshWeb3) {
+        this.setSignIn(this.state.refreshWeb3.redirectUrl, context)
+      }
+    })
   }
 
   onPairSelected = (pair) => {
@@ -110,25 +151,9 @@ class App extends Component {
     this.setState({pairs: pairs})
   }
 
-  setLayoutMode = (isDarkMode) => {
-    if (isDarkMode) {
-      if (!document.body.classList.contains("dark-mode")) {
-        document.body.classList.remove('light-mode')
-        document.body.classList.add('dark-mode')
-      }
-      window.localStorage.setItem('LAYOUT_MODE', '1')
-    }
-    else {
-      if (!document.body.classList.contains("light-mode")) {
-        document.body.classList.remove('dark-mode')
-        document.body.classList.add('light-mode')
-      }
-      window.localStorage.setItem('LAYOUT_MODE', '0')
-    }
-  }
-
-  loadLayoutMode = () => {
-    this.setLayoutMode(isDarkMode())
+  setModeView = (modeView) => {
+    this.setState({modeView: modeView})
+    setModeView(modeView)
   }
 
   onConnect = (ok) => {
@@ -137,21 +162,25 @@ class App extends Component {
 
   render() {
     var showNavbar = window.location.pathname !== "/"
-    var showFooter = window.location.pathname.indexOf("advanced/trade") < 0
-    var darkMode = isDarkMode()
+    var showFooter = window.location.pathname.indexOf("advanced") < 0
+    var menuConfigData = menuConfig()
+    var simplePaths = [`/buy/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]
+    if (menuConfigData.hasAdvanced) {
+      simplePaths.push(`/write/:pair?/:tokenAddress?`)
+    }
     return (
-      <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onLoaded={this.onLoaded}>
-        <ApiCoingeckoDataProvider>
+      <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onChangeNetwork={this.onChangeNetwork} onLoaded={this.onLoaded}>
+        <ApiCoingeckoDataProvider networkToggle={this.state.networkToggle}>
           {this.state.loading ? 
           <div className="initial-loading">
-            <img src={darkMode ? "/logo_white.svg" : "/logo.svg"} className="aco-logo" alt="" />
+            <img src="/logo_white.svg" className="aco-logo" alt="" />
             <div className="mt-3">
               <FontAwesomeIcon icon={faSpinner} className="fa-spin"></FontAwesomeIcon>&nbsp;
               Loading Auctus...
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar darkMode={darkMode} setLayoutMode={this.setLayoutMode} toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.showSignInModal} onPairsLoaded={this.onPairsLoaded} onPairSelected={this.onPairSelected} selectedPair={this.state.selectedPair} slippage={this.state.slippage} setSlippage={this.setSlippage}/>}
+            {showNavbar && <NavBar toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.setSignIn} slippage={this.state.slippage} setSlippage={this.setSlippage} modeView={this.state.modeView} setModeView={this.setModeView}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -161,101 +190,103 @@ class App extends Component {
                 <Route 
                   path={`/terms`}
                   render={ routeProps => <Terms {...routeProps} /> }
-                />
-                <Route 
-                  path={`/advanced/mint/:pair?/:tokenAddress?`}
-                  render={ routeProps => <Writer 
-                    {...routeProps}
-                    darkMode={darkMode}
-                    selectedPair={this.state.selectedPair}
-                    accountToggle={this.state.accountToggle}
-                  /> }
-                />
-                <Route 
-                  path={`/advanced/exercise/:pair?/`}
-                  render={ routeProps => <Exercise 
-                    {...routeProps}
-                    darkMode={darkMode}
-                    selectedPair={this.state.selectedPair}
-                    accountToggle={this.state.accountToggle}
-                  /> }
-                />
-                <Route 
-                  path={`/advanced/trade/:pair?/:tokenAddress?`}
+                />                
+                {menuConfigData.hasAdvanced && <Route 
+                  path={[`/advanced/trade/:pair?/:tokenAddress?`, `/advanced/mint/:pair?/:tokenAddress?`, `/advanced/exercise/:pair?/`]}
                   render={ routeProps => <Trade 
                     {...routeProps}
-                    darkMode={darkMode}
+                    onPairSelected={this.onPairSelected}
+                    onPairsLoaded={this.onPairsLoaded}
+                    pairs={this.state.pairs}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
-                  /> }
-                />
+                    signIn={this.setSignIn}
+                    modeView={this.state.modeView} 
+                    setModeView={this.setModeView}
+                  />}
+                />}
                 <Route 
                   path={`/pools/details/:poolAddress?`}
                   render={ routeProps => <PoolDashboard
                     {...routeProps}
-                    darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
                 />
                 <Route 
-                  path={[`/buy/:pair?/:tokenAddress?`, `/write/:pair?/:tokenAddress?`, `/pools/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]}
+                  path={`/pools/`}
+                  render={ routeProps => <Pools
+                    {...routeProps}
+                    signIn={this.setSignIn}
+                    accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
+                    slippage={this.state.slippage} setSlippage={this.setSlippage}
+                  /> }
+                />                
+                <Route 
+                  path={simplePaths}
                   render={ routeProps => <Simple 
                     {...routeProps}
-                    darkMode={darkMode}
-                    signIn={this.showSignInModal}
-                    onPairSelected={this.onPairSelected} 
+                    signIn={this.setSignIn}
+                    onPairSelected={this.onPairSelected}
                     onPairsLoaded={this.onPairsLoaded}
                     selectedPair={this.state.selectedPair}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     toggleAdvancedTooltip={() => this.setState({toggleAdvancedTooltip: !this.state.toggleAdvancedTooltip})}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
+                    modeView={this.state.modeView} 
+                    setModeView={this.setModeView}
                   /> }
                 />
-                <Route 
-                  path={[`/vaults`, `/advanced/vaults`]}
+                {menuConfigData.hasVaults && <Route 
+                  path={`/vaults`}
                   render={ routeProps => <Vaults
                     {...routeProps}
-                    darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                     slippage={this.state.slippage} setSlippage={this.setSlippage}
                   /> }
-                />
-                <Route 
+                />}
+                {menuConfigData.hasOtc && <Route 
                   path={[`/otc/trade/:orderId?`, `/otc/manage`]}
                   render={ routeProps => <Otc
                     {...routeProps}
-                    darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                   /> }
-                />
-                <Route 
+                />}
+                {menuConfigData.hasCreateOption && <Route 
                   path={`/new-option`}
                   render={ routeProps => <CreateOption
                     {...routeProps}
-                    darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
+                    modeView={this.state.modeView}
                   /> }
-                />
-                <Route 
+                />}
+                {menuConfigData.hasFarm && <Route 
                   path={`/farm`}
                   render={ routeProps => <Farm
                     {...routeProps}
-                    darkMode={darkMode}
-                    signIn={this.showSignInModal}
+                    signIn={this.setSignIn}
                     accountToggle={this.state.accountToggle}
+                    networkToggle={this.state.networkToggle}
                   /> }
-                />
-                <Redirect to="/buy"></Redirect>
+                />}
+                <Redirect to={menuConfigData.hasAdvanced && this.state.modeView === ModeView.Advanced ? "/advanced/trade" : "/buy"}></Redirect>
               </Switch>
               {showFooter && <Footer />}
             </div>
-            {this.state.showSignIn && <MetamaskModal darkMode={darkMode} connecting={this.state.connecting} connect={(type) => this.setState({connecting: type})} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
+            {this.state.showSignIn && <MetamaskModal connecting={this.state.connecting} connect={(type) => this.setState({connecting: type})} onHide={(navigate) => this.onCloseSignIn(navigate)}/>}
+            {this.state.showSelectNetwork && <NetworkModal onHide={() => this.onCloseNetworkModal()}/>}
           </main>}
         </ApiCoingeckoDataProvider>
       </Web3Provider>

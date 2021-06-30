@@ -3,19 +3,20 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts } from '../../util/acoTokenMethods'
-import { zero, formatDate, fromDecimals, toDecimals, isEther, PERCENTAGE_PRECISION, uniswapUrl, acoFlashExerciseAddress, formatWithPrecision } from '../../util/constants'
+import { exercise, getOptionFormattedPrice, getFormattedOpenPositionAmount, getBalanceOfExerciseAsset, getExerciseInfo, getCollateralInfo, getCollateralAmount, getExerciseAddress, getExerciseValue, getMaxExercisedAccounts, acoFee } from '../../util/contractHelpers/acoTokenMethods'
+import { zero, formatDate, fromDecimals, toDecimals, isBaseAsset, PERCENTAGE_PRECISION, formatWithPrecision } from '../../util/constants'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
 import StepsModal from '../StepsModal/StepsModal'
 import DecimalInput from '../Util/DecimalInput'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
 import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
 import Loading from '../Util/Loading'
-import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/acoFlashExerciseMethods'
+import { getEstimatedReturn, hasUniswapPair, flashExercise, getFlashExerciseData } from '../../util/contractHelpers/acoFlashExerciseMethods'
+import { acoFlashExerciseAddress, baseSymbol, swapUrl } from '../../util/network'
 
 class ExerciseModal extends Component {
   constructor(props) {
@@ -24,6 +25,7 @@ class ExerciseModal extends Component {
   }
 
   componentDidMount = () => {
+    this.setAcoFee()
     getMaxExercisedAccounts(this.props.position.option).then(result => this.setState({ maxExercisedAccounts: result }))
 
     getBalanceOfExerciseAsset(this.props.position.option, this.context.web3.selectedAccount).then(result => {
@@ -35,7 +37,8 @@ class ExerciseModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair ||
+    if (this.props.networkToggle !== prevProps.networkToggle || 
+      this.props.selectedPair !== prevProps.selectedPair ||
       this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
@@ -95,7 +98,7 @@ class ExerciseModal extends Component {
         }
       }
       else {
-        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, acoFlashExerciseAddress).then(result => {
+        allowance(this.context.web3.selectedAccount, this.props.position.option.acoToken, acoFlashExerciseAddress()).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(resultValue.lt(this.getOptionAmountToDecimals()))
         })
@@ -108,7 +111,7 @@ class ExerciseModal extends Component {
       return allowDeposit(this.context.web3.selectedAccount, toDecimals(this.state.payValue, this.getPayDecimals()), getExerciseAddress(this.props.position.option), this.props.position.option.acoToken, nonce)
     }
     else {
-      return allowDeposit(this.context.web3.selectedAccount, this.getOptionAmountToDecimals().toString(), this.props.position.option.acoToken, acoFlashExerciseAddress, nonce)
+      return allowDeposit(this.context.web3.selectedAccount, this.getOptionAmountToDecimals().toString(), this.props.position.option.acoToken, acoFlashExerciseAddress(), nonce)
     }
   }
 
@@ -296,7 +299,15 @@ class ExerciseModal extends Component {
 
   getExerciseFee = (optionsAmount) => {
     var totalCollateralValue = this.getTotalCollateralValue(optionsAmount)
-    return (totalCollateralValue * (this.props.position.option.acoFee / PERCENTAGE_PRECISION))
+    return (totalCollateralValue * (this.state.acoFee / PERCENTAGE_PRECISION))
+  }
+
+  setAcoFee() {
+    if (this.props.position.option.acoFee !== null && this.props.position.option.acoFee !== undefined) {
+      this.setState({acoFee:this.props.position.option.acoFee})
+    } else {
+      acoFee(this.props.position.option).then((fee) => this.setState({acoFee:fee}))
+    }
   }
 
   getPayValue = (optionsAmount) => {
@@ -320,7 +331,7 @@ class ExerciseModal extends Component {
 
   isPayEth = () => {
     var option = this.props.position.option
-    return isEther(getExerciseAddress(option))
+    return isBaseAsset(getExerciseAddress(option))
   }
 
   getReceiveSymbol = () => {
@@ -445,7 +456,7 @@ class ExerciseModal extends Component {
                   </table>
                   {this.state.selectedTab === 1 && this.isInsufficientFundsToPay() && <>
                   <div className="insufficient-funds-message">You need more {this.getPayDifference()} {this.getPaySymbol()} to exercise {this.state.optionsAmount} options.</div>
-                  {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={uniswapUrl + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap ETH for {this.getPaySymbol()}</a>}
+                  {!this.isPayEth() && <a className="swap-link" target="_blank" rel="noopener noreferrer" href={swapUrl() + this.getPayAddress()}>Need {this.getPaySymbol()}? Swap {baseSymbol()} for {this.getPaySymbol()}</a>}
                   </>}
                   {this.isFlashOutOfMoney() && 
                     <div className="insufficient-funds-message">This option is currently out of the money according to the estimated Uniswap price, the transaction will most likely fail.</div>

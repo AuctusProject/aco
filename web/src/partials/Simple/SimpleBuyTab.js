@@ -5,8 +5,8 @@ import PropTypes from 'prop-types'
 import DecimalInput from '../Util/DecimalInput'
 import OptionBadge from '../OptionBadge'
 import SimpleDropdown from '../SimpleDropdown'
-import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isEther, maxAllowance, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy, acoBuyerAddress, zrxExchangeAddress } from '../../util/constants'
-import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { formatDate, groupBy, fromDecimals, formatWithPrecision, toDecimals, isBaseAsset, maxAllowance, formatPercentage, DEFAULT_SLIPPAGE, getBalanceOfAsset, sortBy } from '../../util/constants'
+import { getOptionFormattedPrice } from '../../util/contractHelpers/acoTokenMethods'
 import OptionChart from '../OptionChart'
 import Web3Utils from 'web3-utils'
 import { checkTransactionIsMined, getNextNonce } from '../../util/web3Methods'
@@ -14,8 +14,8 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { allowDeposit, allowance } from '../../util/erc20Methods'
-import { getDeribiData } from '../../util/acoApi'
+import { allowDeposit, allowance } from '../../util/contractHelpers/erc20Methods'
+import { getDeribiData } from '../../util/baseApi'
 import StepsModal from '../StepsModal/StepsModal'
 import VerifyModal from '../VerifyModal'
 import BigNumber from 'bignumber.js'
@@ -24,6 +24,7 @@ import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 import ReactTooltip from 'react-tooltip'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { buy, getQuote } from '../../util/acoSwapUtil'
+import { acoBuyerAddress, menuConfig, zrxExchangeAddress } from '../../util/network'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -68,16 +69,20 @@ class SimpleBuyTab extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair || !this.state.currentPairPrice) {
-      this.setPairCurrentPrice()
-    }
-    if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
-      this.selectType(this.state.selectedType)
-    }
-    if (this.props.selectedPair !== prevProps.selectedPair ||
-      this.props.accountToggle !== prevProps.accountToggle) {
-      this.refreshAccountBalance()
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else {
+      if (this.props.selectedPair !== prevProps.selectedPair || !this.state.currentPairPrice) {
+        this.setPairCurrentPrice()
+      }
+      if (this.props.selectedPair !== prevProps.selectedPair ||
+        this.props.toggleOptionsLoaded !== prevProps.toggleOptionsLoaded) {
+        this.selectType(this.state.selectedType)
+      }
+      if (this.props.selectedPair !== prevProps.selectedPair ||
+        this.props.accountToggle !== prevProps.accountToggle) {
+        this.refreshAccountBalance()
+      }
     }
   }
   
@@ -398,16 +403,16 @@ class SimpleBuyTab extends Component {
 
   getAllowanceAddress = () => {
     if (this.state.swapQuote.poolData.length === 0) {
-      return zrxExchangeAddress
+      return zrxExchangeAddress()
     }
     if (this.state.swapQuote.poolData.length === 1 && this.state.swapQuote.zrxData.length === 0) {
       return this.state.swapQuote.poolData[0].acoPool
     }
-    return acoBuyerAddress
+    return acoBuyerAddress()
   }
   
   isPayEth = () => {
-    return isEther(this.state.selectedOption.strikeAsset)
+    return isBaseAsset(this.state.selectedOption.strikeAsset)
   }
 
   onConnectClick = () => {
@@ -575,9 +580,9 @@ class SimpleBuyTab extends Component {
           </div>
         </div>
       </div>
-      <div className="create-link-wrapper">
+      {menuConfig().hasCreateOption && <div className="create-link-wrapper">
         <NavLink className="nav-link" to="/new-option">Want more flexibility? Create your custom option!</NavLink>
-      </div>
+      </div>}
       <div className="chart-and-prices">
         <div className="option-chart-wrapper">
           <OptionChart isCall={this.state.selectedType === 1} currentPrice={(!!this.state.currentPairPrice ? parseFloat(this.state.currentPairPrice) : null)} isBuy={true} strikePrice={priceFromDecimals} optionPrice={optionPrice} quantity={(!!this.state.qtyValue ? parseFloat(this.state.qtyValue) : null)}/>

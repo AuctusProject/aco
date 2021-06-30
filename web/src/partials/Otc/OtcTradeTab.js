@@ -4,7 +4,7 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import OtcTradeTabStep2 from './OtcTradeTabStep2'
 import OtcTradeTabStep1 from './OtcTradeTabStep1'
-import { getOtcOrder } from '../../util/acoApi'
+import { getOtcOrder } from '../../util/baseApi'
 import OtcTradeTabStep3 from './OtcTradeTabStep3'
 
 class OtcTradeTab extends Component {
@@ -24,7 +24,10 @@ class OtcTradeTab extends Component {
   }
   
   componentDidUpdate = (prevProps) => {    
-    if (!this.props.match.params.orderId && this.state.otcOrder) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+    else if (!this.props.match.params.orderId && this.state.otcOrder) {
       this.setState({otcOrder: null, selectedOption: null, step: 1})
     }
     else if (this.props.match.params.orderId && this.props.match.params.orderId !== prevProps.match.params.orderId) {

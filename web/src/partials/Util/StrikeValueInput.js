@@ -4,10 +4,11 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { faSearch } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { getDeribitOptions } from '../../util/acoApi'
+import { getDeribitOptions } from '../../util/baseApi'
 import Modal from 'react-bootstrap/Modal'
 import ReactTooltip from 'react-tooltip'
 import { groupBy } from '../../util/constants'
+import { usdSymbol } from '../../util/network'
 
 class StrikeValueInput extends Component {
   constructor(props) {
@@ -44,7 +45,7 @@ class StrikeValueInput extends Component {
           if (this.props.selectedStrike && this.props.selectedStrike.value === Number(strikePrice)) {
             hasCurrentSelectedStrikePrice = true
           }
-          return { value: Number(strikePrice), name: strikePrice + " USDC"}
+          return { value: Number(strikePrice), name: strikePrice + " " + usdSymbol()}
         })
         this.setState({selectedStrike: !hasCurrentSelectedStrikePrice ? null : this.props.selectedStrike, strikeValues: strikeOptions, filteredStrikes: strikeOptions})
       })

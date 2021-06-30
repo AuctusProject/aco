@@ -7,7 +7,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { claim } from '../../util/acoDistributorMethods'
+import { claim } from '../../util/contractHelpers/acoDistributorMethods'
 
 class AirdropClaimModal extends Component {
   constructor(props) {
@@ -20,7 +20,7 @@ class AirdropClaimModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

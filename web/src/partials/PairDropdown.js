@@ -5,18 +5,29 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
 import PairInfo from './PairInfo'
 import { getPairIdFromRoute } from '../util/constants'
+import { baseSymbol, usdSymbol } from '../util/network'
 
 class PairDropdown extends Component {  
   componentDidMount = () => {
-    if (this.props.pairs && this.props.pairs.length > 0 && !this.props.selectedPair) {
+    if (this.props.pairs && this.props.pairs.length > 0 && (!this.props.selectedPair || !this.hasSelectedPair())) {
       this.selectInitialPair()
     }
   }
 
   componentDidUpdate = (prevProps) => {
-    if (prevProps.pairs === null && this.props.pairs != null) {
+    if (this.props.networkToggle !== prevProps.networkToggle || prevProps.pairs !== this.props.pairs) {
       this.componentDidMount()
     }
+  }
+
+  hasSelectedPair = () => {
+    var pairs = this.props.pairs
+    for (let i = 0; i < pairs.length; i++) {
+      if (pairs[i].id === this.props.selectedPair.id) {
+        return true
+      }
+    }
+    return false
   }
 
   selectInitialPair = () => {
@@ -32,7 +43,8 @@ class PairDropdown extends Component {
       this.selectPair(pairs[0])
     }
     else {
-      var defaultIndex = this.props.pairs.findIndex((el) => el.id === "ETH_USDC")
+      let basePair = baseSymbol()+"_"+usdSymbol()
+      var defaultIndex = this.props.pairs.findIndex((el) => el.id === basePair)
       if (defaultIndex === -1)
         defaultIndex = 0
       this.selectPair(pairs[defaultIndex])

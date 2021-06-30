@@ -2,10 +2,10 @@ import PropTypes from 'prop-types'
 import { attemptAsync, delayAsync } from "./zrxUtils.js"
 import { w3cwebsocket } from "websocket"
 import WebSocketOrdersChannel from "./WebSocketOrdersChannel"
-import { zrxWSSUrl } from "../constants"
 import { Component } from 'react'
 import { getOrderbook, getUpdatedOrderbook } from '../acoSwapUtil'
 import { getOption } from '../dataController.js'
+import { zrxWSSUrl } from '../network.js'
 
 const childContextTypes = {
     orderbook: PropTypes.object
@@ -16,15 +16,14 @@ class WebsocketOrderProvider extends Component {
     _perPage = 100
     _isDestroyed = false
     _isConnecting = false
-    _ordersChannel
-    _websocketEndpoint = zrxWSSUrl
+    _ordersChannel = undefined
 
     constructor(props, context) {
         super(props, context)
         this.state = { 
             orderbooks: {}
         }
-    }    
+    } 
 
     async destroyAsync() {
         this._isDestroyed = true;
@@ -35,6 +34,11 @@ class WebsocketOrderProvider extends Component {
         }
     }
 
+    async restartAsync() {
+        await this.destroyAsync()
+        this.componentDidMount()
+    }
+
     componentDidMount() {
         if (this.props.option) {            
             this.subscribeAndGetOrders()
@@ -42,12 +46,20 @@ class WebsocketOrderProvider extends Component {
     }
 
     componentDidUpdate = (prevProps) => {
-        if (this.props.option !== prevProps.option) {
-            this.componentDidMount()
+        if (this.props.networkToggle !== prevProps.networkToggle) {
+            this.restartAsync()
+        } else {
+            if (this.props.option !== prevProps.option) {
+                this.componentDidMount()
+            }
+            if (this.props.slippage !== prevProps.slippage && this.props.option) {
+                this.setOrderBook(this.props.option)
+            }
         }
-        if (this.props.slippage !== prevProps.slippage && this.props.option) {
-            this.setOrderBook(this.props.option)
-        }
+    }
+
+    componentWillUnmount() {
+        this.destroyAsync()
     }
 
     subscribeAndGetOrders = async () => {
@@ -74,32 +86,36 @@ class WebsocketOrderProvider extends Component {
     }
 
     async _createWebsocketSubscriptionAsync(option) {
-        while (this._isConnecting && !this._ordersChannel) {
-            await delayAsync(100);
-        }
-        if (!this._ordersChannel) {
-            this._isConnecting = true;
-            try {
-                this._ordersChannel = await this._createOrdersChannelAsync();
-            } finally {
-                this._isConnecting = false;
+        let websocketEndpoint = zrxWSSUrl()
+        if (websocketEndpoint) {
+            while (this._isConnecting && !this._ordersChannel) {
+                await delayAsync(100);
+            }
+            if (!this._ordersChannel) {
+                this._isConnecting = true;
+                try {
+                    this._ordersChannel = await this._createOrdersChannelAsync();
+                } finally {
+                    this._isConnecting = false;
+                }
             }
         }
-        
-        var makerToken = this.props.option.acoToken
-        var takerToken = this.props.option.strikeAsset
-        const subscriptionOpts = {
-            makerToken,
-            takerToken,
-            acoToken: option.acoToken
-        };
         this._wsSubscriptions.add(option.acoToken);
-        this._ordersChannel.subscribe(subscriptionOpts);
-        this._ordersChannel.subscribe({
-            ...subscriptionOpts,
-            makerToken: takerToken,
-            takerToken: makerToken,
-        });
+        if (websocketEndpoint) {
+            var makerToken = this.props.option.acoToken
+            var takerToken = this.props.option.strikeAsset
+            const subscriptionOpts = {
+                makerToken,
+                takerToken,
+                acoToken: option.acoToken
+            }
+            this._ordersChannel.subscribe(subscriptionOpts);
+            this._ordersChannel.subscribe({
+                ...subscriptionOpts,
+                makerToken: takerToken,
+                takerToken: makerToken,
+            });
+        }
     }
 
     async _handleOrderUpdatesAsync(acoToken, apiOrders) {
@@ -133,13 +149,13 @@ class WebsocketOrderProvider extends Component {
                 ordersChannelHandler,
             );
         } catch (e) {
-            throw new Error(`Creating websocket connection to ${this._websocketEndpoint}`);
+            throw new Error(`Creating websocket connection to ${zrxWSSUrl()}`);
         }
     }
 
     async _createWebSocketOrdersChannelAsync(ordersChannelHandler) {
         return new Promise((resolve, reject) => {
-            var client = new w3cwebsocket(this._websocketEndpoint);
+            var client = new w3cwebsocket(zrxWSSUrl());
             client.onopen = function () {
                 var ordersChannel = new WebSocketOrdersChannel(client, ordersChannelHandler);
                 resolve(ordersChannel);

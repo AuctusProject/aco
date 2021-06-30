@@ -7,7 +7,7 @@ import MetamaskLargeIcon from './Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from './Util/SpinnerLargeIcon'
 import DoneLargeIcon from './Util/DoneLargeIcon'
 import ErrorLargeIcon from './Util/ErrorLargeIcon'
-import { newAcoToken } from '../util/acoFactoryMethods'
+import { newAcoToken } from '../util/contractHelpers/acoFactoryMethods'
 import { refreshAvailableOptions } from '../util/dataController'
 
 class CreateOptionModal extends Component {
@@ -21,7 +21,7 @@ class CreateOptionModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

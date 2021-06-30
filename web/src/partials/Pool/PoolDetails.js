@@ -21,7 +21,7 @@ class PoolDetails extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.updateBalances()
     }
   }
@@ -212,7 +212,7 @@ class PoolDetails extends Component {
             <div className={"outline-btn"} onClick={this.onWithdrawClick}>WITHDRAW</div>
           </div>
         </div>
-        <PoolAccountPosition pool={this.props.pool} balance={this.state.withdrawBalance}/>
+        <PoolAccountPosition {...this.props} pool={this.props.pool} balance={this.state.withdrawBalance}/>
       </div>}
     </div>
     {this.state.depositPool && <DepositModal {...this.props} pool={this.state.depositPool} depositBalance={this.state.depositBalance} onHide={this.onDepositHide} />}

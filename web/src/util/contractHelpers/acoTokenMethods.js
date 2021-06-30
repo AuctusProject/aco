@@ -1,15 +1,14 @@
-import { getWeb3, sendTransaction, sendTransactionWithNonce } from './web3Methods'
-import { isEther, fromDecimals, toDecimals, getBalanceOfAsset } from './constants';
+import { getWeb3, sendTransaction, sendTransactionWithNonce } from '../web3Methods'
+import { isBaseAsset, fromDecimals, toDecimals, getBalanceOfAsset } from '../constants';
 import { acoTokenABI } from './acoTokenABI';
 import Web3Utils from 'web3-utils';
 
 function getAcoTokenContract(address) {
-    var acoTokenContract = null
     const _web3 = getWeb3()
     if (_web3) {
-        acoTokenContract = new _web3.eth.Contract(acoTokenABI, address)
+        return new _web3.eth.Contract(acoTokenABI, address)
     }
-    return acoTokenContract
+    return null
 }
 
 export function getCollateralAddress(option) {
@@ -30,7 +29,7 @@ export function getExerciseAddress(option) {
 
 export function mint(userAddress, optionInfo, value, nonce) {
     const acoTokenContract = getAcoTokenContract(optionInfo.acoToken)
-    if (isEther(getCollateralAddress(optionInfo))) {
+    if (isBaseAsset(getCollateralAddress(optionInfo))) {
         var data = acoTokenContract.methods.mintPayable().encodeABI()
         return sendTransactionWithNonce(null, null, userAddress, optionInfo.acoToken, value, data, null, nonce)
     }
@@ -55,7 +54,7 @@ export function redeem(userAddress, optionInfo) {
 export function exercise(userAddress, optionInfo, tokenAmount, value, nonce) {
     const acoTokenContract = getAcoTokenContract(optionInfo.acoToken)
     var data = acoTokenContract.methods.exercise(tokenAmount, new Date().getTime()).encodeABI()
-    return sendTransactionWithNonce(null, null, userAddress, optionInfo.acoToken, (isEther(getExerciseAddress(optionInfo)) ? value : null), data, null, nonce)
+    return sendTransactionWithNonce(null, null, userAddress, optionInfo.acoToken, (isBaseAsset(getExerciseAddress(optionInfo)) ? value : null), data, null, nonce)
 }
 
 export function getBalanceOfCollateralAsset(optionInfo, userAddress) {

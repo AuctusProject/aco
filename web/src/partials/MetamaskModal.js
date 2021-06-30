@@ -26,7 +26,7 @@ class MetamaskModal extends Component {
       this.props.onHide()
     }
     return (
-      <Modal className={"metamask-modal "+ (this.props.darkMode ? "" : "")}  centered={true} size="sm" show={true} onHide={(e) => this.props.onHide()}>
+      <Modal className="metamask-modal" centered={true} size="sm" show={true} onHide={(e) => this.props.onHide()}>
         <Modal.Header closeButton>
         </Modal.Header>
         <Modal.Body>
@@ -34,7 +34,7 @@ class MetamaskModal extends Component {
             <div className="col-md-12">
               <div className="metamask-container text-center">
                 <div className="logo-wrapper">
-                  <img src={this.props.darkMode ? "/logo_white_sm.svg" : "/logo_sm.svg"} className="logo-img" alt="" />
+                  <img src="/logo_white_sm.svg" className="logo-img" alt="" />
                 </div>
                 <div className="metamask-modal-title">Connect Wallet</div>
                 <div className="metamask-modal-subtitle mb-4">To start using Auctus.</div>

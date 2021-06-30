@@ -1,14 +1,16 @@
 import './TradeMenu.css'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { fromDecimals, groupBy, formatDate } from '../util/constants'
+import { fromDecimals, groupBy, formatDate, getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner, faEnvelope } from '@fortawesome/free-solid-svg-icons'
 import { faTwitter, faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons'
 import { NavLink } from 'react-router-dom'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
+import PairDropdown from './PairDropdown'
 
 class TradeMenu extends Component {
+
   onSelectOption = (option) => {
     this.props.onSelectOption(option)
   }
@@ -19,29 +21,41 @@ class TradeMenu extends Component {
 
   getOptionsWithBalance = () => {
     return this.props.options ? this.props.options.filter(o => this.props.balances[o.acoToken] > 0) : []
+  }  
+
+  isLogged = () => {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount
+  }
+
+  getUrlWithPairId = (baseUrl) => {
+    var pairId = getPairIdFromRoute(this.props.location)
+    if (pairId) {
+      return baseUrl + "/" + pairId
+    }
+    return baseUrl
   }
 
   render() {
     var pair = this.props.selectedPair    
     var grouppedOptions = this.props.options ? groupBy(this.props.options, "expiryTime") : {}
     var balanceOptions = this.getOptionsWithBalance()
-    var pairTitle = pair.underlyingSymbol + pair.strikeAssetSymbol
-
-    var iconUrl = this.context && this.context.assetsImages && this.context.assetsImages[pair.underlyingSymbol]
+    var pairTitle = pair ? pair.underlyingSymbol + pair.strikeAssetSymbol : ""
+    var iconUrl = pair && this.context && this.context.assetsImages && this.context.assetsImages[pair.underlyingSymbol]
 
     return (
       <div className="trade-menu">
         <div className="trade-menu-content">
-          <div className="trade-menu-pair-balance-info">
+          <PairDropdown {...this.props}></PairDropdown>
+          {pair && <div className="trade-menu-pair-balance-info">
             <div className="trade-menu-balance-title">BALANCE</div>
             <div className="pair-balance-items">
               <div className="pair-balance-item">
                 <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
-                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : ""}>{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
+                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : ""}>{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</div>
               </div>
               <div className="pair-balance-item">
                 <div className="trade-menu-pair-symbol">{pair.strikeAssetSymbol}</div>
-                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : ""}>{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}</div>
+                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : ""}>{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</div>
               </div>
               {balanceOptions.map(option => (
                 <div key={option.acoToken} className="pair-balance-item clickable" onClick={() => this.onSelectOption(option)}>
@@ -50,8 +64,13 @@ class TradeMenu extends Component {
                 </div>
               ))}
             </div>
-          </div>    
-          <div>
+          </div>}
+          <div className="trade-menu-manage">
+            <div className="trade-menu-balance-title">MANAGE</div>
+            <NavLink className="trade-menu-manage-link" to={this.getUrlWithPairId("/advanced/mint")}>Mint Options</NavLink>
+            <NavLink className="trade-menu-manage-link" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise Options</NavLink>
+          </div>
+          {pair && <div>
             <div className="trade-menu-pair-title">
               {iconUrl && <img className="asset-icon" src={iconUrl} alt=""/>}
               {pairTitle} options
@@ -66,7 +85,7 @@ class TradeMenu extends Component {
                 </div>
               ))}
             </div>
-          </div>
+          </div>}
         </div>
         <div className="trade-menu-footer">
             <div className="trade-menu-footer-links">

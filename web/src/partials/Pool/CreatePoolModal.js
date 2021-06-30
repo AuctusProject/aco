@@ -6,28 +6,16 @@ import PropTypes from "prop-types";
 import OptionBadge from "../OptionBadge";
 import SimpleAssetDropdown from "../SimpleAssetDropdown";
 import DecimalInput from "../Util/DecimalInput";
-import { ethAddress, StrikePriceModes, StrikePriceOptions, STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS, toDecimals, usdcAddress, wbtcAddress } from "../../util/constants";
+import { StrikePriceModes, StrikePriceOptions, STRIKE_PRICE_MODE, STRIKE_PRICE_OPTIONS, toDecimals } from "../../util/constants";
 import SimpleDropdown from "../SimpleDropdown";
-import { createPrivatePool } from "../../util/acoPoolFactoryMethods";
+import { createPrivatePool } from "../../util/contractHelpers/acoPoolFactoryMethods";
 import { checkTransactionIsMined } from "../../util/web3Methods";
 import MetamaskLargeIcon from "../Util/MetamaskLargeIcon";
 import SpinnerLargeIcon from "../Util/SpinnerLargeIcon";
 import DoneLargeIcon from "../Util/DoneLargeIcon";
 import ErrorLargeIcon from "../Util/ErrorLargeIcon";
 import StepsModal from "../StepsModal/StepsModal";
-
-export const CREATE_POOL_UNDERLYING_OPTIONS = [
-  {
-    value: "ETH",
-    name: "ETH",
-    icon: "/images/eth_icon.png",
-  },
-  {
-    value: "WBTC",
-    name: "WBTC",
-    icon: "/images/wbtc_icon.png",
-  },
-];
+import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress, ethAsset, ethSymbol } from "../../util/network";
 
 class CreatePoolModal extends Component {
   constructor(props) {
@@ -35,10 +23,35 @@ class CreatePoolModal extends Component {
     this.state = this.getInitialState(props);
   }
 
+  underlyingOptions() {
+    let base = baseAsset()
+    let result = []
+    if (base.symbol !== ethSymbol()) {
+      result.push({
+        value: base.symbol,
+        name: base.symbol,
+        icon: base.icon
+      })
+    }
+    let eth = ethAsset()
+    result.push({
+      value: eth.symbol,
+      name: eth.symbol,
+      icon: eth.icon
+    })
+    let btc = btcAsset()
+    result.push({
+      value: btc.symbol,
+      name: btc.symbol,
+      icon: btc.icon
+    })
+    return result
+  }
+
   getInitialState = (props) => {
     var state = {
       selectedType: 1,
-      selectedUnderlying: CREATE_POOL_UNDERLYING_OPTIONS[0],
+      selectedUnderlying: this.underlyingOptions()[0],
       priceMode: STRIKE_PRICE_MODE[0],
       priceSettingsType: STRIKE_PRICE_OPTIONS[0],
       maxStrikePrice: "",
@@ -55,6 +68,12 @@ class CreatePoolModal extends Component {
       noMax: ""
     };
     return state;
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
+      this.props.onHide(false)
+    }
   }
 
   componentDidMount = () => {}
@@ -150,7 +169,8 @@ class CreatePoolModal extends Component {
       return "-1"
     }
     else {
-      return toDecimals(stateValue, 6).toString()
+      let usd = usdAsset()
+      return toDecimals(stateValue, usd.decimals).toString()
     }
   }
 
@@ -164,7 +184,7 @@ class CreatePoolModal extends Component {
       let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
       let minStrikePrice = this.getStrikePriceDecimals(this.state.minStrikePrice)
       let maxStrikePrice = this.getStrikePriceDecimals(this.state.maxStrikePrice)
-      let underlying = this.state.selectedUnderlying.value === "ETH" ? ethAddress : wbtcAddress
+      let underlying = this.state.selectedUnderlying.value === "ETH" ? ethAddress() : this.state.selectedUnderlying.value === btcSymbol() ? btcAddress() : baseAddress()
       if (this.state.priceMode.value === StrikePriceModes.AnyPrice || this.state.priceMode.value === StrikePriceModes.Fixed) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceBelowMax = "-1"
@@ -208,7 +228,7 @@ class CreatePoolModal extends Component {
       let maxExpiration = this.state.maxExpiration * 86400
       let baseVolatility = this.getToleranceDecimals(this.state.ivValue)
       this.setStepsModalInfo(++stepNumber)
-      createPrivatePool(this.context.web3.selectedAccount, underlying, usdcAddress, this.state.selectedType === 1, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration)
+      createPrivatePool(this.context.web3.selectedAccount, underlying, usdAddress(), this.state.selectedType === 1, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration)
       .then(result => {
         if (result) {
           this.setStepsModalInfo(++stepNumber)
@@ -366,7 +386,7 @@ class CreatePoolModal extends Component {
                 <div className="input-column underlying-column">
                   <div className="input-label">Underlying</div>
                   <div className="input-field">
-                    <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={CREATE_POOL_UNDERLYING_OPTIONS} onSelectOption={this.onAssetSelected} />
+                    <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={this.underlyingOptions()} onSelectOption={this.onAssetSelected} />
                   </div>
                 </div>
                 <div className="input-column">
@@ -422,7 +442,7 @@ class CreatePoolModal extends Component {
                         <div className="label-input-row">
                           <div className="input-field">
                             <DecimalInput disabled={this.state.noFixedMin} onChange={this.onMinStrikePriceChange} value={this.state.minStrikePrice}></DecimalInput>
-                            <div className="coin-symbol">USDC</div>
+                            <div className="coin-symbol">{usdSymbol()}</div>
                           </div>
                         </div>
                       </div>
@@ -441,7 +461,7 @@ class CreatePoolModal extends Component {
                         <div className="label-input-row">
                           <div className="input-field ">
                             <DecimalInput disabled={this.state.noFixedMax} onChange={this.onMaxStrikePriceChange} value={this.state.maxStrikePrice}></DecimalInput>
-                            <div className="coin-symbol">USDC</div>
+                            <div className="coin-symbol">{usdSymbol()}</div>
                           </div>
                         </div>
                       </div>

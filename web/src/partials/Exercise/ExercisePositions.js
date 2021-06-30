@@ -3,8 +3,8 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import OptionBadge from '../OptionBadge'
-import { getOptionFormattedPrice, getFormattedOpenPositionAmount } from '../../util/acoTokenMethods'
-import { listPositionsForExercise } from '../../util/acoFactoryMethods'
+import { getOptionFormattedPrice, getFormattedOpenPositionAmount } from '../../util/contractHelpers/acoTokenMethods'
+import { listPositionsForExercise } from '../../util/contractHelpers/acoFactoryMethods'
 import { confirm } from '../../util/sweetalert'
 import { fromDecimals, formatDate, PositionsLayoutMode, getTimeToExpiry } from '../../util/constants'
 
@@ -15,7 +15,8 @@ class ExercisePositions extends Component {
   }
   
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair ||
+    if (this.props.networkToggle !== prevProps.networkToggle || 
+      this.props.selectedPair !== prevProps.selectedPair ||
       this.props.accountToggle !== prevProps.accountToggle ||
       (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
       if (this.props.loadedPositions) {

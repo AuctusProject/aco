@@ -1,22 +1,24 @@
-import { getWeb3, sendTransaction } from './web3Methods'
-import { acoFactoryAddress, getOtcOptions, isExpired, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore, sortByDesc, sortByFn } from './constants';
+import { getWeb3, sendTransaction } from '../web3Methods'
+import { getOtcOptions, isExpired, removeExpiredOptions, removeNotWhitelistedOptions, removeOptionsToIgnore, sortByDesc, sortByFn } from '../constants';
 import { acoFactoryABI } from './acoFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { acoFee, unassignableCollateral, currentCollateral, assignableCollateral, balanceOf, getOpenPositionAmount, currentCollateralizedTokens, unassignableTokens, assignableTokens } from './acoTokenMethods';
-import { getPairsFromOptions } from './dataController';
+import { getOptions, getPairsFromOptions } from '../dataController';
+import { acoFactoryAddress } from '../network';
 
-var acoFactoryContract = null
 function getAcoFactoryContract() {
-    if (acoFactoryContract == null) {
-        const _web3 = getWeb3()
-        if (_web3) {
-            acoFactoryContract = new _web3.eth.Contract(acoFactoryABI, acoFactoryAddress)
-        }
+    const _web3 = getWeb3()
+    if (_web3) {
+        return new _web3.eth.Contract(acoFactoryABI, acoFactoryAddress())
     }
-    return acoFactoryContract
+    return null
 }
 
-var availableOptions = null
+export const resetOptions = () => {
+    availableOptions = null
+}
+
+let availableOptions = null
 function getAllAvailableOptions() {
     return new Promise((resolve, reject) => {
         if (availableOptions != null) {
@@ -80,16 +82,16 @@ function getAllAvailableOptionsWhitelisted() {
     })
 }
 
-function getOtcAvailableOptions() {
-    return new Promise((resolve, reject) => {
-        getAllAvailableOptions()
-        .then(allOptions => {
-            var otcOptions = getOtcOptions(allOptions)
-            resolve(otcOptions)
-        })
-        .catch((err) => reject(err))
-    })
-}
+// function getOtcAvailableOptions() {
+//     return new Promise((resolve, reject) => {
+//         getAllAvailableOptions()
+//         .then(allOptions => {
+//             var otcOptions = getOtcOptions(allOptions)
+//             resolve(otcOptions)
+//         })
+//         .catch((err) => reject(err))
+//     })
+// }
 
 function parseAcoCreationEvent(events) {
     return new Promise((resolve, reject) => {
@@ -159,15 +161,19 @@ export const listPairs = () => {
 
 export const listOptions = (pair, optionType = null, removeExpired = false, onlyOtcOptions = false) => {
     return new Promise((resolve, reject) => {
-        var optionsMethod = !onlyOtcOptions ? getAllAvailableOptionsWhitelisted : getOtcAvailableOptions
-        optionsMethod().then(availableOptions => {
+        getOptions().then(allOptions => {
+            if (removeExpired) {
+                allOptions = removeExpiredOptions(allOptions)
+            }
+            if (onlyOtcOptions) {
+                allOptions = getOtcOptions(allOptions)
+            }
             var options = []
-            for (let i = 0; i < availableOptions.length; i++) {
-                const option = availableOptions[i];
+            for (let i = 0; i < allOptions.length; i++) {
+                const option = allOptions[i];
                 if ((!pair || (option.underlying.toLowerCase() === pair.underlying.toLowerCase() && 
                     option.strikeAsset.toLowerCase() === pair.strikeAsset.toLowerCase())) && 
-                    (!optionType || (optionType === 1 ? option.isCall : !option.isCall)) && 
-                    (!removeExpired || !isExpired(option.expiryTime))) {
+                    (!optionType || (optionType === 1 ? option.isCall : !option.isCall))) {
                     options.push(option)
                 }
             }
@@ -282,7 +288,7 @@ export function getPositionForOption(option, userAccount) {
 export function newAcoToken(from, underlying, strikeAsset, isCall, strikePrice, expiryTime) {
     const contract = getAcoFactoryContract()
     var data = contract.methods.newAcoToken(underlying, strikeAsset, isCall, strikePrice, expiryTime).encodeABI()
-    return sendTransaction(null, null, from, acoFactoryAddress, null, data)
+    return sendTransaction(null, null, from, acoFactoryAddress(), null, data)
 }
 
 export const acoTokenData = (aco) => {

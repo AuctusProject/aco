@@ -1,60 +1,22 @@
 import Web3Utils from 'web3-utils'
-import { balanceOf, getERC20AssetInfo } from './erc20Methods';
+import { balanceOf, getERC20AssetInfo } from './contractHelpers/erc20Methods';
+import { allAcoOtcAddresses, CHAIN_ID, defaultAcoCreators, ethAddress, optionsToIgnore, usdAddress, btcAddress, usdAsset, baseAddress } from './network';
 import { checkEthBalanceOf } from './web3Methods';
 
 export const zero = new Web3Utils.BN(0);
 const negative1 = new Web3Utils.BN(-1);
 
-export const acoFactoryAddress = process.env.REACT_APP_ACO_FACTORY_ADDRESS; 
-export const acoPoolFactoryAddress = process.env.REACT_APP_ACO_POOL_FACTORY_ADDRESS; 
-export const acoFlashExerciseAddress = process.env.REACT_APP_ACO_FLASH_EXERCISE_ADDRESS; 
-export const acoWriterAddress = process.env.REACT_APP_ACO_WRITER_ADDRESS; 
-export const zrxExchangeAddress = process.env.REACT_APP_ZRX_EXCHANGE_ADDRESS.toLowerCase(); 
-export const multicallAddress = process.env.REACT_APP_MULTICALL_ADDRESS; 
-export const allAcoOtcAddresses = process.env.REACT_APP_ACO_OTC_ADDRESS.split(',');
-export const acoOtcAddress = allAcoOtcAddresses[allAcoOtcAddresses.length-1];
-export const acoBuyerAddress = process.env.REACT_APP_ACO_BUYER_ADDRESS;
-export const acoDistributorAddress = process.env.REACT_APP_ACO_DISTRIBUTOR_ADDRESS;
-export const acoRewardAddress = process.env.REACT_APP_ACO_REWARD_ADDRESS;
-export const auctusAddress = process.env.REACT_APP_AUCTUS_ADDRESS.toLowerCase();
-export const acoAssetConverterHelperAddress = process.env.REACT_APP_ASSET_CONVERTER_HELPER_ADDRESS;
-export const CHAIN_ID = process.env.REACT_APP_CHAIN_ID; 
-export const apiUrl = process.env.REACT_APP_ACO_API_URL;
-export const subgraphUrl = process.env.REACT_APP_SUBGRAPH_API_URL;
-export const zrxApiUrl = process.env.REACT_APP_ZRX_API_URL;
-export const zrxWSSUrl = process.env.REACT_APP_ZRX_WSS_URL;
-export const etherscanUrl = process.env.REACT_APP_ETHERSCAN_URL + "address/";
-export const etherscanTxUrl = process.env.REACT_APP_ETHERSCAN_URL + "tx/";
-export const gasPriceType = process.env.REACT_APP_GAS_PRICE_TYPE;
-export const defaultGasPrice = parseInt(process.env.REACT_APP_DEFAULT_GAS_PRICE);
-export const deprecatedPoolImplementation = process.env.REACT_APP_DEPRECATED_POOL_DEPRECATED_IMPLEMENTATION.toLowerCase().split(',');
-export const acoVaults = JSON.parse(process.env.REACT_APP_ACO_VAULTS);
-export const acoVaultsV2 = JSON.parse(process.env.REACT_APP_ACO_VAULTS_V2);
-export const defaultPoolAdmin = process.env.REACT_APP_ACO_DEFAULT_POOL_ADMIN.toLowerCase();
-export const defaultAcoCreator = process.env.REACT_APP_ACO_DEFAULT_CREATOR.toLowerCase().split(',');
-export const gasStationApiUrl = "https://ethgasstation.info/json/ethgasAPI.json"
 export const maxAllowance = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
-export const uniswapUrl = "https://uniswap.exchange/swap?outputCurrency=";
 export const coingeckoApiUrl = "https://api.coingecko.com/api/v3/"
-export const wssInfuraAddress = process.env.REACT_APP_INFURA_WSS;
-export const swapQuoteSellSize = "0.001";
-export const PERCENTAGE_PRECISION = 100000;
-export const ethAddress = "0x0000000000000000000000000000000000000000"; 
-export const usdcAddress = process.env.REACT_APP_USDC_ADDRESS.toLowerCase();
-export const wethAddress = process.env.REACT_APP_WETH_ADDRESS.toLowerCase();
-export const wbtcAddress = process.env.REACT_APP_WBTC_ADDRESS.toLowerCase();
-export const ethTransactionTolerance = 0.01;
-export const gwei = 1000000000;
-export const ONE_SECOND = 1000;
-export const ONE_MINUTE = ONE_SECOND * 60;
-export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60;
-export const DEFAULT_SLIPPAGE = 0.03;
-export const OTC_ORDER_STATUS_AVAILABLE = "0x00";
-export const ZRX_RPS = 3;
-export const acoRewardsPools = JSON.parse(process.env.REACT_APP_ACO_REWARDS_POOLS);
-export const acoAirdropAmounts = JSON.parse(process.env.REACT_APP_ACO_AIRDROP_AMOUNTS);
-export const airdropClaimStart = 1617386400;
-export const optionsToIgnore = ["0xf7902f8db0ee97f9e9b07933ba2724d64f267110","0xde757d935f43781c7079a41a162d8560a800ec13"];
+export const swapQuoteSellSize = "0.001"
+export const PERCENTAGE_PRECISION = 100000
+export const ethTransactionTolerance = 0.01
+export const gwei = 1000000000
+export const ONE_SECOND = 1000
+export const ONE_MINUTE = ONE_SECOND * 60
+export const ONE_YEAR_TOTAL_MINUTES = 365 * 24 * 60
+export const DEFAULT_SLIPPAGE = 0.03
+export const OTC_ORDER_STATUS_AVAILABLE = "0x00"
 
 export const OPTION_TYPES = {
     1: {
@@ -141,19 +103,6 @@ export function getOptionName(isCall) {
     return isCall ? OPTION_TYPES[1].name : OPTION_TYPES[2].name
 }
 
-export function getNetworkName(chainId) {
-    if (chainId === "4") {
-        return "rinkeby"
-    }
-    else if (chainId === "3") {
-        return "ropsten"
-    }
-    else if (chainId === "42") {
-        return "kovan"
-    }
-    return "mainnet"
-}
-
 export const ellipsisCenterOfText = (text) => {
     if (text && text.length > 10) {
       return text.substring(0, 6) + "..." + text.substring(text.length - 4, text.length)
@@ -172,14 +121,14 @@ export const formatDate = (expiryTime, shortDate= false, shortMonth = false) => 
     return new Date(expiryTime * ONE_SECOND).toLocaleString("en-US", options) + (shortDate ? "" : " UTC")
 }
 
-export const isEther = (assetAddress) => {
-    return assetAddress === ethAddress
+export const isBaseAsset = (assetAddress) => {
+    return assetAddress === baseAddress()
 }
 
 export function getBalanceOfAsset(assetAddress, userAddress) {
     return new Promise(function (resolve, reject) {
         let balance
-        if (isEther(assetAddress)) {
+        if (isBaseAsset(assetAddress)) {
             balance = checkEthBalanceOf(userAddress)
         }
         else {
@@ -383,7 +332,9 @@ export const getPairIdFromRoute = (location) => {
         var paths = location.pathname.split(route)
         if (paths.length >= 2) {
             var params = paths[1].split("/")
-            return params[0]
+            if (params[0].indexOf("_") > 0) {
+                return params[0]
+            }
         }
     }
     return null
@@ -391,23 +342,21 @@ export const getPairIdFromRoute = (location) => {
 
 export const getCurrentRoute = (location) => {
     var routes = [
-      "/advanced/exercise",
-      "/advanced/mint",
-      "/advanced/trade",
-      "/advanced/pools",
-      "/buy",
-      "/write",
-      "/manage",
-      "/pools"
-    ]
+        "/advanced/exercise",
+        "/advanced/mint",
+        "/advanced/trade",
+        "/buy",
+        "/write",
+        "/manage",
+    ];
     for (let i = 0; i < routes.length; i++) {
-      const route = routes[i];
-      if (location.pathname.indexOf(route) !== -1) {
-        return route  + "/"
-      }
+        const route = routes[i];
+        if (location.pathname.indexOf(route) !== -1) {
+            return route + "/";
+        }
     }
     return null;
-}
+};
 
 export const addressToData = (address) => {
     return address.substring(2).toLowerCase().padStart(64, '0');
@@ -418,29 +367,26 @@ export const dataToAddress = (data) => {
 }
 
 export const numberToData = (num) => {
-    return num.toString(16).padStart(64, '0')
+    let value = (typeof(num) === "string" ? BigInt(num) : num)
+    return value.toString(16).padStart(64, '0')
 }
 
 export const booleanToData = (bool) => {
     return "000000000000000000000000000000000000000000000000000000000000000" + (bool ? "1" : "0")
 }
 
-export const isDarkMode = () => {
-    return window.localStorage.getItem('LAYOUT_MODE') !== "0"
-}
-
 export const removeOptionsToIgnore = (options) => {
-    return options.filter(o => !optionsToIgnore.includes(o.acoToken.toLowerCase()))
+    return options.filter(o => !optionsToIgnore().includes(o.acoToken.toLowerCase()))
 }
 
 export const removeOtcOptions = (options) => {
-    return options.filter(o => !o.creator || (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length === 0))
+    return options.filter(o => !o.creator || (allAcoOtcAddresses().filter(c => c.toLowerCase() === o.creator.toLowerCase()).length === 0))
 }
 
 export const removeNotWhitelistedOptions = (options) => {
-    return options.filter(o => o.strikeAsset.toLowerCase() === usdcAddress && 
-        (o.underlying.toLowerCase() === wbtcAddress || o.underlying.toLowerCase() === ethAddress || !o.creator ||
-            (defaultAcoCreator.filter(c => c === o.creator.toLowerCase()).length > 0)))
+    return options.filter(o => o.strikeAsset.toLowerCase() === usdAddress() && 
+        (o.underlying.toLowerCase() === btcAddress() || o.underlying.toLowerCase() === ethAddress() || o.underlying.toLowerCase() === baseAddress()
+         || !o.creator || (defaultAcoCreators().filter(c => c === o.creator.toLowerCase()).length > 0)))
 }
 
 export const isExpired = (expiryTime) => {
@@ -452,7 +398,7 @@ export const removeExpiredOptions = (options) => {
 }
 
 export const getOtcOptions = (options) => {
-    return options.filter(o => o.creator && (allAcoOtcAddresses.filter(c => c.toLowerCase() === o.creator.toLowerCase()).length > 0))
+    return options.filter(o => o.creator && (allAcoOtcAddresses().filter(c => c.toLowerCase() === o.creator.toLowerCase()).length > 0))
 }
 
 export const getByAddress = (address) => {
@@ -475,11 +421,11 @@ export const getByAddress = (address) => {
 export const saveToLocalOrders = (order) => {
     var localOrders = getLocalOrders()
     localOrders.push(order)
-    window.localStorage.setItem('OTC_LOCAL_ORDERS', JSON.stringify(localOrders))
+    window.localStorage.setItem('OTC_LOCAL_ORDERS_'+CHAIN_ID(), JSON.stringify(localOrders))
 }
 
 export const getLocalOrders = () => {
-    var localOrders = window.localStorage.getItem('OTC_LOCAL_ORDERS')
+    var localOrders = window.localStorage.getItem('OTC_LOCAL_ORDERS_'+CHAIN_ID())
     if (!localOrders) {
         return []
     }
@@ -502,12 +448,32 @@ export const getSlippageConfig = () => {
     }
 }
 
+export const ModeView = {
+    Basic: 1,
+    Advanced: 2
+}
+
+export const setModeView = (modeView) => {
+    window.localStorage.setItem('MODE_VIEW', modeView.toString())
+}
+
+export const getModeView = () => {
+    var modeView = window.localStorage.getItem('MODE_VIEW')
+    if (!modeView) {
+        return ModeView.Basic
+    }
+    else {
+        return parseInt(modeView)
+    }
+}
+
 export const capitalizeFirstLetter = (string) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
 export const formatAcoRewardName = (acoReward) => {
-    var strikePrice = Number(fromDecimals(acoReward.strikePrice, 6)).toFixed(2)
+    var usd = usdAsset()
+    var strikePrice = Number(fromDecimals(acoReward.strikePrice, usd.decimals)).toFixed(2)
     var formattedDate = formatDate(acoReward.expiryTime, true)
     return `AUC CALL $${strikePrice} Expiration: ${formattedDate}`
 }

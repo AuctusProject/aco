@@ -5,6 +5,7 @@ import { withRouter } from 'react-router-dom'
 import { fromDecimals } from '../../util/constants'
 import { mergeByPrice } from '../../util/Zrx/orderbookUtil'
 import BigNumber from 'bignumber.js'
+import { usdSymbol } from '../../util/network'
 
 class Orderbook extends Component {
   constructor() {
@@ -86,7 +87,7 @@ class Orderbook extends Component {
         <div className="orderbook-table">
           <div className="orderbook-table-headers">
             <div className="orderbook-table-header-item orderbook-size-col">Size</div>
-            <div className="orderbook-table-header-item orderbook-price-col">Price (USDC)</div>
+            <div className="orderbook-table-header-item orderbook-price-col">Price ({usdSymbol()})</div>
           </div>
           <div className="orderbook-table-body">
             <div className="orderbook-table-body-content">

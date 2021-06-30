@@ -8,7 +8,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { redeemACOTokens } from '../../util/acoPoolMethodsv3'
+import { redeemACOTokens } from '../../util/contractHelpers/acoPoolMethodsv3'
 
 class RedeemModal extends Component {
   constructor(props) {
@@ -23,7 +23,7 @@ class RedeemModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }

@@ -8,10 +8,11 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { acoOtcAddress, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, toDecimals, usdcAddress, wethAddress, zero } from '../../util/constants'
-import { allowance, allowDeposit } from '../../util/erc20Methods'
-import { signOrder } from '../../util/acoOtcMethods'
-import { createOtcOrder } from '../../util/acoApi'
+import { fromDecimals, getBalanceOfAsset, isBaseAsset, maxAllowance, toDecimals, zero } from '../../util/constants'
+import { allowance, allowDeposit } from '../../util/contractHelpers/erc20Methods'
+import { signOrder } from '../../util/contractHelpers/acoOtcMethods'
+import { createOtcOrder } from '../../util/baseApi'
+import { acoOtcAddress, baseSymbol, usdAddress, usdAsset, usdSymbol, wrapperAddress } from '../../util/network'
 
 class CreateOrderModal extends Component {
   constructor(props) {
@@ -24,7 +25,7 @@ class CreateOrderModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }
@@ -72,7 +73,7 @@ class CreateOrderModal extends Component {
   afterWrap = (stepNumber, nonce, needApproval, needWrap) => {
     if (needApproval) {
       this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
-      allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getAsset(), acoOtcAddress, nonce)
+      allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getAsset(), acoOtcAddress(), nonce)
         .then(result => {
           if (result) {
             this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
@@ -103,8 +104,8 @@ class CreateOrderModal extends Component {
 
   needWrapValue = () => {
     return new Promise((resolve) => {
-      if (this.getAsset() === wethAddress) {
-        getBalanceOfAsset(wethAddress, this.context.web3.selectedAccount).then(result => {
+      if (this.getAsset() === wrapperAddress()) {
+        getBalanceOfAsset(wrapperAddress(), this.context.web3.selectedAccount).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(this.getAssetValue().sub(resultValue))
         })
@@ -118,20 +119,20 @@ class CreateOrderModal extends Component {
   getAsset = () => {
     var isCall = this.props.createOrderData.selectedOption.selectedType === 1
     if (this.props.createOrderData.isAsk && isCall) {
-      return isEther(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  wethAddress : this.props.createOrderData.selectedOption.selectedUnderlying.address
+      return isBaseAsset(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  wrapperAddress() : this.props.createOrderData.selectedOption.selectedUnderlying.address
     }
     else {
-      return usdcAddress
+      return usdAddress()
     }
   }
 
   getAssetSymbol = () => {
     var isCall = this.props.createOrderData.selectedOption.selectedType === 1
     if (this.props.createOrderData.isAsk && isCall) {
-      return isEther(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  "WETH" : this.props.createOrderData.selectedOption.selectedUnderlying.symbol
+      return isBaseAsset(this.props.createOrderData.selectedOption.selectedUnderlying.address) ?  "WETH" : this.props.createOrderData.selectedOption.selectedUnderlying.symbol
     }
     else {
-      return "USDC"
+      return usdSymbol()
     }
   }
 
@@ -142,7 +143,8 @@ class CreateOrderModal extends Component {
         return this.props.createOrderData.optionQty
       }
       else {
-        return new Web3Utils.BN(fromDecimals(toDecimals(this.props.createOrderData.selectedOption.strikeValue, 6).mul(this.props.createOrderData.optionQty), this.props.createOrderData.selectedOption.selectedUnderlying.decimals, 0, 0))
+        let usd = usdAsset()
+        return new Web3Utils.BN(fromDecimals(toDecimals(this.props.createOrderData.selectedOption.strikeValue, usd.decimals).mul(this.props.createOrderData.optionQty), this.props.createOrderData.selectedOption.selectedUnderlying.decimals, 0, 0))
       }
     }
     else {
@@ -156,7 +158,7 @@ class CreateOrderModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-      allowance(this.context.web3.selectedAccount, this.getAsset(), acoOtcAddress).then(result => {
+      allowance(this.context.web3.selectedAccount, this.getAsset(), acoOtcAddress()).then(result => {
         var resultValue = new Web3Utils.BN(result)
         resolve(resultValue.lt(this.getAssetValue()))
       })
@@ -196,7 +198,7 @@ class CreateOrderModal extends Component {
   setStepsModalInfo = (stepNumber, needApproval, needWrap) => {
     var title = ""
     if (stepNumber <= 2) {
-      title = "Wrap ETH"
+      title = "Wrap " + baseSymbol()
     }
     else if (stepNumber <= 4) {
       title = "Unlock token"
@@ -209,11 +211,11 @@ class CreateOrderModal extends Component {
     var img = null
     var assetSymbol =  this.getAssetSymbol()
     if (needWrap && stepNumber === 1) {
-      subtitle = "Confirm on " + this.context.web3.name + " to wrap ETH."
+      subtitle = "Confirm on " + this.context.web3.name + " to wrap " + baseSymbol() +"."
       img = <MetamaskLargeIcon />
     }
     else if (needWrap && stepNumber === 2) {
-      subtitle = "Wrapping ETH..."
+      subtitle = "Wrapping " + baseSymbol() + "..."
       img = <SpinnerLargeIcon />
     }
     else if (needApproval && stepNumber === 3) {
@@ -244,7 +246,7 @@ class CreateOrderModal extends Component {
 
     var steps = []
     if (needWrap) {
-      steps.push({ title: "Wrap ETH", progress: stepNumber > 2 ? 100 : 0, active: true })
+      steps.push({ title: "Wrap " + baseSymbol(), progress: stepNumber > 2 ? 100 : 0, active: true })
     }
     if (needApproval) {
       steps.push({ title: "Unlock", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false })

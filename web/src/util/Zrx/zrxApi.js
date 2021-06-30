@@ -1,7 +1,8 @@
 import Axios from 'axios'
-import { toDecimals, zrxApiUrl, ZRX_RPS } from '../constants'
+import { toDecimals } from '../constants'
 import BigNumber from 'bignumber.js'
 import { RateLimit } from 'async-sema';
+import { zrxApiUrl, zrxRequestPerSecond } from '../network';
 
 export const getSwapQuote = async (isBuy, option, acoAmount = null, acoPrice = null) => {
   let makerToken = (isBuy ? option.acoToken : option.strikeAsset)
@@ -95,10 +96,17 @@ const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
   return sortedOrders
 }
 
-var rateLimit = new RateLimit(ZRX_RPS)
+export const resetZrxRateLimit = () => {
+  rateLimit = new RateLimit(zrxRequestPerSecond())
+}
+
+let rateLimit = new RateLimit(zrxRequestPerSecond())
 export const getOrders = async (makerToken, takerToken, page = 1, perPage = 100) => {
+  if (!zrxApiUrl()) {
+    return []
+  }
   await rateLimit()
-  let url = zrxApiUrl + "sra/v4/orders?"
+  let url = zrxApiUrl() + "sra/v4/orders?"
   url += "makerToken=" + makerToken
   url += "&takerToken=" + takerToken
   url += "&page=" + page
@@ -112,7 +120,7 @@ export const getOrders = async (makerToken, takerToken, page = 1, perPage = 100)
 
 export const postOrder = async (order) => {
   await rateLimit()
-  const res = await Axios.post(zrxApiUrl + "sra/v4/order", order)
+  const res = await Axios.post(zrxApiUrl() + "sra/v4/order", order)
   if (res && res.data) {
     return res.data
   }
@@ -121,7 +129,7 @@ export const postOrder = async (order) => {
 
 export const postOrderConfig = async (order) => {
   await rateLimit()
-  const res = await Axios.post(zrxApiUrl + "sra/v4/order_config", order)
+  const res = await Axios.post(zrxApiUrl() + "sra/v4/order_config", order)
   if (res && res.data) {
     return res.data
   }

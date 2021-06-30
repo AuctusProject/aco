@@ -6,14 +6,15 @@ import Web3Utils from 'web3-utils'
 import Loading from '../Util/Loading'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faClone } from '@fortawesome/free-regular-svg-icons'
-import { ellipsisCenterOfText, etherscanUrl, formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isEther, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals, usdcAddress, wethAddress } from '../../util/constants'
-import { getAcoAsset } from '../../util/acoApi'
+import { ellipsisCenterOfText, formatDate, formatWithPrecision, fromDecimals, getBalanceOfAsset, getByAddress, getTimeToExpiry, isBaseAsset, ONE_SECOND, OTC_ORDER_STATUS_AVAILABLE, toDecimals } from '../../util/constants'
+import { getAcoAsset } from '../../util/baseApi'
 import CancelOrderModal from './CancelOrderModal'
 import AssetInput from '../Util/AssetInput'
 import TakeOrderModal from './TakeOrderModal'
-import { signerNonceStatus } from '../../util/acoOtcMethods'
+import { signerNonceStatus } from '../../util/contractHelpers/acoOtcMethods'
 import ReactTooltip from 'react-tooltip'
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
+import { explorerUrl, usdAddress, usdAsset, usdSymbol, wrapperAddress } from '../../util/network'
 
 class OtcTradeTabStep3 extends Component {
   constructor(props) {
@@ -28,11 +29,15 @@ class OtcTradeTabStep3 extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.otcOrder !== prevProps.otcOrder) {
-      this.loadOrderInfo()
-    }
-    if (this.props.accountToggle !== prevProps.accountToggle) {
-      this.loadAssetsBalances()
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else {
+      if (this.props.otcOrder !== prevProps.otcOrder) {
+        this.loadOrderInfo()
+      }
+      if (this.props.accountToggle !== prevProps.accountToggle) {
+        this.loadAssetsBalances()
+      }
     }
   }
 
@@ -42,23 +47,24 @@ class OtcTradeTabStep3 extends Component {
     if (userAddress && this.state.optionInfo) {
       var assetToPay = this.getAssetToPay()
       var signerAssetToPay = this.getSignerAssetToPay()
-      if (isEther(assetToPay)) {
-        getBalanceOfAsset(wethAddress, userAddress).then(wethBalance => {
+      if (isBaseAsset(assetToPay)) {
+        getBalanceOfAsset(wrapperAddress(), userAddress).then(wethBalance => {
           this.setState({ wethBalance: wethBalance })
         })
       }
       getBalanceOfAsset(assetToPay, userAddress).then(assetToPayBalance => {
         this.setState({ assetToPayBalance: assetToPayBalance })
       })
-      getBalanceOfAsset(isEther(signerAssetToPay) ? wethAddress : signerAssetToPay, this.props.otcOrder.order.signer.responsible).then(wethBalance => {
+      getBalanceOfAsset(isBaseAsset(signerAssetToPay) ? wrapperAddress() : signerAssetToPay, this.props.otcOrder.order.signer.responsible).then(wethBalance => {
         this.setState({ signerAssetToPayBalance: wethBalance })
       })
     }
   }
 
   getAmountToPay = () => {
+    let usd = usdAsset()
     if (this.props.otcOrder.isAskOrder) 
-      return toDecimals(this.state.usdcValue, 6)
+      return toDecimals(this.state.usdcValue, usd.decimals)
     else if (this.state.optionInfo.isCall)
       return this.state.optionInfo.amount
     else
@@ -69,7 +75,7 @@ class OtcTradeTabStep3 extends Component {
     if (!this.props.otcOrder.isAskOrder && this.state.optionInfo.isCall)
       return this.state.assetInfo.address
     else
-      return usdcAddress
+      return usdAddress()
   }
 
   getSignerAmountToPay = () => {
@@ -85,7 +91,7 @@ class OtcTradeTabStep3 extends Component {
     if (this.props.otcOrder.isAskOrder && this.state.optionInfo.isCall)
       return this.state.assetInfo.address
     else
-      return usdcAddress
+      return usdAddress()
   }
 
   getUnderlyingAddress = () => {
@@ -97,22 +103,23 @@ class OtcTradeTabStep3 extends Component {
 
   loadOrderInfo = () => {
     if (this.props.otcOrder) {
+      let usd = usdAsset()
       var optionInfo = this.props.otcOrder.isAskOrder ? this.props.otcOrder.order.signer : this.props.otcOrder.order.sender
       var usdcInfo = !this.props.otcOrder.isAskOrder ? this.props.otcOrder.order.signer : this.props.otcOrder.order.sender
       this.getOrderUnderlyingInfo(optionInfo.underlying).then(acoAsset => {
-        var strikeValue = fromDecimals(optionInfo.strikePrice, 6, 6, 0)
+        var strikeValue = fromDecimals(optionInfo.strikePrice, usd.decimals, usd.decimals, 0)
         var optionName =
           "ACO " +
           acoAsset.symbol +
           "-" +
           strikeValue +
-          "USDC-" +
+          usdSymbol() + "-" +
           (optionInfo.isCall ? "C" : "P") +
           "-" +
           this.getFormattedDate(optionInfo)
 
         var optionQty = fromDecimals(optionInfo.amount, acoAsset.decimals, 4, 0)
-        var usdcValue = fromDecimals(usdcInfo.amount, 6, 4, 0)
+        var usdcValue = fromDecimals(usdcInfo.amount, usd.decimals, 4, 0)
         this.setState({ optionInfo: optionInfo, assetInfo: acoAsset, optionName: optionName, optionQty: optionQty, usdcValue: usdcValue },
           () => this.loadAssetsBalances())
       })
@@ -194,7 +201,8 @@ class OtcTradeTabStep3 extends Component {
   }
 
   getUSDCToCollaterizeFormatted = () => {
-    return fromDecimals(this.getUSDCToCollaterize(), 6)
+    let usd = usdAsset()
+    return fromDecimals(this.getUSDCToCollaterize(), usd.decimals)
   }
 
   getTimeToExpiryOrder = () => {
@@ -246,7 +254,7 @@ class OtcTradeTabStep3 extends Component {
   }
 
   getSummaryDescription = () => {
-    var premium = this.state.usdcValue + " USDC"
+    var premium = this.state.usdcValue + " " + usdSymbol()
     var summary = ""
     if (this.props.otcOrder.isAskOrder) {
       summary = `Pay ${premium} for the right to ${this.state.optionInfo.isCall ? "buy" : "sell"} `
@@ -254,7 +262,7 @@ class OtcTradeTabStep3 extends Component {
     else {
       summary = `Receive ${premium} in return for assuming the obligation to ${this.state.optionInfo.isCall ? "sell" : "buy"} `
     }
-    summary += `${this.state.optionQty} ${this.state.assetInfo.symbol} for ${this.getStrikePriceOption()} USDC each until ${this.getExpirationOption()}.`
+    summary += `${this.state.optionQty} ${this.state.assetInfo.symbol} for ${this.getStrikePriceOption()} ${usdSymbol()} each until ${this.getExpirationOption()}.`
     return summary
   }
 
@@ -263,7 +271,8 @@ class OtcTradeTabStep3 extends Component {
   }
 
   getStrikePriceOption = () => {
-    return fromDecimals(this.state.optionInfo.strikePrice, 6, 6, 0)
+    let usd = usdAsset()
+    return fromDecimals(this.state.optionInfo.strikePrice, usd.decimals, usd.decimals, 0)
   }
 
   onConnectClick = () => {
@@ -272,12 +281,13 @@ class OtcTradeTabStep3 extends Component {
 
   onTakeTradeClick = () => {
     if (this.canTakeOrder() && !this.getButtonMessage()) {
+      let usd = usdAsset()
       var orderData = {
         isAskOrder: this.props.otcOrder.isAskOrder,
         underlying: this.state.assetInfo,
         isCall: this.state.optionInfo.isCall,
         optionQty: this.state.optionInfo.amount,
-        usdcValue: toDecimals(this.state.usdcValue, 6),
+        usdcValue: toDecimals(this.state.usdcValue, usd.decimals),
         strikeValue: this.state.optionInfo.strikePrice,
         order: this.props.otcOrder.order
       }
@@ -295,7 +305,7 @@ class OtcTradeTabStep3 extends Component {
     }
     var amountToPay = this.getAmountToPay()
     var assetToPay = this.getAssetToPay()
-    return ((isEther(assetToPay) && new Web3Utils.BN(this.state.wethBalance).gte(new Web3Utils.BN(amountToPay))) ||
+    return ((isBaseAsset(assetToPay) && new Web3Utils.BN(this.state.wethBalance).gte(new Web3Utils.BN(amountToPay))) ||
       new Web3Utils.BN(this.state.assetToPayBalance).gte(new Web3Utils.BN(amountToPay)))
   }
 
@@ -310,7 +320,7 @@ class OtcTradeTabStep3 extends Component {
   }
 
   isPublicCounterparty = () => {
-    return isEther(this.props.otcOrder.order.sender.responsible)
+    return isBaseAsset(this.props.otcOrder.order.sender.responsible)
   }
 
   getButtonMessage = () => {
@@ -409,20 +419,20 @@ class OtcTradeTabStep3 extends Component {
               </div>
               <div className="label-column">
                 <div className="label-text">
-                  USDC
+                  {usdSymbol()}
               </div>
               </div>
             </div>
             <div className="otc-value-row">
               {!this.props.otcOrder.isAskOrder ? <div>
-                Total premium to be paid: {this.state.usdcValue} USDC {this.getPremiumPerOption()}
+                Total premium to be paid: {this.state.usdcValue} {usdSymbol()} {this.getPremiumPerOption()}
               </div> :
                 <>
                   {this.state.optionInfo.isCall ?
                     <div>{this.state.assetInfo.symbol} to collaterize: {this.state.optionQty}</div> :
-                    <div>USDC to collaterize: {this.getUSDCToCollaterizeFormatted()}</div>
+                    <div>{usdSymbol()} to collaterize: {this.getUSDCToCollaterizeFormatted()}</div>
                   }
-                  <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}</div>
+                  <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} {usdSymbol()} {this.getPremiumPerOption()}</> : "-"}</div>
                 </>}
             </div>
             <div className="counterparty-row">
@@ -480,9 +490,9 @@ class OtcTradeTabStep3 extends Component {
                 <div className="input-column">
                   <div className="input-label">Underlying</div>
                   <div className="input-field">
-                    <AssetInput onAssetSelected={this.onAssetSelected} disabled={true} showTokenImportedModal={this.canTakeOrder()} selectedAsset={this.state.assetInfo}></AssetInput>
+                    <AssetInput {...this.props} onAssetSelected={this.onAssetSelected} disabled={true} showTokenImportedModal={this.canTakeOrder()} selectedAsset={this.state.assetInfo}></AssetInput>
                   </div>
-                  {this.state.assetInfo.foundByAddress && <a className="address-hint" rel="noopener noreferrer" href={etherscanUrl + this.state.assetInfo.address} target="_blank">
+                  {this.state.assetInfo.foundByAddress && <a className="address-hint" rel="noopener noreferrer" href={explorerUrl() + this.state.assetInfo.address} target="_blank">
                     <div className="truncate">{ellipsisCenterOfText(this.state.assetInfo.address)}</div>
                     <FontAwesomeIcon icon={faExternalLinkAlt}></FontAwesomeIcon>
                   </a>}
@@ -508,14 +518,14 @@ class OtcTradeTabStep3 extends Component {
               </div>
               <div className={"otc-value-row " + (!this.hasBalanceToTake() ? "insufficient-funds" : "")}>
                 {this.props.otcOrder.isAskOrder ? <div>
-                  Total premium to be paid: {this.state.usdcValue} USDC {this.getPremiumPerOption()}
+                  Total premium to be paid: {this.state.usdcValue} {usdSymbol()} {this.getPremiumPerOption()}
                 </div> :
                   <>
                     {this.state.optionInfo.isCall ?
                       <div>{this.state.assetInfo.symbol} to collaterize: {this.state.optionQty}</div> :
-                      <div>USDC to collaterize: {this.getUSDCToCollaterizeFormatted()}</div>
+                      <div>{usdSymbol()} to collaterize: {this.getUSDCToCollaterizeFormatted()}</div>
                     }
-                    <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} USDC {this.getPremiumPerOption()}</> : "-"}</div>
+                    <div>Total premium to be received: {this.state.usdcValue ? <>{this.state.usdcValue} {usdSymbol()} {this.getPremiumPerOption()}</> : "-"}</div>
                   </>}
               </div>
               <div className={"counterparty-row "+ (!this.isCounterpartyWallet() ? "invalid-counterparty" : "")}>
@@ -541,8 +551,8 @@ class OtcTradeTabStep3 extends Component {
               </div>
             </>}
         </>}
-      {this.state.cancelOrderData && <CancelOrderModal cancelOrderData={this.state.cancelOrderData} onHide={this.onCancelOrderHide} />}
-      {this.state.takeOrderData && <TakeOrderModal orderData={this.state.takeOrderData} onHide={this.onTakeOrderHide} />}
+      {this.state.cancelOrderData && <CancelOrderModal {...this.props} cancelOrderData={this.state.cancelOrderData} onHide={this.onCancelOrderHide} />}
+      {this.state.takeOrderData && <TakeOrderModal {...this.props} orderData={this.state.takeOrderData} onHide={this.onTakeOrderHide} />}
     </div>
   }
 }

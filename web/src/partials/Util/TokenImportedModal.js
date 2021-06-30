@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/Modal'
-import { etherscanUrl } from '../../util/constants'
+import { explorerUrl } from '../../util/network'
 
 class TokenImportedModal extends Component {
   constructor(props) {
@@ -51,7 +51,7 @@ class TokenImportedModal extends Component {
               <div className="asset-name">{this.props.selectedAsset.symbol}</div>
               <div className="asset-address">
                 <span>{this.props.selectedAsset.address}</span>
-                <a className="etherscan-link" rel="noopener noreferrer" href={etherscanUrl + this.props.selectedAsset.address} target="_blank">(View on Etherscan)</a>
+                <a className="etherscan-link" rel="noopener noreferrer" href={explorerUrl() + this.props.selectedAsset.address} target="_blank">(View on Etherscan)</a>
               </div>
             </div>            
           </div>

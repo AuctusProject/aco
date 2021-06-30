@@ -1,12 +1,12 @@
 import { getWeb3, sendTransaction } from '../web3Methods.js'
 import Web3Utils from 'web3-utils'
 import { zrxABI } from './zrxABI.js'
-import { zrxExchangeAddress } from '../constants.js'
 import { getGasPrice } from '../gasStationApi.js'
+import { zrxExchangeAddress } from '../network.js'
 
 const getExchangeContract = () => {
   const _web3 = getWeb3()
-  return new _web3.eth.Contract(zrxABI, zrxExchangeAddress)
+  return new _web3.eth.Contract(zrxABI, zrxExchangeAddress())
 }
 
 export const getSwapData = async (orders, amounts) => {
@@ -20,13 +20,13 @@ export const getSwapData = async (orders, amounts) => {
 export const cancelLimitOrder = async (from, order) => {
   const exchange = getExchangeContract()
   const data = exchange.methods.cancelLimitOrder(order).encodeABI()
-  return sendTransaction(null, null, from, zrxExchangeAddress, null, data, null)
+  return sendTransaction(null, null, from, zrxExchangeAddress(), null, data, null)
 }
 
 export const cancelAllPairLimitOrders = async (from, baseAsset, quoteAsset) => {
   const exchange = getExchangeContract()
   const data = exchange.methods.cancelPairLimitOrders(baseAsset, quoteAsset, new Web3Utils.BN(Date.now())).encodeABI()
-  return sendTransaction(null, null, from, zrxExchangeAddress, null, data, null)
+  return sendTransaction(null, null, from, zrxExchangeAddress(), null, data, null)
 }
 
 let protocolFeeMultiplier = null
@@ -46,4 +46,8 @@ export const getFeeData = async (ordersAmount) => {
     gasPrice: gas,
     value: gas.mul(new Web3Utils.BN(data[1])).mul(new Web3Utils.BN(ordersAmount))
   }
+}
+
+export const resetZrxData = () => {
+  protocolFeeMultiplier = null
 }

@@ -3,7 +3,7 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import Modal from 'react-bootstrap/Modal'
-import { getOptionCollateralFormatedValue, getTokenAmount, getOptionTokenAmountFormatedValue, getCollateralInfo, burn } from '../../util/acoTokenMethods'
+import { getOptionCollateralFormatedValue, getTokenAmount, getOptionTokenAmountFormatedValue, getCollateralInfo, burn } from '../../util/contractHelpers/acoTokenMethods'
 import { fromDecimals, toDecimals } from '../../util/constants'
 import { checkTransactionIsMined } from '../../util/web3Methods'
 import Web3Utils from 'web3-utils'
@@ -21,7 +21,8 @@ class BurnModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair || 
+    if (this.props.networkToggle !== prevProps.networkToggle || 
+      this.props.selectedPair !== prevProps.selectedPair || 
       this.props.position !== prevProps.position ||
       this.props.accountToggle !== prevProps.accountToggle) {
         this.props.onHide(false)

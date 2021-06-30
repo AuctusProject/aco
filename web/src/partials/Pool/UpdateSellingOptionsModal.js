@@ -11,8 +11,9 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/acoPoolMethodsv5'
+import { refreshAcoPermissionConfig, setAcoPermissionConfig } from '../../util/contractHelpers/acoPoolMethodsv5'
 import SimpleDropdown from '../SimpleDropdown'
+import { usdAsset, usdSymbol } from '../../util/network'
 
 class UpdateSellingOptionsModal extends Component {
   constructor(props) {
@@ -64,13 +65,14 @@ class UpdateSellingOptionsModal extends Component {
       }
     }
 
+    let usd = usdAsset()
     this.setState({
       tolerancePriceBelowMin: this.getTolerance(this.props.tolerancePriceBelowMin),
       tolerancePriceBelowMax: this.getTolerance(this.props.tolerancePriceBelowMax),
       tolerancePriceAboveMin: this.getTolerance(this.props.tolerancePriceAboveMin),
       tolerancePriceAboveMax: this.getTolerance(this.props.tolerancePriceAboveMax),
-      minStrikePrice: fromDecimals(this.props.minStrikePrice, 6, 6, 0),
-      maxStrikePrice: fromDecimals(this.props.maxStrikePrice, 6, 6, 0),
+      minStrikePrice: fromDecimals(this.props.minStrikePrice, usd.decimals, usd.decimals, 0),
+      maxStrikePrice: fromDecimals(this.props.maxStrikePrice, usd.decimals, usd.decimals, 0),
       noFixedMin: this.props.minStrikePrice === null,
       noFixedMax: this.props.maxStrikePrice === null,
       minExpiration: this.props.minExpiration,
@@ -89,7 +91,7 @@ class UpdateSellingOptionsModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }
@@ -108,7 +110,8 @@ class UpdateSellingOptionsModal extends Component {
       return "-1"
     }
     else {
-      return toDecimals(stateValue, 6).toString()
+      let usd = usdAsset()
+      return toDecimals(stateValue, usd.decimals).toString()
     }
   }
 
@@ -410,7 +413,7 @@ class UpdateSellingOptionsModal extends Component {
                         <div className="label-input-row">
                           <div className="input-field">
                             <DecimalInput disabled={this.state.noFixedMin} onChange={this.onMinStrikePriceChange} value={this.state.minStrikePrice}></DecimalInput>
-                            <div className="coin-symbol">USDC</div>
+                            <div className="coin-symbol">{usdSymbol()}</div>
                           </div>
                         </div>
                       </div>
@@ -429,7 +432,7 @@ class UpdateSellingOptionsModal extends Component {
                         <div className="label-input-row">
                           <div className="input-field ">
                             <DecimalInput disabled={this.state.noFixedMax} onChange={this.onMaxStrikePriceChange} value={this.state.maxStrikePrice}></DecimalInput>
-                            <div className="coin-symbol">USDC</div>
+                            <div className="coin-symbol">{usdSymbol()}</div>
                           </div>
                         </div>
                       </div>

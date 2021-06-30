@@ -1,16 +1,13 @@
-import { getWeb3 } from './web3Methods'
-import { acoBuyerAddress } from './constants'
+import { getWeb3 } from '../web3Methods'
 import { acoBuyerV2ABI } from './acoBuyerV2ABI'
+import { acoBuyerAddress } from '../network'
 
-let acoBuyerV2Contract = null
 function getAcoBuyerV2Contract() {
-    if (acoBuyerV2Contract === null) {
-        const _web3 = getWeb3()
-        if (_web3) {
-            acoBuyerV2Contract = new _web3.eth.Contract(acoBuyerV2ABI, acoBuyerAddress)
-        }
+    const _web3 = getWeb3()
+    if (_web3) {
+        return new _web3.eth.Contract(acoBuyerV2ABI, acoBuyerAddress())
     }
-    return acoBuyerV2Contract
+    return null
 }
 
 export const getBuyData = (acoToken, paymentToken, paymentAmount, arrayData) => {

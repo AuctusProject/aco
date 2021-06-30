@@ -3,17 +3,24 @@ import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import LiquidityProgramModal from './LiquidityProgramModal'
-import { listRewardsData } from '../../util/acoRewardsMethods'
-import { acoRewardsPools, formatAcoRewardName, numberWithCommas } from '../../util/constants'
+import { listRewardsData } from '../../util/contractHelpers/acoRewardsMethods'
+import { formatAcoRewardName, numberWithCommas } from '../../util/constants'
+import { acoRewardsPools } from '../../util/network'
 
 class LiquidityProgram extends Component {
   constructor(props) {
     super(props)
-    this.state = { selectedPool: null, rewardsData: acoRewardsPools }
+    this.state = { selectedPool: null, rewardsData: acoRewardsPools() }
   }
 
   componentDidMount = () => {
     this.loadData()
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
   }
 
   loadData = (force = false) => {

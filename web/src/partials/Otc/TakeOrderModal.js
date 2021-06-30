@@ -8,9 +8,10 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { acoOtcAddress, fromDecimals, getBalanceOfAsset, isEther, maxAllowance, usdcAddress, wethAddress, zero } from '../../util/constants'
-import { allowance, allowDeposit } from '../../util/erc20Methods'
-import { swapAskOrder, swapBidOrder } from '../../util/acoOtcMethods'
+import { fromDecimals, getBalanceOfAsset, isBaseAsset, maxAllowance, zero } from '../../util/constants'
+import { allowance, allowDeposit } from '../../util/contractHelpers/erc20Methods'
+import { swapAskOrder, swapBidOrder } from '../../util/contractHelpers/acoOtcMethods'
+import { acoOtcAddress, baseSymbol, usdAddress, usdSymbol, wrapperAddress } from '../../util/network'
 
 class TakeOrderModal extends Component {
   constructor(props) {
@@ -23,7 +24,7 @@ class TakeOrderModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }
@@ -71,7 +72,7 @@ class TakeOrderModal extends Component {
   afterWrap = (stepNumber, nonce, needApproval, needWrap) => {
     if (needApproval) {
       this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
-      allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getAsset(), acoOtcAddress, nonce)
+      allowDeposit(this.context.web3.selectedAccount, maxAllowance, this.getAsset(), acoOtcAddress(), nonce)
         .then(result => {
           if (result) {
             this.setStepsModalInfo(++stepNumber, needApproval, needWrap)
@@ -102,8 +103,8 @@ class TakeOrderModal extends Component {
 
   needWrapValue = () => {
     return new Promise((resolve) => {
-      if (this.getAsset() === wethAddress) {
-        getBalanceOfAsset(wethAddress, this.context.web3.selectedAccount).then(result => {
+      if (this.getAsset() === wrapperAddress()) {
+        getBalanceOfAsset(wrapperAddress(), this.context.web3.selectedAccount).then(result => {
           var resultValue = new Web3Utils.BN(result)
           resolve(this.getAssetValue().sub(resultValue))
         })
@@ -117,20 +118,20 @@ class TakeOrderModal extends Component {
   getAsset = () => {
     var isCall = this.props.orderData.isCall
     if (!this.props.orderData.isAskOrder && isCall) {
-      return isEther(this.props.orderData.underlying.address) ?  wethAddress : this.props.orderData.underlying.address
+      return isBaseAsset(this.props.orderData.underlying.address) ?  wrapperAddress() : this.props.orderData.underlying.address
     }
     else {
-      return usdcAddress
+      return usdAddress()
     }
   }
 
   getAssetSymbol = () => {
     var isCall = this.props.orderData.isCall
     if (!this.props.orderData.isAskOrder && isCall) {
-      return isEther(this.props.orderData.underlying.address) ?  "WETH" : this.props.orderData.underlying.symbol
+      return isBaseAsset(this.props.orderData.underlying.address) ?  "WETH" : this.props.orderData.underlying.symbol
     }
     else {
-      return "USDC"
+      return usdSymbol()
     }
   }
 
@@ -155,7 +156,7 @@ class TakeOrderModal extends Component {
 
   needApprove = () => {
     return new Promise((resolve) => {
-      allowance(this.context.web3.selectedAccount, this.getAsset(), acoOtcAddress).then(result => {
+      allowance(this.context.web3.selectedAccount, this.getAsset(), acoOtcAddress()).then(result => {
         var resultValue = new Web3Utils.BN(result)
         resolve(resultValue.lt(this.getAssetValue()))
       })
@@ -193,7 +194,7 @@ class TakeOrderModal extends Component {
   setStepsModalInfo = (stepNumber, needApproval, needWrap) => {
     var title = ""
     if (stepNumber <= 2) {
-      title = "Wrap ETH"
+      title = "Wrap " + baseSymbol()
     }
     else if (stepNumber <= 4) {
       title = "Unlock token"
@@ -206,11 +207,11 @@ class TakeOrderModal extends Component {
     var img = null
     var assetSymbol =  this.getAssetSymbol()
     if (needWrap && stepNumber === 1) {
-      subtitle = "Confirm on " + this.context.web3.name + " to wrap ETH."
+      subtitle = "Confirm on " + this.context.web3.name + " to wrap " + baseSymbol() + "."
       img = <MetamaskLargeIcon />
     }
     else if (needWrap && stepNumber === 2) {
-      subtitle = "Wrapping ETH..."
+      subtitle = "Wrapping "+ baseSymbol() +"..."
       img = <SpinnerLargeIcon />
     }
     else if (needApproval && stepNumber === 3) {
@@ -241,7 +242,7 @@ class TakeOrderModal extends Component {
 
     var steps = []
     if (needWrap) {
-      steps.push({ title: "Wrap ETH", progress: stepNumber > 2 ? 100 : 0, active: true })
+      steps.push({ title: "Wrap "+baseSymbol(), progress: stepNumber > 2 ? 100 : 0, active: true })
     }
     if (needApproval) {
       steps.push({ title: "Unlock", progress: stepNumber > 4 ? 100 : 0, active: stepNumber >= 3 ? true : false })

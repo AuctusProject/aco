@@ -1,24 +1,28 @@
-import { getWeb3, sendTransaction } from './web3Methods'
-import { acoPoolFactoryAddress, deprecatedPoolImplementation, fromDecimals, getBalanceOfAsset, ONE_SECOND, toDecimals, PERCENTAGE_PRECISION } from './constants';
+import { getWeb3, sendTransaction } from '../web3Methods'
+import { fromDecimals, getBalanceOfAsset, ONE_SECOND, toDecimals, PERCENTAGE_PRECISION } from '../constants';
 import { acoPoolFactoryABI } from './acoPoolFactoryABI';
 import { getERC20AssetInfo } from './erc20Methods';
 import { baseVolatility, canSwap, collateral, getWithdrawNoLockedData } from './acoPoolMethods';
 import { getGeneralData } from './acoPoolMethodsv2';
 import { acoPermissionConfig } from './acoPoolMethodsv5';
+import { acoPoolFactoryAddress, deprecatedPoolImplementation, usdAsset } from '../network';
+import { getPools } from '../dataController';
 
-var acoPoolFactoryContract = null
 function getAcoPoolFactoryContract() {
-    if (acoPoolFactoryContract == null) {
-        const _web3 = getWeb3()
-        if (_web3) {
-            acoPoolFactoryContract = new _web3.eth.Contract(acoPoolFactoryABI, acoPoolFactoryAddress)
-        }
+    const _web3 = getWeb3()
+    if (_web3) {
+        return new _web3.eth.Contract(acoPoolFactoryABI, acoPoolFactoryAddress())
     }
-    return acoPoolFactoryContract
+    return null
 }
 
-var availablePools = null
-var availablePoolsWithExtraData = null
+export const resetPools = () => {
+    availablePools = null
+    availablePoolsWithExtraData = null
+}
+
+let availablePools = null
+let availablePoolsWithExtraData = null
 export const getAllAvailablePools = (fillExtraData = true) => {
     return new Promise((resolve, reject) => {
         if (availablePools != null && !fillExtraData) {
@@ -36,7 +40,7 @@ export const getAllAvailablePools = (fillExtraData = true) => {
                     var pools = []
                     for (let i = 0; i < events.length; i++) {
                         const eventValues = events[i].returnValues;
-                        if (deprecatedPoolImplementation.filter(c => c.toLowerCase() === eventValues.acoPoolImplementation.toLowerCase()).length === 0) {                       
+                        if (deprecatedPoolImplementation().filter(c => c.toLowerCase() === eventValues.acoPoolImplementation.toLowerCase()).length === 0) {                       
                             pools.push(eventValues)
                             if (!assetsAddresses.includes(eventValues.strikeAsset)) {
                                 assetsAddresses.push(eventValues.strikeAsset)
@@ -148,13 +152,14 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
                     return
 
                 }
-                var strikePrice = Number(fromDecimals(option.strikePrice, 6))
+                var usd = usdAsset()
+                var strikePrice = Number(fromDecimals(option.strikePrice, usd.decimals))
                 var isValidStrikePrice = (Number(poolConfig.tolerancePriceBelowMin) < 0 || strikePrice <= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMin/PERCENTAGE_PRECISION)))
                     && (Number(poolConfig.tolerancePriceBelowMax) < 0 || strikePrice >= (underlyingPrice * (1 - poolConfig.tolerancePriceBelowMax/PERCENTAGE_PRECISION)))
                     && (Number(poolConfig.tolerancePriceAboveMin) < 0 || strikePrice >= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMin/PERCENTAGE_PRECISION)))
                     && (Number(poolConfig.tolerancePriceAboveMax) < 0 || strikePrice <= (underlyingPrice * (1 + poolConfig.tolerancePriceAboveMax/PERCENTAGE_PRECISION)))
-                    && (Number(poolConfig.minStrikePrice) <= strikePrice)
-                    && (Number(poolConfig.maxStrikePrice) === 0 || Number(poolConfig.maxStrikePrice) >= strikePrice)
+                    && (Number(fromDecimals(poolConfig.minStrikePrice, usd.decimals)) <= strikePrice)
+                    && (Number(poolConfig.maxStrikePrice) === 0 || Number(fromDecimals(poolConfig.maxStrikePrice, usd.decimals)) >= strikePrice)
 
                 resolve(isValidStrikePrice)
             })
@@ -164,7 +169,7 @@ export const getAvailablePoolsForNonCreatedOption = (option, underlyingPrice) =>
 
 export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwapPromise) => {
     return new Promise((resolve, reject) => {
-        getAllAvailablePools(false).then(pools => {
+        getPools(false).then(pools => {
             let canSwapPromises = []
             let filteredPools = []
             for (let i = 0; i < pools.length; i++) {
@@ -208,5 +213,5 @@ export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwa
 export const createPrivatePool = (from, underlying, strikeAsset, isCall, baseVolatility, tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration) => {
     const acoPoolFactoryContract = getAcoPoolFactoryContract()
     var data = acoPoolFactoryContract.methods.newAcoPool(underlying, strikeAsset, isCall, baseVolatility, from, [tolerancePriceBelowMin, tolerancePriceBelowMax, tolerancePriceAboveMin, tolerancePriceAboveMax, minStrikePrice, maxStrikePrice, minExpiration, maxExpiration]).encodeABI()
-    return sendTransaction(null, null, from, acoPoolFactoryAddress, null, data)
+    return sendTransaction(null, null, from, acoPoolFactoryAddress(), null, data)
 }

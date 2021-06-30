@@ -2,8 +2,8 @@ import './WrittenOptionsPositions.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { getOptionsPositions } from '../../util/acoFactoryMethods'
-import { getOptionCollateralFormatedValue, getOptionTokenAmountFormatedValue, redeem, getFormattedOpenPositionAmount, getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { getOptionsPositions } from '../../util/contractHelpers/acoFactoryMethods'
+import { getOptionCollateralFormatedValue, getOptionTokenAmountFormatedValue, redeem, getFormattedOpenPositionAmount, getOptionFormattedPrice } from '../../util/contractHelpers/acoTokenMethods'
 import { ONE_SECOND, getNumberWithSignal, formatDate, PositionsLayoutMode, getTimeToExpiry } from '../../util/constants'
 import { checkTransactionIsMined } from '../../util/web3Methods'
 import StepsModal from '../StepsModal/StepsModal'
@@ -21,7 +21,8 @@ class WrittenOptionsPositions extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair ||
+    if (this.props.networkToggle !== prevProps.networkToggle || 
+        this.props.selectedPair !== prevProps.selectedPair ||
         this.props.accountToggle !== prevProps.accountToggle ||
         (this.props.refresh !== prevProps.refresh && this.props.refresh)) {
       if (this.props.loadedPositions) {

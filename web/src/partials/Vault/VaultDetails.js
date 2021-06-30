@@ -2,14 +2,15 @@ import './VaultDetails.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { acoVaultsV2, formatPercentage, fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
+import { formatPercentage, fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
 import { faChevronDown, faLongArrowAltRight, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import DecimalInput from '../Util/DecimalInput'
-import { getAccountPosition, getAcoVaultInfo } from '../../util/acoVaultMethods'
+import { getAccountPosition, getAcoVaultInfo } from '../../util/contractHelpers/acoVaultMethods'
 import WithdrawVaultModal from './WithdrawVaultModal'
 import DepositVaultModal from './DepositVaultModal'
 import Web3Utils from 'web3-utils'
+import { acoVaultsV2 } from '../../util/network'
 
 class VaultDetails extends Component {
   constructor(props) {
@@ -24,7 +25,10 @@ class VaultDetails extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
+    else if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
       this.updateBalances()
     }
   }
@@ -169,12 +173,13 @@ class VaultDetails extends Component {
   }
 
   render() {
-    let vaultAddress = this.props.vaultAddress
+    let vaultAddress = this.props.vaultAddress && this.props.vaultAddress.toLowerCase()
+    let vaultConfig = acoVaultsV2()
     return <div className="card vault-card">
     <div className={"card-header collapsed "+(this.isConnected() ? "" : "disabled")} id={"heading"+vaultAddress} data-toggle="collapse" data-target={"#collapse"+vaultAddress} aria-expanded="false" aria-controls={"collapse"+vaultAddress}>
       <div className="vault-name">
-        <img src={"/images/vaults/"+acoVaultsV2[vaultAddress].img} alt="ERC-20" />
-        {acoVaultsV2[vaultAddress].name}
+        <img src={"/images/vaults/"+vaultConfig[vaultAddress].img} alt="ERC-20" />
+        {vaultConfig[vaultAddress].name}
       </div>
       <div className="header-separator"></div>
       {!this.isConnected() ? <div className="card-body">
@@ -257,8 +262,8 @@ class VaultDetails extends Component {
         </div>}
       </div>}
     </div>
-    {this.state.depositVaultModalInfo && <DepositVaultModal info={this.state.depositVaultModalInfo} onHide={this.onDepositHide} />}
-    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
+    {this.state.depositVaultModalInfo && <DepositVaultModal {...this.props} info={this.state.depositVaultModalInfo} onHide={this.onDepositHide} />}
+    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal {...this.props} info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
   </div>
   }
 }

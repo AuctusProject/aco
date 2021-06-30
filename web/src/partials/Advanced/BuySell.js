@@ -3,14 +3,15 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet } from '@fortawesome/free-solid-svg-icons'
-import { balanceOf } from '../../util/erc20Methods'
+import { balanceOf } from '../../util/contractHelpers/erc20Methods'
 import { fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
 import DecimalInput from '../Util/DecimalInput'
 import { getAdvancedOrderSteps, getQuote, buildQuotedData, getMintSteps } from '../../util/acoSwapUtil'
 import BigNumber from 'bignumber.js'
 import { error } from '../../util/sweetalert'
 import CreateAdvancedOrderModal from './CreateAdvancedOrderModal'
-import { getCollateralAmountInDecimals, getCollateralInfo } from '../../util/acoTokenMethods'
+import { getCollateralAmountInDecimals, getCollateralInfo } from '../../util/contractHelpers/acoTokenMethods'
+import { usdSymbol } from '../../util/network'
 
 class BuySell extends Component {
   constructor() {
@@ -28,7 +29,9 @@ class BuySell extends Component {
   }
   
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle || 
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else if (this.props.accountToggle !== prevProps.accountToggle || 
       this.props.option !== prevProps.option) {
       this.loadBalances()
     }
@@ -40,16 +43,21 @@ class BuySell extends Component {
 
   loadBalances = () => {
     var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
-    balanceOf(this.props.option.acoToken, userAddress).then(result => {
-      this.setState({acoTokenBalance: result})
-    })
-    balanceOf(this.props.option.strikeAsset, userAddress).then(result => {
-      this.setState({strikeAssetBalance: result})
-    })
-    if (this.props.option.isCall) {
-      getBalanceOfAsset(this.props.option.underlying, userAddress).then(result => {
-        this.setState({underlyingBalance: result})
+    if (userAddress) {
+      balanceOf(this.props.option.acoToken, userAddress).then(result => {
+        this.setState({acoTokenBalance: result})
       })
+      balanceOf(this.props.option.strikeAsset, userAddress).then(result => {
+        this.setState({strikeAssetBalance: result})
+      })
+      if (this.props.option.isCall) {
+        getBalanceOfAsset(this.props.option.underlying, userAddress).then(result => {
+          this.setState({underlyingBalance: result})
+        })
+      }
+    }
+    else {
+      this.setState({acoTokenBalance: null, underlyingBalance: null, strikeAssetBalance: null})
     }
   }
 
@@ -73,7 +81,7 @@ class BuySell extends Component {
     var formattedBalance = "-"
     if (this.state.selectedBuySellTab === 1 && this.state.strikeAssetBalance) {
       formattedBalance = fromDecimals(this.state.strikeAssetBalance, this.props.option.strikeAssetInfo.decimals, 4)
-      formattedBalance += " USDC";
+      formattedBalance += " " + usdSymbol();
     }
     else if (this.state.selectedBuySellTab === 2 && this.state.acoTokenBalance) {
       formattedBalance = fromDecimals(this.state.acoTokenBalance, this.props.option.acoTokenInfo.decimals, 4)
@@ -195,7 +203,7 @@ class BuySell extends Component {
   getTotalCost = () => {
     if (this.state.selectedLimitMarketTab === 1) {
       if (this.state.amountInputValue && this.state.priceInputValue) {
-        return new BigNumber(this.state.amountInputValue).times(this.state.priceInputValue).toFixed(2) + " USDC"
+        return new BigNumber(this.state.amountInputValue).times(this.state.priceInputValue).toFixed(2) + " " + usdSymbol()
       }
     }
     else {
@@ -204,7 +212,7 @@ class BuySell extends Component {
         var amountInDecimals = new BigNumber(toDecimals(this.state.amountInputValue, this.props.option.acoTokenInfo.decimals))
         var quotedData = buildQuotedData(this.props.option, orders, amountInDecimals)
         if (!quotedData.acoAmount.isLessThan(amountInDecimals)) {
-          return new BigNumber(fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals)).toFixed(2) + " USDC"
+          return new BigNumber(fromDecimals(quotedData.strikeAssetAmount, this.props.option.strikeAssetInfo.decimals)).toFixed(2) + " " + usdSymbol()
         }        
       }
     }
@@ -234,6 +242,14 @@ class BuySell extends Component {
       this.placeOrder(true)
     }
     this.setState({ mintSteps: null })
+  }
+  
+  isConnected = () => {
+    return this.context && this.context.web3 && this.context.web3.selectedAccount && this.context.web3.validNetwork
+  }
+
+  onConnectClick = () => {
+    this.props.signIn(null, this.context)
   }
   
   render() {
@@ -282,7 +298,7 @@ class BuySell extends Component {
                       value={this.state.priceInputValue}
                       placeholder="0.00"></DecimalInput>
                   <div className="order-input-right-label">
-                    USDC
+                    {usdSymbol()}
                   </div>
                 </div>
               </div>}
@@ -319,9 +335,12 @@ class BuySell extends Component {
                 <label className="fee-cost-label">{this.state.selectedBuySellTab === 1 ? "Cost" : "Total to receive" }</label>
                 <div className="fee-cost-value bold">{this.getTotalCost()}</div>
               </div>
-              <div className={"action-btn " + (!this.canSubmit() ? "disabled" : "")} onClick={this.onSubmitOrder}>
+              {this.isConnected() ? <div className={"action-btn " + (!this.canSubmit() ? "disabled" : "")} onClick={this.onSubmitOrder}>
                 Place {this.state.selectedLimitMarketTab === 1 ? "Limit" : "Market"} Order
-              </div>
+              </div> : 
+              <div className={"action-btn"} onClick={this.onConnectClick}>
+              CONNECT WALLET
+              </div>}
             </div>
           </div>
         </div>

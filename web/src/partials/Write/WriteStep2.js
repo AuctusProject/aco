@@ -5,7 +5,7 @@ import PropTypes from 'prop-types'
 import OptionBadge from '../OptionBadge'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
-import { getOptionFormattedPrice } from '../../util/acoTokenMethods'
+import { getOptionFormattedPrice } from '../../util/contractHelpers/acoTokenMethods'
 import { formatDate } from '../../util/constants'
 import { getAvailableOptionsByPair } from '../../util/dataController'
 
@@ -16,7 +16,8 @@ class WriteStep2 extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.selectedPair !== prevProps.selectedPair || 
+    if (this.props.networkToggle !== prevProps.networkToggle || 
+      this.props.selectedPair !== prevProps.selectedPair || 
       this.props.optionType !== prevProps.optionType) {
       this.componentDidMount()
     }

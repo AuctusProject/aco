@@ -1,13 +1,14 @@
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import { acoVaults, fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
+import { fromDecimals, getBalanceOfAsset, toDecimals } from '../../util/constants'
 import { faChevronDown, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import DecimalInput from '../Util/DecimalInput'
-import { getAccountPosition, getAcoVaultInfo } from '../../util/acoVaultMethods'
+import { getAccountPosition, getAcoVaultInfo } from '../../util/contractHelpers/acoVaultMethods'
 import WithdrawVaultModal from './WithdrawVaultModal'
 import Web3Utils from 'web3-utils'
+import { acoVaults } from '../../util/network'
 
 class DiscontinuedVaultDetails extends Component {
   constructor(props) {
@@ -22,7 +23,9 @@ class DiscontinuedVaultDetails extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    } else if (this.context.web3.selectedAccount && this.props.accountToggle !== prevProps.accountToggle) {
       this.updateBalances()
     }
   }
@@ -125,13 +128,14 @@ class DiscontinuedVaultDetails extends Component {
   }
 
   render() {
-    let vaultAddress = this.props.vaultAddress
+    let vaultAddress = this.props.vaultAddress && this.props.vaultAddress.toLowerCase()
+    let vaultConfig = acoVaults()
     return !this.showDiscontinuedVault() ? <></> : <div className="card vault-card">
     <div className={"card-header collapsed "+(this.isConnected() ? "" : "disabled")} id={"heading"+vaultAddress} data-toggle="collapse" data-target={"#collapse"+vaultAddress} aria-expanded="false" aria-controls={"collapse"+vaultAddress}>
       <div className="vault-name">
-        <img src={"/images/vaults/"+acoVaults[vaultAddress].img} alt="ERC-20" />
+        <img src={"/images/vaults/"+ vaultConfig[vaultAddress].img} alt="ERC-20" />
         <div className="">
-          <div>{acoVaults[vaultAddress].name}</div>
+          <div>{vaultConfig[vaultAddress].name}</div>
           <span className="discontinued-label">(DISCONTINUED)</span>
         </div>
       </div>
@@ -186,7 +190,7 @@ class DiscontinuedVaultDetails extends Component {
         </div>}
       </div>
     </div>
-    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
+    {this.state.withdrawVaultModalInfo && <WithdrawVaultModal {...this.props} info={this.state.withdrawVaultModalInfo} onHide={this.onWithdrawHide} />}
   </div>
   }
 }

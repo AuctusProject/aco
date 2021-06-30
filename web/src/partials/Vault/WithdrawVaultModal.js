@@ -8,7 +8,7 @@ import MetamaskLargeIcon from '../Util/MetamaskLargeIcon'
 import SpinnerLargeIcon from '../Util/SpinnerLargeIcon'
 import DoneLargeIcon from '../Util/DoneLargeIcon'
 import ErrorLargeIcon from '../Util/ErrorLargeIcon'
-import { withdraw } from '../../util/acoVaultMethods'
+import { withdraw } from '../../util/contractHelpers/acoVaultMethods'
 
 class WithdrawVaultModal extends Component {
   constructor(props) {
@@ -21,7 +21,7 @@ class WithdrawVaultModal extends Component {
   }
 
   componentDidUpdate = (prevProps) => {
-    if (this.props.accountToggle !== prevProps.accountToggle) {
+    if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
     }
   }
