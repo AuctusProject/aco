@@ -1,9 +1,31 @@
 .trade-menu {
-    box-shadow: inset -14.1px -16.9px 38px 0 rgba(0, 0, 0, 0.5);
     background-color: #141414;
     width: 300px;
     height: calc(100vh - 63px);
+    display: flex;
+    flex-direction: row;
+}
+
+.trade-menu-content-wrapper {
+    box-shadow: inset -14.1px -16.9px 38px 0 rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
     overflow: auto;
+}
+
+.trade-menu-collapse {
+    display: none;
+    z-index: -1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 25px;
+    color: white;
+    cursor: pointer;
+    height: 100%;
+    width: 36px;
 }
 
 .light-mode .trade-menu{
@@ -37,12 +59,12 @@
     cursor: pointer;
     color: white;
     display: block;
+    text-decoration: none;
+    background-color: transparent;
 }
 
 .trade-menu-manage-link:hover,
 .trade-menu-manage-link.active  {    
-    text-decoration: none;
-    color: white;
     background-color: #1a1a1a;
 }
 
@@ -245,4 +267,14 @@
 
 .trade-menu-content .pair-price {
     color: #5de9d4;
+}
+
+@media (max-width: 991px) {
+    .trade-menu {
+        width: 100%;
+    }
+    .trade-menu-collapse {
+        display: flex;
+        z-index: auto;
+    }
 }

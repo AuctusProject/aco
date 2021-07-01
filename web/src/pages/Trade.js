@@ -17,7 +17,7 @@ export const ALL_OPTIONS_KEY = "all"
 class Trade extends Component {
   constructor(props) {
     super(props)
-    this.state = {options:null, balances:{}, selectedExpiryTime: ALL_OPTIONS_KEY, orderBooks: {}}
+    this.state = {options:null, balances:{}, selectedExpiryTime: ALL_OPTIONS_KEY, orderBooks: {}, showAdvanced: true}
   }
   
   componentDidMount = () => {
@@ -155,16 +155,27 @@ class Trade extends Component {
 
   render() {
     return <div className="trade-page">
-      <TradeMenu {...this.props} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} selectedExpiryTime={this.state.selectedExpiryTime} onSelectExpiryTime={this.onSelectExpiryTime} options={this.state.options} balances={this.state.balances}/>
-      {this.props.selectedPair &&
+      <TradeMenu 
+        {...this.props} 
+        advancedShown={this.state.showAdvanced} 
+        onCollapseClick={() => this.setState({showAdvanced: !this.state.showAdvanced})}
+        selectedOption={this.state.selectedOption} 
+        onSelectOption={this.onSelectOption} 
+        selectedExpiryTime={this.state.selectedExpiryTime} 
+        onSelectExpiryTime={this.onSelectExpiryTime} 
+        options={this.state.options} 
+        balances={this.state.balances}/>
+      {this.props.selectedPair && this.state.showAdvanced &&
       <>
-        <div className="advanced-content">
-        {this.isMintMenu() && <Writer {...this.props}/>}
-        {this.isExerciseMenu() && <Exercise {...this.props}/>}
-        {!this.isMintMenu() && !this.isExerciseMenu() && <>
-          {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
-          {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption} loadBalances={this.loadBalances}></AdvancedTrade>}
-        </>}
+        <div className="advanced-content-wrapper">
+          <div className="advanced-content">
+            {this.isMintMenu() && <Writer {...this.props}/>}
+            {this.isExerciseMenu() && <Exercise {...this.props}/>}
+            {!this.isMintMenu() && !this.isExerciseMenu() && <>
+              {!this.state.selectedOption && <TradeOptionsList {...this.props} selectedExpiryTime={this.state.selectedExpiryTime} selectedOption={this.state.selectedOption} onSelectOption={this.onSelectOption} options={this.state.options} balances={this.state.balances} orderBooks={this.state.orderBooks}></TradeOptionsList>}
+              {this.state.selectedOption && <AdvancedTrade {...this.props} option={this.state.selectedOption} loadBalances={this.loadBalances}></AdvancedTrade>}
+            </>}
+          </div>
         </div>
       </>}
     </div>

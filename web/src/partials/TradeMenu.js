@@ -1,11 +1,11 @@
 import './TradeMenu.css'
 import React, { Component } from 'react'
+import { withRouter, NavLink } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { fromDecimals, groupBy, formatDate, getPairIdFromRoute } from '../util/constants'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner, faEnvelope } from '@fortawesome/free-solid-svg-icons'
+import { faSpinner, faEnvelope, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons'
 import { faTwitter, faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons'
-import { NavLink } from 'react-router-dom'
 import { ALL_OPTIONS_KEY } from '../pages/Trade'
 import PairDropdown from './PairDropdown'
 
@@ -13,10 +13,23 @@ class TradeMenu extends Component {
 
   onSelectOption = (option) => {
     this.props.onSelectOption(option)
+    if (this.isMobile()) {
+      this.props.onCollapseClick()
+    }
   }
 
   onSelectExpiryTime = (expiryTime) => {
     this.props.onSelectExpiryTime(expiryTime)
+    if (this.isMobile()) {
+      this.props.onCollapseClick()
+    }
+  }
+
+  toPath = (path) => {
+    this.props.history.push(this.getUrlWithPairId(path))
+    if (this.isMobile()) {
+      this.props.onCollapseClick()
+    }
   }
 
   getOptionsWithBalance = () => {
@@ -35,6 +48,14 @@ class TradeMenu extends Component {
     return baseUrl
   }
 
+  isMobile = () => {
+    return window.innerWidth <= 991
+  }
+
+  isActivePath = (path) => {
+    return window.location && window.location.pathname && window.location.pathname.indexOf(path) >= 0
+  }
+
   render() {
     var pair = this.props.selectedPair    
     var grouppedOptions = this.props.options ? groupBy(this.props.options, "expiryTime") : {}
@@ -44,50 +65,52 @@ class TradeMenu extends Component {
 
     return (
       <div className="trade-menu">
-        <div className="trade-menu-content">
-          <PairDropdown {...this.props}></PairDropdown>
-          {pair && <div className="trade-menu-pair-balance-info">
-            <div className="trade-menu-balance-title">BALANCE</div>
-            <div className="pair-balance-items">
-              <div className="pair-balance-item">
-                <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
-                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : ""}>{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</div>
-              </div>
-              <div className="pair-balance-item">
-                <div className="trade-menu-pair-symbol">{pair.strikeAssetSymbol}</div>
-                <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : ""}>{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</div>
-              </div>
-              {balanceOptions.map(option => (
-                <div key={option.acoToken} className="pair-balance-item clickable" onClick={() => this.onSelectOption(option)}>
-                  <div className="trade-menu-pair-symbol">{option.acoTokenInfo.symbol}</div>
-                  <div className="trade-menu-pair-balance truncate" title={fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}>{fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}</div>
+        {(!this.props.advancedShown || !this.isMobile()) && 
+        <div className="trade-menu-content-wrapper">
+          <div className="trade-menu-content">
+            <PairDropdown {...this.props}></PairDropdown>
+            {pair && <div className="trade-menu-pair-balance-info">
+              <div className="trade-menu-balance-title">BALANCE</div>
+              <div className="pair-balance-items">
+                <div className="pair-balance-item">
+                  <div className="trade-menu-pair-symbol">{pair.underlyingSymbol}</div>
+                  <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : ""}>{this.props.balances[pair.underlying] ? fromDecimals(this.props.balances[pair.underlying], pair.underlyingInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</div>
                 </div>
-              ))}
+                <div className="pair-balance-item">
+                  <div className="trade-menu-pair-symbol">{pair.strikeAssetSymbol}</div>
+                  <div className="trade-menu-pair-balance truncate" title={this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : ""}>{this.props.balances[pair.strikeAsset] ? fromDecimals(this.props.balances[pair.strikeAsset], pair.strikeAssetInfo.decimals) : (this.isLogged() ? <FontAwesomeIcon icon={faSpinner} className="fa-spin"/> : "-")}</div>
+                </div>
+                {balanceOptions.map(option => (
+                  <div key={option.acoToken} className="pair-balance-item clickable" onClick={() => this.onSelectOption(option)}>
+                    <div className="trade-menu-pair-symbol">{option.acoTokenInfo.symbol}</div>
+                    <div className="trade-menu-pair-balance truncate" title={fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}>{fromDecimals(this.props.balances[option.acoToken], option.acoTokenInfo.decimals)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>}
+            <div className="trade-menu-manage">
+              <div className="trade-menu-balance-title">MANAGE</div>
+              <div className={"trade-menu-manage-link" + (this.isActivePath("/advanced/mint") ? " active" : "")} onClick={() => this.toPath("/advanced/mint")}>Mint Options</div>
+              <div className={"trade-menu-manage-link" + (this.isActivePath("/advanced/exercise") ? " active" : "")} onClick={() => this.toPath("/advanced/exercise")}>Exercise Options</div>
             </div>
-          </div>}
-          <div className="trade-menu-manage">
-            <div className="trade-menu-balance-title">MANAGE</div>
-            <NavLink className="trade-menu-manage-link" to={this.getUrlWithPairId("/advanced/mint")}>Mint Options</NavLink>
-            <NavLink className="trade-menu-manage-link" to={this.getUrlWithPairId("/advanced/exercise")}>Exercise Options</NavLink>
+            {pair && <div>
+              <div className="trade-menu-pair-title">
+                {iconUrl && <img className="asset-icon" src={iconUrl} alt=""/>}
+                {pairTitle} options
+              </div>
+              <div className="option-expirations-wrapper">
+                <div className={"option-expiration-item "+(this.props.selectedExpiryTime === ALL_OPTIONS_KEY ? "active" : "")} onClick={() => this.onSelectExpiryTime(ALL_OPTIONS_KEY)}>
+                  All expirations
+                </div>
+                {Object.keys(grouppedOptions).map(expiryTime => (
+                  <div key={expiryTime} className={"option-expiration-item "+(this.props.selectedExpiryTime === expiryTime ? "active" : "")} onClick={() => this.onSelectExpiryTime(expiryTime)}>
+                    {formatDate(expiryTime)}
+                  </div>
+                ))}
+              </div>
+            </div>}
           </div>
-          {pair && <div>
-            <div className="trade-menu-pair-title">
-              {iconUrl && <img className="asset-icon" src={iconUrl} alt=""/>}
-              {pairTitle} options
-            </div>
-            <div className="option-expirations-wrapper">
-              <div className={"option-expiration-item "+(this.props.selectedExpiryTime === ALL_OPTIONS_KEY ? "active" : "")} onClick={() => this.onSelectExpiryTime(ALL_OPTIONS_KEY)}>
-                All expirations
-              </div>
-              {Object.keys(grouppedOptions).map(expiryTime => (
-                <div key={expiryTime} className={"option-expiration-item "+(this.props.selectedExpiryTime === expiryTime ? "active" : "")} onClick={() => this.onSelectExpiryTime(expiryTime)}>
-                  {formatDate(expiryTime)}
-                </div>
-              ))}
-            </div>
-          </div>}
-        </div>
-        <div className="trade-menu-footer">
+          <div className="trade-menu-footer">
             <div className="trade-menu-footer-links">
               <NavLink to="/terms">Terms</NavLink>
               <NavLink to="/privacy">Privacy Policy</NavLink>
@@ -105,6 +128,10 @@ class TradeMenu extends Component {
               </div>
             </div>
           </div>
+        </div>}
+        <div className="trade-menu-collapse" onClick={() => this.props.onCollapseClick()}>
+          <FontAwesomeIcon icon={(this.props.advancedShown ? faChevronRight : faChevronLeft)}></FontAwesomeIcon>
+        </div>
       </div>)
   }
 }
@@ -112,4 +139,4 @@ TradeMenu.contextTypes = {
   assetsImages: PropTypes.object,
   web3: PropTypes.object
 }
-export default TradeMenu
+export default withRouter(TradeMenu)

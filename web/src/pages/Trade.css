@@ -4,8 +4,19 @@
     flex-direction: row;
 }
 
-.advanced-content {
+.advanced-content-wrapper {
     height: calc(100vh - 63px) !important;
     width: calc(100% - 300px);
-    overflow-y: auto;
+}
+
+.advanced-content {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+@media (max-width: 991px) {
+    .advanced-content-wrapper {
+        width: calc(100% - 36px);
+    }
 }
