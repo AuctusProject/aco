@@ -62,7 +62,7 @@ class PoolDashboard extends Component {
 
   render() {
     let pool = this.state.pool
-    let poolName = this.getFormattedPoolName()
+    let poolName = (pool ? this.getFormattedPoolName() : "")
     var menuConfigData = menuConfig()
     return <div className="pool-dashboard">
       {!pool ? <Loading></Loading> :
