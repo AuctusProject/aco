@@ -124,6 +124,7 @@
   line-height: 1;
   margin-right: 10px;
   max-height: 22px;
+  max-width: 32px;
 }
 
 .user-nav-wrap > div {
