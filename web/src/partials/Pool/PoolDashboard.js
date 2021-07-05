@@ -62,13 +62,14 @@ class PoolDashboard extends Component {
 
   render() {
     let pool = this.state.pool
+    let poolName = this.getFormattedPoolName()
     var menuConfigData = menuConfig()
     return <div className="pool-dashboard">
       {!pool ? <Loading></Loading> :
         <>
           <div className="page-title">
             <div className="back-link clickable" onClick={this.goToPools}><FontAwesomeIcon icon={faArrowLeft}/> Pools</div>
-            {this.getFormattedPoolName()}
+            <div className="pool-title" title={poolName}>{poolName}</div>
           </div>
           {<div>
             <PoolHistoricalChart {...this.props} pool={pool}></PoolHistoricalChart>

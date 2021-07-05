@@ -19,3 +19,16 @@
     position: absolute;
     left: 4px;
 }
+
+.pool-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 991px) {
+    .pool-title {
+        max-width: calc(100vw - 125px);
+        margin-left: auto;
+    }
+}

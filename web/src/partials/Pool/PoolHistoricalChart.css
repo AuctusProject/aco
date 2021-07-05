@@ -62,3 +62,12 @@
     font-size: 14px;
     font-weight: bold;
 }
+
+@media (max-width: 991px) {
+    .pool-historical-chart-top {
+        flex-direction: column;
+    }
+    .pool-historical-chart-share {
+        margin-top: 15px;
+    }
+}
