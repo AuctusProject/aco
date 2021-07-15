@@ -256,7 +256,7 @@ class App extends Component {
                   /> }
                 />}
                 {menuConfigData.hasOtc && <Route 
-                  path={[`/otc/trade/:orderId?`, `/otc/manage`]}
+                  path={`/otc/(trade|manage)/:orderId?`}
                   render={ routeProps => <Otc
                     {...routeProps}
                     signIn={this.setSignIn}
