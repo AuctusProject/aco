@@ -46,6 +46,7 @@ class App extends Component {
       accountToggle: false,
       networkToggle: false,
       toggleAdvancedTooltip: false,
+      toggleSimpleTooltip: false,
       orderBooks:{},
       connecting: null,
       disconnecting: null,
@@ -180,7 +181,7 @@ class App extends Component {
             </div>
           </div> :
           <main role="main">
-            {showNavbar && <NavBar toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.setSignIn} slippage={this.state.slippage} setSlippage={this.setSlippage} modeView={this.state.modeView} setModeView={this.setModeView}/>}
+            {showNavbar && <NavBar toggleAdvancedTooltip={this.state.toggleAdvancedTooltip} toggleSimpleTooltip={this.state.toggleSimpleTooltip} disconnect={() => this.setState({disconnecting: true})} signIn={this.setSignIn} slippage={this.state.slippage} setSlippage={this.setSlippage} modeView={this.state.modeView} setModeView={this.setModeView}/>}
             <div className={(showNavbar ? "app-content" : "")+(showFooter ? " footer-padding" : "")}>
               <Switch>
                 <Route 
@@ -205,6 +206,7 @@ class App extends Component {
                     signIn={this.setSignIn}
                     modeView={this.state.modeView} 
                     setModeView={this.setModeView}
+                    toggleSimpleTooltip={() => this.setState({toggleSimpleTooltip: !this.state.toggleSimpleTooltip})}
                   />}
                 />}
                 <Route 

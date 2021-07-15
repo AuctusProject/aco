@@ -460,7 +460,7 @@ export const setModeView = (modeView) => {
 export const getModeView = () => {
     var modeView = window.localStorage.getItem('MODE_VIEW')
     if (!modeView) {
-        return ModeView.Basic
+        return ModeView.Advanced
     }
     else {
         return parseInt(modeView)

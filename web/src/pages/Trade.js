@@ -21,6 +21,7 @@ class Trade extends Component {
   }
   
   componentDidMount = () => {
+    this.props.toggleSimpleTooltip()
     if (this.props.modeView !== ModeView.Advanced) {
       this.props.setModeView(ModeView.Advanced)
     }

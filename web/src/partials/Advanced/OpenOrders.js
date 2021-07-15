@@ -30,7 +30,7 @@ class OpenOrders extends Component {
   getUserOrders = () => {    
     var userAddress = this.context && this.context.web3 && this.context.web3.selectedAccount
     var userOrders = []
-    if (this.context.orderbook) {
+    if (this.context.orderbook && userAddress) {
       if (this.context.orderbook && this.context.orderbook.ask && this.context.orderbook.ask.orders) {
         var askOrders = this.context.orderbook.ask.orders.filter(o => o.order && o.order.maker && o.order.maker.toLowerCase() === userAddress.toLowerCase())
         userOrders = userOrders.concat(askOrders)

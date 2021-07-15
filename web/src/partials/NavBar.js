@@ -14,6 +14,7 @@ class NavBar extends Component {
     super(props)
 		this.state = {
       showAdvancedTootlip: false,
+      showSimpleTootlip: false,
       showSlippageDropdown: false
     }
   }
@@ -32,6 +33,9 @@ class NavBar extends Component {
       if (this.props.toggleAdvancedTooltip !== prevProps.toggleAdvancedTooltip) {
         this.setState({showAdvancedTootlip: !window.localStorage.getItem('DISMISS_ADVANCED_TOOLTIP_V2')})
       }
+      if (this.props.toggleSimpleTooltip !== prevProps.toggleSimpleTooltip) {
+        this.setState({showSimpleTootlip: !window.localStorage.getItem('DISMISS_SIMPLE_TOOLTIP')})
+      }
     }
   }
 
@@ -46,6 +50,11 @@ class NavBar extends Component {
   onDismissAdvancedTooltip = () => {
     this.setState({showAdvancedTootlip: false})
     window.localStorage.setItem('DISMISS_ADVANCED_TOOLTIP_V2', '1')
+  }
+
+  onDismissSimpleTooltip = () => {
+    this.setState({showSimpleTootlip: false})
+    window.localStorage.setItem('DISMISS_SIMPLE_TOOLTIP', '1')
   }
 
   getUrlWithPairId = (baseUrl) => {
@@ -110,6 +119,7 @@ class NavBar extends Component {
   }
  
   render() {
+    var isAdvancedMode = this.isAdvanced()
     var username = this.context && this.context.web3 && this.context.web3.selectedAccount
     var validNetwork = this.context && this.context.web3 && this.context.web3.validNetwork
     var isWalletConnect = validNetwork && !this.context.web3.isBrowserProvider
@@ -153,10 +163,15 @@ class NavBar extends Component {
                 </NavLink>}
               </ul>
               <ul className="navbar-nav ml-auto align-items-center">
-                {this.state.showAdvancedTootlip && window.innerWidth >= 992 && !this.isAdvanced() &&
+                {window.innerWidth >= 992 && this.state.showAdvancedTootlip && !isAdvancedMode &&
                 <div className="advanced-tooltip">
                   Go to advanced mode to trade options with limit orders.
                 <div className="action-btn" onClick={() => this.onDismissAdvancedTooltip()}>Dismiss</div>
+                </div>}
+                {window.innerWidth >= 992 && this.state.showSimpleTootlip && isAdvancedMode &&
+                <div className="advanced-tooltip">
+                  Go to basic mode to trade options with an easy-to-use interface.
+                <div className="action-btn" onClick={() => this.onDismissSimpleTooltip()}>Dismiss</div>
                 </div>}
                 <li className="nav-item dropdown slippage-config"> 
                   <div className="dropdown-toggle clickable" target="_self" id="slippageConfig" role="button" aria-haspopup="true" aria-expanded="false" onClick={this.toggleSlippageDropdown}>
