@@ -165,9 +165,9 @@ class App extends Component {
     var showNavbar = window.location.pathname !== "/"
     var showFooter = window.location.pathname.indexOf("advanced") < 0
     var menuConfigData = menuConfig()
-    var simplePaths = [`/buy/:pair?/:tokenAddress?`, `/manage/:pair?/:tokenAddress?`]
+    var simplePaths = "/(buy|manage"
     if (menuConfigData.hasAdvanced) {
-      simplePaths.push(`/write/:pair?/:tokenAddress?`)
+      simplePaths += "|write"
     }
     return (
       <Web3Provider refresh={this.state.refreshWeb3} connecting={this.state.connecting} connected={(ok) => this.onConnect(ok)} disconnecting={this.state.disconnecting} disconnected={() => this.setState({disconnecting: null})} onChangeAccount={this.onChangeAccount} onChangeNetwork={this.onChangeNetwork} onLoaded={this.onLoaded}>
@@ -193,7 +193,7 @@ class App extends Component {
                   render={ routeProps => <Terms {...routeProps} /> }
                 />                
                 {menuConfigData.hasAdvanced && <Route 
-                  path={[`/advanced/trade/:pair?/:tokenAddress?`, `/advanced/mint/:pair?/:tokenAddress?`, `/advanced/exercise/:pair?/`]}
+                  path={`/advanced/(trade|mint|exercise)/:pair?/:tokenAddress?`}
                   render={ routeProps => <Trade 
                     {...routeProps}
                     onPairSelected={this.onPairSelected}
@@ -230,7 +230,7 @@ class App extends Component {
                   /> }
                 />                
                 <Route 
-                  path={simplePaths}
+                  path={simplePaths+")/:pair?/:tokenAddress?"}
                   render={ routeProps => <Simple 
                     {...routeProps}
                     signIn={this.setSignIn}
