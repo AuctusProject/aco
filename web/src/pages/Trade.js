@@ -17,7 +17,7 @@ export const ALL_OPTIONS_KEY = "all"
 class Trade extends Component {
   constructor(props) {
     super(props)
-    this.state = {options:null, balances:{}, selectedExpiryTime: ALL_OPTIONS_KEY, orderBooks: {}, showAdvanced: true}
+    this.state = {options:null, balances:{}, selectedExpiryTime: ALL_OPTIONS_KEY, orderBooks: {}, showAdvanced: !!props.selectedPair}
   }
   
   componentDidMount = () => {
@@ -41,6 +41,9 @@ class Trade extends Component {
       })      
     }
     else if (this.props.selectedPair !== prevProps.selectedPair) {
+      if (!prevProps.selectedPair) {
+        this.setState({showAdvanced: true})
+      }
       this.loadOptions()
     }
     else if (this.props.accountToggle !== prevProps.accountToggle) {
