@@ -34,7 +34,17 @@ export const getOptions = async () => {
   } else {
     if (hasSubgraph()) {
       let result = await getAllOptions()
-      allOptions = parseSubgraphAcos(result, false, false)
+      if (result && result.length > 0) {
+        allOptions = parseSubgraphAcos(result, false, false)
+      } else {
+        try {
+          let acoOptions = await getAcoOptions()
+          return acoOptions
+        } catch (err) {
+          console.error(err)
+          return []
+        }
+      }
     } else {
       let options = await getAcoOptions()
       if (options) {
