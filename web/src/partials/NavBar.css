@@ -258,10 +258,9 @@ li.dropdown {
   color: white !important;
 }
 
-.light-mode .dropdown-item:hover, 
-.light-mode .dropdown-item:focus {
-  background-color: #dedede !important;
-  color: black !important;  
+.dropdown-item.active, .dropdown-item:active {
+  color: #5de9d4 !important;
+  background-color: unset !important;
 }
 
 .navbar-items .nav-item {

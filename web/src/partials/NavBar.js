@@ -149,9 +149,6 @@ class NavBar extends Component {
                 >
                   <div className="link-title">TRADE</div>
                 </NavLink>
-                {menuConfigData.hasVaults && <NavLink className="nav-item link-nav" to={"/vaults"}>
-                  <div className="link-title">VAULTS</div>
-                </NavLink>}
                 <NavLink className="nav-item link-nav pools-link" to={"/pools"}>
                   <div className="link-title">POOLS<div className="earn-badge">Earn</div></div>
                 </NavLink>
@@ -232,6 +229,7 @@ class NavBar extends Component {
                     <FontAwesomeIcon icon={faEllipsisH}></FontAwesomeIcon>
                   </div>
                   <div className="dropdown-menu" aria-labelledby="moreMenu">
+                    {menuConfigData.hasVaults && <NavLink className="dropdown-item clickable" to={"/vaults"}>VAULTS</NavLink>}
                     <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/faq">FAQ</a>
                     <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://docs.auctus.org/">DOCS</a>
                     <a className="dropdown-item clickable" target="_blank" rel="noopener noreferrer" href="https://t.me/AuctusOptions">TELEGRAM</a>
