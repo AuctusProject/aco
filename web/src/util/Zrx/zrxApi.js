@@ -73,26 +73,28 @@ export const getZrxOrdersFormatted = (isBuy, option, zrxOrders, acoAmount = null
 
 const getSortedOrdersWithPrice = (isBuy, option, zrxOrders) => {
   const sortedOrders = []
-  for (let j = 0; j < zrxOrders.length; ++j) {
-    let takerAmount = new BigNumber(zrxOrders[j].order.takerAmount)  
-    let makerAmount = new BigNumber(zrxOrders[j].order.makerAmount)    
-    let oneUnderlying = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
-    let price
-    if (isBuy) {
-      price = takerAmount.times(oneUnderlying).div(makerAmount)
-    } else {
-      price = makerAmount.times(oneUnderlying).div(takerAmount)
+  if (zrxOrders) {
+    for (let j = 0; j < zrxOrders.length; ++j) {
+      let takerAmount = new BigNumber(zrxOrders[j].order.takerAmount)  
+      let makerAmount = new BigNumber(zrxOrders[j].order.makerAmount)    
+      let oneUnderlying = new BigNumber(toDecimals("1", option.underlyingInfo.decimals))
+      let price
+      if (isBuy) {
+        price = takerAmount.times(oneUnderlying).div(makerAmount)
+      } else {
+        price = makerAmount.times(oneUnderlying).div(takerAmount)
+      }
+      zrxOrders[j].price = price
+      sortedOrders.push(zrxOrders[j])
     }
-    zrxOrders[j].price = price
-    sortedOrders.push(zrxOrders[j])
+    sortedOrders.sort((a, b) => {
+      if (isBuy) {
+        return a.price.comparedTo(b.price)
+      } else {
+        return b.price.comparedTo(a.price)
+      }
+    })
   }
-  sortedOrders.sort((a, b) => {
-    if (isBuy) {
-      return a.price.comparedTo(b.price)
-    } else {
-      return b.price.comparedTo(a.price)
-    }
-  })
   return sortedOrders
 }
 

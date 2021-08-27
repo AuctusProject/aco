@@ -176,7 +176,8 @@ export const getAvailablePoolsForOptionWithCustomCanSwap = (option, customCanSwa
                 const pool = pools[i];
                 if (pool.underlying.toLowerCase() === option.underlying.toLowerCase() && 
                     pool.strikeAsset.toLowerCase() === option.strikeAsset.toLowerCase() && 
-                    pool.isCall === option.isCall) {
+                    pool.isCall === option.isCall &&
+                    deprecatedPoolImplementation().filter((j) => j.toLowerCase() === pool.acoPoolImplementation.toLowerCase()).length === 0) {
                     let canSwapPromise = customCanSwapPromise(pool, option)
                     canSwapPromises.push(canSwapPromise)
                     canSwapPromise.then(result => {
