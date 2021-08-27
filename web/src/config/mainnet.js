@@ -2,7 +2,7 @@ export const mainnet = {
     name: "ETHEREUM",
     iconUrl: "/images/eth_icon.png",
     CHAIN_ID: 1,
-    customRpc: null,
+    customRpc: "0x1",
     apiUrl: "https://cu3pxr9ydi.execute-api.us-east-1.amazonaws.com/prod/",
     //subgraphUrl: "https://api.thegraph.com/subgraphs/name/auctusproject/auctus-options",
     subgraphUrl: "https://gateway.thegraph.com/api/ba45e66588d28b13fbcf6a04b0980059/subgraphs/id/0xd1b10607921c78d9a00529294c4b99f1bd250e1c-0",

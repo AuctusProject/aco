@@ -191,9 +191,17 @@ export function switchNetwork(connectionData) {
     } else {
       let promise
       const web3 = getWeb3()
-      const requestData = {
-        method: 'wallet_addEthereumChain',
-        params: [connectionData]
+      let requestData
+      if (typeof(connectionData) === "string") {
+        requestData = {
+          method: 'wallet_switchEthereumChain',
+          params: [{chainId:connectionData}]
+        }
+      } else {
+        requestData = {
+          method: 'wallet_addEthereumChain',
+          params: [connectionData]
+        }
       }
       if (web3.eth.currentProvider.request) {
         promise = web3.eth.currentProvider.request(requestData)

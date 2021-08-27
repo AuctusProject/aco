@@ -3,7 +3,7 @@ export const kovan = {
     prodNet: "ETHEREUM",
     iconUrl: "/images/eth_icon.png",
     CHAIN_ID: 42,
-    customRpc: null,
+    customRpc: "0x2a",
     apiUrl: "https://bl37dtsnsc.execute-api.us-east-1.amazonaws.com/dev/",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/auctusproject/auctus-options-kovan",
     rpcWssUrl: "wss://kovan.infura.io/ws/v3/8d03fea006b64542ab9c26af741965b2",
