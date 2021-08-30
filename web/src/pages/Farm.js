@@ -2,11 +2,9 @@ import './Farm.css'
 import React, { Component } from 'react'
 import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
-import Airdrop from '../partials/Farm/Airdrop'
 import LiquidityProgram from '../partials/Farm/LiquidityProgram'
 import { listClaimedAcos } from '../util/contractHelpers/acoDistributorMethods'
 import { listClaimedRewards, listUnclaimedRewards } from '../util/contractHelpers/acoRewardsMethods'
-import RewardChart from '../partials/Farm/RewardChart'
 import RewardOptionCard from '../partials/Farm/RewardOptionCard'
 import { balanceOf } from '../util/contractHelpers/erc20Methods'
 import { getAvailableOptionsByUnderlying } from '../util/dataController'
@@ -105,11 +103,8 @@ class Farm extends Component {
 
   render() {
     return <div className="farm py-5">
-      <div className="farm-title">Auctus Liquidity Incentives</div>
-      <div className="farm-subtitle">Earn AUC options for helping grow the protocol fundamentals.</div>
-      <a href="https://blog.auctus.org/auctus-auc-first-ever-12-5mm-options-airdrop-incentives-campaign-b9fb96188c5" target="_blank" rel="noopener noreferrer" className="farm-learn-more">Learn more</a>
-      <Airdrop {...this.props}/>
-      <RewardChart airdropCurrentOption={this.state.airdropCurrentOption} acoBalances={this.state.acoBalances} airdropUnclaimed={this.state.airdropUnclaimed} rewardUnclaimed={this.state.rewardUnclaimed} />
+      <div className="farm-title">Auctus' first liquidity incentive program has ended.</div>
+      <div className="farm-title">We would like to thank everyone for participating.</div>
       <LiquidityProgram {...this.props} rewardUnclaimed={this.state.rewardUnclaimed} loadUnclaimedRewards={this.getRewardUnclaimedAcos} toggleRewardUnclaimed={this.state.toggleRewardUnclaimed} />
       {(this.state.acoBalances && this.state.acoBalances.length > 0) && <>
         <div className="unclaimed-rewards-title">

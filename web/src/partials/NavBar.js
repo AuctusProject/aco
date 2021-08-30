@@ -152,11 +152,11 @@ class NavBar extends Component {
                 <NavLink className="nav-item link-nav pools-link" to={"/pools"}>
                   <div className="link-title">POOLS<div className="earn-badge">Earn</div></div>
                 </NavLink>
-                {menuConfigData.hasFarm && <NavLink className="nav-item link-nav" to={"/farm"}>
-                  <div className="link-title">FARM &amp; AIRDROP</div>
-                </NavLink>}
                 {menuConfigData.hasOtc && <NavLink className="nav-item link-nav" to={"/otc/trade"} isActive={() => window.location.pathname.indexOf("otc/trade") > 0 || window.location.pathname.indexOf("otc/manage") > 0}>
                   <div className="link-title">OTC</div>
+                </NavLink>}
+                {menuConfigData.hasFarm && <NavLink className="nav-item link-nav" to={"/farm"}>
+                  <div className="link-title">FARM</div>
                 </NavLink>}
               </ul>
               <ul className="navbar-nav ml-auto align-items-center">

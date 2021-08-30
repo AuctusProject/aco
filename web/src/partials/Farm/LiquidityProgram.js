@@ -4,7 +4,6 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import LiquidityProgramModal from './LiquidityProgramModal'
 import { listRewardsData } from '../../util/contractHelpers/acoRewardsMethods'
-import { formatAcoRewardName, numberWithCommas } from '../../util/constants'
 import { acoRewardsPools } from '../../util/network'
 
 class LiquidityProgram extends Component {
@@ -57,8 +56,8 @@ class LiquidityProgram extends Component {
   }
 
   render() {
-    return <div className="liquidity-program">
-      <div className="liquidity-program-title">Join our liquidity programs to earn more options</div>
+    return <div className="liquidity-program pt-5">
+      <div className="liquidity-program-title">Please unstake your liquidity tokens.</div>
       <div className="liquidity-program-pools">
         {this.state.rewardsData && this.state.rewardsData.map(rewardData => (
           <div key={rewardData.pid} className="liquidity-card clickable" onClick={() => this.onLiquiditySelect(rewardData)}>
@@ -66,9 +65,6 @@ class LiquidityProgram extends Component {
               {rewardData.image.map(img => <img key={img} alt="" src={img}></img>)}
             </div>
             <div className="liquidity-card-title">{rewardData.name}</div>
-            <div className="liquidity-card-rewards-title">{"Rewards per $1000 per month"}</div>
-            <div className="liquidity-card-rewards-value">{!rewardData.monthly1kReward ? "..." : numberWithCommas(rewardData.monthly1kReward)}</div>
-            <div className="liquidity-card-rewards-option">{formatAcoRewardName(rewardData.currentAco)}</div>
           </div>
         ))}
       </div>
