@@ -201,31 +201,6 @@ class LiquidityProgramModal extends Component {
           <div className="reward-card">
             <div className="reward-card-content">
               <div className="reward-card-title">
-                {this.props.pool.name} AVAILABLE
-              </div>
-              <div className="reward-card-balance reward-card-balance-mb">
-                {this.state.poolBalance ? fromDecimals(this.state.poolBalance, this.props.pool.decimals) : <FontAwesomeIcon icon={faSpinner} className="fa-spin"/>}
-              </div>
-              <div className="reward-card-input">
-                <div className="input-field">
-                  <DecimalInput onChange={this.onStakeValueChange} value={this.state.stakeValue}></DecimalInput>
-                </div>
-                <div className="action-btn" onClick={this.onStakeClick}>STAKE</div>
-              </div>
-              <div className="reward-card-percentage-buttons">
-                <div className="outline-btn reward-card-percentage-button" onClick={this.onStakePercentageClick(0.25)}>25%</div>
-                <div className="outline-btn reward-card-percentage-button" onClick={this.onStakePercentageClick(0.5)}>50%</div>
-                <div className="outline-btn reward-card-percentage-button" onClick={this.onStakePercentageClick(0.75)}>75%</div>
-                <div className="outline-btn reward-card-percentage-button" onClick={this.onStakePercentageClick(1)}>100%</div>
-              </div>
-            </div>
-            <div className="reward-action">
-              <div className="action-btn" onClick={this.onClaimClick}>CLAIM REWARDS</div>
-            </div>
-          </div>
-          <div className="reward-card">
-            <div className="reward-card-content">
-              <div className="reward-card-title">
                 {this.props.pool.name} STAKED
               </div>
               <div className={"reward-card-balance " + (this.showPoolDetailsLink() ? "" : "reward-card-balance-mb")}>
