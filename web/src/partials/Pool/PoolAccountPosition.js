@@ -118,7 +118,7 @@ class PoolAccountPosition extends Component {
             <tbody>
             {this.state.accountPosition.acoTokensInfos && Object.values(this.state.accountPosition.acoTokensInfos).map(tokenPosition =>
               <tr key={tokenPosition.acoToken}>
-                <td>{tokenPosition.acoTokenInfo.name}</td>
+                <td>{tokenPosition.acoTokenInfo.symbol}</td>
                 <td className="value-highlight">{fromDecimals(tokenPosition.balance, tokenPosition.acoTokenInfo.decimals)}</td>
                 <td className="value-highlight">{fromDecimals(tokenPosition.collateralAmount, getCollateralInfo(tokenPosition).decimals, 4, 0)}</td>
               </tr>)}
