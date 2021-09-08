@@ -24,7 +24,7 @@ export const arbitrum = {
     zrxExchangeAddress: null,
     multicallAddress: null,
     allAcoOtcAddresses: ["0xc91c5dda23704e1f4279d4947b7fa59101aebb86"],
-    acoBuyerAddress: "0xa79ac0fc650d2751b93058a89f29211d9b2d53c4",
+    acoBuyerAddress: "0xd0d8066885e07539cf4d9fecd19d2729a310be4e",
     acoDistributorAddress: null,
     acoRewardAddress: null,
     airdropClaimStart: null,
