@@ -20,11 +20,11 @@ import StepsModal from '../StepsModal/StepsModal'
 import VerifyModal from '../VerifyModal'
 import BigNumber from 'bignumber.js'
 import SlippageModal from '../SlippageModal'
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { faInfoCircle, faMinus, faPlus } from '@fortawesome/free-solid-svg-icons'
 import ReactTooltip from 'react-tooltip'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { buy, getQuote } from '../../util/acoSwapUtil'
-import { acoBuyerAddress, menuConfig, zrxExchangeAddress } from '../../util/network'
+import { acoBuyerAddress, btcAddress, menuConfig, zrxExchangeAddress } from '../../util/network'
 
 class SimpleBuyTab extends Component {
   constructor(props) {
@@ -33,7 +33,7 @@ class SimpleBuyTab extends Component {
       selectedType: 1, 
       selectedOption: null,
       deribitPrice: null, 
-      qtyValue: "1.00", 
+      qtyValue: "1.0", 
       strikeAssetBalance: null,
       currentPairPrice: null,
       maxSlippage: DEFAULT_SLIPPAGE
@@ -42,6 +42,7 @@ class SimpleBuyTab extends Component {
 
   componentDidMount = () => {
     if (this.props.selectedPair) {
+      this.onPairChange()
       this.selectType(this.state.selectedType)
       this.refreshAccountBalance()
       this.setPairCurrentPrice()
@@ -72,6 +73,9 @@ class SimpleBuyTab extends Component {
     if (this.props.networkToggle !== prevProps.networkToggle) {
       this.componentDidMount()
     } else {
+      if (this.props.selectedPair !== prevProps.selectedPair) {
+        this.onPairChange()
+      }
       if (this.props.selectedPair !== prevProps.selectedPair || !this.state.currentPairPrice) {
         this.setPairCurrentPrice()
       }
@@ -84,6 +88,24 @@ class SimpleBuyTab extends Component {
         this.refreshAccountBalance()
       }
     }
+  }
+
+  onPairChange = () => {
+    var qtyValue = this.getQtyValue()
+    this.setState({qtyValue: qtyValue})
+  }
+
+  getQtyValue = () => {
+    if (this.isBtcAsset()) {
+      return "0.1"
+    }
+    else {
+      return "1.0"
+    }
+  }
+
+  isBtcAsset = () => {
+    return this.props.selectedPair && this.props.selectedPair.underlying === btcAddress()
   }
   
   componentWillUnmount = () => {
@@ -373,7 +395,7 @@ class SimpleBuyTab extends Component {
   onHideStepsModal = () => {
     let redirect = (this.props.selectedPair && this.state.stepsModalInfo && this.state.stepsModalInfo.success)
     if (redirect) {
-      this.setState({ stepsModalInfo: null, selectedStrike: null, qtyValue: "1.00", selectedExpiration: null }, () => {
+      this.setState({ stepsModalInfo: null, selectedStrike: null, qtyValue: this.getQtyValue(), selectedExpiration: null }, () => {
         this.setSelectedOption()
         this.props.refreshExercise()
         var self = this
@@ -490,7 +512,7 @@ class SimpleBuyTab extends Component {
 
   getTotalToBePaidFormatted = () => {
     var totalToBePaid = this.getTotalToBePaid()
-    if (totalToBePaid) {
+    if (totalToBePaid && this.props.selectedPair) {
       return formatWithPrecision(totalToBePaid) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
@@ -498,7 +520,7 @@ class SimpleBuyTab extends Component {
 
   getMaxToPayFormatted = () => {
     var maxToPay = this.getMaxToPay()
-    if (maxToPay) {
+    if (maxToPay && this.props.selectedPair) {
       return fromDecimals(maxToPay, this.state.selectedOption.strikeAssetInfo.decimals) + " " + this.props.selectedPair.strikeAssetSymbol
     }
     return "-"
@@ -544,6 +566,27 @@ class SimpleBuyTab extends Component {
     return null
   }
 
+  onMinusQtyValue = () => {
+    var value = 0
+    if (this.state.qtyValue) {
+      value = parseFloat(this.state.qtyValue)
+    }
+    value -= 0.1
+    if (value < 0) {
+      value = 0
+    }
+    this.onQtyChange(value.toFixed(1))
+  }
+
+  onPlusQtyValue = () => {
+    var value = 0
+    if (this.state.qtyValue) {
+      value = parseFloat(this.state.qtyValue)
+    }
+    value += 0.1
+    this.onQtyChange(value.toFixed(1))
+  }
+
   render() {
     var selectedOption = this.state.selectedOption
     var priceFromDecimals = selectedOption ? parseFloat(fromDecimals(selectedOption.strikePrice, selectedOption.strikeAssetInfo.decimals)) : null
@@ -552,8 +595,10 @@ class SimpleBuyTab extends Component {
       <div className="inputs-wrapper">
         <div className="input-column">
           <div className="input-label">Qty</div>
-          <div className="input-field">
+          <div className="input-field qty-value-input">
+            {this.isBtcAsset() && <FontAwesomeIcon className="clickable" icon={faMinus} onClick={this.onMinusQtyValue}/>}
             <DecimalInput tabIndex="-1" placeholder="Option amount" onChange={this.onQtyChange} value={this.state.qtyValue}></DecimalInput>
+            {this.isBtcAsset() && <FontAwesomeIcon className="clickable" icon={faPlus} onClick={this.onPlusQtyValue}/>}
           </div>
         </div>
         <div className="input-column">

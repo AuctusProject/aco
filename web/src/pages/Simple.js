@@ -42,6 +42,7 @@ class Simple extends Component {
   }  
 
   loadAvailableOptions = (forceRefresh) => {
+    this.setState({pairs: null})
     getAvailableOptions(forceRefresh).then(result => {
       result = result.filter(o => o.underlying.toLowerCase() !== auctusAddress())      
       var pairs = getPairsFromOptions(result)

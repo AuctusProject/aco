@@ -92,7 +92,7 @@ class PoolCurrentTab extends Component {
 
   showRedeem = () => {
     let pool = this.props.pool
-    return this.props.isAdmin && pool.openAcos && pool.openAcos.length > 0
+    return this.props.isAdmin && pool.netValue > 0
   }
 
   getRestoreButtonLabel = () => {
