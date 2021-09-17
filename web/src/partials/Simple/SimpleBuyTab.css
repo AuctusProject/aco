@@ -207,3 +207,8 @@
 .create-link-wrapper .nav-link:hover {
     text-shadow: 0 2px 5px #5de9d4;
 }
+
+.qty-value-input svg {
+    padding: 5px;
+    font-size: 25px;
+}
