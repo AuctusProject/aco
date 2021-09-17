@@ -21,7 +21,13 @@ const callApi = (method, queryStringParameters) => {
       } else {
         resolve(null);
       }
-    }).catch((err) => reject("deribit " + method + complement + " " + err));
+    }).catch((err) => {
+      if (err.toString().indexOf("400") > 0) {
+        resolve(null);
+      } else {
+        reject("deribit " + method + complement + " " + err);
+      }
+    });
   });
 };
 

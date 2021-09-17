@@ -17,9 +17,10 @@ const setError = (statusCode, error, event, errorPrepend) => {
 const getEventData = (event) => {
   if (event) {
     try {
-      return "       >>>> EVENT: " + JSON.stringify(event);
-    } catch (e) {
-      return "       >>>> Read EVENT error: " + e;
+      let origin = event["origin"] || event["Referer"];
+      return "  >>>> Origin: " + JSON.stringify(origin);
+    } catch {
+      return "";
     }
   }
   return "";
@@ -32,8 +33,8 @@ const getErrorMessage = (error, prependString = "") => {
       msg += "MESSAGE: " + error.message;
       if (error.response) {
         if (error.response.status) msg += " STATUS CODE: " + error.response.status;
-        if (error.response.data) msg += " DATA: " + stringify(error.response.data);
-        if (error.response.headers) msg += " HEADERS: " + stringify(error.response.headers);
+        if (error.response.data) msg += " DATA: " + JSON.stringify(error.response.data);
+        if (error.response.headers) msg += " HEADERS: " + JSON.stringify(error.response.headers);
       } else if (error.stack) {
         msg += " STACK: " + error.stack;
       }
@@ -44,7 +45,7 @@ const getErrorMessage = (error, prependString = "") => {
         msg += this.getErrorMessage(error[i]) + " --- ";
       }
     } else if (typeof(error) === "object") {
-      msg += stringify(error);
+      msg += JSON.stringify(error);
     } else {
       msg += error.toString();
     }
