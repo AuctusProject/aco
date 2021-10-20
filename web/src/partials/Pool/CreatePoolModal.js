@@ -15,7 +15,8 @@ import SpinnerLargeIcon from "../Util/SpinnerLargeIcon";
 import DoneLargeIcon from "../Util/DoneLargeIcon";
 import ErrorLargeIcon from "../Util/ErrorLargeIcon";
 import StepsModal from "../StepsModal/StepsModal";
-import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress, ethAsset, ethSymbol } from "../../util/network";
+import { usdAddress, usdSymbol, usdAsset } from "../../util/network";
+import { getAcoAssets } from "../../util/baseApi";
 
 class CreatePoolModal extends Component {
   constructor(props) {
@@ -23,35 +24,10 @@ class CreatePoolModal extends Component {
     this.state = this.getInitialState(props);
   }
 
-  underlyingOptions() {
-    let base = baseAsset()
-    let result = []
-    if (base.symbol !== ethSymbol()) {
-      result.push({
-        value: base.symbol,
-        name: base.symbol,
-        icon: base.icon
-      })
-    }
-    let eth = ethAsset()
-    result.push({
-      value: eth.symbol,
-      name: eth.symbol,
-      icon: eth.icon
-    })
-    let btc = btcAsset()
-    result.push({
-      value: btc.symbol,
-      name: btc.symbol,
-      icon: btc.icon
-    })
-    return result
-  }
-
   getInitialState = (props) => {
     var state = {
       selectedType: 1,
-      selectedUnderlying: this.underlyingOptions()[0],
+      selectedUnderlying: null,
       priceMode: STRIKE_PRICE_MODE[0],
       priceSettingsType: STRIKE_PRICE_OPTIONS[0],
       maxStrikePrice: "",
@@ -73,10 +49,26 @@ class CreatePoolModal extends Component {
   componentDidUpdate = (prevProps) => {
     if (this.props.networkToggle !== prevProps.networkToggle || this.props.accountToggle !== prevProps.accountToggle) {
       this.props.onHide(false)
+      this.refreshUnderlyingAssets()
     }
   }
 
-  componentDidMount = () => {}
+  componentDidMount = () => {
+    this.refreshUnderlyingAssets()
+  }
+
+  refreshUnderlyingAssets = () => {
+    getAcoAssets().then(assets => {
+      var filteredAssets = assets.filter(a => 
+        a.createPool
+      ).map(a => {return {
+        value: a.symbol,
+        name: a.symbol,
+        icon: a.imageUrl
+      }})
+      this.setState({assets: assets, underlyingOptions: filteredAssets})
+    })
+  }
 
   selectType = (type) => {
     this.setState({ selectedType: type });
@@ -174,6 +166,16 @@ class CreatePoolModal extends Component {
     }
   }
 
+  getSelectedUnderlyingAddress = () => {
+    var assets = this.state.assets
+    var symbol = this.state.selectedUnderlying.value
+    for (let i = 0; i < assets.length; ++i) {
+      if (assets[i].symbol.toLowerCase() === symbol.toLowerCase()) {
+        return assets[i].address
+      }
+    }
+  }
+
   onCreateClick = () => {
     if (this.canConfirm()) {
       var stepNumber = 0
@@ -184,7 +186,7 @@ class CreatePoolModal extends Component {
       let tolerancePriceAboveMax = this.getToleranceDecimals(this.state.tolerancePriceAboveMax)
       let minStrikePrice = this.getStrikePriceDecimals(this.state.minStrikePrice)
       let maxStrikePrice = this.getStrikePriceDecimals(this.state.maxStrikePrice)
-      let underlying = this.state.selectedUnderlying.value === "ETH" ? ethAddress() : this.state.selectedUnderlying.value === btcSymbol() ? btcAddress() : baseAddress()
+      let underlying = this.getSelectedUnderlyingAddress()
       if (this.state.priceMode.value === StrikePriceModes.AnyPrice || this.state.priceMode.value === StrikePriceModes.Fixed) {
         tolerancePriceBelowMin = "-1"
         tolerancePriceBelowMax = "-1"
@@ -386,7 +388,7 @@ class CreatePoolModal extends Component {
                 <div className="input-column underlying-column">
                   <div className="input-label">Underlying</div>
                   <div className="input-field">
-                    <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={this.underlyingOptions()} onSelectOption={this.onAssetSelected} />
+                    <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={this.state.underlyingOptions} onSelectOption={this.onAssetSelected} />
                   </div>
                 </div>
                 <div className="input-column">
