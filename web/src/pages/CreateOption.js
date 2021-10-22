@@ -14,7 +14,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
 import { confirm } from '../util/sweetalert'
 import { getAvailableOptionsByPair } from '../util/dataController'
-import { ethAddress, usdAddress, btcAddress, usdSymbol, usdAsset, baseAsset, btcAsset, btcSymbol, baseAddress, ethSymbol, ethAsset, menuConfig } from '../util/network'
+import { usdAddress, usdSymbol, usdAsset, menuConfig } from '../util/network'
+import { getAcoAssets } from '../util/baseApi'
 
 class CreateOption extends Component {
   constructor(props) {
@@ -22,35 +23,10 @@ class CreateOption extends Component {
     this.state = this.getInitialState(props)
   }
 
-  underlyingOptions() {
-    let base = baseAsset()
-    let result = []
-    if (base.symbol !== ethSymbol()) {
-      result.push({
-        value: base.symbol,
-        name: base.symbol,
-        icon: base.icon
-      })
-    }
-    let eth = ethAsset()
-    result.push({
-      value: eth.symbol,
-      name: eth.symbol,
-      icon: eth.icon
-    })
-    let btc = btcAsset()
-    result.push({
-      value: btc.symbol,
-      name: btc.symbol,
-      icon: btc.icon
-    })
-    return result
-  }
-
   getInitialState = (props) => {
     var state = { 
       selectedType: 1, 
-      selectedUnderlying: this.underlyingOptions()[0],
+      selectedUnderlying: null,
       expirationDate: "",
       selectedStrike: "",
       strikeOptions: null,
@@ -60,6 +36,26 @@ class CreateOption extends Component {
   }
 
   componentDidMount = () => {
+    this.refreshUnderlyingAssets()
+  }
+
+  refreshUnderlyingAssets = () => {
+    getAcoAssets().then(assets => {
+      var filteredAssets = assets.filter(a => 
+        a.createAco
+      ).map(a => {return {
+        value: a.symbol,
+        name: a.symbol,
+        icon: a.imageUrl
+      }})
+      this.setState({underlyingOptions: filteredAssets})
+    })
+  }
+
+  componentDidUpdate = (prevProps) => {
+    if (this.props.networkToggle !== prevProps.networkToggle) {
+      this.componentDidMount()
+    }
   }
 
   selectType = (type) => {
@@ -103,10 +99,26 @@ class CreateOption extends Component {
     }    
   }
 
+  getSelectedUnderlyingAddress = () => {
+    var underlyingAsset = this.getSelectedUnderlyingAsset()
+    return underlyingAsset && underlyingAsset.address
+  }
+
+  getSelectedUnderlyingAsset = () => {
+    var assets = this.state.assets
+    var symbol = this.state.selectedUnderlying.value
+    for (let i = 0; i < assets.length; ++i) {
+      if (assets[i].symbol.toLowerCase() === symbol.toLowerCase()) {
+        return assets[i].address
+      }
+    }
+  }
+
   getOptionData = () => {
     let usd = usdAsset()
+    let underlying = this.getSelectedUnderlyingAddress()
     return {
-      underlying: this.state.selectedUnderlying.value === ethSymbol() ? ethAddress() : this.state.selectedUnderlying.value === btcSymbol() ? btcAddress() : baseAddress(),
+      underlying: underlying,
       strikeAsset: usdAddress(),
       isCall: this.state.selectedType === 1,
       expiryTime: (this.state.expirationDate.getTime()/ONE_SECOND).toString(),
@@ -154,20 +166,8 @@ class CreateOption extends Component {
       let usd = usdAsset()
       return usd.decimals
     }
-    if (this.state.selectedUnderlying.value === "WBTC" 
-      || this.state.selectedUnderlying.value === "BTCB" 
-      || this.state.selectedUnderlying.value === btcSymbol()) {
-      let btc = btcAsset()
-      return btc.decimals
-    }
-    if (this.state.selectedUnderlying.value === "ETH" 
-      || this.state.selectedUnderlying.value === ethSymbol()) {
-      let eth = ethAsset()
-      return eth.decimals
-    }
-    else {
-      return 18
-    }
+    var underlyingAsset = this.getSelectedUnderlyingAsset()
+    return underlyingAsset && underlyingAsset.decimals
   }
 
   getPoolLiquiditySymbol = () => {
@@ -251,7 +251,7 @@ class CreateOption extends Component {
             <div className="input-column underlying-column">
               <div className="input-label">Underlying</div>
               <div className="input-field">
-                <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={this.underlyingOptions()} onSelectOption={this.onAssetSelected}/>
+                <SimpleAssetDropdown placeholder="Select underlying" selectedOption={this.state.selectedUnderlying} options={this.state.underlyingOptions} onSelectOption={this.onAssetSelected}/>
               </div>
             </div>
             <div className="input-column">

@@ -58,7 +58,7 @@ export function signOrder(from, isAsk, option, optionAmount, usdcValue, expiry, 
   })
 }
 
-const personalSignOrder = (from, isAsk, order) => {
+export const personalSignOrder = (from, isAsk, order) => {
   return new Promise((resolve, reject) => { 
     const otcContract = acoOtcAddress()
     const orderHash = (isAsk ? getAskOrderHash(order, otcContract) : getBidOrderHash(order, otcContract))
