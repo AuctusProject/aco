@@ -48,7 +48,7 @@ class CreateOption extends Component {
         name: a.symbol,
         icon: a.imageUrl
       }})
-      this.setState({underlyingOptions: filteredAssets})
+      this.setState({assets: assets, underlyingOptions: filteredAssets})
     })
   }
 
@@ -109,7 +109,7 @@ class CreateOption extends Component {
     var symbol = this.state.selectedUnderlying.value
     for (let i = 0; i < assets.length; ++i) {
       if (assets[i].symbol.toLowerCase() === symbol.toLowerCase()) {
-        return assets[i].address
+        return assets[i]
       }
     }
   }
