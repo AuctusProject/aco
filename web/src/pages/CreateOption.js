@@ -14,8 +14,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import CreateOptionModal from '../partials/CreateOptionModal'
 import { confirm } from '../util/sweetalert'
 import { getAvailableOptionsByPair } from '../util/dataController'
-import { usdAddress, usdSymbol, usdAsset, menuConfig } from '../util/network'
+import { usdAddress, usdSymbol, usdAsset, menuConfig, btcSymbol, ethSymbol } from '../util/network'
 import { getAcoAssets } from '../util/baseApi'
+import DecimalInput from '../partials/Util/DecimalInput'
 
 class CreateOption extends Component {
   constructor(props) {
@@ -101,7 +102,7 @@ class CreateOption extends Component {
 
   getSelectedUnderlyingAddress = () => {
     var underlyingAsset = this.getSelectedUnderlyingAsset()
-    return underlyingAsset && underlyingAsset.address
+    return underlyingAsset ? underlyingAsset.address : null
   }
 
   getSelectedUnderlyingAsset = () => {
@@ -239,6 +240,17 @@ class CreateOption extends Component {
     }
   }
 
+  isBtcOrEthAsset = () => {
+    return this.state.selectedUnderlying && 
+      (this.state.selectedUnderlying.value === btcSymbol()
+      || this.state.selectedUnderlying.value === ethSymbol())
+  }
+
+  onStrikeChange = (value) => {
+    this.setState({strikeInputValue: value})
+    this.onStrikeSelected({value: value})
+  }
+
   render() {    
     var minDate = this.getMinDate()
     var maxDate = new Date().setFullYear(new Date().getFullYear() + 1)
@@ -271,8 +283,14 @@ class CreateOption extends Component {
               <div className="input-label">Strike</div>
               <div className="input-field">
                 {(this.state.selectedUnderlying) ? 
-                  <StrikeValueInput selectedUnderlying={this.state.selectedUnderlying} selectedType={this.state.selectedType} selectedStrike={this.state.selectedStrike} onStrikeSelected={this.onStrikeSelected}/>
-                  :
+                  (this.isBtcOrEthAsset() ?
+                  <StrikeValueInput selectedUnderlying={this.state.selectedUnderlying} selectedType={this.state.selectedType} selectedStrike={this.state.selectedStrike} onStrikeSelected={this.onStrikeSelected}/> :
+                  <DecimalInput className="order-input" 
+                    placeholder="Enter strike"
+                    notifyOnChange={true} 
+                    onChange={this.onStrikeChange} 
+                    value={this.state.strikeInputValue}></DecimalInput>
+                  ) :
                   <span className="simple-dropdown-placeholder">Select underlying first</span>
                 }
               </div>
